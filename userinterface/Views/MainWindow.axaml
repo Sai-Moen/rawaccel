@@ -3,6 +3,7 @@
         xmlns:vm="using:userinterface.ViewModels"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:userinterface.Views"
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
         x:Class="userinterface.Views.MainWindow"
         Icon="/Assets/avalonia-logo.ico"
@@ -27,5 +28,9 @@
             />
         </ExperimentalAcrylicBorder.Material>
       </ExperimentalAcrylicBorder>
+
+      <DockPanel Margin="40">
+        <local:ProfileView DockPanel.Dock="Right"/>
+      </DockPanel>
     </Panel>
 </Window>
