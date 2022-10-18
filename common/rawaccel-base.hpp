@@ -25,6 +25,7 @@ namespace rawaccel {
     inline constexpr bool GAIN = 1;
     
     enum class accel_mode {
+        arc,
         classic,
         jump,
         natural,

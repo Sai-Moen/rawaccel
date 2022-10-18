@@ -11,6 +11,7 @@ namespace grapher
     {
         #region Fields
 
+        public static readonly LayoutBase Arc = new ArcLayout();
         public static readonly LayoutBase Linear = new LinearLayout();
         public static readonly LayoutBase Classic = new ClassicLayout();
         public static readonly LayoutBase Jump = new JumpLayout();
@@ -51,6 +52,7 @@ namespace grapher
             AccelDropdown.Items.AddRange(
                 new LayoutBase[]
                 {
+                    Arc,
                     Linear,
                     Classic,
                     Jump,
@@ -443,6 +445,7 @@ namespace grapher
         { 
             switch (args.mode)
             {
+                case AccelMode.arc:      return Arc;
                 case AccelMode.classic:  return (args.exponentClassic == 2) ? Linear : Classic;
                 case AccelMode.jump:     return Jump;
                 case AccelMode.natural:  return Natural;

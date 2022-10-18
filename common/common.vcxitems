@@ -14,6 +14,7 @@
     <ProjectCapability Include="SourceItemsFromImports" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="$(MSBuildThisFileDirectory)accel-arc.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)accel-classic.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)accel-jump.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)accel-lookup.hpp" />

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "accel-arc.hpp"
 #include "accel-classic.hpp"
 #include "accel-jump.hpp"
 #include "accel-lookup.hpp"
@@ -13,6 +14,8 @@ namespace rawaccel {
     union accel_union {
         accel_noaccel noaccel;
         lookup lut;
+        arc<GAIN> arc_g;
+        arc<LEGACY> arc_l;
         classic<GAIN> classic_g;
         classic<LEGACY> classic_l;
         jump<GAIN> jump_g;
@@ -35,6 +38,7 @@ namespace rawaccel {
         auto visit(Visitor vis, const accel_args& args)
         {
             switch (args.mode) {
+            case accel_mode::arc:      return visit_helper<arc>(vis, args.gain);
             case accel_mode::classic:  return visit_helper<classic>(vis, args.gain);
             case accel_mode::jump:     return visit_helper<jump>(vis, args.gain);
             case accel_mode::natural:  return visit_helper<natural>(vis, args.gain);
