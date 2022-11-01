@@ -1,11 +1,9 @@
-﻿using grapher.Models.Serialized;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
 
-namespace grapher.Models.Mouse
+namespace userinterface.Models.Mouse
 {
     public class MouseWatcher
     {
@@ -684,19 +682,12 @@ namespace grapher.Models.Mouse
 
         #region Constructors
 
-        public MouseWatcher(Form containingForm, Label display, AccelCharts accelCharts, SettingsManager setMngr)
+        public MouseWatcher(IMouseMoveDisplayer mouseMoveDisplayer, IntPtr handle)
         {
-            ContainingForm = containingForm;
-            Display = display;
-            AccelCharts = accelCharts;
-            SettingsManager = setMngr;
-            MouseData = new MouseData();
-
-            LastMoveDisplayFormat = Constants.MouseMoveDefaultFormat;
-            LastMoveNormalized = false;
+            MouseMoveDisplayer = mouseMoveDisplayer;
 
             RAWINPUTDEVICE device = new RAWINPUTDEVICE();
-            device.WindowHandle = ContainingForm.Handle;
+            device.WindowHandle = handle;
             device.UsagePage = HIDUsagePage.Generic;
             device.Usage = HIDUsage.Mouse;
             device.Flags = RawInputDeviceFlags.InputSink | RawInputDeviceFlags.DevNotify;
@@ -712,36 +703,18 @@ namespace grapher.Models.Mouse
 
         #region Properties
 
-        private Form ContainingForm { get; }
-
-        private Label Display { get; }
-
-        private AccelCharts AccelCharts { get; }
-
-        private SettingsManager SettingsManager { get; }
-
-        private MouseData MouseData { get; }
+        private IMouseMoveDisplayer MouseMoveDisplayer { get; }
 
         private Stopwatch Stopwatch { get; }
 
-        private string LastMoveDisplayFormat { get; set; }
-
-        private bool LastMoveNormalized { get; set; }
-
         private double PollTime
         {
-            get => 1000 / SettingsManager.PollRateField.Data;
+            get => 1;
         }
 
         #endregion Properties
 
         #region Methods
-
-        public void UpdateLastMove()
-        {
-            MouseData.Get(out var x, out var y);
-            Display.Text = string.Format(LastMoveDisplayFormat, x, y);
-        }
 
         public void ReadMouseMove(Message message)
         {
@@ -751,24 +724,7 @@ namespace grapher.Models.Mouse
 
             bool relative = !rawInput.Data.Mouse.Flags.HasFlag(RawMouseFlags.MoveAbsolute);
 
-            bool deviceMatch = false;
-            foreach (var (handle, normalized) in SettingsManager.ActiveNormTaggedHandles)
-            {
-                if (handle == rawInput.Header.Device)
-                {
-                    deviceMatch = true;
-
-                    if (normalized != LastMoveNormalized)
-                    {
-                        LastMoveDisplayFormat = normalized ?
-                                                Constants.MouseMoveNormalizedFormat :
-                                                Constants.MouseMoveDefaultFormat;
-                        LastMoveNormalized = normalized;
-                    }
-
-                    break;
-                }
-            }
+            bool deviceMatch = true;
 
             if (relative && deviceMatch && (rawInput.Data.Mouse.LastX != 0 || rawInput.Data.Mouse.LastY != 0))
             {
@@ -777,29 +733,9 @@ namespace grapher.Models.Mouse
                 time = time > 100 ? 100 : time;
                 time = time > (PollTime * 0.8) ? time : (PollTime * 0.8);
 
-                double x = rawInput.Data.Mouse.LastX;
-                double y = rawInput.Data.Mouse.LastY;
-
-                // strip negative directional multipliers, charts calculated from positive input
-
-                Vec2<double> dirMults = new Vec2<double>
-                {
-                    x = SettingsManager.ActiveProfile.lrSensRatio,
-                    y = SettingsManager.ActiveProfile.udSensRatio
-                };
-
-                if (dirMults.x > 0 && x < 0)
-                {
-                    x /= dirMults.x;
-                }
-
-                if (dirMults.y > 0 && y < 0)
-                {
-                    y /= dirMults.y;
-                }
-
-                MouseData.Set(rawInput.Data.Mouse.LastX, rawInput.Data.Mouse.LastY);
-                AccelCharts.MakeDots(x, y, time);
+                MouseMoveDisplayer.SetLastMouseMove(
+                    rawInput.Data.Mouse.LastX,
+                    rawInput.Data.Mouse.LastY);
             }
         }
 

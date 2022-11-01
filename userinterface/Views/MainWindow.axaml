@@ -28,9 +28,10 @@
           />
       </ExperimentalAcrylicBorder.Material>
     </ExperimentalAcrylicBorder>
-    <Panel Margin="40">
+    <DockPanel Margin="40">
+      <ContentControl Content="{Binding MouseListen}" DockPanel.Dock="Left" VerticalAlignment="Center"/>
       <ContentControl Content="{Binding Profiles}"/>
-    </Panel>
+    </DockPanel>
   </Panel>
 
 </Window>

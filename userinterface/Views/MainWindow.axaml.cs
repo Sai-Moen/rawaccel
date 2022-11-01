@@ -1,4 +1,4 @@
-using Avalonia.Controls;
+using Window = Avalonia.Controls.Window;
 
 namespace userinterface.Views
 {
@@ -7,6 +7,11 @@ namespace userinterface.Views
         public MainWindow()
         {
             InitializeComponent();
+        }
+
+        protected override void OnInitialized()
+        {
+            base.OnInitialized();
         }
     }
 }

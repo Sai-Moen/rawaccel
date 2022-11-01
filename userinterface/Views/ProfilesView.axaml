@@ -8,7 +8,7 @@
 
   <TabControl>
     <TabItem Header="{Binding ProfileOneTitle}">
-      <lvc:CartesianChart Series="{Binding Series}" Title="{Binding ChartTitle}"/>
+      <lvc:CartesianChart Series="{Binding Series}" Title="{Binding ChartTitle}" ZoomingSpeed="0"/>
     </TabItem>
     <TabItem Header="Profile2">
       This will be another profile.
