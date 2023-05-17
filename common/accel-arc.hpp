@@ -5,14 +5,14 @@
 namespace rawaccel {
 
     struct arc_base {
+        double ioffset;
         double limit;
         double midpoint;
-        double offset;
 
         arc_base(const accel_args& args) :
+            ioffset(args.input_offset),
             limit(args.limit - 1),
-            midpoint(args.midpoint),
-            offset(args.input_offset)
+            midpoint(args.midpoint)
         {}
     };
 
@@ -28,9 +28,13 @@ namespace rawaccel {
 
         double operator()(double x, const accel_args&) const
         {
-            if (x <= offset) return 1;
-            x -= offset;
-            return 1 + limit / (1 + midpoint / (x * x));
+            double y = 1;
+            if (x > ioffset)
+            {
+                x -= ioffset;
+                y += limit / (1 + midpoint / (x * x));
+            }
+            return y;
         }
     };
 
@@ -40,9 +44,13 @@ namespace rawaccel {
 
         double operator()(double x, const accel_args&) const
         {
-            if (x <= offset) return 1;
-            x -= offset;
-            return 1 + (limit / x) * (x - midpoint * atan(x / midpoint));
+            double y = 1;
+            if (x > ioffset)
+            {
+                x -= ioffset;
+                y += (limit / x) * (x - midpoint * atan(x / midpoint));
+            }
+            return y;
         }
     };
 }
