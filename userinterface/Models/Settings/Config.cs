@@ -7,12 +7,6 @@ namespace userinterface.Models.Settings
 {
     public class Config
     {
-        #region Constructors
-
-        public Config() {}
-
-        #endregion Constructors
-
         #region Properties
 
         [JsonPropertyOrder(0)]

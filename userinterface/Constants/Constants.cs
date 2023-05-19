@@ -5,9 +5,18 @@ namespace userinterface
     public static class Constants
     {
         #region Constants
-        
-        /// <summary> Name of the GUI configuration file. </summary>
-        public const string ConfigFileName = ".config";
+
+        /// <summary> Version number string. </summary>
+        public const string Version = "1.7.0";
+
+        /// <summary> Relative Path of the Config file. </summary>
+        public const string ConfigFileName = @".config";
+
+        /// <summary> Relative Path of the Profile folder. </summary>
+        public const string ProfileFolderName = @"Profiles/";
+
+        /// <summary> Default profile name. </summary>
+        public const string DefaultProfileName = "Default";
 
         /// <summary> DPI by which charts are scaled if none is set by user. </summary>
         public const int DefaultDPI = 1600;
