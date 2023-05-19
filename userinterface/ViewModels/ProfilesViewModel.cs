@@ -7,6 +7,7 @@ using LiveChartsCore.SkiaSharpView;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Windows;
 using System.Windows.Documents;
 
 using userinterface.Models.Settings;
@@ -15,51 +16,54 @@ namespace userinterface.ViewModels
 {
     public sealed class ProfilesViewModel : ViewModelBase
     {
+        public const int MaxPoints = 0x1000;
+
         public ProfilesViewModel()
         {
-            Profiles = new List<Profile>();
-
-            LastMouseMoveList = new ObservableCollection<WeightedPoint>();
+            LastMouseMoveList = new List<ObservablePoint>(MaxPoints);
 
             LastMouseMoveSeries =
-            new ScatterSeries<ObservablePoint>
+            new LineSeries<ObservablePoint>
             {
-                Values = new ObservableCollection<ObservablePoint>(),
+                Values = LastMouseMoveList,
                 AnimationsSpeed = System.TimeSpan.FromMilliseconds(10),
-                //EasingFunction = t => t * t,
+            };
+
+            BaseSeries =
+            new LineSeries<ObservablePoint>
+            {
+                Values = new ObservablePoint[]
+                {
+                    new ObservablePoint(0, 0),
+                }
             };
 
             Series = new ISeries[]
             {
-                new LineSeries<ObservablePoint>
-                {
-                    Values = new ObservablePoint[]
-                    {
-                        new ObservablePoint(0, 0),
-                        new ObservablePoint(1, 1),
-                        new ObservablePoint(10, 10),
-                        new ObservablePoint(50, 50),
-                    },
-                    Fill = null,
-                    GeometrySize = 0,
-                    LineSmoothness = 0,
-                },
-
+                BaseSeries,
                 LastMouseMoveSeries,
             };
+
+            Profiles = new HashSet<Profile>();
         }
 
-        public IList<Profile> Profiles { get; set; }
+        public IList<ObservablePoint> LastMouseMoveList;
+
+        public LineSeries<ObservablePoint> LastMouseMoveSeries;
+
+        public LineSeries<ObservablePoint> BaseSeries;
 
         public ISeries[] Series { get; }
 
-        private ScatterSeries<ObservablePoint> LastMouseMoveSeries { get; set; }
-
-        private ObservableCollection<WeightedPoint> LastMouseMoveList { get; }
+        public ISet<Profile> Profiles { get; set; }
 
         public void SetLastMouseMove(float x, float y)
         {
-            LastMouseMoveList.Add(new WeightedPoint(x, y, 1));
+            if (LastMouseMoveList.Count >= MaxPoints)
+            {
+                LastMouseMoveList.RemoveAt(0);
+            }
+            LastMouseMoveList.Add(new ObservablePoint(x, y));
         }
     }
 }
