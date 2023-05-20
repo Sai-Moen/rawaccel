@@ -1,13 +1,13 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:vm="using:userinterface.ViewModels"
+        xmlns:vm="using:RawAccel.ViewModels"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:userinterface.Views"
+        xmlns:local="clr-namespace:RawAccel.Views"
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-        x:Class="userinterface.Views.MainWindow"
+        x:Class="RawAccel.Views.MainWindow"
         Icon="/Assets/avalonia-logo.ico"
-        Title="userinterface"
+        Title="RawAccel"
         TransparencyLevelHint="AcrylicBlur"
         Background="Transparent"
         ExtendClientAreaToDecorationsHint="True"
@@ -29,8 +29,9 @@
       </ExperimentalAcrylicBorder.Material>
     </ExperimentalAcrylicBorder>
     <DockPanel Margin="40">
-      <ContentControl Content="{Binding MouseListen}" DockPanel.Dock="Left" VerticalAlignment="Center"/>
+      <ContentControl Content="{Binding MouseListen}" DockPanel.Dock="Left" VerticalAlignment="Bottom"/>
       <ContentControl Content="{Binding Profiles}"/>
+      <ContentControl Content="{Binding Chart}"/>
     </DockPanel>
   </Panel>
 

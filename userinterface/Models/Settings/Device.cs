@@ -1,6 +1,6 @@
 ﻿// Uhh how does this work
 
-namespace userinterface.Models.Settings
+namespace RawAccel.Models.Settings
 {
     public class Device
     {

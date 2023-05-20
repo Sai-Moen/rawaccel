@@ -1,6 +1,6 @@
 using Window = Avalonia.Controls.Window;
 
-namespace userinterface.Views
+namespace RawAccel.Views
 {
     public partial class MainWindow : Window
     {

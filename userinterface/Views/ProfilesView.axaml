@@ -3,10 +3,19 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-             xmlns:lvc="using:LiveChartsCore.SkiaSharpView.Avalonia"
-             x:Class="userinterface.Views.ProfilesView">
+             x:Class="RawAccel.Views.ProfilesView">
 
   <TabControl Items="{Binding Profiles}">
-	  <lvc:CartesianChart Series="" Title="" />
+      <TabControl.ItemTemplate>
+          <DataTemplate>
+              <TextBlock Text="{Binding Name}"/>
+          </DataTemplate>
+      </TabControl.ItemTemplate>
+      <TabControl.ContentTemplate>
+          <DataTemplate>
+              <!--Settings panel goes here-->
+              <TextBlock Text="{Binding Name}"/>
+          </DataTemplate>
+      </TabControl.ContentTemplate>
   </TabControl>
 </UserControl>

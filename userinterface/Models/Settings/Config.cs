@@ -3,7 +3,7 @@ using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace userinterface.Models.Settings
+namespace RawAccel.Models.Settings
 {
     public class Config
     {

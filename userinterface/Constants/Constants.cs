@@ -1,6 +1,6 @@
 ﻿using System.Globalization;
 
-namespace userinterface
+namespace RawAccel
 {
     public static class Constants
     {
@@ -14,18 +14,6 @@ namespace userinterface
 
         /// <summary> Relative Path of the Profile folder. </summary>
         public const string ProfileFolderName = @"Profiles/";
-
-        /// <summary> Default profile name. </summary>
-        public const string DefaultProfileName = "Default";
-
-        /// <summary> DPI by which charts are scaled if none is set by user. </summary>
-        public const int DefaultDPI = 1600;
-
-        /// <summary> Poll rate by which charts are scaled if none is set by user. </summary>
-        public const int DefaultPollRate = 1000;
-
-        /// <summary> Resolution of chart calulation. </summary>
-        public const int Resolution = 500;
 
         /// <summary> Multiplied by DPI over poll rate to find rough max expected velocity. </summary>
         public const double MaxMultiplier = .075;

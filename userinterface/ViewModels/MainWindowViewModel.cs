@@ -1,24 +1,25 @@
 using System;
-using userinterface.Models.Mouse;
+using RawAccel.Models.Mouse;
 
-namespace userinterface.ViewModels
+namespace RawAccel.ViewModels
 {
     public class MainWindowViewModel : ViewModelBase, IMouseMoveDisplayer
     {
         public MainWindowViewModel()
         {
-            Profiles = new ProfilesViewModel();
             MouseListen = new MouseListenViewModel();
             MouseWindow = new MouseWindow(this);
+            Profiles = new ProfilesViewModel();
+            Chart = new ChartViewModel();
         }
-
-        public ProfilesViewModel Profiles { get; }
 
         public MouseListenViewModel MouseListen { get; }
 
         public MouseWindow MouseWindow { get; }
 
-        public string Test => "Is this working?";
+        public ProfilesViewModel Profiles { get; }
+
+        public ChartViewModel Chart { get; }
 
         public void SetLastMouseMove(float x, float y)
         {
@@ -26,7 +27,7 @@ namespace userinterface.ViewModels
             MouseListen.LastX = (int)x;
 
             var size = MathF.Sqrt(x * x + y * y);
-            Profiles.SetLastMouseMove(size, size);
+            Chart.SetLastMouseMove(size, size);
         }
     }
 }

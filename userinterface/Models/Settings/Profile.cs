@@ -3,14 +3,14 @@ using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace userinterface.Models.Settings
+namespace RawAccel.Models.Settings
 {
     public class Profile
     {
         #region Properties
 
         [JsonPropertyOrder(0)]
-        public string? Name { get; set; }
+        public string Name { get; set; } = "Default";
 
         [JsonPropertyOrder(1)]
         public GeneralParams? Params { get; set; }
@@ -27,7 +27,6 @@ namespace userinterface.Models.Settings
 
         public void Save()
         {
-            Name ??= Constants.DefaultProfileName;
             string path = Path.Combine(Constants.ProfileFolderName, Name);
             File.WriteAllText(path, JsonSerializer.Serialize(this));
         }

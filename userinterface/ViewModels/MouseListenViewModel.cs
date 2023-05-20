@@ -1,6 +1,6 @@
 ﻿using ReactiveUI;
 
-namespace userinterface.ViewModels
+namespace RawAccel.ViewModels
 {
     public class MouseListenViewModel : ViewModelBase
     {

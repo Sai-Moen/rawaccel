@@ -1,6 +1,6 @@
 using Avalonia.Controls;
 
-namespace userinterface.Views
+namespace RawAccel.Views
 {
     public partial class ProfilesView : UserControl
     {

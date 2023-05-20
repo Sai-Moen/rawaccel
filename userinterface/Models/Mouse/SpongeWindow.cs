@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Windows.Forms;
 
-namespace userinterface.Models.Mouse
+namespace RawAccel.Models.Mouse
 {
     public abstract class WinApiServiceBase : IDisposable
     {

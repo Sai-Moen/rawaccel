@@ -2,7 +2,7 @@ using Avalonia.Controls;
 using Avalonia.Interactivity;
 using System;
 
-namespace userinterface.Views
+namespace RawAccel.Views
 {
     public partial class MouseListenView : UserControl
     {

@@ -1,10 +1,10 @@
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
-using userinterface.ViewModels;
-using userinterface.Views;
+using RawAccel.ViewModels;
+using RawAccel.Views;
 
-namespace userinterface
+namespace RawAccel
 {
     public partial class App : Application
     {

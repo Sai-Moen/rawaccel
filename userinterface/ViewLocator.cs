@@ -1,9 +1,9 @@
 using Avalonia.Controls;
 using Avalonia.Controls.Templates;
 using System;
-using userinterface.ViewModels;
+using RawAccel.ViewModels;
 
-namespace userinterface
+namespace RawAccel
 {
     public class ViewLocator : IDataTemplate
     {

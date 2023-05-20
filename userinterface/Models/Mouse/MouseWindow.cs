@@ -1,6 +1,6 @@
 ﻿using System.Windows.Forms;
 
-namespace userinterface.Models.Mouse
+namespace RawAccel.Models.Mouse
 {
     public class MouseWindow : WinApiServiceBase
     {
