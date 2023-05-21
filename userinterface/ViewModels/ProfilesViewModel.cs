@@ -1,14 +1,4 @@
-﻿using Avalonia.Threading;
-
-using LiveChartsCore;
-using LiveChartsCore.Defaults;
-using LiveChartsCore.SkiaSharpView;
-
-using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Windows;
-using System.Windows.Documents;
+﻿using System.Collections.Generic;
 
 using RawAccel.Models.Settings;
 

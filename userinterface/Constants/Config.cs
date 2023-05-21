@@ -11,13 +11,13 @@
         public const int DefaultPollRate = 1000;
 
         /// <summary> Toggles Last Mouse Move indicator. </summary>
-        public const bool ShowLastMouseMove = true;
+        public const bool DefaultShowLastMouseMove = true;
 
         /// <summary> Toggles Velocity and Gain charts. </summary>
-        public const bool ShowVelocityAndGain = false;
+        public const bool DefaultShowVelocityAndGain = false;
 
         /// <summary> Toggles whether to write profile to driver upon starting the UI </summary>
-        public const bool AutoWriteToDriverOnStartup = true;
+        public const bool DefaultAutoWriteToDriverOnStartup = true;
 
         /// <summary> Default Theme Name </summary>
         public const string DefaultTheme = "Light Theme";

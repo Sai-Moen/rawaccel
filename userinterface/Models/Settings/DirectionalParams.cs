@@ -1,5 +1,6 @@
-﻿using System.Text.Json.Serialization;
-using System.Windows;
+﻿using Avalonia;
+
+using System.Text.Json.Serialization;
 
 namespace RawAccel.Models.Settings
 {

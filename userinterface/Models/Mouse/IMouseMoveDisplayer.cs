@@ -1,6 +1,4 @@
-﻿using LiveChartsCore.Defaults;
-
-namespace RawAccel.Models.Mouse
+﻿namespace RawAccel.Models.Mouse
 {
     public interface IMouseMoveDisplayer
     {
