@@ -1,4 +1,4 @@
-using Window = Avalonia.Controls.Window;
+using Avalonia.Controls;
 
 namespace RawAccel.Views
 {
