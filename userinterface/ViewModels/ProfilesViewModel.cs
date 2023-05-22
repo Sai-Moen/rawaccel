@@ -13,14 +13,14 @@ namespace userinterface.ViewModels
     {
         public ProfilesViewModel()
         {
-            LastMouseMoveList = new ObservableCollection<WeightedPoint>();
+            LastMouseMoveList = new ObservableCollection<ObservablePoint>();
 
             LastMouseMoveSeries =
             new ScatterSeries<ObservablePoint>
             {
                 Values = LastMouseMoveList,
                 AnimationsSpeed = System.TimeSpan.FromMilliseconds(10),
-                //EasingFunction = t => t * t,
+                EasingFunction = t => 1,
             };
 
             Series = new ISeries[]
@@ -29,10 +29,10 @@ namespace userinterface.ViewModels
                 {
                     Values = new ObservablePoint[]
                     {
-                        new ObservablePoint(0, 0),
+                        new ObservablePoint(0, 1),
                         new ObservablePoint(1, 1),
-                        new ObservablePoint(10, 10),
-                        new ObservablePoint(50, 50),
+                        new ObservablePoint(10, 1),
+                        new ObservablePoint(100, 1),
                     },
                     Fill = null,
                     GeometrySize = 0,
@@ -49,13 +49,18 @@ namespace userinterface.ViewModels
 
         private ScatterSeries<ObservablePoint> LastMouseMoveSeries { get; set; }
 
-        private ObservableCollection<WeightedPoint> LastMouseMoveList { get; }
+        private ObservableCollection<ObservablePoint> LastMouseMoveList { get; }
 
         public string ChartTitle { get; } = "Test Chart";
 
         public void SetLastMouseMove(float x, float y)
         {
-            LastMouseMoveList.Add(new WeightedPoint(x, y, 1));
+            LastMouseMoveList.Add(new ObservablePoint(x, y));
+
+            if (LastMouseMoveList.Count > 1)
+            {
+                LastMouseMoveList.RemoveAt(0);
+            }
         }
     }
 }
