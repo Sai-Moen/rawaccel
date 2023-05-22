@@ -2,22 +2,22 @@
 using LiveChartsCore.Defaults;
 using LiveChartsCore.SkiaSharpView;
 
-using System.Collections.ObjectModel;
-
 namespace RawAccel.ViewModels
 {
     public sealed class ChartViewModel : ViewModelBase
     {
         public ChartViewModel()
         {
-            LastMouseMoveList = new ObservableCollection<ObservablePoint>
-            {
-                new ObservablePoint(0, 0),
-            };
+            LastMouseMove = new ObservablePoint(0, 0);
 
             LastMouseMoveSeries = new LineSeries<ObservablePoint>
             {
-                Values = LastMouseMoveList, // How to remove that weird shit
+                Values = new ObservablePoint[]
+                {
+                    LastMouseMove,
+                },
+                AnimationsSpeed = System.TimeSpan.FromMilliseconds(10),
+                EnableNullSplitting = false,
             };
 
             Series = new ISeries<ObservablePoint>[]
@@ -40,7 +40,7 @@ namespace RawAccel.ViewModels
             LineSmoothness = 1,
         };
 
-        private readonly ObservableCollection<ObservablePoint> LastMouseMoveList;
+        private readonly ObservablePoint LastMouseMove;
 
         private readonly LineSeries<ObservablePoint> LastMouseMoveSeries;
 
@@ -48,8 +48,8 @@ namespace RawAccel.ViewModels
 
         public void SetLastMouseMove(float x, float y)
         {
-            LastMouseMoveList.Clear();
-            LastMouseMoveList.Add(new ObservablePoint(x, y));
+            LastMouseMove.X = x;
+            LastMouseMove.Y = y;
         }
     }
 }

@@ -7,7 +7,9 @@
              xmlns:lvc="using:LiveChartsCore.SkiaSharpView.Avalonia">
 
 	<lvc:CartesianChart Series="{Binding Series}"
-						Tooltip="{x:Null}"/>
+						UpdaterThrottler="00:00:00.001"
+						Tooltip="{x:Null}"
+						Legend="{x:Null}"/>
 	<!--
 	Tooltip of Null disappears the tooltip text that pops up and tells you the series and values.
 	Since these are all just implementation details this should not be user-facing, and offers only minimal debug potential.
