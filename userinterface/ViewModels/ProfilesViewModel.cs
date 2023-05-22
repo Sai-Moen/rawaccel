@@ -19,8 +19,7 @@ namespace userinterface.ViewModels
             new ScatterSeries<ObservablePoint>
             {
                 Values = LastMouseMoveList,
-                AnimationsSpeed = System.TimeSpan.FromMilliseconds(10),
-                EasingFunction = t => 1,
+                AnimationsSpeed = System.TimeSpan.FromMilliseconds(1),
             };
 
             Series = new ISeries[]
@@ -30,8 +29,6 @@ namespace userinterface.ViewModels
                     Values = new ObservablePoint[]
                     {
                         new ObservablePoint(0, 1),
-                        new ObservablePoint(1, 1),
-                        new ObservablePoint(10, 1),
                         new ObservablePoint(100, 1),
                     },
                     Fill = null,
@@ -55,11 +52,14 @@ namespace userinterface.ViewModels
 
         public void SetLastMouseMove(float x, float y)
         {
-            LastMouseMoveList.Add(new ObservablePoint(x, y));
-
-            if (LastMouseMoveList.Count > 1)
+            if (LastMouseMoveList.Count == 0)
             {
-                LastMouseMoveList.RemoveAt(0);
+                LastMouseMoveList.Add(new ObservablePoint(x, y));
+            }
+            else
+            {
+                LastMouseMoveList[0].X = x;
+                LastMouseMoveList[0].Y = y;
             }
         }
     }
