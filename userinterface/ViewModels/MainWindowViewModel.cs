@@ -1,5 +1,6 @@
-using System;
 using RawAccel.Models.Mouse;
+
+using System;
 
 namespace RawAccel.ViewModels
 {
@@ -23,8 +24,8 @@ namespace RawAccel.ViewModels
 
         public void SetLastMouseMove(float x, float y)
         {
-            MouseListen.LastY = (int)y;
             MouseListen.LastX = (int)x;
+            MouseListen.LastY = (int)y;
 
             var size = MathF.Sqrt(x * x + y * y);
             Chart.SetLastMouseMove(size, size);

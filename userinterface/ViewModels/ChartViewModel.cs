@@ -8,16 +8,13 @@ namespace RawAccel.ViewModels
     {
         public ChartViewModel()
         {
-            LastMouseMove = new ObservablePoint(0, 0);
-
             LastMouseMoveSeries = new LineSeries<ObservablePoint>
             {
                 Values = new ObservablePoint[]
                 {
                     LastMouseMove,
                 },
-                AnimationsSpeed = System.TimeSpan.FromMilliseconds(10),
-                EnableNullSplitting = false,
+                AnimationsSpeed = System.TimeSpan.Zero,
             };
 
             Series = new ISeries<ObservablePoint>[]
@@ -27,7 +24,7 @@ namespace RawAccel.ViewModels
             };
         }
 
-        private const int size = 64; // temporary variable, Permanent Laziness
+        private const int size = 128; // temporary variable, Permanent Laziness
 
         private readonly LineSeries<ObservablePoint> BaseSeries = new()
         {
@@ -40,7 +37,7 @@ namespace RawAccel.ViewModels
             LineSmoothness = 1,
         };
 
-        private readonly ObservablePoint LastMouseMove;
+        private readonly ObservablePoint LastMouseMove = new(0.0, 0.0);
 
         private readonly LineSeries<ObservablePoint> LastMouseMoveSeries;
 
