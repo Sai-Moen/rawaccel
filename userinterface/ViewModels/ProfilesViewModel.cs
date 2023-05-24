@@ -19,7 +19,8 @@ namespace userinterface.ViewModels
             new ScatterSeries<ObservablePoint>
             {
                 Values = LastMouseMoveList,
-                AnimationsSpeed = System.TimeSpan.FromMilliseconds(1),
+                AnimationsSpeed = System.TimeSpan.Zero,
+                IsHoverable = false,
             };
 
             Series = new ISeries[]
@@ -34,9 +35,30 @@ namespace userinterface.ViewModels
                     Fill = null,
                     GeometrySize = 0,
                     LineSmoothness = 0,
+                    IsHoverable = false,
                 },
 
                 LastMouseMoveSeries,
+            };
+
+            XAxes = new Axis[]
+            {
+                new Axis
+                {
+                    MaxLimit = 100,
+                    MinLimit = 0,
+                    AnimationsSpeed = System.TimeSpan.Zero,
+                }
+            };
+
+            YAxes = new Axis[]
+            {
+                new Axis
+                {
+                    MaxLimit = 2,
+                    MinLimit = 0,
+                    AnimationsSpeed = System.TimeSpan.Zero,
+                }
             };
         }
 
@@ -47,6 +69,10 @@ namespace userinterface.ViewModels
         private ScatterSeries<ObservablePoint> LastMouseMoveSeries { get; set; }
 
         private ObservableCollection<ObservablePoint> LastMouseMoveList { get; }
+
+        private Axis[] XAxes { get; }
+
+        private Axis[] YAxes { get; }
 
         public string ChartTitle { get; } = "Test Chart";
 
