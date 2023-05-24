@@ -29,13 +29,16 @@ namespace rawaccel {
         double operator()(double x, const accel_args&) const
         {
             double y = 1;
+
             if (x > ioffset)
             {
                 x -= ioffset;
                 y += limit / (1 + midpoint / (x * x));
             }
+
             return y;
         }
+
     };
 
     template <>
@@ -45,12 +48,15 @@ namespace rawaccel {
         double operator()(double x, const accel_args&) const
         {
             double y = 1;
+
             if (x > ioffset)
             {
                 x -= ioffset;
                 y += (limit / x) * (x - midpoint * atan(x / midpoint));
             }
+
             return y;
         }
+
     };
 }
