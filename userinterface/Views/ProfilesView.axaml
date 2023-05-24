@@ -14,7 +14,7 @@
         XAxes="{Binding XAxes}"
         YAxes="{Binding YAxes}"
         Title="{Binding ChartTitle}"
-        UpdaterThrottler="00:00:00.001"/>
+        UpdaterThrottler="00:00:00.000"/>
     </TabItem>
     <TabItem Header="Profile2">
       This will be another profile.
