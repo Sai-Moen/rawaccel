@@ -18,8 +18,6 @@ namespace userinterface.ViewModels
 
         public MouseWindow MouseWindow { get; }
 
-        public string Test => "Is this working?";
-
         public void SetLastMouseMove(float x, float y)
         {
             MouseListen.LastY = (int)y;

@@ -3,16 +3,9 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-             xmlns:ScottPlot="clr-namespace:ScottPlot.Avalonia;assembly=ScottPlot.Avalonia"
+             xmlns:sp="using:ScottPlot.Avalonia"
              x:Class="userinterface.Views.ProfilesView">
 
-  <TabControl>
-    <TabItem Header="{Binding ProfileOneTitle}">
-      <!--<ScottPlot:AvaPlot Name="AvaPlot1"/> -->
-      <Image Source="/Assets/Filler.png"/>
-    </TabItem>
-    <TabItem Header="Profile2">
-      This will be another profile.
-    </TabItem>
-  </TabControl>
+	<!--Can't bind these Names unfortunately?-->
+	<sp:AvaPlot Name="SensitivityX"/>
 </UserControl>
