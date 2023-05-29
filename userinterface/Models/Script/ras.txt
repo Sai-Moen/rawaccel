@@ -31,17 +31,18 @@ Basic File Structure:
 		This would only support very simple actions so that you can't delete System32 or anti-cheat from there.
 
 Scripting language syntax:
-	The header will only be an array of the parameter names and default values,
-	up to 8 parameters (I don't know if one should have or needs access to that, but who knows).
-	Between the header and body there could be some space to declare temporary variables,
-	up to an arbitrary cap [insert random power of 2].
-
 	The input will be x, and the output will be whatever is in y (1 by default).
 	Using control flow cleverly should make it so that multiple return, or even return at all, is not necessary,
 	so there is not a return keyword.
 
 	When a variable is used that has not been declared before the body,
 	or an existing variable is used before the body, an error is thrown.
+
+	Sections:
+		1. Author's notes (side-effect of not lexing until square brackets)
+		2. RawAccel parameters, delimited by []
+		3. Temporary variables declaration
+		4. RawAccel point evaluation, delimited by {}
 
 	Reserved tokens:
 		x y			"Input/Output variables"
@@ -52,7 +53,7 @@ Scripting language syntax:
 		: ;			"Control Flow Block / Line end"
 		e pi tau	"Math Constants"
 		
-		All operators, control flow and functions are reserved as well.
+		All other keywords and operators are reserved as well.
 
 	Control Flow:
 		if bool: statement(s) :
@@ -65,7 +66,7 @@ Scripting language syntax:
 		+ - * / % ^		"Arithmetic"
 		+= -= *= /=	%=	"Compound Assignments"
 		& | !			"Logical Operators"
-		< > <= >=		"Comparison Operators"
+		== < > <= >=	"Comparison Operators"
 
 		There are C# System.Math functions for certain exponential functions,
 		these conversions (e.g. e^x -> Exp(x) etc.) will be checked in the backend.
