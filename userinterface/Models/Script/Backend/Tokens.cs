@@ -1,8 +1,12 @@
-﻿namespace userinterface.Models.Script.Backend
+﻿using System.Collections.Generic;
+using System.Diagnostics;
+
+namespace userinterface.Models.Script.Backend
 {
     internal enum TokenType
     {
         Undefined,
+        Identifier,
         Parameter,
         Variable,
         Keyword,
@@ -12,77 +16,92 @@
         Literal,
     }
 
-    internal record Token(string Word, TokenType TokenType);
+    internal record Token(TokenType TokenType, string Word);
 
     internal static class Tokens
     {
-        public static readonly string[] AllTokens = new string[]
+        private static readonly (TokenType, string)[] ListReserved = new (TokenType, string)[]
         {
-            Keywords.INPUT,
-            Keywords.OUTPUT,
-            Keywords.CONST_E,
-            Keywords.CONST_PI,
-            Keywords.CONST_TAU,
-            Keywords.BRANCH_IF,
-            Keywords.BRANCH_WHILE,
+            (Keywords.DefaultType, Keywords.INPUT),
+            (Keywords.DefaultType, Keywords.OUTPUT),
+            (Keywords.DefaultType, Keywords.CONST_E),
+            (Keywords.DefaultType, Keywords.CONST_PI),
+            (Keywords.DefaultType, Keywords.CONST_TAU),
+            (Keywords.DefaultType, Keywords.BRANCH_IF),
+            (Keywords.DefaultType, Keywords.BRANCH_WHILE),
 
-            Separators.BLOCK,
-            Separators.TERMINATOR,
-            Separators.FPOINT,
-            Separators.PREC_START,
-            Separators.PREC_END,
-            Separators.PARAMS_START,
-            Separators.PARAMS_END,
-            Separators.CALC_START,
-            Separators.CALC_END,
+            (Separators.DefaultType, Separators.BLOCK),
+            (Separators.DefaultType, Separators.TERMINATOR),
+            (Separators.DefaultType, Separators.FPOINT),
+            (Separators.DefaultType, Separators.PREC_START),
+            (Separators.DefaultType, Separators.PREC_END),
+            (Separators.DefaultType, Separators.PARAMS_START),
+            (Separators.DefaultType, Separators.PARAMS_END),
+            (Separators.DefaultType, Separators.CALC_START),
+            (Separators.DefaultType, Separators.CALC_END),
 
-            Operators.ASSIGNMENT,
-            Operators.ADD,
-            Operators.SUB,
-            Operators.MUL,
-            Operators.DIV,
-            Operators.MOD,
-            Operators.EXP,
-            Operators.IADD,
-            Operators.ISUB,
-            Operators.IMUL,
-            Operators.IDIV,
-            Operators.IMOD,
-            Operators.CMP_AND,
-            Operators.CMP_OR,
-            Operators.CMP_NOT,
-            Operators.CMP_EQ,
-            Operators.CMP_LT,
-            Operators.CMP_GT,
-            Operators.CMP_LE,
-            Operators.CMP_GE,
+            (Operators.DefaultType, Operators.ASSIGN),
+            (Operators.DefaultType, Operators.ADD),
+            (Operators.DefaultType, Operators.SUB),
+            (Operators.DefaultType, Operators.MUL),
+            (Operators.DefaultType, Operators.DIV),
+            (Operators.DefaultType, Operators.MOD),
+            (Operators.DefaultType, Operators.EXP),
+            (Operators.DefaultType, Operators.IADD),
+            (Operators.DefaultType, Operators.ISUB),
+            (Operators.DefaultType, Operators.IMUL),
+            (Operators.DefaultType, Operators.IDIV),
+            (Operators.DefaultType, Operators.IMOD),
+            (Operators.DefaultType, Operators.CMP_AND),
+            (Operators.DefaultType, Operators.CMP_OR),
+            (Operators.DefaultType, Operators.CMP_NOT),
+            (Operators.DefaultType, Operators.CMP_EQ),
+            (Operators.DefaultType, Operators.CMP_LT),
+            (Operators.DefaultType, Operators.CMP_GT),
+            (Operators.DefaultType, Operators.CMP_LE),
+            (Operators.DefaultType, Operators.CMP_GE),
 
-            Functions.ABS,
-            Functions.CEIL,
-            Functions.FLOOR,
-            Functions.SQRT,
-            Functions.CBRT,
-            Functions.LOG,
-            Functions.LOG2,
-            Functions.LOG10,
-            Functions.SIN,
-            Functions.SINH,
-            Functions.ASIN,
-            Functions.ASINH,
-            Functions.COS,
-            Functions.COSH,
-            Functions.ACOS,
-            Functions.ACOSH,
-            Functions.TAN,
-            Functions.TANH,
-            Functions.ATAN,
-            Functions.ATANH,
-            Functions.ATAN2,
+            (Functions.DefaultType, Functions.ABS),
+            (Functions.DefaultType, Functions.SQRT),
+            (Functions.DefaultType, Functions.CBRT),
+            (Functions.DefaultType, Functions.ROUND),
+            (Functions.DefaultType, Functions.CEIL),
+            (Functions.DefaultType, Functions.FLOOR),
+            (Functions.DefaultType, Functions.TRUNC),
+            (Functions.DefaultType, Functions.LOG),
+            (Functions.DefaultType, Functions.LOG2),
+            (Functions.DefaultType, Functions.LOG10),
+            (Functions.DefaultType, Functions.SIN),
+            (Functions.DefaultType, Functions.SINH),
+            (Functions.DefaultType, Functions.ASIN),
+            (Functions.DefaultType, Functions.ASINH),
+            (Functions.DefaultType, Functions.COS),
+            (Functions.DefaultType, Functions.COSH),
+            (Functions.DefaultType, Functions.ACOS),
+            (Functions.DefaultType, Functions.ACOSH),
+            (Functions.DefaultType, Functions.TAN),
+            (Functions.DefaultType, Functions.TANH),
+            (Functions.DefaultType, Functions.ATAN),
+            (Functions.DefaultType, Functions.ATANH),
         };
+
+        static Tokens()
+        {
+            MapReserved = new Dictionary<string, Token>(ListReserved.Length);
+
+            foreach((TokenType type, string name) in ListReserved)
+            {
+                MapReserved.Add(name, new Token(type, name));
+            }
+
+            Debug.Assert(MapReserved.Count == ListReserved.Length);
+        }
+
+        public static readonly IDictionary<string, Token> MapReserved;
 
         internal static class Keywords
         {
-            public const TokenType DefaultTokenType = TokenType.Keyword;
+            public const TokenType DefaultType = TokenType.Keyword;
 
             // Calculation IO
             public const string INPUT           = "x";
@@ -100,7 +119,38 @@
 
         internal static class Separators
         {
-            public const TokenType DefaultTokenType = TokenType.Separator;
+            private static readonly string[] SeparatorsList = new string[]
+            {
+                BLOCK, TERMINATOR, FPOINT,
+                PREC_START, PREC_END,
+                PARAMS_START, PARAMS_END,
+                CALC_START, CALC_END,
+            };
+
+            private static readonly string[] CalculationSeparatorsList = new string[]
+            {
+                BLOCK, TERMINATOR,
+                PREC_START, PREC_END,
+            };
+
+            static Separators()
+            {
+                Set = new HashSet<char>();
+
+                foreach(string s in SeparatorsList)
+                {
+                    Debug.Assert(s.Length == 1);
+                }
+
+                foreach(string s in CalculationSeparatorsList)
+                {
+                    Set.Add(s[0]);
+                }
+            }
+
+            public static readonly ISet<char> Set;
+
+            public const TokenType DefaultType = TokenType.Separator;
 
             // Delimiters
             public const string BLOCK           = ":";
@@ -122,10 +172,33 @@
 
         internal static class Operators
         {
-            public const TokenType DefaultTokenType = TokenType.Operator;
+            private static readonly string[] OperatorsList = new string[]
+            {
+                ASSIGN,
+                ADD, SUB, MUL, DIV, MOD, EXP,
+                IADD, ISUB, IMUL, IDIV, IMOD,
+                CMP_AND, CMP_OR, CMP_NOT,
+                CMP_EQ, CMP_LT, CMP_GT, CMP_LE, CMP_GE,
+            };
+
+            static Operators()
+            {
+                Set = new HashSet<char>();
+
+                foreach(string s in OperatorsList)
+                {
+                    // Hack safely
+                    Debug.Assert(s.Length == 1 || (s.Length == 2 && s[1] == ASSIGN[0]));
+                    Set.Add(s[0]);
+                }
+            }
+
+            public static readonly ISet<char> Set;
+
+            public const TokenType DefaultType = TokenType.Operator;
 
             // Assignment
-            public const string ASSIGNMENT  = "=";
+            public const string ASSIGN  = "=";
 
             // Normal Arithmetic
             public const string ADD     = "+";
@@ -157,40 +230,41 @@
 
         internal static class Functions
         {
-            public const TokenType DefaultTokenType = TokenType.Function;
+            public const TokenType DefaultType = TokenType.Function;
 
             // General
-            public const string ABS     = "abs";
-            public const string CEIL    = "ceil";
-            public const string FLOOR   = "floor";
+            public const string ABS     = "abs";    // Absolute Value
+            public const string SQRT    = "sqrt";   // Square Root
+            public const string CBRT    = "cbrt";   // Cube Root
 
-            // Roots
-            public const string SQRT    = "sqrt";
-            public const string CBRT    = "cbrt";
+            // Rounding
+            public const string ROUND   = "round";  // Round to nearest
+            public const string CEIL    = "ceil";   // Round to infinity
+            public const string FLOOR   = "floor";  // Round to -infinity
+            public const string TRUNC   = "trunc";  // Round to 0
 
             // Logarithm
-            public const string LOG     = "log";
-            public const string LOG2    = "log2";
-            public const string LOG10   = "log10";
+            public const string LOG     = "log";    // Natural Logarithm (loge x)
+            public const string LOG2    = "log2";   // Binary Logarithm (log2 x)
+            public const string LOG10   = "log10";  // Decimal Logarithm (log10 x)
 
             // Sine
-            public const string SIN     = "sin";
-            public const string SINH    = "sinh";
-            public const string ASIN    = "asin";
-            public const string ASINH   = "asinh";
+            public const string SIN     = "sin";    // Normal
+            public const string SINH    = "sinh";   // Hyperbolic
+            public const string ASIN    = "asin";   // Inverse (Arc)
+            public const string ASINH   = "asinh";  // Inverse (Arc) Hyperbolic
 
             // Cosine
-            public const string COS     = "cos";
-            public const string COSH    = "cosh";
-            public const string ACOS    = "acos";
-            public const string ACOSH   = "acosh";
+            public const string COS     = "cos";    // Normal
+            public const string COSH    = "cosh";   // Hyperbolic
+            public const string ACOS    = "acos";   // Inverse (Arc)
+            public const string ACOSH   = "acosh";  // Inverse (Arc) Hyperbolic
 
             // Tangent
-            public const string TAN     = "tan";
-            public const string TANH    = "tanh";
-            public const string ATAN    = "atan";
-            public const string ATANH   = "atanh";
-            public const string ATAN2   = "atan2";
+            public const string TAN     = "tan";    // Normal
+            public const string TANH    = "tanh";   // Hyperbolic
+            public const string ATAN    = "atan";   // Inverse (Arc)
+            public const string ATANH   = "atanh";  // Inverse (Arc) Hyperbolic
         }
     }
 }

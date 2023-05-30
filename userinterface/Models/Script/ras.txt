@@ -3,6 +3,8 @@ RawAccelScript
 Description:
 	A way for users to automatically generate LUT points,
 	while being nearly as easy to set up as preset modes.
+	It provides a safe way to load someone else's code into RawAccel,
+	and have the language it's written in to actually be designed for this use case.
 
 Motivation:
 	Ever since LUT released, people have used external tools to create curves,
@@ -11,9 +13,9 @@ Motivation:
 	The problem with the external tools however, is that they present a barrier of entry for the average user to overcome.
 	This barrier mostly consists of having to mess with and run someones python script (a security problem on its own),
 	use something like WebPlotDigitizer and having to deal with whatever problems that might cause,
-	or copy a Google sheet to their google drive and edit certain values and then copy those (somehow).
-	After all that, they get to paste that into a textbox which serializes the points to some arbitrary length doubles.
-	The only upside to this is that with the maximum amount of points Angle Snapping gets hidden better down the file.
+	or copy a Google sheet to their drive and edit certain values and then copy those (somehow).
+	After all that, they get to paste that into a box which can't even show most of it, nor can the 'applied values' box.
+	The only upside to this is that with the maximum amount of points, Angle Snapping gets hidden better down the file.
 
 	All of this just to do some math that they probably don't care too much about,
 	to generate and save some points that they probably don't care about.
@@ -28,9 +30,9 @@ Basic File Structure:
 	Backend:
 		These are the files that model the actual formula itself.
 		They do so by interpreting the script that is loaded in from the frontend.
-		This would only support very simple actions so that you can't delete System32 or anti-cheat from there.
+		This will only support very simple actions so that you can't delete System32 or anti-cheat from there.
 
-Scripting language syntax:
+Scripting language 'specification':
 	The input will be x, and the output will be whatever is in y (1 by default).
 	Using control flow cleverly should make it so that multiple return, or even return at all, is not necessary,
 	so there is not a return keyword.
@@ -39,27 +41,30 @@ Scripting language syntax:
 	or an existing variable is used before the body, an error is thrown.
 
 	Sections:
-		1. Author's notes (side-effect of not lexing until square brackets)
+		1. Author's notes (side-effect of not tokenizing until square brackets)
 		2. RawAccel parameters, delimited by []
 		3. Temporary variables declaration
 		4. RawAccel point evaluation, delimited by {}
 
-	Reserved tokens:
+	Keywords:
 		x y			"Input/Output variables"
-		.			"Floating Point"
-		( )			"Precedence"
-		[ ]			"Header"
-		{ }			"Body"
-		: ;			"Control Flow Block / Line end"
 		e pi tau	"Math Constants"
-		
-		All other keywords and operators are reserved as well.
 
-	Control Flow:
 		if bool: statement(s) :
 		while bool: statement(s) :
 
-		There are not actually bool values from the script's source code POV.
+		There are not actually bool values from the script's source code POV,
+		since it can only transpile to comparisons between doubles.
+
+	Separators:
+		.	"Floating Point"
+		:	"Control Flow Block"
+		;	"Line Terminator"
+		( )	"Precedence"
+		[ ]	"Parameters"
+		{ }	"Calculation"
+		
+		Separators must be 1 character.
 
 	Operators:
 		=				"(Re-)Assignment"
@@ -68,15 +73,17 @@ Scripting language syntax:
 		& | !			"Logical Operators"
 		== < > <= >=	"Comparison Operators"
 
-		There are C# System.Math functions for certain exponential functions,
-		these conversions (e.g. e^x -> Exp(x) etc.) will be checked in the backend.
+		Due to a tokenizer hack turned feature, operators must be 1 character and optionally append '='.
 
 	Functions:
-		abs ceil floor
-		sqrt cbrt
+		abs sqrt cbrt
+		ceil floor round trunc
 		log log2 log10
 		sin sinh asin asinh
 		cos cosh acos acosh
-		tan tanh atan atanh atan2
+		tan tanh atan atanh
 
-		These are all C# System.Math-supported functions with a very similar signature.
+		pow exp "indirectly, with the ^ operator"
+
+		These are all C# System.Math-supported functions with a very similar signature,
+		namely 'double Func(double)' which means that some optimization in the parser is permitted.
