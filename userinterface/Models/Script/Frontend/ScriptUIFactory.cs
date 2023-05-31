@@ -1,7 +1,7 @@
 ﻿
 namespace userinterface.Models.Script.Frontend
 {
-    public class Deserializer
+    public class ScriptUIFactory
     {
     }
 }

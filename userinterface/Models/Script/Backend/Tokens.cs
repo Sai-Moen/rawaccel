@@ -1,4 +1,7 @@
-﻿using System.Collections.Generic;
+﻿global using TokenMap = System.Collections.Generic.IDictionary
+    <string, userinterface.Models.Script.Backend.Token>;
+
+using System.Collections.Generic;
 using System.Diagnostics;
 
 namespace userinterface.Models.Script.Backend
@@ -9,11 +12,11 @@ namespace userinterface.Models.Script.Backend
         Identifier,
         Parameter,
         Variable,
+        Literal,
         Keyword,
         Separator,
         Operator,
         Function,
-        Literal,
     }
 
     internal record Token(TokenType TokenType, string Word);
@@ -65,9 +68,9 @@ namespace userinterface.Models.Script.Backend
             (Functions.DefaultType, Functions.SQRT),
             (Functions.DefaultType, Functions.CBRT),
             (Functions.DefaultType, Functions.ROUND),
+            (Functions.DefaultType, Functions.TRUNC),
             (Functions.DefaultType, Functions.CEIL),
             (Functions.DefaultType, Functions.FLOOR),
-            (Functions.DefaultType, Functions.TRUNC),
             (Functions.DefaultType, Functions.LOG),
             (Functions.DefaultType, Functions.LOG2),
             (Functions.DefaultType, Functions.LOG10),
@@ -97,7 +100,7 @@ namespace userinterface.Models.Script.Backend
             Debug.Assert(MapReserved.Count == ListReserved.Length);
         }
 
-        public static readonly IDictionary<string, Token> MapReserved;
+        public static readonly TokenMap MapReserved;
 
         internal static class Keywords
         {
@@ -187,8 +190,10 @@ namespace userinterface.Models.Script.Backend
 
                 foreach(string s in OperatorsList)
                 {
-                    // Hack safely
-                    Debug.Assert(s.Length == 1 || (s.Length == 2 && s[1] == ASSIGN[0]));
+                    // Hack safely,
+                    Debug.Assert(s.Length == 1 || (s.Length == 2 && s[1] == SECOND_C));
+
+                    // since we know that the second character is always the same
                     Set.Add(s[0]);
                 }
             }
@@ -199,6 +204,7 @@ namespace userinterface.Models.Script.Backend
 
             // Assignment
             public const string ASSIGN  = "=";
+            public const char SECOND_C  = '=';
 
             // Normal Arithmetic
             public const string ADD     = "+";
@@ -239,9 +245,9 @@ namespace userinterface.Models.Script.Backend
 
             // Rounding
             public const string ROUND   = "round";  // Round to nearest
+            public const string TRUNC   = "trunc";  // Round to 0
             public const string CEIL    = "ceil";   // Round to infinity
             public const string FLOOR   = "floor";  // Round to -infinity
-            public const string TRUNC   = "trunc";  // Round to 0
 
             // Logarithm
             public const string LOG     = "log";    // Natural Logarithm (loge x)
@@ -251,20 +257,20 @@ namespace userinterface.Models.Script.Backend
             // Sine
             public const string SIN     = "sin";    // Normal
             public const string SINH    = "sinh";   // Hyperbolic
-            public const string ASIN    = "asin";   // Inverse (Arc)
-            public const string ASINH   = "asinh";  // Inverse (Arc) Hyperbolic
+            public const string ASIN    = "asin";   // Inverse
+            public const string ASINH   = "asinh";  // Inverse Hyperbolic
 
             // Cosine
             public const string COS     = "cos";    // Normal
             public const string COSH    = "cosh";   // Hyperbolic
-            public const string ACOS    = "acos";   // Inverse (Arc)
-            public const string ACOSH   = "acosh";  // Inverse (Arc) Hyperbolic
+            public const string ACOS    = "acos";   // Inverse
+            public const string ACOSH   = "acosh";  // Inverse Hyperbolic
 
             // Tangent
             public const string TAN     = "tan";    // Normal
             public const string TANH    = "tanh";   // Hyperbolic
-            public const string ATAN    = "atan";   // Inverse (Arc)
-            public const string ATANH   = "atanh";  // Inverse (Arc) Hyperbolic
+            public const string ATAN    = "atan";   // Inverse
+            public const string ATANH   = "atanh";  // Inverse Hyperbolic
         }
     }
 }

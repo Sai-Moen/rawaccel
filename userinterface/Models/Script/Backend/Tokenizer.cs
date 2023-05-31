@@ -8,9 +8,12 @@ namespace userinterface.Models.Script.Backend
     /**
      * <summary>
      * 
-     * Phase of the Tokenizer, that determines the characters to accept.
-     * 
      * <list type="table">
+     * 
+     * <listheader>
+     * <term><see cref="TokenizerState"/></term>
+     * <description>Phase of the Tokenizer, that determines the characters to accept.</description>
+     * </listheader>
      * 
      * <item>
      * <term><see cref="Startup"/></term>
@@ -24,7 +27,7 @@ namespace userinterface.Models.Script.Backend
      * 
      * <item>
      * <term><see cref="Variables"/></term>
-     * <description>Allows for up to <c>(32 - Parameters)</c> variables to be declared.</description>
+     * <description>Allows for variables to be declared.</description>
      * </item>
      * 
      * <item>
@@ -44,7 +47,12 @@ namespace userinterface.Models.Script.Backend
         Calculation,
     }
 
-    /// <summary>Automatically attempts to Tokenize when given an input script.</summary>
+    /// <summary>
+    /// 
+    /// <see cref="Tokenizer"/>
+    /// Automatically attempts to Tokenize when given an input script.
+    /// 
+    /// </summary>
     internal class Tokenizer
     {
         #region Fields
@@ -53,15 +61,17 @@ namespace userinterface.Models.Script.Backend
 
         private TokenType CurrentTokenState = TokenType.Undefined;
 
+        private const int MaxParameters = 8;
+
         private const int MaxIdentifierLength = 0x10;
 
         private const int MaxLiteralLength = 0x20;
 
         private readonly StringBuilder TokenBuffer = new();
 
-        internal readonly IList<Token> TokenList = new List<Token>();
+        internal IList<Token> TokenList { get; } = new List<Token>();
 
-        private readonly ISet<string> UsedIdentifiers = new HashSet<string>();
+        private readonly TokenMap UsedIdentifiers = new Dictionary<string, Token>();
 
         private int CurrentIdx = -1;
 
@@ -103,21 +113,27 @@ namespace userinterface.Models.Script.Backend
             return (c >= '0' && c <= '9') || c == Tokens.Separators.FPOINT[0];
         }
 
-        private static bool IsAllowedCharacter(char c)
+        private bool IsReserved(char c)
         {
-            return IsAlphabeticCharacter(c) || IsNumericCharacter(c);
+            return IsReserved(c.ToString());
         }
 
         private bool IsReserved(string s)
         {
-            return UsedIdentifiers.Contains(s) || Tokens.MapReserved.ContainsKey(s);
+            return UsedIdentifiers.ContainsKey(s) || Tokens.MapReserved.ContainsKey(s);
         }
 
         private void CheckCharacters()
         {
+            // Not a problem in terms of parsing, but for consistency among (us) script writers.
+            if (Characters[MaxIdx] != Tokens.Separators.CALC_END[0])
+            {
+                TokenizerError("Please don't type anything after the body.");
+            }
+
             foreach (char c in Characters)
             {
-                if (IsAllowedCharacter(c) || IsReserved(c.ToString()))
+                if (IsAlphabeticCharacter(c) || IsNumericCharacter(c) || IsReserved(c))
                 {
                     continue;
                 }
@@ -136,11 +152,6 @@ namespace userinterface.Models.Script.Backend
             while (++CurrentIdx <= MaxIdx)
             {
                 CurrentChar = Characters[CurrentIdx];
-
-                if (CurrentIdx == MaxIdx && !CurrentCharStrCmp(Tokens.Separators.CALC_END))
-                {
-                    TokenizerError("End Of File reached unexpectedly!");
-                }
 
                 switch (State)
                 {
@@ -162,19 +173,21 @@ namespace userinterface.Models.Script.Backend
 
         private void OnStateStartup()
         {
-            if (CurrentCharStrCmp(Tokens.Separators.PARAMS_START))
+            if (StrCmpCurrentChar(Tokens.Separators.PARAMS_START))
             {
                 State = TokenizerState.Parameters;
+                Debug.Assert(State == TokenizerState.Parameters, "Paranoia");
             }
         }
 
         private void OnStateParameters()
         {
-            if (CurrentCharStrCmp(Tokens.Separators.PARAMS_END))
+            if (StrCmpCurrentChar(Tokens.Separators.PARAMS_END))
             {
                 AddTokenIfUnreserved();
-                AddReservedCharacter();
+                AddMapReservedCharacter();
                 State = TokenizerState.Variables;
+                Debug.Assert(State == TokenizerState.Variables, "Second line of defense (anti-side-effect)");
                 return;
             }
 
@@ -183,11 +196,12 @@ namespace userinterface.Models.Script.Backend
 
         private void OnStateVariables()
         {
-            if (CurrentCharStrCmp(Tokens.Separators.CALC_START))
+            if (StrCmpCurrentChar(Tokens.Separators.CALC_START))
             {
                 AddTokenIfUnreserved();
-                AddReservedCharacter();
+                AddMapReservedCharacter();
                 State = TokenizerState.Calculation;
+                Debug.Assert(State == TokenizerState.Calculation, "Second line of defense (anti-side-effect)");
                 return;
             }
 
@@ -196,9 +210,11 @@ namespace userinterface.Models.Script.Backend
 
         private void OnStateCalculation()
         {
-            if (CurrentCharStrCmp(Tokens.Separators.CALC_END))
+            if (StrCmpCurrentChar(Tokens.Separators.CALC_END))
             {
-                CurrentIdx = MaxIdx;
+                AddTokenIfUnreserved();
+                AddMapReservedCharacter();
+                Debug.Assert(CurrentIdx == MaxIdx);
                 return;
             }
 
@@ -207,10 +223,24 @@ namespace userinterface.Models.Script.Backend
             bool isSeparator = Tokens.Separators.Set.Contains(CurrentChar);
             bool isOperator = Tokens.Operators.Set.Contains(CurrentChar);
 
+            void TransitionDefinedToSpecial()
+            {
+                AddAnyReservedToken();
+
+                if (isOperator && PeekNext() == Tokens.Operators.SECOND_C)
+                {
+                    BufferCurrentChar();
+                    CurrentTokenState = TokenType.Operator;
+                    return;
+                }
+
+                AddMapReservedCharacter();
+            }
+
             switch (CurrentTokenState)
             {
                 case TokenType.Undefined:
-                    TokenBuffer.Append(CurrentChar);
+                    BufferCurrentChar();
 
                     if (isAlphabetic)
                     {
@@ -222,31 +252,56 @@ namespace userinterface.Models.Script.Backend
                         CurrentTokenState = TokenType.Literal;
                         return;
                     }
-                    else if (isSeparator)
+                    else if (isSeparator || isOperator)
                     {
-                        CurrentTokenState = TokenType.Separator;
-                        AddToken();
-                        return;
-                    }
-                    else if (isOperator)
-                    {
-                        CurrentTokenState = TokenType.Operator;
+                        if (isOperator && PeekNext() == Tokens.Operators.SECOND_C)
+                        {
+                            CurrentTokenState = TokenType.Operator;
+                            return;
+                        }
+
+                        AddMapReservedToken();
                         return;
                     }
 
                     goto default;
                 case TokenType.Identifier:
-                    // TODO
+                    CapIdentifierLength();
 
-                    goto default;
-                case TokenType.Operator:
-                    // TODO
+                    if (isAlphabetic || isNumeric)
+                    {
+                        BufferCurrentChar();
+                        return;
+                    }
+                    else if (isSeparator || isOperator)
+                    {
+                        TransitionDefinedToSpecial();
+                        return;
+                    }
 
                     goto default;
                 case TokenType.Literal:
-                    // TODO
+                    CapLiteralLength();
+
+                    if (isAlphabetic)
+                    {
+                        TokenizerError("Unexpected letter in a number literal!");
+                    }
+                    else if (isNumeric)
+                    {
+                        BufferCurrentChar();
+                        return;
+                    }
+                    else if (isSeparator || isOperator)
+                    {
+                        TransitionDefinedToSpecial();
+                        return;
+                    }
 
                     goto default;
+                case TokenType.Operator:
+                    AddMapReservedToken();
+                    return;
                 default:
                     TokenizerError($"Indeterminate state during {State}!");
                     return;
@@ -261,10 +316,15 @@ namespace userinterface.Models.Script.Backend
             switch (CurrentTokenState)
             {
                 case TokenType.Undefined:
-                    TokenBuffer.Append(CurrentChar);
+                    BufferCurrentChar();
 
                     if (isAlphabetic)
                     {
+                        if (type == TokenType.Parameter && UsedIdentifiers.Count > MaxParameters)
+                        {
+                            TokenizerError($"Too many parameters! (max {MaxParameters})");
+                        }
+
                         CurrentTokenState = TokenType.Identifier;
                         return;
                     }
@@ -276,33 +336,26 @@ namespace userinterface.Models.Script.Backend
 
                     goto default;
                 case TokenType.Identifier:
-                    Debug.Assert(TokenBuffer.Length <= MaxIdentifierLength);
-                    if (TokenBuffer.Length == MaxIdentifierLength)
-                    {
-                        TokenizerError($"Identifier name too long! (>= {MaxIdentifierLength} characters)");
-                    }
+                    CapIdentifierLength();
 
                     if (isAlphabetic || isNumeric)
                     {
-                        TokenBuffer.Append(CurrentChar);
+                        BufferCurrentChar();
                         return;
                     }
 
-                    if (CurrentCharStrCmp(Tokens.Operators.ASSIGN))
+                    if (StrCmpCurrentChar(Tokens.Operators.ASSIGN))
                     {
                         CurrentTokenState = type;
+                        Debug.Assert(CurrentTokenState == type, "Relies on side-effect");
                         AddTokenIfUnreserved();
-                        AddReservedCharacter();
+                        AddMapReservedCharacter();
                         return;
                     }
 
                     goto default;
                 case TokenType.Literal:
-                    Debug.Assert(TokenBuffer.Length <= MaxLiteralLength);
-                    if (TokenBuffer.Length == MaxLiteralLength)
-                    {
-                        TokenizerError($"Number literal too long! (>= {MaxLiteralLength} characters)");
-                    }
+                    CapLiteralLength();
 
                     if (isAlphabetic)
                     {
@@ -310,14 +363,14 @@ namespace userinterface.Models.Script.Backend
                     }
                     else if (isNumeric)
                     {
-                        TokenBuffer.Append(CurrentChar);
+                        BufferCurrentChar();
                         return;
                     }
 
-                    if (CurrentCharStrCmp(Tokens.Separators.TERMINATOR))
+                    if (StrCmpCurrentChar(Tokens.Separators.TERMINATOR))
                     {
                         AddTokenIfUnreserved();
-                        AddReservedCharacter();
+                        AddMapReservedCharacter();
                         return;
                     }
 
@@ -328,70 +381,142 @@ namespace userinterface.Models.Script.Backend
             }
         }
 
-        private void AddToken()
-        {
-            AddToken(TokenBuffer.ToString());
-        }
-
-        private void AddToken(string finalToken)
-        {
-            AddToken(CurrentTokenState, finalToken);
-        }
-
-        private void AddToken(TokenType TokenState, string finalToken)
-        {
-            TokenList.Add(new Token(TokenState, finalToken));
-            TokenBuffer.Clear();
-            CurrentTokenState = TokenType.Undefined;
-        }
-        
         private void AddTokenIfUnreserved()
         {
-            string finalToken = TokenBuffer.ToString();
-
-            if (finalToken.Length == 0)
+            if (TokenBuffer.Length == 0)
             {
+                Debug.Assert(CurrentTokenState == TokenType.Undefined, "Can't have a defined token without characters");
                 return;
             }
 
-            if (IsReserved(finalToken))
+            string s = TokenBuffer.ToString();
+
+            if (IsReserved(s))
             {
                 TokenizerError("Identifier reserved!");
             }
 
-            AddToken(finalToken);
+            Token token = new(CurrentTokenState, s);
 
-            UsedIdentifiers.Add(finalToken);
+            UsedIdentifiers.Add(s, token);
+
+            AddToken(token);
         }
 
-        private void AddReservedCharacter()
+        private void AddMapReservedCharacter()
         {
+            AddMapReservedToken(CurrentChar.ToString());
+        }
+
+        private void AddMapReservedToken()
+        {
+            AddMapReservedToken(TokenBuffer.ToString());
+        }
+
+        private void AddMapReservedToken(string s)
+        {
+            Debug.Assert(!UsedIdentifiers.ContainsKey(s));
+
             Token token;
 
-            if (Tokens.MapReserved.TryGetValue(CurrentChar.ToString(), out token!))
+            if (Tokens.MapReserved.TryGetValue(s, out token!))
             {
-                TokenList.Add(token);
+                AddToken(token);
                 return;
             }
 
-            TokenizerError("Cannot add reserved character!");
+            TokenizerError("Cannot add unmapped token!");
         }
 
-        private char? PeekNext()
+        private void AddAnyReservedToken()
         {
-            return CurrentIdx < MaxIdx ? Characters[CurrentIdx + 1] : null;
+            AddAnyReservedToken(TokenBuffer.ToString());
         }
 
-        private bool CurrentCharStrCmp(string s)
+        private void AddAnyReservedToken(string s)
+        {
+            Token token;
+
+            if (Tokens.MapReserved.TryGetValue(s, out token!) ||
+                UsedIdentifiers.TryGetValue(s, out token!))
+            {
+                AddToken(token);
+                return;
+            }
+
+            TokenizerError("Cannot add unreserved token!");
+        }
+
+        private void AddToken(Token token)
+        {
+            TokenList.Add(token);
+            TokenBuffer.Clear();
+            CurrentTokenState = TokenType.Undefined;
+        }
+
+        private void BufferCurrentChar()
+        {
+            TokenBuffer.Append(CurrentChar);
+        }
+
+        private bool StrCmpCurrentChar(string s)
         {
             return CurrentChar == s[0];
         }
 
+        private char PeekNext()
+        {
+            if (CurrentIdx < MaxIdx)
+            {
+                return Characters[CurrentIdx + 1];
+            }
+
+            TokenizerError("Tried to read beyond file bounds!");
+            return char.MinValue;
+        }
+
+        private void CapIdentifierLength()
+        {
+            Debug.Assert(TokenBuffer.Length <= MaxIdentifierLength);
+            if (TokenBuffer.Length == MaxIdentifierLength)
+            {
+                TokenizerError($"Identifier name too long! (stay below {MaxIdentifierLength} characters)");
+            }
+        }
+
+        private void CapLiteralLength()
+        {
+            Debug.Assert(TokenBuffer.Length <= MaxLiteralLength);
+            if (TokenBuffer.Length == MaxLiteralLength)
+            {
+                TokenizerError($"Number literal too long! (stay below {MaxLiteralLength} characters)");
+            }
+        }
+
         private void TokenizerError(string error)
         {
-            throw new Exception($"Index: {CurrentIdx}; " + error);
+            throw new TokenizerException($"Index: {CurrentIdx}; " + error);
         }
 
         #endregion Methods
+    }
+
+    /// <summary>Ensures that we aren't accidentally catching unrelated exceptions while debugging.</summary>
+    internal class TokenizerException : Exception
+    {
+        public TokenizerException()
+            : base()
+        {
+        }
+
+        public TokenizerException(string? message)
+            : base(message)
+        {
+        }
+
+        public TokenizerException(string? message, Exception? innerException)
+            : base(message, innerException)
+        {
+        }
     }
 }
