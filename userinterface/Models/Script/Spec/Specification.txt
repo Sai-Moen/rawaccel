@@ -1,4 +1,4 @@
-RawAccelScript
+RawAccelScript - Not So Formal Specification
 
 Description:
 	A way for users to automatically generate LUT points,
@@ -15,7 +15,7 @@ Motivation:
 	use something like WebPlotDigitizer and having to deal with whatever problems that might cause,
 	or copy a Google sheet to their drive and edit certain values and then copy those (somehow).
 	After all that, they get to paste that into a box which can't even show most of it, nor can the 'applied values' box.
-	The only upside to this is that with the maximum amount of points, Angle Snapping gets hidden better down the file.
+	The only upside to this is that with the maximum amount of points, Angle Snapping gets hidden better down the settings file.
 
 	All of this just to do some math that they probably don't care too much about,
 	to generate and save some points that they probably don't care about.
@@ -23,17 +23,25 @@ Motivation:
 	and allows the grapher to automatically calculate the points based on given parameters.
 
 Basic File Structure:
+	Proposed file name extension for custom scripts = .rascript (RawAccelScript)
+
+	Transpiler:
+		This is the main object (not god object) that strings everything together.
+		The whole program is kind of a restrictive transpiler to C#,
+		more than a compiler or interpreter at least.
+
 	Frontend:
-		These are the files concerned with deserializing the (human-readable) script.
-		Proposed file name extension for custom script = .rascript (RawAccelScript)
+		These are the files concerned with loading the (human-readable) script,
+		and communicating with the rest of the UI (via the Transpiler?).
 
 	Backend:
 		These are the files that model the actual formula itself.
-		They do so by interpreting the script that is loaded in from the frontend.
+		They do so by interpreting the script that is loaded in from the frontend via the Transpiler.
 		This will only support very simple actions so that you can't delete System32 or anti-cheat from there.
 
-Scripting language 'specification':
-	The input will be x, and the output will be whatever is in y (1 by default).
+Scripting language specification:
+	The input variable will be x, and the output variable will be whatever is in y (1 by default).
+	By reserving those tokens and using ref double it should be possible to go through iterations to make a LUT.
 	Using control flow cleverly should make it so that multiple return, or even return at all, is not necessary,
 	so there is not a return keyword.
 
@@ -41,17 +49,35 @@ Scripting language 'specification':
 	or an existing variable is used before the body, an error is thrown.
 
 	Sections:
-		1. Author's notes (side-effect of not tokenizing until square brackets)
-		2. RawAccel parameters, delimited by []
-		3. Temporary variables declaration
-		4. RawAccel point evaluation, delimited by {}
+		1. Comments
+			This section exists because the tokenizer does not tokenize until the Parameters section is entered.
+			Therefore, the script writer is allowed to write anything here with accepted characters (ascii letters).
+		2. Parameters
+			Delimited by []
+			This section holds up to 8 parameters.
+			These parameters correspond to RawAccel parameters in the UI, and are bound accordingly.
+		3. Variables (not user-facing)
+			This section holds temporary variables that store Literals.
+			The maximum amount should be at least 256, but is otherwise left to implementation details.
+		4. Calculation
+			Delimited by {}
+			This section is where the calculation actually happens.
+
+			Input variable 'x' will be selected externally, and then passed by value to the Parser.
+			At the Parser it will be passed around by reference,
+			to make sure Inline Arithmetic works as one might expect.
+
+			At the same time, Output variable 'y' will also be passed around by reference,
+			accumulating terms along the way, until the end of the Calculation block,
+			where it is returned to the caller of the Transpiler's point-getting method.
+			It starts at 1, which means by default the smallest possible script "[]{}" will generate a static curve.
 
 	Keywords:
 		x y			"Input/Output variables"
 		e pi tau	"Math Constants"
 
-		if (bool): statement(s) :
-		while (bool): statement(s) :
+		if (bool): s :		"s means statements"
+		while (bool): s :	"s means statements"
 
 		There are not actually bool values from the script's source code POV,
 		since it can only transpile to comparisons between doubles.
@@ -69,7 +95,7 @@ Scripting language 'specification':
 	Operators:
 		=				"(Re-)Assignment"
 		+ - * / % ^		"Arithmetic"
-		+= -= *= /=	%=	"Compound Assignments"
+		+= -= *= /=	%=	"Inline Arithmetic"
 		& | !			"Logical Operators"
 		== < > <= >=	"Comparison Operators"
 

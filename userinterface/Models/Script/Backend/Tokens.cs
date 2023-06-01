@@ -1,12 +1,9 @@
-﻿global using TokenMap = System.Collections.Generic.IDictionary
-    <string, userinterface.Models.Script.Backend.Token>;
-
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Diagnostics;
 
 namespace userinterface.Models.Script.Backend
 {
-    internal enum TokenType
+    public enum TokenType
     {
         Undefined,
         Identifier,
@@ -19,9 +16,9 @@ namespace userinterface.Models.Script.Backend
         Function,
     }
 
-    internal record Token(TokenType Kind, string Word);
+    public record Token(TokenType Kind, string Word);
 
-    internal static class Tokens
+    public static class Tokens
     {
         private static readonly (TokenType, string)[] ListReserved = new (TokenType, string)[]
         {
@@ -100,9 +97,9 @@ namespace userinterface.Models.Script.Backend
             Debug.Assert(MapReserved.Count == ListReserved.Length);
         }
 
-        public static readonly TokenMap MapReserved;
+        public static readonly IDictionary<string, Token> MapReserved;
 
-        internal static class Keywords
+        public static class Keywords
         {
             public const TokenType DefaultType = TokenType.Keyword;
 
@@ -120,7 +117,7 @@ namespace userinterface.Models.Script.Backend
             public const string BRANCH_WHILE    = "while";
         }
 
-        internal static class Separators
+        public static class Separators
         {
             private static readonly string[] SeparatorsList = new string[]
             {
@@ -173,7 +170,7 @@ namespace userinterface.Models.Script.Backend
             public const string CALC_END        = "}";
         }
 
-        internal static class Operators
+        public static class Operators
         {
             private static readonly string[] OperatorsList = new string[]
             {
@@ -234,7 +231,7 @@ namespace userinterface.Models.Script.Backend
             public const string CMP_GE  = ">=";
         }
 
-        internal static class Functions
+        public static class Functions
         {
             public const TokenType DefaultType = TokenType.Function;
 

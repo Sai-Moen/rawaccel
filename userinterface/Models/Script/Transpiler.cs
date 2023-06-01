@@ -4,22 +4,24 @@ using userinterface.Models.Script.Frontend;
 
 namespace userinterface.Models.Script
 {
-    public static class Transpiler
+    public class Transpiler
     {
         public const string ScriptPath = @"Scripts/"; // Maybe move to constants and remove debugpath later
         public const string __DebugPath = @"../../../Models/Script/Spec/example.rascript";
 
-        private static readonly IScriptUI UI = ScriptUIFactory.GetScriptUI(ScriptUI.CommandLine);
+        private readonly IScriptUI UI;
 
-        static Transpiler()
+        public Transpiler(string scriptPath)
         {
 #if DEBUG
+            UI = ScriptUIFactory.GetScriptUI(ScriptUI.CommandLine);
 #else
             UI = ScriptUIFactory.GetScriptUI(ScriptUI.Graphical);
 #endif
+            Transpile(scriptPath);
         }
 
-        public static void Transpile(string scriptPath)
+        private void Transpile(string scriptPath)
         {
             Tokenizer tokenizer;
 
@@ -35,7 +37,7 @@ namespace userinterface.Models.Script
 
             foreach(Token token in tokenizer.TokenList)
             {
-                UI.HandleMessage($"{token.Word}: {token.Kind}");
+                UI.HandleMessage($"{token.Kind} ->".PadRight(16) + token.Word);
             }
         }
     }

@@ -7,36 +7,7 @@ namespace userinterface.Models.Script.Backend
 {
     /**
      * <summary>
-     * 
-     * <list type="table">
-     * 
-     * <listheader>
-     * <term><see cref="TokenizerState"/></term>
-     * <description>Phase of the Tokenizer, that determines the characters to accept.</description>
-     * </listheader>
-     * 
-     * <item>
-     * <term><see cref="Startup"/></term>
-     * <description>Advance until the Parameters section starts, used for comments.</description>
-     * </item>
-     * 
-     * <item>
-     * <term><see cref="Parameters"/></term>
-     * <description>Allows for up to 8 parameters to be declared.</description>
-     * </item>
-     * 
-     * <item>
-     * <term><see cref="Variables"/></term>
-     * <description>Allows for variables to be declared.</description>
-     * </item>
-     * 
-     * <item>
-     * <term><see cref="Calculation"/></term>
-     * <description>Represents one iteration of calculating the points.</description>
-     * </item>
-     * 
-     * </list>
-     * 
+     * Phase of the Tokenizer, that determines the characters and tokens to accept.
      * </summary>
      */
     internal enum TokenizerState
@@ -76,7 +47,7 @@ namespace userinterface.Models.Script.Backend
 
         internal IList<Token> TokenList { get; } = new List<Token>();
 
-        private readonly TokenMap UsedIdentifiers = new Dictionary<string, Token>();
+        private readonly IDictionary<string, Token> UsedIdentifiers = new Dictionary<string, Token>();
 
         private int CurrentIdx = -1;
 
@@ -177,8 +148,8 @@ namespace userinterface.Models.Script.Backend
         {
             if (StrCmpCurrentChar(Tokens.Separators.PARAMS_START))
             {
+                AddMapReservedCharacter();
                 State = TokenizerState.Parameters;
-                Debug.Assert(State == TokenizerState.Parameters, "Paranoia");
             }
         }
 
@@ -189,7 +160,6 @@ namespace userinterface.Models.Script.Backend
                 AddTokenIfUnreserved();
                 AddMapReservedCharacter();
                 State = TokenizerState.Variables;
-                Debug.Assert(State == TokenizerState.Variables, "Second line of defense (anti-side-effect)");
                 return;
             }
 
@@ -203,7 +173,6 @@ namespace userinterface.Models.Script.Backend
                 AddTokenIfUnreserved();
                 AddMapReservedCharacter();
                 State = TokenizerState.Calculation;
-                Debug.Assert(State == TokenizerState.Calculation, "Second line of defense (anti-side-effect)");
                 return;
             }
 
@@ -214,7 +183,7 @@ namespace userinterface.Models.Script.Backend
         {
             if (StrCmpCurrentChar(Tokens.Separators.CALC_END))
             {
-                AddTokenIfUnreserved();
+                AddAnyReservedToken();
                 AddMapReservedCharacter();
                 Debug.Assert(CurrentIdx == MaxIdx);
                 return;
@@ -360,9 +329,11 @@ namespace userinterface.Models.Script.Backend
 
         private void AddTokenIfUnreserved()
         {
+            Debug.Assert(State != TokenizerState.Calculation, "Only declare new Identifiers before Calculation!");
+
             if (TokenBuffer.Length == 0)
             {
-                Debug.Assert(CurrentTokenState == TokenType.Undefined, "Can't have a defined token without characters");
+                Debug.Assert(CurrentTokenState == TokenType.Undefined, "Can't have a defined token without characters!");
                 return;
             }
 
@@ -375,7 +346,7 @@ namespace userinterface.Models.Script.Backend
 
             Token token = new(CurrentTokenState, s);
 
-            if (CurrentTokenState == TokenType.Parameter || CurrentTokenState == TokenType.Variable)
+            if (CurrentTokenState != TokenType.Literal)
             {
                 UsedIdentifiers.Add(s, token);
             }
@@ -390,6 +361,7 @@ namespace userinterface.Models.Script.Backend
 
         private void AddMapReservedToken()
         {
+            Debug.Assert(TokenBuffer.Length != 0, "Can't add empty reserved token!");
             AddMapReservedToken(TokenBuffer.ToString());
         }
 
@@ -410,6 +382,15 @@ namespace userinterface.Models.Script.Backend
 
         private void AddAnyReservedToken()
         {
+            if (TokenBuffer.Length == 0)
+            {
+                /*
+                 * This is allowed because this method need not be called with anything in the buffer.
+                 * In a valid state, it can be called after a line terminator or an identifier,
+                 * with empty buffer or nonempty buffer respectively, unlike mapped reserved.
+                 */
+                return;
+            }
             AddAnyReservedToken(TokenBuffer.ToString());
         }
 
@@ -475,27 +456,16 @@ namespace userinterface.Models.Script.Backend
 
         private void TokenizerError(string error)
         {
-            throw new TokenizerException($"Index: {CurrentIdx}; " + error);
+            throw new TokenizerException(CurrentIdx, error);
         }
 
         #endregion Methods
     }
 
-    /// <summary>Ensures that we aren't accidentally catching unrelated exceptions while debugging.</summary>
-    internal class TokenizerException : Exception
+    public class TokenizerException : Exception
     {
-        public TokenizerException()
-            : base()
-        {
-        }
-
-        public TokenizerException(string? message)
-            : base(message)
-        {
-        }
-
-        public TokenizerException(string? message, Exception? innerException)
-            : base(message, innerException)
+        public TokenizerException(int index, string message)
+            : base($"Index: {index}; {message}")
         {
         }
     }
