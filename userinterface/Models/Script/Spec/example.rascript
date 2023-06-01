@@ -1,4 +1,5 @@
 Example RawAccelScript using the Arc formula.
+Might make it more of a 'tutorial' in the future.
 
 [
 

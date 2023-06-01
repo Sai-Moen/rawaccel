@@ -1,16 +1,17 @@
-﻿using System;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 
 namespace userinterface.Models.Script.Frontend
 {
     public class CommandLineUI : IScriptUI
     {
-        public void HandleException(Exception exception)
+        public void HandleException(TranspilerException exception)
         {
+            int line = (int)exception.Data[TranspilerException.LineData]!;
+            string message = $"Line {line}: {exception.Message}";
 #if DEBUG
-            Debug.WriteLine(exception.Message);
+            Debug.WriteLine(message);
 #else
-            Console.WriteLine(exception.Message);
+            Console.WriteLine(message);
 #endif
         }
 

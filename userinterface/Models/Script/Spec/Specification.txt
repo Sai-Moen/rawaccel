@@ -1,4 +1,4 @@
-RawAccelScript - Not So Formal Specification
+RawAccelScript - A Not So Formal Specification
 
 Description:
 	A way for users to automatically generate LUT points,
@@ -93,11 +93,11 @@ Scripting language specification:
 		Separators must be 1 character.
 
 	Operators:
-		=				"(Re-)Assignment"
-		+ - * / % ^		"Arithmetic"
-		+= -= *= /=	%=	"Inline Arithmetic"
-		& | !			"Logical Operators"
-		== < > <= >=	"Comparison Operators"
+		=					"(Re-)Assignment"
+		+ - * / % ^			"Arithmetic"
+		+= -= *= /=	%= ^=	"Inline Arithmetic"
+		& | !				"Logical Operators"
+		== < > <= >=		"Comparison Operators"
 
 		Due to a tokenizer hack turned feature, operators must be 1 character and optionally append '='.
 
@@ -109,7 +109,7 @@ Scripting language specification:
 		cos cosh acos acosh
 		tan tanh atan atanh
 
-		pow exp "indirectly, with the ^ operator"
+		pow exp	"indirectly, with the ^ operator"
 
 		These are all C# System.Math-supported functions with a very similar signature,
 		namely 'double Func(double)' which means that some optimization in the parser is permitted.

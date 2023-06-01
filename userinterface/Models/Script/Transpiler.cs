@@ -23,22 +23,45 @@ namespace userinterface.Models.Script
 
         private void Transpile(string scriptPath)
         {
+            string script;
+
+            try
+            {
+                script = ScriptLoader.LoadScript(scriptPath);
+            }
+            catch
+            {
+                // Do something
+                return;
+            }
+
             Tokenizer tokenizer;
 
             try
             {
-                tokenizer = new(ScriptLoader.LoadScript(scriptPath));
+                tokenizer = new(script);
             }
-            catch (Exception e)
+            catch (TranspilerException e)
             {
                 UI.HandleException(e);
                 return;
             }
-
-            foreach(Token token in tokenizer.TokenList)
+#if DEBUG
+            foreach (Token token in tokenizer.TokenList)
             {
                 UI.HandleMessage($"{token.Kind} ->".PadRight(16) + token.Word);
             }
+#endif
+        }
+    }
+
+    public class TranspilerException : Exception
+    {
+        public const int LineData = 0;
+
+        public TranspilerException(string message)
+            : base(message)
+        {
         }
     }
 }

@@ -52,6 +52,7 @@ namespace userinterface.Models.Script.Backend
             (Operators.DefaultType, Operators.IMUL),
             (Operators.DefaultType, Operators.IDIV),
             (Operators.DefaultType, Operators.IMOD),
+            (Operators.DefaultType, Operators.IEXP),
             (Operators.DefaultType, Operators.CMP_AND),
             (Operators.DefaultType, Operators.CMP_OR),
             (Operators.DefaultType, Operators.CMP_NOT),
@@ -217,6 +218,7 @@ namespace userinterface.Models.Script.Backend
             public const string IMUL    = "*=";
             public const string IDIV    = "/=";
             public const string IMOD    = "%=";
+            public const string IEXP    = "^=";
 
             // Logical
             public const string CMP_AND = "&";

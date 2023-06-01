@@ -10,7 +10,7 @@ namespace userinterface.Models.Script.Frontend
 
     public interface IScriptUI
     {
-        public void HandleException(Exception exception);
+        public void HandleException(TranspilerException exception);
 
         public void HandleMessage(string message);
     }
