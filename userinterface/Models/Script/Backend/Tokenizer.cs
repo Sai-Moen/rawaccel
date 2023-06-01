@@ -480,9 +480,7 @@ namespace userinterface.Models.Script.Backend
 
         private void TokenizerError(string error)
         {
-            TokenizerException exception = new(error);
-            exception.Data.Add(TranspilerException.LineData, CurrentLine);
-            throw exception;
+            throw new TokenizerException($"Line {CurrentLine}: {error}");
         }
 
         #endregion Methods

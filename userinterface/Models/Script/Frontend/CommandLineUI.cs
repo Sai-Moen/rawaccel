@@ -6,8 +6,7 @@ namespace userinterface.Models.Script.Frontend
     {
         public void HandleException(TranspilerException exception)
         {
-            int line = (int)exception.Data[TranspilerException.LineData]!;
-            string message = $"Line {line}: {exception.Message}";
+            string message = exception.Message;
 #if DEBUG
             Debug.WriteLine(message);
 #else

@@ -57,8 +57,6 @@ namespace userinterface.Models.Script
 
     public class TranspilerException : Exception
     {
-        public const int LineData = 0;
-
         public TranspilerException(string message)
             : base(message)
         {
