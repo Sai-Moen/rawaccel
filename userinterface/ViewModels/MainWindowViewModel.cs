@@ -1,5 +1,6 @@
 using System;
 using userinterface.Models.Mouse;
+using userinterface.Models.Script;
 
 namespace userinterface.ViewModels
 {
@@ -7,9 +8,15 @@ namespace userinterface.ViewModels
     {
         public MainWindowViewModel()
         {
+#if DEBUG // Only for debugging RawAccelScript! Remove from other repos if applicable
+            
+            Transpiler.Transpile(Transpiler.__DebugPath);
+            Environment.Exit(0);
+#else
             Profiles = new ProfilesViewModel();
             MouseListen = new MouseListenViewModel();
             MouseWindow = new MouseWindow(this);
+#endif
         }
 
         public ProfilesViewModel Profiles { get; }

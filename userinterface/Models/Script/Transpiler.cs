@@ -6,8 +6,8 @@ namespace userinterface.Models.Script
 {
     public static class Transpiler
     {
-        public const string ScriptPath = @"Scripts\"; // Maybe move to constants and remove debugpath later
-        public const string __DebugPath = @"C:\Users\SaiMoen\dev\src\rawaccel_SaiMoen\userinterface\Models\Script\Spec\arc_example.rascript";
+        public const string ScriptPath = @"Scripts/"; // Maybe move to constants and remove debugpath later
+        public const string __DebugPath = @"../../../Models/Script/Spec/example.rascript";
 
         private static readonly IScriptUI UI = ScriptUIFactory.GetScriptUI(ScriptUI.CommandLine);
 
