@@ -47,25 +47,30 @@ namespace userinterface.Models.Script.Backend
         Calculation,
     }
 
-    /// <summary>
-    /// 
-    /// <see cref="Tokenizer"/>
-    /// Automatically attempts to Tokenize when given an input script.
-    /// 
-    /// </summary>
+    /** <summary>
+     * 
+     * <see cref="Tokenizer"/>
+     * Automatically attempts to Tokenize when given an input script.
+     * 
+     * </summary>
+     */ 
     internal class Tokenizer
     {
-        #region Fields
-
-        private TokenizerState State = TokenizerState.Startup;
-
-        private TokenType CurrentTokenState = TokenType.Undefined;
+        #region Constants
 
         private const int MaxParameters = 8;
 
         private const int MaxIdentifierLength = 0x10;
 
         private const int MaxLiteralLength = 0x20;
+
+        #endregion Constants
+
+        #region Fields
+
+        private TokenizerState State = TokenizerState.Startup;
+
+        private TokenType CurrentTokenState = TokenType.Undefined;
 
         private readonly StringBuilder TokenBuffer = new();
 
@@ -89,7 +94,8 @@ namespace userinterface.Models.Script.Backend
         {
             Characters = script
                 .ReplaceLineEndings("")
-                .Replace(" ", "")
+                .Replace(" ", null)
+                .Replace("\t", null)
                 .ToCharArray();
 
             MaxIdx = Characters.Length - 1;
@@ -138,17 +144,13 @@ namespace userinterface.Models.Script.Backend
                     continue;
                 }
 
-                if (c == '\t')
-                {
-                    TokenizerError("Please use spaces instead of tabs.");
-                }
-
                 TokenizerError($"Invalid character detected, char: {c}, u16: {(ushort)c}");
             }
         }
 
         private void Tokenize()
         {
+            Debug.Assert(CurrentIdx == -1);
             while (++CurrentIdx <= MaxIdx)
             {
                 CurrentChar = Characters[CurrentIdx];
@@ -223,20 +225,6 @@ namespace userinterface.Models.Script.Backend
             bool isSeparator = Tokens.Separators.Set.Contains(CurrentChar);
             bool isOperator = Tokens.Operators.Set.Contains(CurrentChar);
 
-            void TransitionDefinedToSpecial()
-            {
-                AddAnyReservedToken();
-
-                if (isOperator && PeekNext() == Tokens.Operators.SECOND_C)
-                {
-                    BufferCurrentChar();
-                    CurrentTokenState = TokenType.Operator;
-                    return;
-                }
-
-                AddMapReservedCharacter();
-            }
-
             switch (CurrentTokenState)
             {
                 case TokenType.Undefined:
@@ -249,8 +237,7 @@ namespace userinterface.Models.Script.Backend
                     }
                     else if (isNumeric)
                     {
-                        CurrentTokenState = TokenType.Literal;
-                        return;
+                        TokenizerError("Number literal not allowed during calculation!");
                     }
                     else if (isSeparator || isOperator)
                     {
@@ -275,26 +262,16 @@ namespace userinterface.Models.Script.Backend
                     }
                     else if (isSeparator || isOperator)
                     {
-                        TransitionDefinedToSpecial();
-                        return;
-                    }
+                        AddAnyReservedToken();
 
-                    goto default;
-                case TokenType.Literal:
-                    CapLiteralLength();
+                        if (isOperator && PeekNext() == Tokens.Operators.SECOND_C)
+                        {
+                            BufferCurrentChar();
+                            CurrentTokenState = TokenType.Operator;
+                            return;
+                        }
 
-                    if (isAlphabetic)
-                    {
-                        TokenizerError("Unexpected letter in a number literal!");
-                    }
-                    else if (isNumeric)
-                    {
-                        BufferCurrentChar();
-                        return;
-                    }
-                    else if (isSeparator || isOperator)
-                    {
-                        TransitionDefinedToSpecial();
+                        AddMapReservedCharacter();
                         return;
                     }
 
@@ -398,7 +375,10 @@ namespace userinterface.Models.Script.Backend
 
             Token token = new(CurrentTokenState, s);
 
-            UsedIdentifiers.Add(s, token);
+            if (CurrentTokenState == TokenType.Parameter || CurrentTokenState == TokenType.Variable)
+            {
+                UsedIdentifiers.Add(s, token);
+            }
 
             AddToken(token);
         }

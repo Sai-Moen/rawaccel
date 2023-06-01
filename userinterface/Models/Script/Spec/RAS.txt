@@ -25,7 +25,7 @@ Motivation:
 Basic File Structure:
 	Frontend:
 		These are the files concerned with deserializing the (human-readable) script.
-		Proposed file name extension for custom script = .ras (RawAccelScript)
+		Proposed file name extension for custom script = .rascript (RawAccelScript)
 
 	Backend:
 		These are the files that model the actual formula itself.
@@ -50,8 +50,8 @@ Scripting language 'specification':
 		x y			"Input/Output variables"
 		e pi tau	"Math Constants"
 
-		if bool: statement(s) :
-		while bool: statement(s) :
+		if (bool): statement(s) :
+		while (bool): statement(s) :
 
 		There are not actually bool values from the script's source code POV,
 		since it can only transpile to comparisons between doubles.

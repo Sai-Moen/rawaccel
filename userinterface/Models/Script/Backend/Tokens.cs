@@ -19,7 +19,7 @@ namespace userinterface.Models.Script.Backend
         Function,
     }
 
-    internal record Token(TokenType TokenType, string Word);
+    internal record Token(TokenType Kind, string Word);
 
     internal static class Tokens
     {

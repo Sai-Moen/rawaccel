@@ -1,34 +1,42 @@
-﻿using System.IO;
+﻿using System;
 using userinterface.Models.Script.Backend;
+using userinterface.Models.Script.Frontend;
 
 namespace userinterface.Models.Script
 {
-    public class Transpiler
+    public static class Transpiler
     {
-        public const int MaxScriptFileLength = 0xFFFF;
-        public const string ScriptPath = "";
+        public const string ScriptPath = @"Scripts\"; // Maybe move to constants and remove debugpath later
+        public const string __DebugPath = @"C:\Users\SaiMoen\dev\src\rawaccel_SaiMoen\userinterface\Models\Script\Spec\arc_example.rascript";
 
-        public Transpiler()
+        private static readonly IScriptUI UI = ScriptUIFactory.GetScriptUI(ScriptUI.CommandLine);
+
+        static Transpiler()
         {
-            StreamReader file;
+#if DEBUG
+#else
+            UI = ScriptUIFactory.GetScriptUI(ScriptUI.Graphical);
+#endif
+        }
+
+        public static void Transpile(string scriptPath)
+        {
+            Tokenizer tokenizer;
 
             try
             {
-                file = File.OpenText(ScriptPath);
+                tokenizer = new(ScriptLoader.LoadScript(scriptPath));
             }
-            catch
+            catch (Exception e)
             {
-                // something wrong
+                UI.HandleException(e);
                 return;
             }
-            
 
-            if (file.BaseStream.Length > MaxScriptFileLength)
+            foreach(Token token in tokenizer.TokenList)
             {
-                // Tell the user to stop trolling
+                UI.HandleMessage($"{token.Word}: {token.Kind}");
             }
-
-            Tokenizer tokenizer = new(file.ReadToEnd());
         }
     }
 }
