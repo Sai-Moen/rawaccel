@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Diagnostics;
 
-namespace userinterface.Models.Script.Backend
+namespace userinterface.Models.Script.Generation
 {
     public enum TokenType
     {
@@ -9,14 +9,14 @@ namespace userinterface.Models.Script.Backend
         Identifier,
         Parameter,
         Variable,
-        Literal,
+        Number,
         Keyword,
         Separator,
         Operator,
         Function,
     }
 
-    public record Token(TokenType Kind, string Word);
+    public record Token(TokenType Type, uint Line, string Symbol);
 
     public static class Tokens
     {
@@ -88,17 +88,17 @@ namespace userinterface.Models.Script.Backend
 
         static Tokens()
         {
-            MapReserved = new Dictionary<string, Token>(ListReserved.Length);
+            MapReserved = new TokenMap(ListReserved.Length);
 
             foreach((TokenType type, string name) in ListReserved)
             {
-                MapReserved.Add(name, new Token(type, name));
+                MapReserved.Add(name, new Token(type, 0, name));
             }
 
             Debug.Assert(MapReserved.Count == ListReserved.Length);
         }
 
-        public static readonly IDictionary<string, Token> MapReserved;
+        public static readonly TokenMap MapReserved;
 
         public static class Keywords
         {
@@ -270,6 +270,27 @@ namespace userinterface.Models.Script.Backend
             public const string TANH    = "tanh";   // Hyperbolic
             public const string ATAN    = "atan";   // Inverse
             public const string ATANH   = "atanh";  // Inverse Hyperbolic
+        }
+    }
+
+    public class TokenMap : Dictionary<string, Token>, IDictionary<string, Token>
+    {
+        public TokenMap()
+            : base()
+        {
+        }
+
+        public TokenMap(int capacity)
+            : base(capacity)
+        {
+        }
+    }
+
+    public class TokenList : List<Token>, IList<Token>
+    {
+        public TokenList()
+            : base()
+        {
         }
     }
 }

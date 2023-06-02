@@ -30,11 +30,11 @@ Basic File Structure:
 		The whole program is kind of a restrictive transpiler to C#,
 		more than a compiler or interpreter at least.
 
-	Frontend:
+	Interaction:
 		These are the files concerned with loading the (human-readable) script,
-		and communicating with the rest of the UI (via the Transpiler?).
+		and communicating with the rest of the UI (via the Transpiler).
 
-	Backend:
+	Generation:
 		These are the files that model the actual formula itself.
 		They do so by interpreting the script that is loaded in from the frontend via the Transpiler.
 		This will only support very simple actions so that you can't delete System32 or anti-cheat from there.
@@ -52,19 +52,22 @@ Scripting language specification:
 		1. Comments
 			This section exists because the tokenizer does not tokenize until the Parameters section is entered.
 			Therefore, the script writer is allowed to write anything here with accepted characters (ascii letters).
+
 		2. Parameters
 			Delimited by []
 			This section holds up to 8 parameters.
 			These parameters correspond to RawAccel parameters in the UI, and are bound accordingly.
+
 		3. Variables (not user-facing)
-			This section holds temporary variables that store Literals.
+			This section holds temporary variables that store Numbers.
 			The maximum amount should be at least 256, but is otherwise left to implementation details.
+
 		4. Calculation
 			Delimited by {}
 			This section is where the calculation actually happens.
 
 			Input variable 'x' will be selected externally, and then passed by value to the Parser.
-			At the Parser it will be passed around by reference,
+			At the Parser/AST it will be passed around by reference,
 			to make sure Inline Arithmetic works as one might expect.
 
 			At the same time, Output variable 'y' will also be passed around by reference,
@@ -112,4 +115,4 @@ Scripting language specification:
 		pow exp	"indirectly, with the ^ operator"
 
 		These are all C# System.Math-supported functions with a very similar signature,
-		namely 'double Func(double)' which means that some optimization in the parser is permitted.
+		namely "double Func(double)" which means that some optimization in the parser is permitted.

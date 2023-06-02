@@ -1,29 +1,22 @@
-﻿using System.Collections.Generic;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Text;
 
-namespace userinterface.Models.Script.Backend
+namespace userinterface.Models.Script.Generation
 {
-    /**
-     * <summary>
-     * Phase of the Tokenizer, that determines the characters and tokens to accept.
-     * </summary>
-     */
+    /// <summary>
+    /// Phase of the Tokenizer, that determines the characters and tokens to accept.
+    /// </summary>
     internal enum TokenizerState
     {
-        Startup,
+        Comments,
         Parameters,
         Variables,
         Calculation,
     }
 
-    /** <summary>
-     * 
-     * <see cref="Tokenizer"/>
-     * Automatically attempts to Tokenize when given an input script.
-     * 
-     * </summary>
-     */ 
+    /// <summary>
+    /// Automatically attempts to Tokenize when given an input script.
+    /// </summary>
     internal class Tokenizer
     {
         #region Constants
@@ -32,7 +25,7 @@ namespace userinterface.Models.Script.Backend
 
         public const int MaxIdentifierLength = 0x10;
 
-        public const int MaxLiteralLength = 0x20;
+        public const int MaxNumberLength = 0x20;
 
         public const char NewLine = '\n';
 
@@ -40,21 +33,21 @@ namespace userinterface.Models.Script.Backend
 
         #region Fields
 
-        private TokenizerState State = TokenizerState.Startup;
+        private TokenizerState State = TokenizerState.Comments;
 
         private TokenType CurrentTokenState = TokenType.Undefined;
 
-        private readonly StringBuilder TokenBuffer = new();
+        internal TokenList TokenList { get; } = new();
 
-        internal IList<Token> TokenList { get; } = new List<Token>();
+        private readonly TokenMap UsedIdentifiers = new();
 
-        private readonly IDictionary<string, Token> UsedIdentifiers = new Dictionary<string, Token>();
+        private readonly StringBuilder CharBuffer = new();
 
         private int CurrentIdx = -1;
 
         private readonly int MaxIdx;
 
-        private int CurrentLine = 1;
+        private uint CurrentLine = 1;
 
         private char CurrentChar;
 
@@ -112,7 +105,7 @@ namespace userinterface.Models.Script.Backend
             // Not a problem in terms of parsing, but for consistency among (us) script writers.
             if (Characters[MaxIdx] != Tokens.Separators.CALC_END[0])
             {
-                CurrentLine = -1; // The location is in the error.
+                CurrentLine = 0; // The location is in the error.
                 TokenizerError("Please don't type anything after the body.");
             }
 
@@ -156,7 +149,7 @@ namespace userinterface.Models.Script.Backend
 
                 switch (State)
                 {
-                    case TokenizerState.Startup:
+                    case TokenizerState.Comments:
                         OnStateStartup();
                         break;
                     case TokenizerState.Parameters:
@@ -236,7 +229,7 @@ namespace userinterface.Models.Script.Backend
                     }
                     else if (isNumeric)
                     {
-                        TokenizerError("Number literal not allowed during calculation!");
+                        TokenizerError("Number not allowed during calculation!");
                     }
                     else if (isSeparator || isOperator)
                     {
@@ -305,7 +298,7 @@ namespace userinterface.Models.Script.Backend
                     }
                     else if (isNumeric)
                     {
-                        CurrentTokenState = TokenType.Literal;
+                        CurrentTokenState = TokenType.Number;
                         return;
                     }
 
@@ -329,12 +322,12 @@ namespace userinterface.Models.Script.Backend
                     }
 
                     break;
-                case TokenType.Literal:
-                    CapLiteralLength();
+                case TokenType.Number:
+                    CapNumberLength();
 
                     if (isAlphabetic)
                     {
-                        TokenizerError("Unexpected letter in a number literal!");
+                        TokenizerError("Unexpected letter in a number!");
                     }
                     else if (isNumeric)
                     {
@@ -359,22 +352,22 @@ namespace userinterface.Models.Script.Backend
         {
             Debug.Assert(State != TokenizerState.Calculation, "Only declare new Identifiers before Calculation!");
 
-            if (TokenBuffer.Length == 0)
+            if (CharBuffer.Length == 0)
             {
                 Debug.Assert(CurrentTokenState == TokenType.Undefined);
                 return;
             }
 
-            string s = TokenBuffer.ToString();
+            string s = CharBuffer.ToString();
 
             if (IsReserved(s))
             {
                 TokenizerError("Identifier reserved!");
             }
 
-            Token token = new(CurrentTokenState, s);
+            Token token = new(CurrentTokenState, CurrentLine, s);
 
-            if (CurrentTokenState != TokenType.Literal)
+            if (CurrentTokenState != TokenType.Number)
             {
                 UsedIdentifiers.Add(s, token);
             }
@@ -389,8 +382,8 @@ namespace userinterface.Models.Script.Backend
 
         private void AddMapReservedToken()
         {
-            Debug.Assert(TokenBuffer.Length != 0, "Can't add empty reserved token!");
-            AddMapReservedToken(TokenBuffer.ToString());
+            Debug.Assert(CharBuffer.Length != 0, "Can't add empty reserved token!");
+            AddMapReservedToken(CharBuffer.ToString());
         }
 
         private void AddMapReservedToken(string s)
@@ -401,7 +394,7 @@ namespace userinterface.Models.Script.Backend
 
             if (Tokens.MapReserved.TryGetValue(s, out token!))
             {
-                AddToken(token);
+                AddToken(token with { Line = CurrentLine });
                 return;
             }
 
@@ -410,12 +403,12 @@ namespace userinterface.Models.Script.Backend
 
         private void AddAnyReservedToken()
         {
-            if (TokenBuffer.Length == 0)
+            if (CharBuffer.Length == 0)
             {
                 Debug.Assert(CurrentTokenState == TokenType.Undefined);
                 return;
             }
-            AddAnyReservedToken(TokenBuffer.ToString());
+            AddAnyReservedToken(CharBuffer.ToString());
         }
 
         private void AddAnyReservedToken(string s)
@@ -425,7 +418,7 @@ namespace userinterface.Models.Script.Backend
             if (Tokens.MapReserved.TryGetValue(s, out token!) ||
                 UsedIdentifiers.TryGetValue(s, out token!))
             {
-                AddToken(token);
+                AddToken(token with { Line = CurrentLine });
                 return;
             }
 
@@ -435,13 +428,13 @@ namespace userinterface.Models.Script.Backend
         private void AddToken(Token token)
         {
             TokenList.Add(token);
-            TokenBuffer.Clear();
+            CharBuffer.Clear();
             CurrentTokenState = TokenType.Undefined;
         }
 
         private void BufferCurrentChar()
         {
-            TokenBuffer.Append(CurrentChar);
+            CharBuffer.Append(CurrentChar);
         }
 
         private bool StringCompareCurrentChar(string s)
@@ -462,25 +455,25 @@ namespace userinterface.Models.Script.Backend
 
         private void CapIdentifierLength()
         {
-            Debug.Assert(TokenBuffer.Length <= MaxIdentifierLength);
-            if (TokenBuffer.Length == MaxIdentifierLength)
+            Debug.Assert(CharBuffer.Length <= MaxIdentifierLength);
+            if (CharBuffer.Length == MaxIdentifierLength)
             {
                 TokenizerError($"Identifier name too long! (stay below {MaxIdentifierLength} characters)");
             }
         }
 
-        private void CapLiteralLength()
+        private void CapNumberLength()
         {
-            Debug.Assert(TokenBuffer.Length <= MaxLiteralLength);
-            if (TokenBuffer.Length == MaxLiteralLength)
+            Debug.Assert(CharBuffer.Length <= MaxNumberLength);
+            if (CharBuffer.Length == MaxNumberLength)
             {
-                TokenizerError($"Number literal too long! (stay below {MaxLiteralLength} characters)");
+                TokenizerError($"Number too long! (stay below {MaxNumberLength} characters)");
             }
         }
 
         private void TokenizerError(string error)
         {
-            throw new TokenizerException($"Line {CurrentLine}: {error}");
+            throw new TokenizerException(CurrentLine, error);
         }
 
         #endregion Methods
@@ -488,9 +481,6 @@ namespace userinterface.Models.Script.Backend
 
     public class TokenizerException : TranspilerException
     {
-        public TokenizerException(string message)
-            : base(message)
-        {
-        }
+        public TokenizerException(uint line, string message) : base($"Line {line}: {message}") {}
     }
 }
