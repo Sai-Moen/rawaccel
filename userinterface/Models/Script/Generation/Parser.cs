@@ -22,8 +22,6 @@ namespace userinterface.Models.Script.Generation
 
         internal Root RootNode { get; } = new();
 
-        private readonly TokenList TokenBuffer = new();
-
         private int CurrentIdx;
 
         private readonly int MaxIdx;
@@ -48,110 +46,110 @@ namespace userinterface.Models.Script.Generation
 
         private void Parse()
         {
-            Debug.Assert(CurrentIdx == 0, "We don't need to check for PARAMS_START at runtime.");
-            while (++CurrentIdx <= MaxIdx) // Starts at second token as per the Assert ^^^
-            {
-                CurrentToken = TokenList[CurrentIdx];
-
-                switch (State)
-                {
-                    case ParserState.Parameters:
-                        OnStateParameters();
-                        break;
-                    case ParserState.Variables:
-                        OnStateVariables();
-                        break;
-                    case ParserState.Calculation:
-                        OnStateCalculation();
-                        break;
-                }
-            }
+            Advance();
+            Debug.Assert(CurrentIdx == 1, "We don't need to check for PARAMS_START at runtime.");
+            OnStateParameters();
+            OnStateVariables();
+            OnStateCalculation();
         }
 
         private void OnStateParameters()
         {
-            if (CurrentToken.Symbol == Tokens.Separators.PARAMS_END)
+            while (CurrentToken.Symbol != Tokens.Separators.PARAMS_END)
             {
-                State = ParserState.Variables;
-                return;
+                Assignment(TokenType.Parameter);
             }
 
-            PreCalculationHelper(TokenType.Parameter);
+            ParserError($"Indeterminate state during {State}!");
         }
 
         private void OnStateVariables()
         {
-            if (CurrentToken.Symbol == Tokens.Separators.CALC_START)
+            while (CurrentToken.Symbol != Tokens.Separators.CALC_START)
             {
-                State = ParserState.Calculation;
-                return;
+                Assignment(TokenType.Variable);
             }
 
-            PreCalculationHelper(TokenType.Variable);
+            ParserError($"Indeterminate state during {State}!");
         }
 
         private void OnStateCalculation()
         {
-            if (CurrentToken.Symbol == Tokens.Separators.CALC_END)
+            while (CurrentToken.Symbol != Tokens.Separators.CALC_END)
             {
-                Debug.Assert(CurrentIdx == MaxIdx);
-                return;
+                Statement();
             }
 
             ParserError($"Indeterminate state during {State}!");
         }
 
-        private void PreCalculationHelper(TokenType type)
+        private void Advance()
+        {
+            Debug.Assert(CurrentIdx >= 0);
+            CurrentToken = TokenList[++CurrentIdx];
+        }
+
+        private bool Accept(string symbol)
+        {
+            if (CurrentToken.Symbol == symbol)
+            {
+                Advance();
+                return true;
+            }
+            return false;
+        }
+
+        private bool Accept(TokenType type)
         {
             if (CurrentToken.Type == type)
             {
-                BufferToken();
-                return;
+                Advance();
+                return true;
             }
+            return false;
+        }
 
-            switch (CurrentToken.Type)
+        private bool Expect(string symbol)
+        {
+            if (Accept(symbol))
             {
-                case TokenType.Number:
-                    BufferToken();
-                    return;
-                case TokenType.Operator:
-                    if (CurrentToken.Symbol == Tokens.Operators.ASSIGN)
-                    {
-                        BufferToken();
-                        return;
-                    }
-
-                    break;
-                case TokenType.Separator:
-                    if (CurrentToken.Symbol == Tokens.Separators.TERMINATOR)
-                    {
-                        BufferToken();
-
-                        INode node = ParseNode.Factory(NodeType.Assignment);
-
-                        if (node.TryCreateNodes(GetTokens()))
-                        {
-                            RootNode.AddExistingNode(node);
-                            return;
-                        }
-                    }
-
-                    break;
+                return true;
             }
-
-            ParserError($"Indeterminate state during {State}!");
+            ParserError("Unexpected symbol!");
+            return false;
         }
 
-        private Token[] GetTokens()
+        private bool Expect(TokenType type)
         {
-            Token[] tokens = TokenBuffer.ToArray();
-            TokenBuffer.Clear();
-            return tokens;
+            if (Accept(type))
+            {
+                return true;
+            }
+            ParserError("Unexpected type of token!");
+            return false;
         }
 
-        private void BufferToken()
+        private void Assignment(TokenType type)
         {
-            TokenBuffer.Add(CurrentToken);
+            Expect(type);
+            Expect(Tokens.Operators.ASSIGN);
+            Expect(TokenType.Number);
+            Expect(Tokens.Separators.TERMINATOR);
+        }
+
+        private void Statement()
+        {
+            if (Accept(TokenType.Variable))
+            {
+                if (Accept(Tokens.Operators.ASSIGN))
+                {
+
+                }
+                else
+                {
+
+                }
+            }
         }
 
         private void ParserError(string error)

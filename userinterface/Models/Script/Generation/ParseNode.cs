@@ -28,8 +28,6 @@ namespace userinterface.Models.Script.Generation
         /// Children of this node, null if variable/number literal.
         /// </summary>
         public NodeList? Children { get; }
-
-        public bool TryCreateNodes(Token[] tokens);
     }
 
     public static class ParseNode
@@ -64,11 +62,6 @@ namespace userinterface.Models.Script.Generation
 
         public NodeList Children { get; } = new();
 
-        public bool TryCreateNodes(Token[] tokens)
-        {
-            throw new ParserException("Do not call this on Root!");
-        }
-
         public void AddExistingNode(INode node)
         {
             Children!.Add(node);
@@ -86,11 +79,6 @@ namespace userinterface.Models.Script.Generation
         public Token NodeToken { get; }
 
         public NodeList? Children => null;
-
-        public bool TryCreateNodes(Token[] tokens)
-        {
-            throw new ParserException("Do not call this on a leaf node!");
-        }
     }
 
     public class Number : INode
@@ -113,122 +101,48 @@ namespace userinterface.Models.Script.Generation
         public Token NodeToken { get; }
 
         public NodeList? Children => null;
-
-        public bool TryCreateNodes(Token[] tokens)
-        {
-            throw new ParserException("Do not call this on a leaf node!");
-        }
     }
 
     public class Assignment : INode
     {
-        private const string This = Tokens.Operators.ASSIGN;
+        public Token? NodeToken { get; init; }
 
-        public Token? NodeToken { get; private set; }
-
-        public NodeList Children { get; private set; } = new();
-
-        /// <summary>
-        /// Expected token order ->
-        /// (concrete) Identifier, This, (concrete) Identifier or Number, Separator(TERMINATOR)
-        /// </summary>
-        public bool TryCreateNodes(Token[] tokens)
-        {
-            if (tokens.Length != 4)
-            {
-                return false;
-            }
-
-            switch (tokens[0].Type)
-            {
-                case TokenType.Parameter:
-                case TokenType.Variable:
-                    Children.Add(ParseNode.Factory(NodeType.Variable, tokens[0]));
-                    break;
-                default:
-                    return false;
-            }
-
-            if (tokens[1].Type == TokenType.Operator && tokens[1].Symbol == This)
-            {
-                NodeToken = tokens[1];
-            }
-            else
-            {
-                return false;
-            }
-
-            switch (tokens[2].Type)
-            {
-                case TokenType.Parameter:
-                case TokenType.Variable:
-                    Children.Add(ParseNode.Factory(NodeType.Variable, tokens[2]));
-                    break;
-                case TokenType.Number:
-                    Children.Add(ParseNode.Factory(NodeType.Number, tokens[2]));
-                    break;
-                default:
-                    return false;
-            }
-
-            return tokens[3].Type == TokenType.Separator &&
-                tokens[3].Symbol == Tokens.Separators.TERMINATOR;
-        }
+        public NodeList Children { get; } = new();
     }
 
     public class BinaryExpression : INode
     {
-        public Token? NodeToken { get; private set; }
-        public NodeList Children { get; private set; } = new();
+        public Token? NodeToken { get; init; }
 
-        public bool TryCreateNodes(Token[] tokens)
-        {
-            throw new NotImplementedException();
-        }
+        public NodeList Children { get; } = new();
     }
 
     public class AssignmentExpression : INode
     {
-        public Token? NodeToken { get; private set; }
-        public NodeList Children { get; private set; } = new();
+        public Token? NodeToken { get; init; }
 
-        public bool TryCreateNodes(Token[] tokens)
-        {
-            throw new NotImplementedException();
-        }
+        public NodeList Children { get; } = new();
     }
 
     public class Comparison : INode
     {
-        public Token? NodeToken { get; private set; }
-        public NodeList Children { get; private set; } = new();
+        public Token? NodeToken { get; init; }
 
-        public bool TryCreateNodes(Token[] tokens)
-        {
-            throw new NotImplementedException();
-        }
+        public NodeList Children { get; } = new();
     }
 
     public class Branch : INode
     {
-        public Token? NodeToken { get; private set; }
-        public NodeList Children { get; private set; } = new();
+        public Token? NodeToken { get; init; }
 
-        public bool TryCreateNodes(Token[] tokens)
-        {
-            throw new NotImplementedException();
-        }
+        public NodeList Children { get; } = new();
     }
 
     public class FunctionCall : INode
     {
-        public Token? NodeToken { get; private set; }
-        public NodeList Children { get; private set; } = new();
+        public Token? NodeToken { get; init; }
 
-        public bool TryCreateNodes(Token[] tokens)
-        {
-            throw new NotImplementedException();
-        }
+        public NodeList Children { get; } = new();
     }
 
     public class NodeList : List<INode>, IList<INode>
