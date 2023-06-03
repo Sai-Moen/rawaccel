@@ -1,26 +1,28 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 
 namespace userinterface.Models.Script.Generation
 {
-    public enum TokenType
+    [Flags]
+    public enum TokenType : byte
     {
-        Undefined,
-        Identifier,
-        Parameter,
-        Variable,
-        Number,
-        Keyword,
-        Separator,
-        Operator,
-        Function,
+        Undefined   = 0,
+        Identifier  = 1 << 0,
+        Parameter   = 1 << 1,
+        Variable    = 1 << 2,
+        Number      = 1 << 3,
+        Keyword     = 1 << 4,
+        Separator   = 1 << 5,
+        Operator    = 1 << 6,
+        Function    = 1 << 7,
     }
 
     public record Token(TokenType Type, uint Line, string Symbol);
 
     public static class Tokens
     {
-        private static readonly (TokenType, string)[] ListReserved = new (TokenType, string)[]
+        private static readonly (TokenType, string)[] ReservedArray =
         {
             (Keywords.DefaultType, Keywords.INPUT),
             (Keywords.DefaultType, Keywords.OUTPUT),
@@ -88,17 +90,17 @@ namespace userinterface.Models.Script.Generation
 
         static Tokens()
         {
-            MapReserved = new TokenMap(ListReserved.Length);
+            ReservedMap = new TokenMap(ReservedArray.Length);
 
-            foreach((TokenType type, string name) in ListReserved)
+            foreach((TokenType type, string name) in ReservedArray)
             {
-                MapReserved.Add(name, new Token(type, 0, name));
+                ReservedMap.Add(name, new Token(type, 0, name));
             }
 
-            Debug.Assert(MapReserved.Count == ListReserved.Length);
+            Debug.Assert(ReservedMap.Count == ReservedArray.Length);
         }
 
-        public static readonly TokenMap MapReserved;
+        public static readonly TokenMap ReservedMap;
 
         public static class Keywords
         {
@@ -116,41 +118,18 @@ namespace userinterface.Models.Script.Generation
             // Branching
             public const string BRANCH_IF       = "if";
             public const string BRANCH_WHILE    = "while";
+
+            private static readonly string[] PredefinedArray =
+            {
+                INPUT, OUTPUT,
+                CONST_E, CONST_PI, CONST_TAU,
+            };
+
+            public static readonly TokenSet PredefinedSet = new(PredefinedArray);
         }
 
         public static class Separators
         {
-            private static readonly string[] SeparatorsList = new string[]
-            {
-                BLOCK, TERMINATOR, FPOINT,
-                PREC_START, PREC_END,
-                PARAMS_START, PARAMS_END,
-                CALC_START, CALC_END,
-            };
-
-            private static readonly string[] CalculationSeparatorsList = new string[]
-            {
-                BLOCK, TERMINATOR,
-                PREC_START, PREC_END,
-            };
-
-            static Separators()
-            {
-                Set = new HashSet<char>();
-
-                foreach(string s in SeparatorsList)
-                {
-                    Debug.Assert(s.Length == 1);
-                }
-
-                foreach(string s in CalculationSeparatorsList)
-                {
-                    Set.Add(s[0]);
-                }
-            }
-
-            public static readonly ISet<char> Set;
-
             public const TokenType DefaultType = TokenType.Separator;
 
             // Delimiters
@@ -169,36 +148,44 @@ namespace userinterface.Models.Script.Generation
             // Calculation
             public const string CALC_START      = "{";
             public const string CALC_END        = "}";
+
+            private static readonly string[] SeparatorsArray =
+            {
+                BLOCK, TERMINATOR, FPOINT,
+                PREC_START, PREC_END,
+                PARAMS_START, PARAMS_END,
+                CALC_START, CALC_END,
+            };
+
+            private static readonly string[] CalcSeparatorsArray =
+            {
+                BLOCK, TERMINATOR,
+                PREC_START, PREC_END,
+            };
+
+            static Separators()
+            {
+                CalcSet = new HashSet<char>();
+
+                foreach(string s in SeparatorsArray)
+                {
+                    Debug.Assert(s.Length == 1);
+                }
+
+                foreach(string s in CalcSeparatorsArray)
+                {
+                    CalcSet.Add(s[0]);
+                }
+            }
+
+            public static readonly ISet<char> CalcSet;
         }
 
         public static class Operators
         {
-            private static readonly string[] OperatorsList = new string[]
-            {
-                ASSIGN,
-                ADD, SUB, MUL, DIV, MOD, EXP,
-                IADD, ISUB, IMUL, IDIV, IMOD,
-                CMP_AND, CMP_OR, CMP_NOT,
-                CMP_EQ, CMP_LT, CMP_GT, CMP_LE, CMP_GE,
-            };
-
-            static Operators()
-            {
-                Set = new HashSet<char>();
-
-                foreach(string s in OperatorsList)
-                {
-                    // Hack safely,
-                    Debug.Assert(s.Length == 1 || (s.Length == 2 && s[1] == SECOND_C));
-
-                    // since we know that the second character is always the same
-                    Set.Add(s[0]);
-                }
-            }
-
-            public static readonly ISet<char> Set;
-
             public const TokenType DefaultType = TokenType.Operator;
+
+            public const uint MaxPrecedence = 2;
 
             // Assignment
             public const string ASSIGN  = "=";
@@ -231,6 +218,60 @@ namespace userinterface.Models.Script.Generation
             public const string CMP_GT  = ">";
             public const string CMP_LE  = "<=";
             public const string CMP_GE  = ">=";
+
+            private static readonly string[] OperatorsArray =
+            {
+                ASSIGN,
+                ADD, SUB, MUL, DIV, MOD, EXP,
+                IADD, ISUB, IMUL, IDIV, IMOD, IEXP,
+                CMP_AND, CMP_OR, CMP_NOT,
+                CMP_EQ, CMP_LT, CMP_GT, CMP_LE, CMP_GE,
+            };
+
+            private static readonly string[][] ArithmeticArray =
+            {
+                new string[2] { ADD, SUB, },
+                new string[3] { MUL, DIV, MOD, },
+                new string[1] { EXP, }
+            };
+
+            private static readonly string[] InlineArray =
+            {
+                IADD, ISUB, IMUL, IDIV, IMOD, IEXP,
+            };
+
+            private static readonly string[] ComparisonArray =
+            {
+                CMP_AND, CMP_OR, CMP_NOT,
+                CMP_EQ, CMP_LT, CMP_GT, CMP_LE, CMP_GE,
+            };
+
+            static Operators()
+            {
+                FullSet = new HashSet<char>();
+
+                foreach(string s in OperatorsArray)
+                {
+                    // Hack safely,
+                    Debug.Assert(s.Length == 1 || (s.Length == 2 && s[1] == SECOND_C));
+
+                    // since we know that the second character is always the same
+                    FullSet.Add(s[0]);
+                }
+            }
+
+            public static readonly ISet<char> FullSet;
+
+            public static readonly TokenSet[] ArithmeticSetArray =
+            {
+                new(ArithmeticArray[0]),
+                new(ArithmeticArray[1]),
+                new(ArithmeticArray[2]),
+            };
+
+            public static readonly TokenSet InlineSet = new(InlineArray);
+
+            public static readonly TokenSet ComparisonSet = new(ComparisonArray);
         }
 
         public static class Functions
@@ -270,27 +311,35 @@ namespace userinterface.Models.Script.Generation
             public const string TANH    = "tanh";   // Hyperbolic
             public const string ATAN    = "atan";   // Inverse
             public const string ATANH   = "atanh";  // Inverse Hyperbolic
+
+            private static readonly string[] FunctionsArray =
+            {
+                ABS, SQRT, CBRT,
+                ROUND, TRUNC, CEIL, FLOOR,
+                LOG, LOG2, LOG10,
+                SIN, SINH, ASIN, ASINH,
+                COS, COSH, ACOS, ACOSH,
+                TAN, TANH, ATAN, ATANH,
+            };
+
+            public static readonly TokenSet FunctionsSet = new(FunctionsArray);
         }
     }
 
     public class TokenMap : Dictionary<string, Token>, IDictionary<string, Token>
     {
-        public TokenMap()
-            : base()
-        {
-        }
+        public TokenMap() : base() {}
 
-        public TokenMap(int capacity)
-            : base(capacity)
-        {
-        }
+        public TokenMap(int capacity) : base(capacity) {}
     }
 
     public class TokenList : List<Token>, IList<Token>
     {
-        public TokenList()
-            : base()
-        {
-        }
+        public TokenList() : base() {}
+    }
+
+    public class TokenSet : HashSet<string>, ISet<string>
+    {
+        public TokenSet(IEnumerable<string> collection) : base(collection) {}
     }
 }

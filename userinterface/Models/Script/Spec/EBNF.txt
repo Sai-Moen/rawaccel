@@ -1,3 +1,5 @@
+(* RawAccelScript EBNF (with creative liberties) *)
+
 alphabetic = "A" | "B" | "C" | "D" | "E" | "F" | "G"
 		   | "H" | "I" | "J" | "K" | "L" | "M" | "N"
 		   | "O" | "P" | "Q" | "R" | "S" | "T" | "U"
@@ -44,16 +46,16 @@ slot = identifier | keyword ;
 
 calculation = { statement } ;
 
-statement = variable , "=" , expression , ";"
-		  | variable , inline , expression , ";"
+statement = variable , "=" , expression0 , ";"
+		  | variable , inline , expression0 , ";"
 		  | "if" , "(" , condition , ")" , ":" , { statement } , ":"
 		  | "while" , "(" , condition , ")" , ":" , { statement } , ":" ;
 
-condition = expression , comparison , expression ;
+condition = expression0 , comparison , expression0 ;
 
-expression = [ precendence0 ] , term , { [ precendence0 ] , term } ;
+expression0 = [ precendence0 ] , expression1 , [ { precendence0 , expression1 } ] ;
 
-term = factor , { [ precedence1 ] , factor } ;
+expression1 = expression2 , [ { precedence1 , expression2 } ] ;
 
-factor = identifier , [ { precedence2 , identifier } ]
-	   | [ function ] , "(" expression ")" ;
+expression2 = slot , [ { precedence2 , slot } ]
+	  | [ function ] , "(" , expression0 , ")" ;

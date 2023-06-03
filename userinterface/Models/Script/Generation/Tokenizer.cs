@@ -95,7 +95,7 @@ namespace userinterface.Models.Script.Generation
 
         private bool IsReserved(string s)
         {
-            return UsedIdentifiers.ContainsKey(s) || Tokens.MapReserved.ContainsKey(s);
+            return UsedIdentifiers.ContainsKey(s) || Tokens.ReservedMap.ContainsKey(s);
         }
 
         private void CheckCharacters()
@@ -169,7 +169,7 @@ namespace userinterface.Models.Script.Generation
         {
             if (StringCompareCurrentChar(Tokens.Separators.PARAMS_START))
             {
-                AddMapReservedCharacter();
+                AddReservedCharacter();
                 State = TokenizerState.Parameters;
             }
         }
@@ -178,8 +178,8 @@ namespace userinterface.Models.Script.Generation
         {
             if (StringCompareCurrentChar(Tokens.Separators.PARAMS_END))
             {
-                AddTokenIfUnreserved();
-                AddMapReservedCharacter();
+                AddTokenIfUnused();
+                AddReservedCharacter();
                 State = TokenizerState.Variables;
                 return;
             }
@@ -191,8 +191,8 @@ namespace userinterface.Models.Script.Generation
         {
             if (StringCompareCurrentChar(Tokens.Separators.CALC_START))
             {
-                AddTokenIfUnreserved();
-                AddMapReservedCharacter();
+                AddTokenIfUnused();
+                AddReservedCharacter();
                 State = TokenizerState.Calculation;
                 return;
             }
@@ -205,15 +205,16 @@ namespace userinterface.Models.Script.Generation
             if (StringCompareCurrentChar(Tokens.Separators.CALC_END))
             {
                 AddAnyReservedToken();
-                AddMapReservedCharacter();
+                AddReservedCharacter();
                 Debug.Assert(CurrentIdx == MaxIdx, "Final character check got removed?");
                 return;
             }
 
             bool isAlphabetic = IsAlphabeticCharacter(CurrentChar);
             bool isNumeric = IsNumericCharacter(CurrentChar);
-            bool isSeparator = Tokens.Separators.Set.Contains(CurrentChar);
-            bool isOperator = Tokens.Operators.Set.Contains(CurrentChar);
+
+            bool isSeparator = Tokens.Separators.CalcSet.Contains(CurrentChar);
+            bool isOperator = Tokens.Operators.FullSet.Contains(CurrentChar);
 
             bool isTwoCharOperator = isOperator && PeekNext() == Tokens.Operators.SECOND_C;
 
@@ -239,7 +240,7 @@ namespace userinterface.Models.Script.Generation
                             return;
                         }
 
-                        AddMapReservedToken();
+                        AddReservedToken();
                         return;
                     }
 
@@ -263,13 +264,14 @@ namespace userinterface.Models.Script.Generation
                             return;
                         }
 
-                        AddMapReservedCharacter();
+                        AddReservedCharacter();
                         return;
                     }
 
                     break;
                 case TokenType.Operator:
-                    AddMapReservedToken();
+                    BufferCurrentChar();
+                    AddReservedToken();
                     return;
             }
 
@@ -316,9 +318,20 @@ namespace userinterface.Models.Script.Generation
                     {
                         CurrentTokenState = type;
                         Debug.Assert(CurrentTokenState == type, "Relies on side-effect");
-                        AddTokenIfUnreserved();
-                        AddMapReservedCharacter();
+                        AddTokenIfUnused();
+                        AddReservedCharacter();
                         return;
+                    }
+
+                    if (type == TokenType.Variable)
+                    {
+                        // Allow the user to assign a Parameter to a Variable
+                        if (StringCompareCurrentChar(Tokens.Separators.TERMINATOR))
+                        {
+                            AddUsedToken();
+                            AddReservedCharacter();
+                            return;
+                        }
                     }
 
                     break;
@@ -337,18 +350,18 @@ namespace userinterface.Models.Script.Generation
 
                     if (StringCompareCurrentChar(Tokens.Separators.TERMINATOR))
                     {
-                        AddTokenIfUnreserved();
-                        AddMapReservedCharacter();
+                        AddTokenIfUnused();
+                        AddReservedCharacter();
                         return;
                     }
-
+                    
                     break;
             }
 
             TokenizerError($"Indeterminate state during {State}!");
         }
 
-        private void AddTokenIfUnreserved()
+        private void AddTokenIfUnused()
         {
             Debug.Assert(State != TokenizerState.Calculation, "Only declare new Identifiers before Calculation!");
 
@@ -367,6 +380,9 @@ namespace userinterface.Models.Script.Generation
 
             Token token = new(CurrentTokenState, CurrentLine, s);
 
+            Debug.Assert(CurrentTokenState == TokenType.Number ||
+                (CurrentTokenState & (TokenType.Parameter | TokenType.Variable)) != TokenType.Undefined,
+                "Invalid state while trying to reserve identifier!");
             if (CurrentTokenState != TokenType.Number)
             {
                 UsedIdentifiers.Add(s, token);
@@ -375,30 +391,48 @@ namespace userinterface.Models.Script.Generation
             AddToken(token);
         }
 
-        private void AddMapReservedCharacter()
+        private void AddReservedCharacter()
         {
-            AddMapReservedToken(CurrentChar.ToString());
+            AddReservedToken(CurrentChar.ToString());
         }
 
-        private void AddMapReservedToken()
+        private void AddReservedToken()
         {
             Debug.Assert(CharBuffer.Length != 0, "Can't add empty reserved token!");
-            AddMapReservedToken(CharBuffer.ToString());
+            AddReservedToken(CharBuffer.ToString());
         }
 
-        private void AddMapReservedToken(string s)
+        private void AddReservedToken(string s)
         {
             Debug.Assert(!UsedIdentifiers.ContainsKey(s));
 
             Token token;
 
-            if (Tokens.MapReserved.TryGetValue(s, out token!))
+            if (Tokens.ReservedMap.TryGetValue(s, out token!))
             {
                 AddToken(token with { Line = CurrentLine });
                 return;
             }
 
             TokenizerError("Cannot add unmapped token!");
+        }
+
+        private void AddUsedToken()
+        {
+            AddUsedToken(CharBuffer.ToString());
+        }
+
+        private void AddUsedToken(string s)
+        {
+            Token token;
+
+            if (UsedIdentifiers.TryGetValue(s, out token!))
+            {
+                AddToken(token with { Line = CurrentLine });
+                return;
+            }
+
+            TokenizerError("Cannot add used identifier!");
         }
 
         private void AddAnyReservedToken()
@@ -408,6 +442,7 @@ namespace userinterface.Models.Script.Generation
                 Debug.Assert(CurrentTokenState == TokenType.Undefined);
                 return;
             }
+
             AddAnyReservedToken(CharBuffer.ToString());
         }
 
@@ -415,7 +450,7 @@ namespace userinterface.Models.Script.Generation
         {
             Token token;
 
-            if (Tokens.MapReserved.TryGetValue(s, out token!) ||
+            if (Tokens.ReservedMap.TryGetValue(s, out token!) ||
                 UsedIdentifiers.TryGetValue(s, out token!))
             {
                 AddToken(token with { Line = CurrentLine });
@@ -455,19 +490,17 @@ namespace userinterface.Models.Script.Generation
 
         private void CapIdentifierLength()
         {
-            Debug.Assert(CharBuffer.Length <= MaxIdentifierLength);
-            if (CharBuffer.Length == MaxIdentifierLength)
+            if (CharBuffer.Length > MaxIdentifierLength)
             {
-                TokenizerError($"Identifier name too long! (stay below {MaxIdentifierLength} characters)");
+                TokenizerError($"Identifier name too long! (max {MaxIdentifierLength} characters)");
             }
         }
 
         private void CapNumberLength()
         {
-            Debug.Assert(CharBuffer.Length <= MaxNumberLength);
-            if (CharBuffer.Length == MaxNumberLength)
+            if (CharBuffer.Length > MaxNumberLength)
             {
-                TokenizerError($"Number too long! (stay below {MaxNumberLength} characters)");
+                TokenizerError($"Number too long! (max {MaxNumberLength} characters)");
             }
         }
 

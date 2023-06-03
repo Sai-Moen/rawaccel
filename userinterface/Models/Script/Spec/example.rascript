@@ -9,9 +9,9 @@ Might make it more of a 'tutorial' in the future.
 
 ]
 
-NewX = 0;
-y1 = 0;
-y2 = 0;
+	NewX = 0;
+	y1 = 0;
+	y2 = 0;
 
 {
 

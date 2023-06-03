@@ -30,7 +30,7 @@ namespace userinterface.Models.Script.Generation
         public NodeList? Children { get; }
     }
 
-    public static class ParseNode
+    public static class ParserNode
     {
         public static INode Factory(NodeType type)
         {
@@ -148,5 +148,12 @@ namespace userinterface.Models.Script.Generation
     public class NodeList : List<INode>, IList<INode>
     {
         public NodeList() : base() {}
+
+        public NodeList(int capacity) : base(capacity) {}
+    }
+
+    public class TokenStack : Stack<Token>
+    {
+        public TokenStack() : base() {}
     }
 }
