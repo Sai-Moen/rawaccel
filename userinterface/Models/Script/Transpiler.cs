@@ -27,7 +27,7 @@ namespace userinterface.Models.Script
             {
                 string script = ScriptLoader.LoadScript(scriptPath);
                 Tokenizer tokenizer = new(script);
-                //Parser parser = new(tokenizer.TokenList);
+                Parser parser = new(tokenizer.TokenList);
 #if DEBUG
                 foreach (Token token in tokenizer.TokenList)
                 {

@@ -15,12 +15,14 @@ identifier = alphabetic , { alphabetic | (digit | ".") } ; (* Limited to 15 char
 number = { digit } , [ "." , { digit } ] ; (* Limited to 31 characters *)
 
 keyword = "x" | "y" | "e" | "pi" | "tau" ;
+branch = "if" | "while" ;
 
 precedence0 = "+" | "-" ;
 precedence1 = "*" | "/" | "%" ;
 precedence2 = "^" ;
 
 inline	   = "+=" | "-=" | "*=" | "/=" | "%=" | "^=" ;
+assignment = "=" | inline ;
 
 comparison = "&" | "|" | "!"
 		   | "==" | "<" | ">" | "<=" | ">=" ;
@@ -46,12 +48,8 @@ slot = identifier | keyword ;
 
 calculation = { statement } ;
 
-statement = variable , "=" , expression0 , ";"
-		  | variable , inline , expression0 , ";"
-		  | "if" , "(" , condition , ")" , ":" , { statement } , ":"
-		  | "while" , "(" , condition , ")" , ":" , { statement } , ":" ;
-
-condition = expression0 , comparison , expression0 ;
+statement = variable , assignment , expression0 , ";"
+		  | branch , "(" , expression0 , comparison , expression0 , ")" , ":" , { statement } , ":" 
 
 expression0 = [ precendence0 ] , expression1 , [ { precendence0 , expression1 } ] ;
 

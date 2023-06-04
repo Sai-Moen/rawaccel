@@ -4,30 +4,19 @@ using System.Runtime.CompilerServices;
 namespace userinterface.Models.Script.Generation
 {
     /// <summary>
-    /// Phase of the Parser, similar to the tokenizer,
-    /// but without the Comments Section, as there are no Comment Tokens.
-    /// </summary>
-    internal enum ParserState
-    {
-        Parameters,
-        Variables,
-        Calculation,
-    }
-
-    /// <summary>
     /// Automatically attempts to Parse a list of Tokens into a Syntax Tree of Nodes.
     /// </summary>
     internal class Parser
     {
         #region Fields
 
-        private ParserState State = ParserState.Parameters;
-
         internal NodeList Parameters { get; } = new(8);
 
         internal NodeList Variables { get; } = new();
 
-        internal Root RootNode { get; } = new();
+        internal ParserNode RootNode { get; } = new(NodeType.Root, new Token(TokenType.Undefined, 0, ""));
+
+        private ParserNode CurrentNode;
 
         private readonly TokenStack TokenBuffer = new();
 
@@ -54,77 +43,112 @@ namespace userinterface.Models.Script.Generation
             MaxIdx = TokenList.Count - 1;
             Debug.Assert(MaxIdx > 0);
 
+            AdvanceToken();
+            Debug.Assert(CurrentIdx == 1, "We don't need to check for PARAMS_START at runtime.");
+
+            CurrentNode = RootNode;
             Parse();
         }
 
         #endregion Constructors
 
-        #region Methods
+        #region Helpers
 
         private void Parse()
         {
-            CurrentToken = TokenList[++CurrentIdx];
-            Debug.Assert(CurrentIdx == 1, "We don't need to check for PARAMS_START at runtime.");
-            OnStateParameters();
-            OnStateVariables();
-            OnStateCalculation();
-        }
-
-        private void OnStateParameters()
-        {
+            // Parameters
             while (CurrentToken.Symbol != Tokens.Separators.PARAMS_END)
             {
-                Expect(TokenType.Parameter);
-                Expect(Tokens.Operators.ASSIGN);
-                Expect(TokenType.Number);
-                Expect(Tokens.Separators.TERMINATOR);
+                DeclExpect(TokenType.Parameter);
+                DeclExpect(Tokens.Operators.ASSIGN);
+                DeclExpect(TokenType.Number);
+                DeclExpect(Tokens.Separators.TERMINATOR);
             }
+            AdvanceToken();
+            Debug.Assert(CurrentToken.Symbol != Tokens.Separators.PARAMS_END);
 
-            State = ParserState.Variables;
-        }
-
-        private void OnStateVariables()
-        {
+            // Variables
             while (CurrentToken.Symbol != Tokens.Separators.CALC_START)
             {
-                Expect(TokenType.Variable);
-                Expect(Tokens.Operators.ASSIGN);
-                Expect(TokenType.Number | TokenType.Parameter);
-                Expect(Tokens.Separators.TERMINATOR);
+                DeclExpect(TokenType.Variable);
+                DeclExpect(Tokens.Operators.ASSIGN);
+                DeclExpect(TokenType.Number | TokenType.Parameter);
+                DeclExpect(Tokens.Separators.TERMINATOR);
             }
+            AdvanceToken();
+            Debug.Assert(CurrentToken.Symbol != Tokens.Separators.CALC_START);
 
-            State = ParserState.Calculation;
-        }
-
-        private void OnStateCalculation()
-        {
+            // Calculation
             while (CurrentToken.Symbol != Tokens.Separators.CALC_END)
             {
                 Statement();
             }
-
-            ParserError($"Indeterminate state during {State}!");
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void AdvanceToken()
+        {
+            CurrentToken = TokenList[++CurrentIdx];
+        }
+
+        #endregion Helpers
+
+        #region Declarations
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private bool DeclExpect(bool expect)
+        {
+            if (expect)
+            {
+                if (CurrentToken.Symbol == Tokens.Separators.TERMINATOR)
+                {
+                    Token assignee = TokenBuffer.Pop();
+                    Token eq = TokenBuffer.Pop();
+                    Debug.Assert(eq.Symbol == Tokens.Operators.ASSIGN);
+                    ParserNode declaration = new(NodeType.Assignment, eq, RootNode);
+
+                    Token assigned = TokenBuffer.Pop();
+                    Debug.Assert(TokenBuffer.Count == 0);
+
+                    NodeType type = assignee.Type == TokenType.Parameter ? NodeType.Identifier : NodeType.Number;
+                    declaration.Children.Add(new ParserNode(NodeType.Identifier, assigned, declaration));
+                    declaration.Children.Add(new ParserNode(type, assignee, declaration));
+
+                    NodeList list = assigned.Type == TokenType.Parameter ? Parameters : Variables;
+                    list.Add(declaration);
+                }
+                else
+                {
+                    TokenBuffer.Push(CurrentToken);
+                }
+                AdvanceToken();
+                return true;
+            }
+            ParserError("Unexpected declaration!");
+            return false;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private bool DeclExpect(TokenType type)
+        {
+            return DeclExpect((CurrentToken.Type & type) != TokenType.Undefined);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private bool DeclExpect(string symbol)
+        {
+            return DeclExpect(CurrentToken.Symbol == symbol);
+        }
+
+        #endregion Declarations
+
+        #region Recursive Descent
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void Advance()
         {
-            switch (State)
-            {
-                case ParserState.Parameters:
-                    break;
-                case ParserState.Variables:
-                    break;
-                case ParserState.Calculation:
-                    break;
-            }
-
-            CurrentToken = TokenList[++CurrentIdx];
+            AdvanceToken();
         }
-
-        #endregion Methods
-
-        #region Recursive Descent
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private bool Accept(bool accept)
@@ -156,17 +180,6 @@ namespace userinterface.Models.Script.Generation
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private bool Expect(TokenType type)
-        {
-            if (Accept(type))
-            {
-                return true;
-            }
-            ParserError("Unexpected type of token!");
-            return false;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private bool Expect(string symbol)
         {
             if (Accept(symbol))
@@ -188,7 +201,7 @@ namespace userinterface.Models.Script.Generation
             return false;
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void Expression(uint precedence = 0)
         {
             TokenSet currentSet = Tokens.Operators.ArithmeticSetArray[precedence];
@@ -196,8 +209,8 @@ namespace userinterface.Models.Script.Generation
             Debug.Assert(precedence <= Tokens.Operators.MaxPrecedence);
             if (precedence == Tokens.Operators.MaxPrecedence)
             {
-                if (Accept(Tokens.Keywords.PredefinedSet) ||
-                    Accept(TokenType.Parameter | TokenType.Variable))
+                if (Accept(TokenType.Parameter | TokenType.Variable) ||
+                    Accept(Tokens.Keywords.BuiltinSet))
                 {
                     if (Accept(currentSet))
                     {
@@ -207,6 +220,7 @@ namespace userinterface.Models.Script.Generation
                 else
                 {
                     if (Accept(Tokens.Functions.FunctionsSet)) {}
+
                     Expect(Tokens.Separators.PREC_START);
                     Expression();
                     Expect(Tokens.Separators.PREC_END);
@@ -215,34 +229,33 @@ namespace userinterface.Models.Script.Generation
             else
             {
                 if (precedence == 0 && Accept(currentSet)) {}
-                do { Expression(precedence + 1); } while (Accept(currentSet));
+
+                do Expression(precedence + 1);
+                while (Accept(currentSet));
             }
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void Statement()
         {
-            if (Accept(TokenType.Variable))
+            if (Accept(TokenType.Variable) ||
+                Accept(Tokens.Keywords.InOutSet))
             {
-                if (Accept(Tokens.Operators.ASSIGN) || Accept(Tokens.Operators.InlineSet))
-                {
-                    Expression();
-                    Expect(Tokens.Separators.TERMINATOR);
-                }
+                Expect(Tokens.Operators.AssignmentSet);
+                Expression();
+                Expect(Tokens.Separators.TERMINATOR);
             }
-            else if (Accept(Tokens.Keywords.BRANCH_IF) || Accept(Tokens.Keywords.BRANCH_WHILE))
+            else
             {
+                Expect(Tokens.Keywords.BranchSet);
                 Expect(Tokens.Separators.PREC_START);
                 Expression();
                 Expect(Tokens.Operators.ComparisonSet);
                 Expression();
                 Expect(Tokens.Separators.PREC_END);
                 Expect(Tokens.Separators.BLOCK);
-                do { Statement(); } while (!Accept(Tokens.Separators.BLOCK));
-            }
-            else
-            {
-                ParserError("Could not parse statement!");
+                do Statement();
+                while (!Accept(Tokens.Separators.BLOCK));
             }
         }
 

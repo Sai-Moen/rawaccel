@@ -119,13 +119,27 @@ namespace userinterface.Models.Script.Generation
             public const string BRANCH_IF       = "if";
             public const string BRANCH_WHILE    = "while";
 
-            private static readonly string[] PredefinedArray =
+            private static readonly string[] BuiltinArray =
             {
                 INPUT, OUTPUT,
                 CONST_E, CONST_PI, CONST_TAU,
             };
 
-            public static readonly TokenSet PredefinedSet = new(PredefinedArray);
+            private static readonly string[] IOArray =
+            {
+                INPUT, OUTPUT,
+            };
+
+            private static readonly string[] BranchArray =
+            {
+                BRANCH_IF, BRANCH_WHILE,
+            };
+
+            public static readonly TokenSet BuiltinSet = new(BuiltinArray);
+
+            public static readonly TokenSet InOutSet = new(IOArray);
+
+            public static readonly TokenSet BranchSet = new(BranchArray);
         }
 
         public static class Separators
@@ -235,8 +249,9 @@ namespace userinterface.Models.Script.Generation
                 new string[1] { EXP, }
             };
 
-            private static readonly string[] InlineArray =
+            private static readonly string[] AssignmentArray =
             {
+                ASSIGN,
                 IADD, ISUB, IMUL, IDIV, IMOD, IEXP,
             };
 
@@ -269,7 +284,7 @@ namespace userinterface.Models.Script.Generation
                 new(ArithmeticArray[2]),
             };
 
-            public static readonly TokenSet InlineSet = new(InlineArray);
+            public static readonly TokenSet AssignmentSet = new(AssignmentArray);
 
             public static readonly TokenSet ComparisonSet = new(ComparisonArray);
         }
