@@ -3,15 +3,12 @@ using System.Text;
 
 namespace userinterface.Models.Script.Generation
 {
-    /// <summary>
-    /// Phase of the Tokenizer, that determines the characters and tokens to accept.
-    /// </summary>
-    internal enum TokenizerState
+    public enum CharBufferState
     {
-        Comments,
-        Parameters,
-        Variables,
-        Calculation,
+        Idle,
+        Identifier,
+        Number,
+        Special,
     }
 
     /// <summary>
@@ -33,15 +30,11 @@ namespace userinterface.Models.Script.Generation
 
         #region Fields
 
-        private TokenizerState State = TokenizerState.Comments;
-
-        private TokenType CurrentTokenState = TokenType.Undefined;
-
         internal TokenList TokenList { get; } = new();
 
-        private readonly TokenMap UsedIdentifiers = new();
-
         private readonly StringBuilder CharBuffer = new();
+
+        private CharBufferState BufferState = CharBufferState.Idle;
 
         private int CurrentIdx = -1;
 
@@ -69,14 +62,27 @@ namespace userinterface.Models.Script.Generation
 
             CheckCharacters();
 
-            Debug.Assert(CurrentLine == 1, "CurrentLine not set correctly!");
-
             Tokenize();
         }
 
         #endregion Constructors
 
-        #region Methods
+        #region Static Methods
+
+        private static bool CmpCharStr(char c, string s)
+        {
+            return c == s[0];
+        }
+
+        private static bool IsReserved(char c)
+        {
+            return IsReserved(c.ToString());
+        }
+
+        private static bool IsReserved(string s)
+        {
+            return Tokens.ReservedMap.ContainsKey(s);
+        }
 
         private static bool IsAlphabeticCharacter(char c)
         {
@@ -85,37 +91,35 @@ namespace userinterface.Models.Script.Generation
 
         private static bool IsNumericCharacter(char c)
         {
-            return (c >= '0' && c <= '9') || c == Tokens.Separators.FPOINT[0];
+            return (c >= '0' && c <= '9') || CmpCharStr(c, Tokens.FPOINT);
         }
 
-        private bool IsReserved(char c)
-        {
-            return IsReserved(c.ToString());
-        }
+        #endregion Static Methods
 
-        private bool IsReserved(string s)
-        {
-            return UsedIdentifiers.ContainsKey(s) || Tokens.ReservedMap.ContainsKey(s);
-        }
+        #region Methods
 
         private void CheckCharacters()
         {
             Debug.Assert(MaxIdx > 0, "MaxIdx not set correctly!");
 
             // Not a problem in terms of parsing, but for consistency among (us) script writers.
-            if (Characters[MaxIdx] != Tokens.Separators.CALC_END[0])
+            if (!CmpCharStr(Characters[MaxIdx], Tokens.CALC_END))
             {
                 CurrentLine = 0; // The location is in the error.
                 TokenizerError("Please don't type anything after the body.");
             }
 
+            int startingIndex = 0;
+            uint startingLine = 1;
             bool isComments = true;
 
             foreach (char c in Characters)
             {
                 if (isComments)
                 {
-                    isComments = c != Tokens.Separators.PARAMS_START[0];
+                    startingLine += (uint)(c == NewLine ? 1 : 0);
+                    isComments ^= CmpCharStr(c, Tokens.PARAMS_START);
+                    startingIndex = isComments ? ++startingIndex : --startingIndex;
                     continue;
                 }
                 else if (c == NewLine)
@@ -131,12 +135,14 @@ namespace userinterface.Models.Script.Generation
                 TokenizerError($"Unsupported character detected, char: {c}, u16: {(ushort)c}");
             }
 
-            CurrentLine = 1;
+            CurrentIdx = startingIndex;
+            CurrentLine = startingLine;
         }
 
         private void Tokenize()
         {
-            Debug.Assert(CurrentIdx == -1, "CurrentIdx not initialized correctly!");
+            Debug.Assert(CmpCharStr(Characters[CurrentIdx + 1], Tokens.PARAMS_START),
+                "Current Char should start at the parameter opening!");
             while (++CurrentIdx <= MaxIdx)
             {
                 CurrentChar = Characters[CurrentIdx];
@@ -146,325 +152,128 @@ namespace userinterface.Models.Script.Generation
                     ++CurrentLine;
                     continue;
                 }
-
-                switch (State)
+                else if (IsAlphabeticCharacter(CurrentChar))
                 {
-                    case TokenizerState.Comments:
-                        OnStateStartup();
-                        break;
-                    case TokenizerState.Parameters:
-                        OnStateParameters();
-                        break;
-                    case TokenizerState.Variables:
-                        OnStateVariables();
-                        break;
-                    case TokenizerState.Calculation:
-                        OnStateCalculation();
-                        break;
+                    if (OnAlphabetical()) continue;
                 }
+                else if (IsNumericCharacter(CurrentChar))
+                {
+                    if (OnNumerical()) continue;
+                }
+                else // Must be a reserved token, or error.
+                {
+                    if (OnSpecial()) continue;
+                }
+
+                TokenizerError("Undefined state!");
             }
         }
 
-        private void OnStateStartup()
+        private bool OnAlphabetical()
         {
-            if (StringCompareCurrentChar(Tokens.Separators.PARAMS_START))
+            BufferCurrentChar();
+            switch (BufferState)
             {
-                AddReservedCharacter();
-                State = TokenizerState.Parameters;
-            }
-        }
-
-        private void OnStateParameters()
-        {
-            if (StringCompareCurrentChar(Tokens.Separators.PARAMS_END))
-            {
-                AddTokenIfUnused();
-                AddReservedCharacter();
-                State = TokenizerState.Variables;
-                return;
-            }
-
-            PreCalculationHelper(TokenType.Parameter);
-        }
-
-        private void OnStateVariables()
-        {
-            if (StringCompareCurrentChar(Tokens.Separators.CALC_START))
-            {
-                AddTokenIfUnused();
-                AddReservedCharacter();
-                State = TokenizerState.Calculation;
-                return;
-            }
-
-            PreCalculationHelper(TokenType.Variable);
-        }
-
-        private void OnStateCalculation()
-        {
-            if (StringCompareCurrentChar(Tokens.Separators.CALC_END))
-            {
-                AddAnyReservedToken();
-                AddReservedCharacter();
-                Debug.Assert(CurrentIdx == MaxIdx, "Final character check got removed?");
-                return;
-            }
-
-            bool isAlphabetic = IsAlphabeticCharacter(CurrentChar);
-            bool isNumeric = IsNumericCharacter(CurrentChar);
-
-            bool isSeparator = Tokens.Separators.CalcSet.Contains(CurrentChar);
-            bool isOperator = Tokens.Operators.FullSet.Contains(CurrentChar);
-
-            bool isTwoCharOperator = isOperator && PeekNext() == Tokens.Operators.SECOND_C;
-
-            switch (CurrentTokenState)
-            {
-                case TokenType.Undefined:
-                    BufferCurrentChar();
-
-                    if (isAlphabetic)
-                    {
-                        CurrentTokenState = TokenType.Identifier;
-                        return;
-                    }
-                    else if (isNumeric)
-                    {
-                        TokenizerError("Number not allowed during calculation!");
-                    }
-                    else if (isSeparator || isOperator)
-                    {
-                        if (isTwoCharOperator)
-                        {
-                            CurrentTokenState = TokenType.Operator;
-                            return;
-                        }
-
-                        AddReservedToken();
-                        return;
-                    }
-
-                    break;
-                case TokenType.Identifier:
+                case CharBufferState.Idle:
+                    BufferState = CharBufferState.Identifier;
+                    return true;
+                case CharBufferState.Identifier:
                     CapIdentifierLength();
-
-                    if (isAlphabetic || isNumeric)
-                    {
-                        BufferCurrentChar();
-                        return;
-                    }
-                    else if (isSeparator || isOperator)
-                    {
-                        AddAnyReservedToken();
-
-                        if (isTwoCharOperator)
-                        {
-                            BufferCurrentChar();
-                            CurrentTokenState = TokenType.Operator;
-                            return;
-                        }
-
-                        AddReservedCharacter();
-                        return;
-                    }
-
-                    break;
-                case TokenType.Operator:
-                    BufferCurrentChar();
-                    AddReservedToken();
-                    return;
+                    return true;
+                case CharBufferState.Number:
+                    TokenizerError("Letter detected inside number!");
+                    goto default;
+                default:
+                    return false;
             }
-
-            TokenizerError($"Indeterminate state during {State}!");
         }
 
-        private void PreCalculationHelper(TokenType type)
+        private bool OnNumerical()
         {
-            bool isAlphabetic = IsAlphabeticCharacter(CurrentChar);
-            bool isNumeric = IsNumericCharacter(CurrentChar);
-
-            switch (CurrentTokenState)
+            BufferCurrentChar();
+            switch (BufferState)
             {
-                case TokenType.Undefined:
-                    BufferCurrentChar();
-
-                    if (isAlphabetic)
-                    {
-                        if (type == TokenType.Parameter && UsedIdentifiers.Count > MaxParameters)
-                        {
-                            TokenizerError($"Too many parameters! (max {MaxParameters})");
-                        }
-
-                        CurrentTokenState = TokenType.Identifier;
-                        return;
-                    }
-                    else if (isNumeric)
-                    {
-                        CurrentTokenState = TokenType.Number;
-                        return;
-                    }
-
-                    break;
-                case TokenType.Identifier:
+                case CharBufferState.Idle:
+                    BufferState = CharBufferState.Number;
+                    return true;
+                case CharBufferState.Identifier:
                     CapIdentifierLength();
-
-                    if (isAlphabetic || isNumeric)
-                    {
-                        BufferCurrentChar();
-                        return;
-                    }
-
-                    if (StringCompareCurrentChar(Tokens.Operators.ASSIGN))
-                    {
-                        CurrentTokenState = type;
-                        Debug.Assert(CurrentTokenState == type, "Relies on side-effect");
-                        AddTokenIfUnused();
-                        AddReservedCharacter();
-                        return;
-                    }
-
-                    if (type == TokenType.Variable)
-                    {
-                        // Allow the user to assign a Parameter to a Variable
-                        if (StringCompareCurrentChar(Tokens.Separators.TERMINATOR))
-                        {
-                            AddUsedToken();
-                            AddReservedCharacter();
-                            return;
-                        }
-                    }
-
-                    break;
-                case TokenType.Number:
+                    return true;
+                case CharBufferState.Number:
                     CapNumberLength();
+                    return true;
+                default:
+                    return false;
+            }
+        }
 
-                    if (isAlphabetic)
+        private bool OnSpecial()
+        {
+            switch (BufferState)
+            {
+                case CharBufferState.Idle: // No buffer, so one character?
+                    if (PeekNext(out char c))
                     {
-                        TokenizerError("Unexpected letter in a number!");
+                        Debug.Assert(c != Tokens.SECOND);
                     }
-                    else if (isNumeric)
+                    BufferCurrentChar();
+                    AddBufferedToken();
+                    return true;
+                case CharBufferState.Identifier:
+                    AddBufferedToken();
+                    goto SpecialCheck;
+                case CharBufferState.Number:
+                    AddNumber();
+                    goto SpecialCheck;
+                SpecialCheck:
+                    BufferCurrentChar();
+                    if (PeekNext(out c) && c == Tokens.SECOND)
                     {
-                        BufferCurrentChar();
-                        return;
+                        BufferState = CharBufferState.Special;
                     }
-
-                    if (StringCompareCurrentChar(Tokens.Separators.TERMINATOR))
+                    else
                     {
-                        AddTokenIfUnused();
-                        AddReservedCharacter();
-                        return;
+                        AddBufferedToken();
                     }
-                    
-                    break;
+                    return true;
+                case CharBufferState.Special:
+                    Debug.Assert(CurrentChar == Tokens.SECOND);
+                    BufferCurrentChar();
+                    AddBufferedToken();
+                    return true;
+                default:
+                    return false;
             }
-
-            TokenizerError($"Indeterminate state during {State}!");
         }
 
-        private void AddTokenIfUnused()
-        {
-            Debug.Assert(State != TokenizerState.Calculation, "Only declare new Identifiers before Calculation!");
+        #endregion Methods
 
-            if (CharBuffer.Length == 0)
-            {
-                Debug.Assert(CurrentTokenState == TokenType.Undefined);
-                return;
-            }
-
-            string s = CharBuffer.ToString();
-
-            if (IsReserved(s))
-            {
-                TokenizerError("Identifier reserved!");
-            }
-
-            Token token = new(CurrentTokenState, CurrentLine, s);
-
-            Debug.Assert(CurrentTokenState == TokenType.Number ||
-                (CurrentTokenState & (TokenType.Parameter | TokenType.Variable)) != TokenType.Undefined,
-                "Invalid state while trying to reserve identifier!");
-            if (CurrentTokenState != TokenType.Number)
-            {
-                UsedIdentifiers.Add(s, token);
-            }
-
-            AddToken(token);
-        }
-
-        private void AddReservedCharacter()
-        {
-            AddReservedToken(CurrentChar.ToString());
-        }
-
-        private void AddReservedToken()
-        {
-            Debug.Assert(CharBuffer.Length != 0, "Can't add empty reserved token!");
-            AddReservedToken(CharBuffer.ToString());
-        }
-
-        private void AddReservedToken(string s)
-        {
-            Debug.Assert(!UsedIdentifiers.ContainsKey(s));
-
-            Token token;
-
-            if (Tokens.ReservedMap.TryGetValue(s, out token!))
-            {
-                AddToken(token with { Line = CurrentLine });
-                return;
-            }
-
-            TokenizerError("Cannot add unmapped token!");
-        }
-
-        private void AddUsedToken()
-        {
-            AddUsedToken(CharBuffer.ToString());
-        }
-
-        private void AddUsedToken(string s)
-        {
-            Token token;
-
-            if (UsedIdentifiers.TryGetValue(s, out token!))
-            {
-                AddToken(token with { Line = CurrentLine });
-                return;
-            }
-
-            TokenizerError("Cannot add used identifier!");
-        }
-
-        private void AddAnyReservedToken()
-        {
-            if (CharBuffer.Length == 0)
-            {
-                Debug.Assert(CurrentTokenState == TokenType.Undefined);
-                return;
-            }
-
-            AddAnyReservedToken(CharBuffer.ToString());
-        }
-
-        private void AddAnyReservedToken(string s)
-        {
-            Token token;
-
-            if (Tokens.ReservedMap.TryGetValue(s, out token!) ||
-                UsedIdentifiers.TryGetValue(s, out token!))
-            {
-                AddToken(token with { Line = CurrentLine });
-                return;
-            }
-
-            TokenizerError("Cannot add unreserved token!");
-        }
+        #region Helper Methods
 
         private void AddToken(Token token)
         {
             TokenList.Add(token);
-            CharBuffer.Clear();
-            CurrentTokenState = TokenType.Undefined;
+            BufferState = CharBufferState.Idle;
+        }
+
+        private void AddBufferedToken()
+        {
+            string s = ConsumeBuffer();
+            Token token;
+            if (Tokens.ReservedMap.TryGetValue(s, out Token? value))
+            {
+                token = value with { Line = CurrentLine };
+            }
+            else
+            {
+                token = new(new(TokenType.Identifier, s), CurrentLine);
+            }
+            AddToken(token);
+        }
+
+        private void AddNumber()
+        {
+            AddToken(new(new(TokenType.Number, ConsumeBuffer()), CurrentLine));
         }
 
         private void BufferCurrentChar()
@@ -472,20 +281,23 @@ namespace userinterface.Models.Script.Generation
             CharBuffer.Append(CurrentChar);
         }
 
-        private bool StringCompareCurrentChar(string s)
+        private string ConsumeBuffer()
         {
-            return CurrentChar == s[0];
+            string s = CharBuffer.ToString();
+            CharBuffer.Clear();
+            return s;
         }
 
-        private char PeekNext()
+        private bool PeekNext(out char c)
         {
+            c = char.MinValue;
+
             if (CurrentIdx < MaxIdx)
             {
-                return Characters[CurrentIdx + 1];
+                c = Characters[CurrentIdx + 1];
+                return true;
             }
-
-            TokenizerError("Tried to read beyond file bounds!");
-            return char.MinValue; // born to throw, forced to return
+            return false;
         }
 
         private void CapIdentifierLength()
@@ -504,12 +316,12 @@ namespace userinterface.Models.Script.Generation
             }
         }
 
+        #endregion Helper Methods
+
         private void TokenizerError(string error)
         {
             throw new TokenizerException(CurrentLine, error);
         }
-
-        #endregion Methods
     }
 
     public class TokenizerException : TranspilerException

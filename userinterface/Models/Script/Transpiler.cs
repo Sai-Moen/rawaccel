@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text;
 using userinterface.Models.Script.Generation;
 using userinterface.Models.Script.Interaction;
 
@@ -27,12 +28,15 @@ namespace userinterface.Models.Script
             {
                 string script = ScriptLoader.LoadScript(scriptPath);
                 Tokenizer tokenizer = new(script);
-                Parser parser = new(tokenizer.TokenList);
+                //Parser parser = new(tokenizer.TokenList);
 #if DEBUG
+                StringBuilder builder = new();
                 foreach (Token token in tokenizer.TokenList)
                 {
-                    UI.HandleMessage($"{token.Line}:".PadRight(4) + $" {token.Type} ".PadRight(16) + token.Symbol);
+                    builder.AppendLine(
+                        $"{token.Line}:".PadRight(4) + $" {token.Base.Type} ".PadRight(32) + token.Base.Symbol);
                 }
+                UI.HandleMessage(builder.ToString());
 #else
 #endif
             }
