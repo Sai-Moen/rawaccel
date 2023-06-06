@@ -1,24 +1,31 @@
-﻿using System.Diagnostics;
-using System.Runtime.CompilerServices;
+﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace userinterface.Models.Script.Generation
 {
     /// <summary>
-    /// Automatically attempts to Parse a list of Tokens into a Syntax Tree of Nodes.
+    /// Automatically attempts to Parse a list of Tokens.
     /// </summary>
     internal class Parser
     {
         #region Fields
 
-        internal NodeList Parameters { get; } = new(8);
+        internal IList<ParameterAssignment> Parameters { get; } = new List<ParameterAssignment>(Tokens.MAX_PARAMETERS);
 
-        internal NodeList Variables { get; } = new();
+        internal IList<VariableAssignment> Variables { get; } = new List<VariableAssignment>();
+
+        internal IList<ParserNode> Nodes { get; } = new List<ParserNode>();
+
+        private readonly IList<string> ParameterNames = new List<string>();
+
+        private readonly ISet<string> VariableNames = new HashSet<string>();
 
         private readonly TokenStack TokenBuffer = new();
 
-        private int CurrentIdx;
+        private int CurrentIndex;
 
-        private readonly int MaxIdx;
+        private readonly int MaxIndex;
 
         private Token CurrentToken;
 
@@ -34,15 +41,13 @@ namespace userinterface.Models.Script.Generation
             Debug.Assert(TokenList.Count >= 4, "Tokenizer did not prevent empty script!");
 
             CurrentToken = TokenList[0];
-            Debug.Assert(CurrentToken.Base.Symbol == Tokens.PARAMS_START);
+            Debug.Assert(CmpCurrentTokenType(TokenType.ParameterStart));
 
-            MaxIdx = TokenList.Count - 1;
-            Debug.Assert(MaxIdx > 0);
+            MaxIndex = TokenList.Count - 1;
+            Debug.Assert(MaxIndex > 0);
 
             AdvanceToken();
-            Debug.Assert(CurrentIdx == 1, "We don't need to check for PARAMS_START at runtime.");
-
-            CheckTokens();
+            Debug.Assert(CurrentIndex == 1, "We don't need to check for PARAMS_START at runtime.");
 
             Parse();
         }
@@ -51,124 +56,341 @@ namespace userinterface.Models.Script.Generation
 
         #region Helpers
 
-        private void CheckTokens()
-        {
-        }
-
         private void Parse()
         {
             // Parameters
-            while (CurrentToken.Base.Symbol != Tokens.PARAMS_END)
+            while (!CmpCurrentTokenType(TokenType.ParameterEnd))
             {
-                //DeclExpect(TokenType.Parameter);
-                //DeclExpect(Tokens.ASSIGN);
-                //DeclExpect(TokenType.Number);
-                //DeclExpect(Tokens.TERMINATOR);
+                DeclExpect(TokenType.Parameter, true);
+                DeclExpect(TokenType.Assignment);
+                DeclExpect(TokenType.Number);
+                DeclExpect(TokenType.Terminator);
             }
+
             AdvanceToken();
-            Debug.Assert(CurrentToken.Base.Symbol != Tokens.PARAMS_END);
+            Debug.Assert(!CmpCurrentTokenType(TokenType.ParameterEnd));
+            for (int i = 0; i <= MaxIndex; i++)
+            {
+                Token token = TokenList[i];
+
+                if (ParameterNames.Contains(token.Base.Symbol))
+                {
+                    TokenList[i] = token with { Base = token.Base with { Type = TokenType.Parameter } };
+                }
+            }
 
             // Variables
-            while (CurrentToken.Base.Symbol != Tokens.CALC_START)
+            while (!CmpCurrentTokenType(TokenType.CalculationStart))
             {
-                //DeclExpect(TokenType.Variable);
-                //DeclExpect(Tokens.ASSIGN);
-                //DeclExpect();
-                //DeclExpect(Tokens.TERMINATOR);
+                DeclExpect(TokenType.Variable, true);
+                DeclExpect(TokenType.Assignment);
+                if (DeclAccept(TokenType.Number, true)) {}
+                else DeclExpect(TokenType.Parameter);
+                DeclExpect(TokenType.Terminator);
             }
+
             AdvanceToken();
-            Debug.Assert(CurrentToken.Base.Symbol != Tokens.CALC_START);
+            Debug.Assert(!CmpCurrentTokenType(TokenType.CalculationStart));
+            for (int i = 0; i <= MaxIndex; i++)
+            {
+                Token token = TokenList[i];
+
+                if (VariableNames.Contains(token.Base.Symbol))
+                {
+                    TokenList[i] = token with { Base = token.Base with { Type = TokenType.Variable } };
+                }
+            }
 
             // Calculation
-            while (CurrentToken.Base.Symbol != Tokens.CALC_END)
+            while (!CmpCurrentTokenType(TokenType.CalculationEnd))
             {
                 Statement();
             }
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private bool CmpCurrentTokenType(TokenType type)
+        {
+            return CurrentToken.Base.Type == type;
+        }
+
+        private void Advance(TokenType type)
+        {
+
+        }
+
         private void AdvanceToken()
         {
-            CurrentToken = TokenList[++CurrentIdx];
+            CurrentToken = TokenList[++CurrentIndex];
         }
 
         #endregion Helpers
 
         #region Declarations
 
+        private bool DeclAccept(TokenType type, bool push = false)
+        {
+            if (CmpCurrentTokenType(type))
+            {
+                if (push)
+                {
+                    TokenBuffer.Push(CurrentToken);
+                }
+                AdvanceToken();
+                return true;
+            }
 
+            return false;
+        }
+
+        private void DeclExpect(TokenType type, bool coerce = false)
+        {
+            // Accept has side-effect on "Current...", better save these here!
+            int idx = CurrentIndex;
+            Token token = CurrentToken;
+
+            if (coerce)
+            {
+                token = token with { Base = token.Base with { Type = type } };
+                TokenList[idx] = token;
+
+                if (type == TokenType.Parameter)
+                {
+                    Debug.Assert(ParameterNames.Count <= Tokens.MAX_PARAMETERS);
+                    if (ParameterNames.Count == Tokens.MAX_PARAMETERS)
+                    {
+                        ParserError($"Too many parameters! (max {Tokens.MAX_PARAMETERS})");
+                    }
+
+                    ParameterNames.Add(token.Base.Symbol);
+                }
+                else
+                {
+                    if (ParameterNames.Contains(token.Base.Symbol))
+                    {
+                        ParserError("Parameter/Variable name conflict!");
+                    }
+
+                    VariableNames.Add(token.Base.Symbol);
+                }
+
+                CurrentToken = token; // Side effect
+                if (DeclAccept(type, true))
+                {
+                    TokenBuffer.Push(token);
+                    return;
+                }
+
+                ParserError("Unexpected coercion!");
+            }
+
+            if (!DeclAccept(type))
+            {
+                ParserError("Unexpected declaration!");
+            }
+            else if (type == TokenType.Terminator)
+            {
+                Debug.Assert(TokenBuffer.Count == 3);
+                Token value = TokenBuffer.Pop();
+                Token eq = TokenBuffer.Pop();
+                Token t = TokenBuffer.Pop();
+
+                if (eq.Base.Symbol != Tokens.ASSIGN)
+                {
+                    ParserError($"Expected {Tokens.ASSIGN}");
+                }
+
+                TokenType currentType = t.Base.Type;
+                Debug.Assert(currentType == TokenType.Parameter || currentType == TokenType.Variable);
+
+                if (currentType == TokenType.Parameter)
+                {
+                    Parameters.Add(new(t, value));
+                }
+                else
+                {
+                    Variables.Add(new(t, value));
+                }
+            }
+            else
+            {
+                TokenBuffer.Push(token);
+            }
+        }
 
         #endregion Declarations
 
         #region Recursive Descent
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void Advance()
-        {
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private bool Accept(TokenType type)
         {
-            if (CurrentToken.Base.Type == type)
+            if (type == CurrentToken.Base.Type)
             {
-                Advance();
+                Advance(type);
                 AdvanceToken();
                 return true;
             }
+
             return false;
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private bool Expect(TokenType type)
         {
             if (Accept(type))
             {
                 return true;
             }
+
             ParserError("Unexpected token!");
             return false;
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void Expression(uint precedence = 0)
+        private TokenList ShuntingYard(in TokenQueue input)
         {
-            const uint maxPrecedence = 2;
+            // Shunting yard algorithm (to Reverse Polish Notation)
+            TokenList output = new(input.Count);
 
-            TokenType arithmetic = Tokens.Arithmetic[precedence];
+            TokenStack opstack = new();
 
-            if (precedence == maxPrecedence)
+            while (input.Count != 0)
             {
-                if (Accept(TokenType.Parameter) ||
-                    Accept(TokenType.Variable) ||
-                    Accept(TokenType.Input) ||
-                    Accept(TokenType.Output) ||
-                    Accept(TokenType.Constant))
+                Token token = input.Dequeue();
+                switch (token.Base.Type)
                 {
-                    if (Accept(arithmetic))
-                    {
-                        Expression(precedence); // Tail Call
-                    }
-                }
-                else
-                {
-                    if (Accept(TokenType.Function)) {}
+                    case TokenType.Parameter:
+                    case TokenType.Variable:
+                    case TokenType.Input:
+                    case TokenType.Output:
+                    case TokenType.Constant:
+                        output.Add(token);
+                        continue;
+                    case TokenType.Open:
+                        opstack.Push(token);
+                        continue;
+                    case TokenType.Close:
+                        Token top;
 
-                    Expect(TokenType.Open);
-                    Expression();
-                    Expect(TokenType.Close);
+                        try
+                        {
+                            top = opstack.Peek();
+                        }
+                        catch (InvalidOperationException)
+                        {
+                            ParserError($"Unexpected {Tokens.CLOSE}");
+                            break;
+                        }
+
+                        while (top.Base.Type != TokenType.Open)
+                        {
+                            output.Add(opstack.Pop());
+
+                            if (opstack.Count == 0)
+                            {
+                                ParserError($"No matching {Tokens.OPEN}");
+                            }
+
+                            top = opstack.Peek();
+                        }
+
+                        Debug.Assert(top.Base.Type == TokenType.Open);
+
+                        _ = opstack.Pop();
+                        if (opstack.Count != 0 && opstack.Peek().Base.Type == TokenType.Function)
+                        {
+                            output.Add(opstack.Pop());
+                        }
+
+                        continue;
+                    case TokenType.Arithmetic:
+                        int precedenceT = Tokens.Precedence(token.Base.Symbol);
+                        bool left = Tokens.LeftAssociative(token.Base.Symbol);
+
+                        while (true)
+                        {
+                            if (opstack.Count == 0)
+                            {
+                                break;
+                            }
+
+                            Token op = opstack.Peek();
+                            int precedenceO = Tokens.Precedence(op.Base.Symbol);
+                            if (op.Base.Type == TokenType.Arithmetic &&
+                                (precedenceT < precedenceO ||
+                                (precedenceT == precedenceO && left)))
+                            {
+                                output.Add(opstack.Pop());
+                            }
+                            else
+                            {
+                                break;
+                            }
+                        }
+
+                        opstack.Push(token);
+
+                        continue;
+                    case TokenType.Function:
+                        opstack.Push(token);
+                        continue;
+                    default:
+                        ParserError("Unexpected expression token!");
+                        break;
                 }
             }
-            else
-            {
-                if (precedence == 0 && Accept(arithmetic)) {}
 
-                do Expression(precedence + 1);
-                while (Accept(arithmetic));
+            while (opstack.Count != 0)
+            {
+                Token token = opstack.Pop();
+
+                if (token.Base.Type == TokenType.Open)
+                {
+                    ParserError($"No matching {Tokens.CLOSE}");
+                }
+
+                output.Add(token);
             }
+
+            return output;
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void Expression(TokenType end, TokenType after = TokenType.Undefined)
+        {
+            bool onlyEnd = after == TokenType.Undefined;
+
+            TokenQueue input = new();
+
+            while (true)
+            {
+                Token current = CurrentToken;
+                TokenType currentType = current.Base.Type;
+
+                if (currentType == TokenType.CalculationEnd)
+                {
+                    ParserError("Expression end reached unexpectedly");
+                    return;
+                }
+
+                AdvanceToken();
+
+                TokenType nextType = CurrentToken.Base.Type;
+                bool afterIsNext = after == nextType;
+
+                if (currentType == end && (onlyEnd || afterIsNext))
+                {
+                    if (afterIsNext)
+                    {
+                        AdvanceToken();
+                    }
+                    break;
+                }
+
+                input.Enqueue(current);
+            }
+
+            TokenList output = ShuntingYard(input);
+
+            // Turn into AST
+        }
+
         private void Statement()
         {
             if (Accept(TokenType.Variable) ||
@@ -176,18 +398,13 @@ namespace userinterface.Models.Script.Generation
                 Accept(TokenType.Output))
             {
                 Expect(TokenType.Assignment);
-                Expression();
-                Expect(TokenType.Terminator);
+                Expression(TokenType.Terminator);
             }
-            else
+            else if (Expect(TokenType.Branch))
             {
-                Expect(TokenType.Branch);
                 Expect(TokenType.Open);
-                Expression();
-                Expect(TokenType.Comparison);
-                Expression();
-                Expect(TokenType.Close);
-                Expect(TokenType.Block);
+                Expression(TokenType.Comparison);
+                Expression(TokenType.Close, TokenType.Block);
                 do Statement();
                 while (!Accept(TokenType.Block));
             }

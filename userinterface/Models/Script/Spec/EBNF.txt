@@ -14,7 +14,7 @@ digit = "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" ;
 identifier = alphabetic , { alphabetic | (digit | ".") } ; (* Limited to 15 characters *)
 number = { digit } , [ "." , { digit } ] ; (* Limited to 31 characters *)
 
-keyword = "x" | "y" | "e" | "pi" | "tau" ;
+keyword = "x" | "y" | "zero" | "e" | "pi" | "tau" ;
 branch = "if" | "while" ;
 
 precedence0 = "+" | "-" ;

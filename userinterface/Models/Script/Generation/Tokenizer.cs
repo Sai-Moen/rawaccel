@@ -18,8 +18,6 @@ namespace userinterface.Models.Script.Generation
     {
         #region Constants
 
-        public const int MaxParameters = 8;
-
         public const int MaxIdentifierLength = 0x10;
 
         public const int MaxNumberLength = 0x20;
@@ -36,9 +34,9 @@ namespace userinterface.Models.Script.Generation
 
         private CharBufferState BufferState = CharBufferState.Idle;
 
-        private int CurrentIdx = -1;
+        private int CurrentIndex = -1;
 
-        private readonly int MaxIdx;
+        private readonly int MaxIndex;
 
         private uint CurrentLine = 1;
 
@@ -58,7 +56,7 @@ namespace userinterface.Models.Script.Generation
                 .Replace("\t", null)
                 .ToCharArray();
 
-            MaxIdx = Characters.Length - 1;
+            MaxIndex = Characters.Length - 1;
 
             CheckCharacters();
 
@@ -100,10 +98,10 @@ namespace userinterface.Models.Script.Generation
 
         private void CheckCharacters()
         {
-            Debug.Assert(MaxIdx > 0, "MaxIdx not set correctly!");
+            Debug.Assert(MaxIndex > 0, "MaxIdx not set correctly!");
 
             // Not a problem in terms of parsing, but for consistency among (us) script writers.
-            if (!CmpCharStr(Characters[MaxIdx], Tokens.CALC_END))
+            if (!CmpCharStr(Characters[MaxIndex], Tokens.CALC_END))
             {
                 CurrentLine = 0; // The location is in the error.
                 TokenizerError("Please don't type anything after the body.");
@@ -135,17 +133,17 @@ namespace userinterface.Models.Script.Generation
                 TokenizerError($"Unsupported character detected, char: {c}, u16: {(ushort)c}");
             }
 
-            CurrentIdx = startingIndex;
+            CurrentIndex = startingIndex;
             CurrentLine = startingLine;
         }
 
         private void Tokenize()
         {
-            Debug.Assert(CmpCharStr(Characters[CurrentIdx + 1], Tokens.PARAMS_START),
+            Debug.Assert(CmpCharStr(Characters[CurrentIndex + 1], Tokens.PARAMS_START),
                 "Current Char should start at the parameter opening!");
-            while (++CurrentIdx <= MaxIdx)
+            while (++CurrentIndex <= MaxIndex)
             {
-                CurrentChar = Characters[CurrentIdx];
+                CurrentChar = Characters[CurrentIndex];
 
                 if (CurrentChar == NewLine)
                 {
@@ -259,7 +257,9 @@ namespace userinterface.Models.Script.Generation
         private void AddBufferedToken()
         {
             string s = ConsumeBuffer();
+
             Token token;
+
             if (Tokens.ReservedMap.TryGetValue(s, out Token? value))
             {
                 token = value with { Line = CurrentLine };
@@ -268,6 +268,7 @@ namespace userinterface.Models.Script.Generation
             {
                 token = new(new(TokenType.Identifier, s), CurrentLine);
             }
+
             AddToken(token);
         }
 
@@ -292,11 +293,12 @@ namespace userinterface.Models.Script.Generation
         {
             c = char.MinValue;
 
-            if (CurrentIdx < MaxIdx)
+            if (CurrentIndex < MaxIndex)
             {
-                c = Characters[CurrentIdx + 1];
+                c = Characters[CurrentIndex + 1];
                 return true;
             }
+
             return false;
         }
 

@@ -77,6 +77,7 @@ Scripting language specification:
 
 	Keywords:
 		x y			"Input/Output variables"
+		zero		"Used for unary minus"
 		e pi tau	"Math Constants"
 
 		if (bool): s :		"s means statements"

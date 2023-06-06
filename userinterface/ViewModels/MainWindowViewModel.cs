@@ -10,7 +10,7 @@ namespace userinterface.ViewModels
         {
 #if DEBUG // Only for debugging RawAccelScript! Remove from other repos if applicable
             
-            Transpiler transpiler = new(Transpiler.__DebugPath);
+            Script transpiler = new(Script.__DebugPath);
             Environment.Exit(0);
 #else
             Profiles = new ProfilesViewModel();

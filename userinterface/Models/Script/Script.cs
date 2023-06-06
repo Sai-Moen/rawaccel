@@ -5,30 +5,30 @@ using userinterface.Models.Script.Interaction;
 
 namespace userinterface.Models.Script
 {
-    public class Transpiler
+    public class Script
     {
         public const string ScriptPath = @"Scripts/"; // Maybe move to constants and remove debugpath later
         public const string __DebugPath = @"../../../Models/Script/Spec/example.rascript";
 
         private readonly IScriptInterface UI;
 
-        public Transpiler(string scriptPath)
+        public Script(string scriptPath)
         {
 #if DEBUG
             UI = ScriptInterface.Factory(ScriptInterfaceType.Debug);
 #else
             UI = ScriptInterface.Factory(ScriptInterfaceType.Release);
 #endif
-            Transpile(scriptPath);
+            Run(scriptPath);
         }
 
-        private void Transpile(string scriptPath)
+        private void Run(string scriptPath)
         {
             try
             {
                 string script = ScriptLoader.LoadScript(scriptPath);
                 Tokenizer tokenizer = new(script);
-                //Parser parser = new(tokenizer.TokenList);
+                Parser parser = new(tokenizer.TokenList);
 #if DEBUG
                 StringBuilder builder = new();
                 foreach (Token token in tokenizer.TokenList)
@@ -43,7 +43,6 @@ namespace userinterface.Models.Script
             catch (TranspilerException e)
             {
                 UI.HandleException(e);
-                return;
             }
         }
     }

@@ -28,9 +28,7 @@ namespace userinterface.Models.Script.Generation
         CalculationEnd,
 
         Assignment,
-        ArithmeticAdditive,
-        ArithmeticMultiplicative,
-        ArithmeticExponential,
+        Arithmetic,
         Comparison,
         Logical,
 
@@ -41,14 +39,26 @@ namespace userinterface.Models.Script.Generation
 
     public record Token(BaseToken Base, uint Line = 0);
 
+    public enum Section
+    {
+        Comments,
+        Parameters,
+        Variables,
+        Calculation,
+    }
+
     public static class Tokens
     {
         #region Constants
 
         // Keywords
+        public const int MAX_PARAMETERS = 8;
         // Calculation IO
         public const string INPUT           = "x";
         public const string OUTPUT          = "y";
+
+        // Unary Minus Hack
+        public const string ZERO =          "zero";
 
         // Constants
         public const string CONST_E         = "e";
@@ -78,9 +88,10 @@ namespace userinterface.Models.Script.Generation
         public const string CALC_END        = "}";
 
         // Operators
+        public const uint MAX_PRECEDENCE = 2;
         // Assignment
         public const string ASSIGN  = "=";
-        public const char SECOND = '=';
+        public const char SECOND = '='; // assume the second character of an operator is 2 char
         // Inline Arithmetic
         public const string IADD    = "+=";
         public const string ISUB    = "-=";
@@ -153,6 +164,7 @@ namespace userinterface.Models.Script.Generation
             new BaseToken(TokenType.Input, INPUT),
             new BaseToken(TokenType.Output, OUTPUT),
 
+            new BaseToken(TokenType.Constant, ZERO),
             new BaseToken(TokenType.Constant, CONST_E),
             new BaseToken(TokenType.Constant, CONST_PI),
             new BaseToken(TokenType.Constant, CONST_TAU),
@@ -181,12 +193,12 @@ namespace userinterface.Models.Script.Generation
             new BaseToken(TokenType.Assignment, IMOD),
             new BaseToken(TokenType.Assignment, IEXP),
 
-            new BaseToken(TokenType.ArithmeticAdditive, ADD),
-            new BaseToken(TokenType.ArithmeticAdditive, SUB),
-            new BaseToken(TokenType.ArithmeticMultiplicative, MUL),
-            new BaseToken(TokenType.ArithmeticMultiplicative, DIV),
-            new BaseToken(TokenType.ArithmeticMultiplicative, MOD),
-            new BaseToken(TokenType.ArithmeticExponential, EXP),
+            new BaseToken(TokenType.Arithmetic, ADD),
+            new BaseToken(TokenType.Arithmetic, SUB),
+            new BaseToken(TokenType.Arithmetic, MUL),
+            new BaseToken(TokenType.Arithmetic, DIV),
+            new BaseToken(TokenType.Arithmetic, MOD),
+            new BaseToken(TokenType.Arithmetic, EXP),
 
             new BaseToken(TokenType.Comparison, CMP_EQ),
             new BaseToken(TokenType.Comparison, CMP_LT),
@@ -233,6 +245,7 @@ namespace userinterface.Models.Script.Generation
 
         static Tokens()
         {
+            // Reserve tokens
             ReservedMap = new TokenMap(ReservedArray.Length);
 
             foreach(BaseToken baseToken in ReservedArray)
@@ -240,6 +253,7 @@ namespace userinterface.Models.Script.Generation
                 ReservedMap.Add(baseToken.Symbol, new Token(baseToken));
             }
 
+            // Static asserts
             Debug.Assert(ReservedMap.Count == ReservedArray.Length);
         }
 
@@ -249,14 +263,32 @@ namespace userinterface.Models.Script.Generation
 
         public static readonly TokenMap ReservedMap;
 
-        public static readonly TokenType[] Arithmetic =
-        {
-            TokenType.ArithmeticAdditive,
-            TokenType.ArithmeticMultiplicative,
-            TokenType.ArithmeticExponential,
+        #endregion Properties
+
+        #region Methods
+
+        public static int Precedence(string s) =>
+            s switch
+            {
+                ADD => 0,
+                SUB => 0,
+                MUL => 1,
+                DIV => 1,
+                MOD => 1,
+                EXP => 2,
+
+                _ => -1,
         };
 
-        #endregion Properties
+        public static bool LeftAssociative(string s) =>
+            s switch
+            {
+                EXP => false,
+
+                _ => true,
+        };
+
+        #endregion Methods
     }
 
     public class TokenMap : Dictionary<string, Token>, IDictionary<string, Token>
@@ -269,5 +301,7 @@ namespace userinterface.Models.Script.Generation
     public class TokenList : List<Token>, IList<Token>
     {
         public TokenList() : base() {}
+
+        public TokenList(int capacity) : base(capacity) {}
     }
 }
