@@ -8,7 +8,7 @@ namespace userinterface.Models.Script
     public class Script
     {
         public const string ScriptPath = @"Scripts/"; // Maybe move to constants and remove debugpath later
-        public const string __DebugPath = @"../../../Models/Script/Spec/example.rascript";
+        public const string __DebugPath = @"../../../Models/Script/Spec/test.rascript";
 
         private readonly IScriptInterface UI;
 
@@ -36,20 +36,29 @@ namespace userinterface.Models.Script
                     builder.AppendLine(
                         $"{token.Line}:".PadRight(4) + $" {token.Base.Type} ".PadRight(32) + token.Base.Symbol);
                 }
+
+                builder.AppendLine().AppendLine("Interpreter code:");
+
+                foreach (Token token in parser.TokenCode)
+                {
+                    builder.AppendLine(
+                        $"{token.Line}:".PadRight(4) + $" {token.Base.Type} ".PadRight(32) + token.Base.Symbol);
+                }
+
                 UI.HandleMessage(builder.ToString());
 #else
 #endif
             }
-            catch (TranspilerException e)
+            catch (ScriptException e)
             {
                 UI.HandleException(e);
             }
         }
     }
 
-    public class TranspilerException : Exception
+    public class ScriptException : Exception
     {
-        public TranspilerException(string message)
+        public ScriptException(string message)
             : base(message)
         {
         }

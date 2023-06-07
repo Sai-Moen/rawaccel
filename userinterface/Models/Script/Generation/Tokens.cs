@@ -16,6 +16,7 @@ namespace userinterface.Models.Script.Generation
         Output,
         Constant,
         Branch,
+        BranchEnd,
 
         Terminator,
         Block,
@@ -30,7 +31,6 @@ namespace userinterface.Models.Script.Generation
         Assignment,
         Arithmetic,
         Comparison,
-        Logical,
 
         Function,
     }
@@ -52,7 +52,7 @@ namespace userinterface.Models.Script.Generation
         #region Constants
 
         // Keywords
-        public const int MAX_PARAMETERS = 8;
+        public const int MAX_PARAMETERS     = 8;
         // Calculation IO
         public const string INPUT           = "x";
         public const string OUTPUT          = "y";
@@ -68,6 +68,7 @@ namespace userinterface.Models.Script.Generation
         // Branching
         public const string BRANCH_IF       = "if";
         public const string BRANCH_WHILE    = "while";
+        public const string BRANCH_END      = "";
 
         // Separators
         // Delimiters
@@ -88,9 +89,8 @@ namespace userinterface.Models.Script.Generation
         public const string CALC_END        = "}";
 
         // Operators
-        public const uint MAX_PRECEDENCE = 2;
         // Assignment
-        public const string ASSIGN  = "=";
+        public const string ASSIGN  = ":=";
         public const char SECOND = '='; // assume the second character of an operator is 2 char
         // Inline Arithmetic
         public const string IADD    = "+=";
@@ -109,16 +109,15 @@ namespace userinterface.Models.Script.Generation
         public const string EXP     = "^";
 
         // Comparison
-        public const string CMP_EQ  = "==";
-        public const string CMP_LT  = "<";
-        public const string CMP_GT  = ">";
-        public const string CMP_LE  = "<=";
-        public const string CMP_GE  = ">=";
-
-        // Logical
-        public const string CMP_AND = "&";
-        public const string CMP_OR  = "|";
-        public const string CMP_NOT = "!";
+        public const string NOT = "!";
+        public const string LT  = "<";
+        public const string GT  = ">";
+        public const string LE  = "<=";
+        public const string GE  = ">=";
+        public const string EQ  = "==";
+        public const string NE  = "!=";
+        public const string AND = "&";
+        public const string OR  = "|";
 
         // Functions
         // General
@@ -171,6 +170,7 @@ namespace userinterface.Models.Script.Generation
 
             new BaseToken(TokenType.Branch, BRANCH_IF),
             new BaseToken(TokenType.Branch, BRANCH_WHILE),
+            new BaseToken(TokenType.BranchEnd, BRANCH_END),
 
             new BaseToken(TokenType.Number, FPOINT),
             new BaseToken(TokenType.Terminator, TERMINATOR),
@@ -200,15 +200,15 @@ namespace userinterface.Models.Script.Generation
             new BaseToken(TokenType.Arithmetic, MOD),
             new BaseToken(TokenType.Arithmetic, EXP),
 
-            new BaseToken(TokenType.Comparison, CMP_EQ),
-            new BaseToken(TokenType.Comparison, CMP_LT),
-            new BaseToken(TokenType.Comparison, CMP_GT),
-            new BaseToken(TokenType.Comparison, CMP_LE),
-            new BaseToken(TokenType.Comparison, CMP_GE),
-
-            new BaseToken(TokenType.Logical, CMP_AND),
-            new BaseToken(TokenType.Logical, CMP_OR),
-            new BaseToken(TokenType.Logical, CMP_NOT),
+            new BaseToken(TokenType.Comparison, NOT),
+            new BaseToken(TokenType.Comparison, LT),
+            new BaseToken(TokenType.Comparison, GT),
+            new BaseToken(TokenType.Comparison, LE),
+            new BaseToken(TokenType.Comparison, GE),
+            new BaseToken(TokenType.Comparison, EQ),
+            new BaseToken(TokenType.Comparison, NE),
+            new BaseToken(TokenType.Comparison, AND),
+            new BaseToken(TokenType.Comparison, OR),
 
             new BaseToken(TokenType.Function, ABS),
             new BaseToken(TokenType.Function, SQRT),
@@ -245,16 +245,19 @@ namespace userinterface.Models.Script.Generation
 
         static Tokens()
         {
-            // Reserve tokens
-            ReservedMap = new TokenMap(ReservedArray.Length);
+            int totalLength = ReservedArray.Length + 1;
+
+            ReservedMap = new TokenMap(totalLength);
 
             foreach(BaseToken baseToken in ReservedArray)
             {
                 ReservedMap.Add(baseToken.Symbol, new Token(baseToken));
             }
 
-            // Static asserts
-            Debug.Assert(ReservedMap.Count == ReservedArray.Length);
+            string second = SECOND.ToString();
+            ReservedMap.Add(second, new(new(TokenType.Undefined, second)));
+
+            Debug.Assert(ReservedMap.Count == totalLength);
         }
 
         #endregion Constructors
@@ -270,23 +273,35 @@ namespace userinterface.Models.Script.Generation
         public static int Precedence(string s) =>
             s switch
             {
-                ADD => 0,
-                SUB => 0,
-                MUL => 1,
-                DIV => 1,
-                MOD => 1,
-                EXP => 2,
+                OR => 0,
+                AND => 1,
 
-                _ => -1,
+                EQ => 2,
+                NE => 2,
+
+                LT => 3,
+                GT => 3,
+                LE => 3,
+                GE => 3,
+
+                ADD => 4,
+                SUB => 4,
+
+                MUL => 5,
+                DIV => 5,
+                MOD => 5,
+
+                EXP => 6,
+
+                NOT => 7,
+
+                _ => throw new ScriptException("Unexpected Precedence call!"),
         };
 
-        public static bool LeftAssociative(string s) =>
-            s switch
-            {
-                EXP => false,
-
-                _ => true,
-        };
+        public static bool LeftAssociative(string s)
+        {
+            return s != EXP;
+        }
 
         #endregion Methods
     }

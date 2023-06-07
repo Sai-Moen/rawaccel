@@ -233,6 +233,7 @@ namespace userinterface.Models.Script.Generation
                     {
                         AddBufferedToken();
                     }
+
                     return true;
                 case CharBufferState.Special:
                     Debug.Assert(CurrentChar == Tokens.SECOND);
@@ -326,7 +327,7 @@ namespace userinterface.Models.Script.Generation
         }
     }
 
-    public class TokenizerException : TranspilerException
+    public class TokenizerException : ScriptException
     {
         public TokenizerException(uint line, string message) : base($"Line {line}: {message}") {}
     }

@@ -4,7 +4,7 @@ namespace userinterface.Models.Script.Interaction
 {
     public class DebugInterface : IScriptInterface
     {
-        public void HandleException(TranspilerException exception)
+        public void HandleException(ScriptException exception)
         {
             Debug.WriteLine(exception.Message);
         }

@@ -10,7 +10,7 @@ namespace userinterface.Models.Script.Interaction
 
     public interface IScriptInterface
     {
-        public void HandleException(TranspilerException exception);
+        public void HandleException(ScriptException exception);
 
         public void HandleMessage(string message);
     }
@@ -21,7 +21,7 @@ namespace userinterface.Models.Script.Interaction
             ui switch
             {
                 ScriptInterfaceType.Debug   => new DebugInterface(),
-                ScriptInterfaceType.Release => throw new NotImplementedException(),
+                ScriptInterfaceType.Release => new ReleaseInterface(),
 
                 _ => throw new NotImplementedException(),
         };

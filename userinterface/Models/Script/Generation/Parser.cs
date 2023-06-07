@@ -15,7 +15,7 @@ namespace userinterface.Models.Script.Generation
 
         internal IList<VariableAssignment> Variables { get; } = new List<VariableAssignment>();
 
-        internal IList<ParserNode> Nodes { get; } = new List<ParserNode>();
+        internal TokenList TokenCode { get; } = new();
 
         private readonly IList<string> ParameterNames = new List<string>();
 
@@ -26,6 +26,8 @@ namespace userinterface.Models.Script.Generation
         private int CurrentIndex;
 
         private readonly int MaxIndex;
+
+        private Token PreviousToken;
 
         private Token CurrentToken;
 
@@ -49,6 +51,7 @@ namespace userinterface.Models.Script.Generation
             AdvanceToken();
             Debug.Assert(CurrentIndex == 1, "We don't need to check for PARAMS_START at runtime.");
 
+            PreviousToken = CurrentToken;
             Parse();
         }
 
@@ -69,6 +72,8 @@ namespace userinterface.Models.Script.Generation
 
             AdvanceToken();
             Debug.Assert(!CmpCurrentTokenType(TokenType.ParameterEnd));
+
+            // Coerce all identifiers with parameter names
             for (int i = 0; i <= MaxIndex; i++)
             {
                 Token token = TokenList[i];
@@ -91,6 +96,8 @@ namespace userinterface.Models.Script.Generation
 
             AdvanceToken();
             Debug.Assert(!CmpCurrentTokenType(TokenType.CalculationStart));
+
+            // Coerce all identifiers with variable names
             for (int i = 0; i <= MaxIndex; i++)
             {
                 Token token = TokenList[i];
@@ -113,34 +120,15 @@ namespace userinterface.Models.Script.Generation
             return CurrentToken.Base.Type == type;
         }
 
-        private void Advance(TokenType type)
-        {
-
-        }
-
         private void AdvanceToken()
         {
+            PreviousToken = CurrentToken;
             CurrentToken = TokenList[++CurrentIndex];
         }
 
         #endregion Helpers
 
         #region Declarations
-
-        private bool DeclAccept(TokenType type, bool push = false)
-        {
-            if (CmpCurrentTokenType(type))
-            {
-                if (push)
-                {
-                    TokenBuffer.Push(CurrentToken);
-                }
-                AdvanceToken();
-                return true;
-            }
-
-            return false;
-        }
 
         private void DeclExpect(TokenType type, bool coerce = false)
         {
@@ -176,7 +164,6 @@ namespace userinterface.Models.Script.Generation
                 CurrentToken = token; // Side effect
                 if (DeclAccept(type, true))
                 {
-                    TokenBuffer.Push(token);
                     return;
                 }
 
@@ -217,15 +204,204 @@ namespace userinterface.Models.Script.Generation
             }
         }
 
+        private bool DeclAccept(TokenType type, bool push = false)
+        {
+            if (CmpCurrentTokenType(type))
+            {
+                if (push)
+                {
+                    TokenBuffer.Push(CurrentToken);
+                }
+                AdvanceToken();
+                return true;
+            }
+
+            return false;
+        }
+
         #endregion Declarations
 
-        #region Recursive Descent
+        #region Shunting Yard
+
+        private void Statement()
+        {
+            if (Accept(TokenType.Variable) ||
+                Accept(TokenType.Input) ||
+                Accept(TokenType.Output))
+            {
+                Token target = PreviousToken;
+                Expect(TokenType.Assignment);
+                Token assignment = PreviousToken;
+                TokenCode.AddRange(Expression(TokenType.Terminator));
+                TokenCode.Add(target);
+                TokenCode.Add(assignment);
+            }
+            else if (Expect(TokenType.Branch))
+            {
+                Token branch = PreviousToken;
+                Expect(TokenType.Open);
+                TokenCode.AddRange(Expression(TokenType.Close, TokenType.Block));
+                TokenCode.Add(branch);
+                do Statement();
+                while (!Accept(TokenType.Block));
+                Debug.Assert(
+                    Tokens.ReservedMap.TryGetValue(Tokens.BRANCH_END, out Token? end));
+                TokenCode.Add(end);
+            }
+        }
+
+        private TokenList Expression(TokenType end, TokenType after = TokenType.Undefined)
+        {
+            TokenQueue input = new();
+
+            while (true)
+            {
+                Token current = CurrentToken;
+                TokenType currentType = current.Base.Type;
+
+                if (currentType == TokenType.CalculationEnd)
+                {
+                    ParserError("Expression end reached unexpectedly");
+                }
+
+                AdvanceToken();
+
+                TokenType nextType = CurrentToken.Base.Type;
+                bool onlyEnd = after == TokenType.Undefined;
+                bool afterIsNext = after == nextType;
+
+                if (currentType == end && (onlyEnd || afterIsNext))
+                {
+                    if (afterIsNext)
+                    {
+                        AdvanceToken();
+                    }
+
+                    break;
+                }
+
+                input.Enqueue(current);
+            }
+
+            return ShuntingYard(input);
+        }
+
+        private TokenList ShuntingYard(TokenQueue input)
+        {
+            // Shunting yard algorithm (to Reverse Polish Notation)
+            TokenList output = new(input.Count);
+
+            Debug.Assert(TokenBuffer.Count == 0);
+
+            while (input.Count != 0)
+            {
+                Token token = input.Dequeue();
+                switch (token.Base.Type)
+                {
+                    case TokenType.Parameter:
+                    case TokenType.Variable:
+                    case TokenType.Input:
+                    case TokenType.Output:
+                    case TokenType.Constant:
+                        output.Add(token);
+                        continue;
+                    case TokenType.Open:
+                        TokenBuffer.Push(token);
+                        continue;
+                    case TokenType.Close:
+                        Token top;
+
+                        try
+                        {
+                            top = TokenBuffer.Peek();
+                        }
+                        catch (InvalidOperationException)
+                        {
+                            ParserError($"Unexpected {Tokens.CLOSE}");
+                            break;
+                        }
+
+                        while (top.Base.Type != TokenType.Open)
+                        {
+                            output.Add(TokenBuffer.Pop());
+
+                            if (TokenBuffer.Count == 0)
+                            {
+                                ParserError($"No matching {Tokens.OPEN}");
+                            }
+
+                            top = TokenBuffer.Peek();
+                        }
+
+                        Debug.Assert(top.Base.Type == TokenType.Open);
+
+                        _ = TokenBuffer.Pop();
+                        if (TokenBuffer.Count != 0 && TokenBuffer.Peek().Base.Type == TokenType.Function)
+                        {
+                            output.Add(TokenBuffer.Pop());
+                        }
+
+                        continue;
+                    case TokenType.Arithmetic:
+                    case TokenType.Comparison:
+                        int pToken = Tokens.Precedence(token.Base.Symbol);
+                        bool left = Tokens.LeftAssociative(token.Base.Symbol);
+
+                        while (true)
+                        {
+                            if (TokenBuffer.Count == 0)
+                            {
+                                break;
+                            }
+
+                            Token op = TokenBuffer.Peek();
+                            TokenType optype = op.Base.Type;
+                            if (optype != TokenType.Comparison && optype != TokenType.Arithmetic)
+                            {
+                                break;
+                            }
+
+                            int pOperator = Tokens.Precedence(op.Base.Symbol);
+                            if (pToken < pOperator || (left && pToken == pOperator))
+                            {
+                                output.Add(TokenBuffer.Pop());
+                            }
+                            else
+                            {
+                                break;
+                            }
+                        }
+
+                        TokenBuffer.Push(token);
+                        continue;
+                    case TokenType.Function:
+                        TokenBuffer.Push(token);
+                        continue;
+                    default:
+                        ParserError("Unexpected expression token!");
+                        break;
+                }
+            }
+
+            while (TokenBuffer.Count != 0)
+            {
+                Token token = TokenBuffer.Pop();
+
+                if (token.Base.Type == TokenType.Open)
+                {
+                    ParserError($"No matching {Tokens.CLOSE}");
+                }
+
+                output.Add(token);
+            }
+
+            return output;
+        }
 
         private bool Accept(TokenType type)
         {
             if (type == CurrentToken.Base.Type)
             {
-                Advance(type);
                 AdvanceToken();
                 return true;
             }
@@ -244,173 +420,7 @@ namespace userinterface.Models.Script.Generation
             return false;
         }
 
-        private TokenList ShuntingYard(in TokenQueue input)
-        {
-            // Shunting yard algorithm (to Reverse Polish Notation)
-            TokenList output = new(input.Count);
-
-            TokenStack opstack = new();
-
-            while (input.Count != 0)
-            {
-                Token token = input.Dequeue();
-                switch (token.Base.Type)
-                {
-                    case TokenType.Parameter:
-                    case TokenType.Variable:
-                    case TokenType.Input:
-                    case TokenType.Output:
-                    case TokenType.Constant:
-                        output.Add(token);
-                        continue;
-                    case TokenType.Open:
-                        opstack.Push(token);
-                        continue;
-                    case TokenType.Close:
-                        Token top;
-
-                        try
-                        {
-                            top = opstack.Peek();
-                        }
-                        catch (InvalidOperationException)
-                        {
-                            ParserError($"Unexpected {Tokens.CLOSE}");
-                            break;
-                        }
-
-                        while (top.Base.Type != TokenType.Open)
-                        {
-                            output.Add(opstack.Pop());
-
-                            if (opstack.Count == 0)
-                            {
-                                ParserError($"No matching {Tokens.OPEN}");
-                            }
-
-                            top = opstack.Peek();
-                        }
-
-                        Debug.Assert(top.Base.Type == TokenType.Open);
-
-                        _ = opstack.Pop();
-                        if (opstack.Count != 0 && opstack.Peek().Base.Type == TokenType.Function)
-                        {
-                            output.Add(opstack.Pop());
-                        }
-
-                        continue;
-                    case TokenType.Arithmetic:
-                        int precedenceT = Tokens.Precedence(token.Base.Symbol);
-                        bool left = Tokens.LeftAssociative(token.Base.Symbol);
-
-                        while (true)
-                        {
-                            if (opstack.Count == 0)
-                            {
-                                break;
-                            }
-
-                            Token op = opstack.Peek();
-                            int precedenceO = Tokens.Precedence(op.Base.Symbol);
-                            if (op.Base.Type == TokenType.Arithmetic &&
-                                (precedenceT < precedenceO ||
-                                (precedenceT == precedenceO && left)))
-                            {
-                                output.Add(opstack.Pop());
-                            }
-                            else
-                            {
-                                break;
-                            }
-                        }
-
-                        opstack.Push(token);
-
-                        continue;
-                    case TokenType.Function:
-                        opstack.Push(token);
-                        continue;
-                    default:
-                        ParserError("Unexpected expression token!");
-                        break;
-                }
-            }
-
-            while (opstack.Count != 0)
-            {
-                Token token = opstack.Pop();
-
-                if (token.Base.Type == TokenType.Open)
-                {
-                    ParserError($"No matching {Tokens.CLOSE}");
-                }
-
-                output.Add(token);
-            }
-
-            return output;
-        }
-
-        private void Expression(TokenType end, TokenType after = TokenType.Undefined)
-        {
-            bool onlyEnd = after == TokenType.Undefined;
-
-            TokenQueue input = new();
-
-            while (true)
-            {
-                Token current = CurrentToken;
-                TokenType currentType = current.Base.Type;
-
-                if (currentType == TokenType.CalculationEnd)
-                {
-                    ParserError("Expression end reached unexpectedly");
-                    return;
-                }
-
-                AdvanceToken();
-
-                TokenType nextType = CurrentToken.Base.Type;
-                bool afterIsNext = after == nextType;
-
-                if (currentType == end && (onlyEnd || afterIsNext))
-                {
-                    if (afterIsNext)
-                    {
-                        AdvanceToken();
-                    }
-                    break;
-                }
-
-                input.Enqueue(current);
-            }
-
-            TokenList output = ShuntingYard(input);
-
-            // Turn into AST
-        }
-
-        private void Statement()
-        {
-            if (Accept(TokenType.Variable) ||
-                Accept(TokenType.Input) ||
-                Accept(TokenType.Output))
-            {
-                Expect(TokenType.Assignment);
-                Expression(TokenType.Terminator);
-            }
-            else if (Expect(TokenType.Branch))
-            {
-                Expect(TokenType.Open);
-                Expression(TokenType.Comparison);
-                Expression(TokenType.Close, TokenType.Block);
-                do Statement();
-                while (!Accept(TokenType.Block));
-            }
-        }
-
-        #endregion Recursive Descent
+        #endregion Shunting Yard
 
         private void ParserError(string error)
         {
@@ -418,7 +428,7 @@ namespace userinterface.Models.Script.Generation
         }
     }
 
-    public class ParserException : TranspilerException
+    public class ParserException : ScriptException
     {
         public ParserException(string message) : base(message) {}
 

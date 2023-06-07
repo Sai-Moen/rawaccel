@@ -10,11 +10,11 @@ namespace userinterface.Models.Script.Interaction
         {
             if (!File.Exists(scriptPath))
             {
-                throw new TranspilerException("File not found!");
+                throw new ScriptException("File not found!");
             }
             else if (new FileInfo(scriptPath).Length > MaxScriptFileLength)
             {
-                throw new TranspilerException("File too big!");
+                throw new ScriptException("File too big!");
             }
 
             try
@@ -25,7 +25,7 @@ namespace userinterface.Models.Script.Interaction
             {
                 // Could differentiate between certain exceptions,
                 // keep in mind that File.Exists already catches a decent amount.
-                throw new TranspilerException("File not readable!");
+                throw new ScriptException("File not readable!");
             }
         }
     }

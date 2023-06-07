@@ -5,7 +5,7 @@ namespace userinterface.Models.Script.Generation
 {
     public abstract class ParserNode
     {
-        public Token? Token { get; init; }
+        public abstract Token Token { get; init; }
     }
 
     public class ParameterAssignment : ParserNode
@@ -17,10 +17,9 @@ namespace userinterface.Models.Script.Generation
 
             Debug.Assert(value.Base.Type == TokenType.Number);
 
-            double result;
-            if (double.TryParse(value.Base.Symbol, out result))
+            if (double.TryParse(value.Base.Symbol, out double result))
             {
-                Value = result;
+                DefaultValue = result;
             }
             else
             {
@@ -28,7 +27,9 @@ namespace userinterface.Models.Script.Generation
             }
         }
 
-        public double Value { get; init; }
+        public override Token Token { get; init; }
+
+        public double DefaultValue { get; init; }
     }
 
     public class VariableAssignment : ParserNode
@@ -41,15 +42,14 @@ namespace userinterface.Models.Script.Generation
             TokenType valueType = value.Base.Type;
             Debug.Assert(valueType == TokenType.Number || valueType == TokenType.Parameter);
 
-            if (valueType == TokenType.Parameter)
+            IsBound = valueType == TokenType.Parameter;
+            if (IsBound)
             {
-                return; // Dynamically assign
+                Param = value; // Dynamically assign
             }
-
-            double result;
-            if (double.TryParse(value.Base.Symbol, out result))
+            else if (double.TryParse(value.Base.Symbol, out double result))
             {
-                Value = result;
+                Value = result; // Assign a value
             }
             else
             {
@@ -57,18 +57,13 @@ namespace userinterface.Models.Script.Generation
             }
         }
 
-        public double Value { get; init; }
-    }
+        public override Token Token { get; init; }
 
-    public class Expression : ParserNode
-    {
-        public Expression(Token token, TokenList tokens)
-        {
-            Token = token;
-            Tokens = tokens;
-        }
+        public bool IsBound { get; init; }
 
-        public TokenList Tokens { get; init; }
+        public Token? Param { get; init; }
+
+        public double? Value { get; init; }
     }
 
     public class TokenStack : Stack<Token>
