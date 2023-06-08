@@ -10,7 +10,8 @@ namespace userinterface.ViewModels
         {
 #if DEBUG // Only for debugging RawAccelScript! Remove from other repos if applicable
             
-            Script script = new(Script.__DebugPath);
+            Script script = new();
+            script.LoadScript(Script.__DebugPath);
             Environment.Exit(0);
 #else
             Profiles = new ProfilesViewModel();

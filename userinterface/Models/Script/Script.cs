@@ -12,23 +12,24 @@ namespace userinterface.Models.Script
 
         private readonly IScriptInterface UI;
 
-        public Script(string scriptPath)
+        private Interpreter _interpreter;
+
+        public Script()
         {
 #if DEBUG
             UI = ScriptInterface.Factory(ScriptInterfaceType.Debug);
 #else
             UI = ScriptInterface.Factory(ScriptInterfaceType.Release);
 #endif
-            Run(scriptPath);
         }
 
-        private void Run(string scriptPath)
+        public void LoadScript(string scriptPath)
         {
             try
             {
-                string script = ScriptLoader.LoadScript(scriptPath);
-                Tokenizer tokenizer = new(script);
+                Tokenizer tokenizer = new(ScriptLoader.LoadScript(scriptPath));
                 Parser parser = new(tokenizer.TokenList);
+                _interpreter = new();
 #if DEBUG
                 StringBuilder builder = new();
                 foreach (Token token in tokenizer.TokenList)
@@ -37,8 +38,26 @@ namespace userinterface.Models.Script
                         $"{token.Line}:".PadRight(4) + $" {token.Base.Type} ".PadRight(32) + token.Base.Symbol);
                 }
 
-                builder.AppendLine().AppendLine("Interpreter code:");
+                builder.AppendLine().AppendLine("Variables:");
+                foreach (VariableAssignment a in parser.Variables)
+                {
+                    if (a.IsExpression)
+                    {
+                        builder.AppendLine(
+                            $"{a.Token.Base.Symbol}: ");
+                        foreach (Token token in a.Expr!.Tokens)
+                        {
+                            builder.AppendLine('\t' + token.ToString());
+                        }
+                    }
+                    else
+                    {
+                        builder.AppendLine(
+                            $"{a.Token.Base.Symbol}: ".PadRight(4) + a.Value);
+                    }
+                }
 
+                builder.AppendLine().AppendLine("Interpreter code:");
                 foreach (Token token in parser.TokenCode)
                 {
                     builder.AppendLine(
@@ -46,7 +65,6 @@ namespace userinterface.Models.Script
                 }
 
                 UI.HandleMessage(builder.ToString());
-#else
 #endif
             }
             catch (ScriptException e)

@@ -50,37 +50,34 @@ Scripting language specification:
 	Sections:
 		1. Comments
 			This section exists because the tokenizer does not tokenize until the Parameters section is entered.
-			Therefore, the script writer is allowed to write anything here with accepted characters (ascii letters).
+			Therefore, the script writer is allowed to write anything here.
 
 		2. Parameters
 			Delimited by []
-			This section holds up to 8 parameters.
+			This section holds a maximum of 8 parameters.
 			These parameters correspond to RawAccel parameters in the UI, and are bound accordingly.
 
 		3. Variables (not user-facing)
-			This section holds temporary variables that store Numbers.
-			The maximum amount should be at least 256, but is otherwise left to implementation details.
+			This section holds temporary variables that store Numbers or Parameters.
+			The maximum amount should be at least 256 minus the maximum amount of parameters,
+			because of allowing 1-byte addressing, but is otherwise left to implementation details.
 
 		4. Calculation
 			Delimited by {}
 			This section is where the calculation actually happens.
 
-			Input variable 'x' will be selected externally, and then passed by value to the Parser.
-			At the Parser/AST it will be passed around by reference,
-			to make sure Inline Arithmetic works as one might expect.
-
-			At the same time, Output variable 'y' will also be passed around by reference,
-			accumulating terms along the way, until the end of the Calculation block,
-			where it is returned to the caller of the Script's point-getting method.
+			Input variable 'x' will be selected externally, and then given to the Interpreter.
+			At the same time, Output variable 'y' will be accumulating until the end of the Calculation block,
 			It starts at 1, which means by default the smallest possible script "[]{}" will generate a static curve.
+			After the Calculation block it will be returned to caller.
 
 	Keywords:
 		x y			"Input/Output variables"
 		zero		"Used for quick unary minus/booleans (zero - x == -x && zero == false && !zero == true)"
 		e pi tau	"Math Constants"
 
-		if (bool): s :		"s means statements"
-		while (bool): s :	"s means statements"
+		if (c): s :		"c means condition, s means statements"
+		while (c): s :	"c means condition, s means statements"
 
 	Separators:
 		.	"Floating Point"
@@ -99,11 +96,12 @@ Scripting language specification:
 		& | !				"Logical Operators"
 		== != < > <= >=		"Comparison Operators"
 
-		Due to a tokenizer hack turned feature, operators must be 1 character and optionally append '='.
+		Due to a tokenizer hack turned feature, operators must be 1 character normally,
+		but can optionally append '='.
 
 	Functions:
 		abs sqrt cbrt
-		ceil floor round trunc
+		round trunc ceil floor
 		log log2 log10
 		sin sinh asin asinh
 		cos cosh acos acosh
@@ -112,4 +110,4 @@ Scripting language specification:
 		pow exp	"indirectly, with the ^ operator"
 
 		These are all C# System.Math-supported functions with a very similar signature,
-		namely "double Func(double)" which means that some optimization in the parser is permitted.
+		namely "Func<double, double>".

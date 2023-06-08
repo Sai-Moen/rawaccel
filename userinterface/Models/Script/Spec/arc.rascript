@@ -8,11 +8,13 @@ Arc mode by SaiMoen
 
 ]
 
+	limit := Limit - 1;
+
 {
 
 	if (x > Offset):
 		x -= Offset;
-		y += (Limit / x) * (x - Midpoint * atan(x / Midpoint));
+		y += (limit / x) * (x - Midpoint * atan(x / Midpoint));
 	:
 
 }

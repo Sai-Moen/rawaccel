@@ -14,7 +14,7 @@ Test script (random gibberish that is still correct according to the spec)
 	y2 := 0;
 
 	four := 4;
-	Coffee := Cappuccino;
+	Coffee := Cappuccino - 4 + 4 - 4 * 1 / 2 + 2;
 
 {
 

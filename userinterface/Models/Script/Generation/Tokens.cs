@@ -39,20 +39,16 @@ namespace userinterface.Models.Script.Generation
 
     public record Token(BaseToken Base, uint Line = 0);
 
-    public enum Section
-    {
-        Comments,
-        Parameters,
-        Variables,
-        Calculation,
-    }
-
     public static class Tokens
     {
         #region Constants
 
-        // Keywords
+        // Declarations
+        public const int CAPACITY = byte.MaxValue + 1;
         public const int MAX_PARAMETERS     = 8;
+        public const int MAX_VARIABLES      = CAPACITY - MAX_PARAMETERS; // Important for addressing
+
+        // Keywords
         // Calculation IO
         public const string INPUT           = "x";
         public const string OUTPUT          = "y";
@@ -258,6 +254,8 @@ namespace userinterface.Models.Script.Generation
             ReservedMap.Add(second, new(new(TokenType.Undefined, second)));
 
             Debug.Assert(ReservedMap.Count == totalLength);
+
+            Debug.Assert(CAPACITY == MAX_PARAMETERS + MAX_VARIABLES);
         }
 
         #endregion Constructors
@@ -308,15 +306,15 @@ namespace userinterface.Models.Script.Generation
 
     public class TokenMap : Dictionary<string, Token>, IDictionary<string, Token>
     {
-        public TokenMap() : base() {}
+        public TokenMap() : base() { }
 
-        public TokenMap(int capacity) : base(capacity) {}
+        public TokenMap(int capacity) : base(capacity) { }
     }
 
     public class TokenList : List<Token>, IList<Token>
     {
-        public TokenList() : base() {}
+        public TokenList() : base() { }
 
-        public TokenList(int capacity) : base(capacity) {}
+        public TokenList(int capacity) : base(capacity) { }
     }
 }

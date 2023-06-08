@@ -329,6 +329,6 @@ namespace userinterface.Models.Script.Generation
 
     public class TokenizerException : ScriptException
     {
-        public TokenizerException(uint line, string message) : base($"Line {line}: {message}") {}
+        public TokenizerException(uint line, string message) : base($"Line {line}: {message}") { }
     }
 }
