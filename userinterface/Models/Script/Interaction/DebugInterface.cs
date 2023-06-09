@@ -6,7 +6,7 @@ namespace userinterface.Models.Script.Interaction
     {
         public void HandleException(ScriptException exception)
         {
-            Debug.WriteLine(exception.Message);
+            Debug.WriteLine(exception);
         }
 
         public void HandleMessage(string message)

@@ -29,7 +29,7 @@ namespace userinterface.Models.Script
             {
                 Tokenizer tokenizer = new(ScriptLoader.LoadScript(scriptPath));
                 Parser parser = new(tokenizer.TokenList);
-                _interpreter = new();
+                _interpreter = new(parser.Parameters, parser.Variables, parser.TokenCode);
 #if DEBUG
                 StringBuilder builder = new();
                 foreach (Token token in tokenizer.TokenList)
@@ -41,19 +41,11 @@ namespace userinterface.Models.Script
                 builder.AppendLine().AppendLine("Variables:");
                 foreach (VariableAssignment a in parser.Variables)
                 {
-                    if (a.IsExpression)
+                    builder.AppendLine(
+                        $"{a.Token.Base.Symbol}: ");
+                    foreach (Token token in a.Expr!.Tokens)
                     {
-                        builder.AppendLine(
-                            $"{a.Token.Base.Symbol}: ");
-                        foreach (Token token in a.Expr!.Tokens)
-                        {
-                            builder.AppendLine('\t' + token.ToString());
-                        }
-                    }
-                    else
-                    {
-                        builder.AppendLine(
-                            $"{a.Token.Base.Symbol}: ".PadRight(4) + a.Value);
+                        builder.AppendLine('\t' + token.ToString());
                     }
                 }
 
@@ -76,9 +68,6 @@ namespace userinterface.Models.Script
 
     public class ScriptException : Exception
     {
-        public ScriptException(string message)
-            : base(message)
-        {
-        }
+        public ScriptException(string message) : base(message) { }
     }
 }

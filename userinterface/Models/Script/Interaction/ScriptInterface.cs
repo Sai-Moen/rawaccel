@@ -17,13 +17,15 @@ namespace userinterface.Models.Script.Interaction
 
     public static class ScriptInterface
     {
-        public static IScriptInterface Factory(ScriptInterfaceType ui) =>
-            ui switch
+        public static IScriptInterface Factory(ScriptInterfaceType ui)
+        {
+            return ui switch
             {
-                ScriptInterfaceType.Debug   => new DebugInterface(),
+                ScriptInterfaceType.Debug => new DebugInterface(),
                 ScriptInterfaceType.Release => new ReleaseInterface(),
 
                 _ => throw new NotImplementedException(),
-        };
+            };
+        }
     }
 }

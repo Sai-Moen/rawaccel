@@ -107,7 +107,7 @@ Scripting language specification:
 		cos cosh acos acosh
 		tan tanh atan atanh
 
-		pow exp	"indirectly, with the ^ operator"
+		pow	"indirectly, with the ^ operator"
 
 		These are all C# System.Math-supported functions with a very similar signature,
 		namely "Func<double, double>".

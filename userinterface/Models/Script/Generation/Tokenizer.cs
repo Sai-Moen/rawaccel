@@ -14,7 +14,7 @@ namespace userinterface.Models.Script.Generation
     /// <summary>
     /// Automatically attempts to Tokenize when given an input script.
     /// </summary>
-    internal class Tokenizer
+    public class Tokenizer
     {
         #region Constants
 
@@ -28,7 +28,7 @@ namespace userinterface.Models.Script.Generation
 
         #region Fields
 
-        internal TokenList TokenList { get; } = new();
+        public TokenList TokenList { get; } = new();
 
         private readonly StringBuilder CharBuffer = new();
 
@@ -48,7 +48,7 @@ namespace userinterface.Models.Script.Generation
 
         #region Constructors
 
-        internal Tokenizer(string script)
+        public Tokenizer(string script)
         {
             Characters = script
                 .ReplaceLineEndings(NewLine.ToString())

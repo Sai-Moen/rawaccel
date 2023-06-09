@@ -12,22 +12,19 @@ namespace userinterface.Models.Script.Generation
     {
         public abstract Token Token { get; }
 
-        public abstract bool IsExpression { get; }
+        public abstract double? Value { get; }
 
-        public abstract double? Value { get; init; }
-
-        public abstract Expression? Expr { get; init; }
+        public abstract Expression? Expr { get; }
     }
 
     public class ParameterAssignment : ParserNode
     {
         public ParameterAssignment(Token token, Token value)
         {
+            Debug.Assert(token.Base.Type == TokenType.Parameter);
             Token = token;
-            Debug.Assert(Token.Base.Type == TokenType.Parameter);
 
             Debug.Assert(value.Base.Type == TokenType.Number);
-
             if (double.TryParse(value.Base.Symbol, out double result))
             {
                 Value = result;
@@ -40,57 +37,42 @@ namespace userinterface.Models.Script.Generation
 
         public override Token Token { get; }
 
-        public override bool IsExpression => false;
+        public override double? Value { get; }
 
-        public override double? Value { get; init; }
-
-        public override Expression? Expr { get => null; init { } }
+        public override Expression? Expr => null;
     }
 
     public class VariableAssignment : ParserNode
     {
-        private readonly double? _value;
-
-        private readonly Expression? _expression;
-
-        public VariableAssignment(Token token, Token[] value)
+        public VariableAssignment(Token token, TokenList expr)
         {
+            Debug.Assert(token.Base.Type == TokenType.Variable);
             Token = token;
-            Debug.Assert(Token.Base.Type == TokenType.Variable);
 
-            Token number = value[0];
-            TokenType valueType = number.Base.Type;
-
-            IsExpression = valueType == TokenType.Parameter;
-            if (IsExpression)
-            {
-                Expr = new(value);
-            }
-            else if (double.TryParse(number.Base.Symbol, out double result))
-            {
-                Value = result;
-            }
-            else
-            {
-                throw new ParserException(number.Line, "Cannot parse number!");
-            }
+            Debug.Assert(expr.Count != 0);
+            Expr = new(expr);
         }
 
         public override Token Token { get; }
 
-        public override bool IsExpression { get; }
+        public override double? Value => null;
 
-        public override double? Value
+        public override Expression? Expr { get; }
+    }
+
+    public class Assignment
+    {
+        public Assignment(ParameterAssignment[] p, VariableAssignment[] v)
         {
-            get => _value ?? throw new ParserException("Unchecked use of Value!");
-            init => _value = value;
+            p.CopyTo(Assignments, 0);
+            v.CopyTo(Assignments, p.Length);
         }
 
-        public override Expression? Expr
-        {
-            get => _expression ?? throw new ParserException("Unchecked use of Parameter!");
-            init => _expression = value;
-        }
+        public Assignment(List<ParameterAssignment> p, List<VariableAssignment> v)
+            : this(p.ToArray(), v.ToArray())
+        { }
+
+        public ParserNode[] Assignments { get; } = new ParserNode[Tokens.CAPACITY];
     }
 
     public class TokenStack : Stack<Token>

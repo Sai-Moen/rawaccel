@@ -54,7 +54,7 @@ namespace userinterface.Models.Script.Generation
         public const string OUTPUT          = "y";
 
         // Unary Minus Hack
-        public const string ZERO =          "zero";
+        public const string ZERO            = "zero";
 
         // Constants
         public const string CONST_E         = "e";
@@ -64,7 +64,7 @@ namespace userinterface.Models.Script.Generation
         // Branching
         public const string BRANCH_IF       = "if";
         public const string BRANCH_WHILE    = "while";
-        public const string BRANCH_END      = "";
+        public const string BRANCH_END      = ""; // Using an empty string to avoid tokenization, be careful...
 
         // Separators
         // Delimiters
@@ -262,14 +262,15 @@ namespace userinterface.Models.Script.Generation
 
         #region Properties
 
-        public static readonly TokenMap ReservedMap;
+        public static TokenMap ReservedMap { get; }
 
         #endregion Properties
 
         #region Methods
 
-        public static int Precedence(string s) =>
-            s switch
+        public static int Precedence(string s)
+        {
+            return s switch
             {
                 OR => 0,
                 AND => 1,
@@ -294,7 +295,8 @@ namespace userinterface.Models.Script.Generation
                 NOT => 7,
 
                 _ => throw new ScriptException("Unexpected Precedence call!"),
-        };
+            };
+        }
 
         public static bool LeftAssociative(string s)
         {

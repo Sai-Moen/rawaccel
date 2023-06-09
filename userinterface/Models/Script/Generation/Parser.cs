@@ -7,15 +7,15 @@ namespace userinterface.Models.Script.Generation
     /// <summary>
     /// Automatically attempts to Parse a list of Tokens.
     /// </summary>
-    internal class Parser
+    public class Parser
     {
         #region Fields
 
-        internal List<ParameterAssignment> Parameters { get; } = new(Tokens.MAX_PARAMETERS);
+        public List<ParameterAssignment> Parameters { get; } = new(Tokens.MAX_PARAMETERS);
 
-        internal List<VariableAssignment> Variables { get; } = new(Tokens.MAX_VARIABLES);
+        public List<VariableAssignment> Variables { get; } = new(Tokens.MAX_VARIABLES);
 
-        internal TokenList TokenCode { get; } = new();
+        public TokenList TokenCode { get; } = new();
 
         private readonly List<string> ParameterNames = new(Tokens.MAX_PARAMETERS);
 
@@ -39,7 +39,7 @@ namespace userinterface.Models.Script.Generation
 
         #region Constructors
 
-        internal Parser(TokenList tokenList)
+        public Parser(TokenList tokenList)
         {
             TokenList = tokenList;
             Debug.Assert(TokenList.Count >= 4, "Tokenizer did not prevent empty script!");
@@ -227,10 +227,10 @@ namespace userinterface.Models.Script.Generation
                         OperatorStack.Push(token);
                         continue;
                     case TokenType.Close:
-                        OnClose(ref output);
+                        OnClose(output);
                         continue;
                     case TokenType.Arithmetic:
-                        OnPrecedence(ref output, token);
+                        OnPrecedence(output, token);
                         continue;
                     default:
                         ParserError("Unexpected expression token!");
@@ -238,7 +238,7 @@ namespace userinterface.Models.Script.Generation
                 }
             }
 
-            OnEmptyQueue(ref output);
+            OnEmptyQueue(output);
 
             Debug.Assert(TokenBuffer.Count == 2);
             Token t = TokenBuffer.Dequeue();
@@ -249,7 +249,7 @@ namespace userinterface.Models.Script.Generation
                 ParserError($"Expected {Tokens.ASSIGN}");
             }
 
-            Variables.Add(new(t, output.ToArray()));
+            Variables.Add(new(t, output));
         }
 
         private (int, Token) DeclExpect(TokenType type)
@@ -291,8 +291,8 @@ namespace userinterface.Models.Script.Generation
                 Expect(TokenType.Assignment);
                 Token assignment = PreviousToken;
                 TokenCode.AddRange(Expression(TokenType.Terminator));
-                TokenCode.Add(target);
                 TokenCode.Add(assignment);
+                TokenCode.Add(target);
             }
             else if (Expect(TokenType.Branch))
             {
@@ -302,9 +302,9 @@ namespace userinterface.Models.Script.Generation
                 TokenCode.Add(branch);
                 do Statement();
                 while (!Accept(TokenType.Block));
-                Debug.Assert(
-                    Tokens.ReservedMap.TryGetValue(Tokens.BRANCH_END, out Token? end));
-                TokenCode.Add(end);
+                bool assert = Tokens.ReservedMap.TryGetValue(Tokens.BRANCH_END, out Token? end);
+                Debug.Assert(assert);
+                TokenCode.Add(end! with { Line = PreviousToken.Line });
             }
         }
 
@@ -368,11 +368,11 @@ namespace userinterface.Models.Script.Generation
                         OperatorStack.Push(token);
                         continue;
                     case TokenType.Close:
-                        OnClose(ref output);
+                        OnClose(output);
                         continue;
                     case TokenType.Arithmetic:
                     case TokenType.Comparison:
-                        OnPrecedence(ref output, token);
+                        OnPrecedence(output, token);
                         continue;
                     default:
                         ParserError("Unexpected expression token!");
@@ -380,12 +380,12 @@ namespace userinterface.Models.Script.Generation
                 }
             }
 
-            OnEmptyQueue(ref output);
+            OnEmptyQueue(output);
 
             return output;
         }
 
-        private void OnClose(ref TokenList output)
+        private void OnClose(in TokenList output)
         {
             Token top;
 
@@ -420,7 +420,7 @@ namespace userinterface.Models.Script.Generation
             }
         }
 
-        private void OnPrecedence(ref TokenList output, Token token)
+        private void OnPrecedence(in TokenList output, Token token)
         {
             int pToken = Tokens.Precedence(token.Base.Symbol);
             bool left = Tokens.LeftAssociative(token.Base.Symbol);
@@ -453,7 +453,7 @@ namespace userinterface.Models.Script.Generation
             OperatorStack.Push(token);
         }
 
-        private void OnEmptyQueue(ref TokenList output)
+        private void OnEmptyQueue(in TokenList output)
         {
             while (OperatorStack.Count != 0)
             {

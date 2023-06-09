@@ -4,12 +4,12 @@
     {
         public void HandleException(ScriptException exception)
         {
-            throw new System.NotImplementedException();
+            System.Console.WriteLine(exception);
         }
 
         public void HandleMessage(string message)
         {
-            throw new System.NotImplementedException();
+            System.Console.WriteLine(message);
         }
     }
 }

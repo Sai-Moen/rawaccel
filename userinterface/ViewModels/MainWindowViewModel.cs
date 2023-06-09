@@ -8,12 +8,12 @@ namespace userinterface.ViewModels
     {
         public MainWindowViewModel()
         {
-#if DEBUG // Only for debugging RawAccelScript! Remove from other repos if applicable
+            // Only for debugging RawAccelScript! Remove from other repos if applicable
             
             Script script = new();
             script.LoadScript(Script.__DebugPath);
             Environment.Exit(0);
-#else
+#if false
             Profiles = new ProfilesViewModel();
             MouseListen = new MouseListenViewModel();
             MouseWindow = new MouseWindow(this);
