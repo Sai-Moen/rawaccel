@@ -1,62 +1,78 @@
 ﻿using System.Collections.Generic;
 using System.Diagnostics;
+using System.Reflection.Metadata;
 
 namespace userinterface.Models.Script.Generation
 {
     public class Interpreter
     {
-        private readonly Assignment Assignment;
+        private readonly MemoryMap Addresses = new();
 
-        private readonly HeapMemory Volatile = new();
+        private readonly MemoryHeap Stable = new();
 
-        private readonly HeapMemory Stable = new();
+        private readonly MemoryHeap Volatile = new();
 
-        private readonly Instruction[] Code;
+        private readonly Program MainProgram;
 
-        private readonly Dictionary<string, MemoryAddress> Addresses = new();
-
-        public double X { get; set; }
-
-        public double Y { get; }
+        private readonly Program[] Startup;
 
         public Interpreter(
             List<ParameterAssignment> parameters,
             List<VariableAssignment> variables,
             TokenList code)
         {
-            Assignment = new(parameters, variables);
-
             Debug.Assert(parameters.Count <= Tokens.MAX_PARAMETERS);
             for (int i = 0; i < parameters.Count; i++)
             {
                 ParameterAssignment parameter = parameters[i];
 
-                Stable[i] = parameter.Value ?? 0;
+                string name = parameter.Token.Base.Symbol;
 
-                Addresses.Add(parameter.Token.Base.Symbol, new(i));
+                Addresses.Add(name, new(i));
+
+                double value = parameter.Value ??
+                    throw new InterpreterException(parameter.Token.Line, "Parameter Value not set!");
+
+                Defaults[i] = new(name, value);
             }
+
+            Startup = new Program[variables.Count];
 
             Debug.Assert(variables.Count <= Tokens.MAX_VARIABLES);
             for (int i = 0; i < variables.Count; i++)
             {
-                VariableAssignment variable = variables[i];
-
                 int j = i + Tokens.MAX_PARAMETERS;
 
-                Addresses.Add(variable.Token.Base.Symbol, new(j));
+                VariableAssignment variable = variables[i];
+
+                string name = variable.Token.Base.Symbol;
+
+                Addresses.Add(name, new(j));
+
+                Expression expr = variable.Expr ??
+                    throw new InterpreterException(variable.Token.Line, "Variable Expr not set!");
+
+                Startup[i] = new(expr, Addresses);
             }
 
-            Code = Instructions.Emit(new(code), Addresses);
+            MainProgram = new(new(code), Addresses);
+        }
 
-            Restore();
+        public ParameterNameValuePairs Defaults { get; } = new();
+
+        public ParameterNameValuePairs CurrentSettings { get; set; } = new();
+
+        public void Init()
+        {
+
         }
 
         private void Restore()
         {
-            Volatile.Restore(Stable);
+            Volatile.RestoreTo(Stable);
         }
 
-        private void InterpreterError(string error)
+        private static void InterpreterError(string error)
         {
             throw new InterpreterException(error);
         }

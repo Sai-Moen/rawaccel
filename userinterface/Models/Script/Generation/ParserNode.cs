@@ -60,28 +60,9 @@ namespace userinterface.Models.Script.Generation
         public override Expression? Expr { get; }
     }
 
-    public class Assignment
-    {
-        public Assignment(ParameterAssignment[] p, VariableAssignment[] v)
-        {
-            p.CopyTo(Assignments, 0);
-            v.CopyTo(Assignments, p.Length);
-        }
-
-        public Assignment(List<ParameterAssignment> p, List<VariableAssignment> v)
-            : this(p.ToArray(), v.ToArray())
-        { }
-
-        public ParserNode[] Assignments { get; } = new ParserNode[Tokens.CAPACITY];
-    }
-
     public class TokenStack : Stack<Token>
-    {
-        public TokenStack() : base() { }
-    }
+    { }
 
     public class TokenQueue : Queue<Token>
-    {
-        public TokenQueue() : base() { }
-    }
+    { }
 }

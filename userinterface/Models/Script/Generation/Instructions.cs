@@ -122,56 +122,56 @@ namespace userinterface.Models.Script.Generation
         {
             // Arguments are reversed because of the Stack Pop order
 
-            Table[InstructionType.LoadE.ToByte()]       = (_, _) => Math.E;
-            Table[InstructionType.LoadPi.ToByte()]      = (_, _) => Math.PI;
-            Table[InstructionType.LoadTau.ToByte()]     = (_, _) => Math.Tau;
-            Table[InstructionType.LoadZero.ToByte()]    = (_, _) => 0;
+            Table[InstructionType.LoadE.ToByte()] = (_, _) => Math.E;
+            Table[InstructionType.LoadPi.ToByte()] = (_, _) => Math.PI;
+            Table[InstructionType.LoadTau.ToByte()] = (_, _) => Math.Tau;
+            Table[InstructionType.LoadZero.ToByte()] = (_, _) => 0;
 
-            Table[InstructionType.Add.ToByte()]         = (y, x) => x + y;
-            Table[InstructionType.Sub.ToByte()]         = (y, x) => x - y;
-            Table[InstructionType.Mul.ToByte()]         = (y, x) => x * y;
-            Table[InstructionType.Div.ToByte()]         = (y, x) => x / y;
-            Table[InstructionType.Mod.ToByte()]         = (y, x) => x % y;
-            Table[InstructionType.Exp.ToByte()]         = (y, x) => Math.Pow(x, y);
-            Table[InstructionType.ExpE.ToByte()]        = (y, _) => Math.Exp(y);
+            Table[InstructionType.Add.ToByte()] = (y, x) => x + y;
+            Table[InstructionType.Sub.ToByte()] = (y, x) => x - y;
+            Table[InstructionType.Mul.ToByte()] = (y, x) => x * y;
+            Table[InstructionType.Div.ToByte()] = (y, x) => x / y;
+            Table[InstructionType.Mod.ToByte()] = (y, x) => x % y;
+            Table[InstructionType.Exp.ToByte()] = (y, x) => Math.Pow(x, y);
+            Table[InstructionType.ExpE.ToByte()] = (y, _) => Math.Exp(y);
 
-            Table[InstructionType.Or.ToByte()]          = (y, x) => Convert.ToDouble((x != 0) | (y != 0));
-            Table[InstructionType.And.ToByte()]         = (y, x) => Convert.ToDouble((x != 0) & (y != 0));
-            Table[InstructionType.Lt.ToByte()]          = (y, x) => Convert.ToDouble(x < y);
-            Table[InstructionType.Gt.ToByte()]          = (y, x) => Convert.ToDouble(x > y);
-            Table[InstructionType.Le.ToByte()]          = (y, x) => Convert.ToDouble(x <= y);
-            Table[InstructionType.Ge.ToByte()]          = (y, x) => Convert.ToDouble(x >= y);
-            Table[InstructionType.Eq.ToByte()]          = (y, x) => Convert.ToDouble(x == y);
-            Table[InstructionType.Ne.ToByte()]          = (y, x) => Convert.ToDouble(x != y);
-            Table[InstructionType.Not.ToByte()]         = (y, _) => Convert.ToDouble(y == 0);
+            Table[InstructionType.Or.ToByte()] = (y, x) => Convert.ToDouble((x != 0) | (y != 0));
+            Table[InstructionType.And.ToByte()] = (y, x) => Convert.ToDouble((x != 0) & (y != 0));
+            Table[InstructionType.Lt.ToByte()] = (y, x) => Convert.ToDouble(x < y);
+            Table[InstructionType.Gt.ToByte()] = (y, x) => Convert.ToDouble(x > y);
+            Table[InstructionType.Le.ToByte()] = (y, x) => Convert.ToDouble(x <= y);
+            Table[InstructionType.Ge.ToByte()] = (y, x) => Convert.ToDouble(x >= y);
+            Table[InstructionType.Eq.ToByte()] = (y, x) => Convert.ToDouble(x == y);
+            Table[InstructionType.Ne.ToByte()] = (y, x) => Convert.ToDouble(x != y);
+            Table[InstructionType.Not.ToByte()] = (y, _) => Convert.ToDouble(y == 0);
 
-            Table[InstructionType.Abs.ToByte()]         = (y, _) => Math.Abs(y);
-            Table[InstructionType.Sqrt.ToByte()]        = (y, _) => Math.Sqrt(y);
-            Table[InstructionType.Cbrt.ToByte()]        = (y, _) => Math.Cbrt(y);
+            Table[InstructionType.Abs.ToByte()] = (y, _) => Math.Abs(y);
+            Table[InstructionType.Sqrt.ToByte()] = (y, _) => Math.Sqrt(y);
+            Table[InstructionType.Cbrt.ToByte()] = (y, _) => Math.Cbrt(y);
 
-            Table[InstructionType.Round.ToByte()]       = (y, _) => Math.Round(y);
-            Table[InstructionType.Trunc.ToByte()]       = (y, _) => Math.Truncate(y);
-            Table[InstructionType.Ceil.ToByte()]        = (y, _) => Math.Ceiling(y);
-            Table[InstructionType.Floor.ToByte()]       = (y, _) => Math.Floor(y);
+            Table[InstructionType.Round.ToByte()] = (y, _) => Math.Round(y);
+            Table[InstructionType.Trunc.ToByte()] = (y, _) => Math.Truncate(y);
+            Table[InstructionType.Ceil.ToByte()] = (y, _) => Math.Ceiling(y);
+            Table[InstructionType.Floor.ToByte()] = (y, _) => Math.Floor(y);
 
-            Table[InstructionType.Log.ToByte()]         = (y, _) => Math.Log(y);
-            Table[InstructionType.Log2.ToByte()]        = (y, _) => Math.Log2(y);
-            Table[InstructionType.Log10.ToByte()]       = (y, _) => Math.Log10(y);
+            Table[InstructionType.Log.ToByte()] = (y, _) => Math.Log(y);
+            Table[InstructionType.Log2.ToByte()] = (y, _) => Math.Log2(y);
+            Table[InstructionType.Log10.ToByte()] = (y, _) => Math.Log10(y);
 
-            Table[InstructionType.Sin.ToByte()]         = (y, _) => Math.Sin(y);
-            Table[InstructionType.Sinh.ToByte()]        = (y, _) => Math.Sinh(y);
-            Table[InstructionType.Asin.ToByte()]        = (y, _) => Math.Asin(y);
-            Table[InstructionType.Asinh.ToByte()]       = (y, _) => Math.Asinh(y);
+            Table[InstructionType.Sin.ToByte()] = (y, _) => Math.Sin(y);
+            Table[InstructionType.Sinh.ToByte()] = (y, _) => Math.Sinh(y);
+            Table[InstructionType.Asin.ToByte()] = (y, _) => Math.Asin(y);
+            Table[InstructionType.Asinh.ToByte()] = (y, _) => Math.Asinh(y);
 
-            Table[InstructionType.Cos.ToByte()]         = (y, _) => Math.Cos(y);
-            Table[InstructionType.Cosh.ToByte()]        = (y, _) => Math.Cosh(y);
-            Table[InstructionType.Acos.ToByte()]        = (y, _) => Math.Acos(y);
-            Table[InstructionType.Acosh.ToByte()]       = (y, _) => Math.Acosh(y);
+            Table[InstructionType.Cos.ToByte()] = (y, _) => Math.Cos(y);
+            Table[InstructionType.Cosh.ToByte()] = (y, _) => Math.Cosh(y);
+            Table[InstructionType.Acos.ToByte()] = (y, _) => Math.Acos(y);
+            Table[InstructionType.Acosh.ToByte()] = (y, _) => Math.Acosh(y);
 
-            Table[InstructionType.Tan.ToByte()]         = (y, _) => Math.Tan(y);
-            Table[InstructionType.Tanh.ToByte()]        = (y, _) => Math.Tanh(y);
-            Table[InstructionType.Atan.ToByte()]        = (y, _) => Math.Atan(y);
-            Table[InstructionType.Atanh.ToByte()]       = (y, _) => Math.Atanh(y);
+            Table[InstructionType.Tan.ToByte()] = (y, _) => Math.Tan(y);
+            Table[InstructionType.Tanh.ToByte()] = (y, _) => Math.Tanh(y);
+            Table[InstructionType.Atan.ToByte()] = (y, _) => Math.Atan(y);
+            Table[InstructionType.Atanh.ToByte()] = (y, _) => Math.Atanh(y);
         }
 
         public static Func<double, double, double>[] Table { get; } =
@@ -194,12 +194,19 @@ namespace userinterface.Models.Script.Generation
                 _ => 1,
             };
         }
+    }
 
-        public static Instruction[] Emit(Expression expression, IDictionary<string, MemoryAddress> indices)
+    public class Program
+    {
+        private readonly InstructionList _instructions;
+
+        #region Constructors
+
+        public Program(Expression expression, MemoryMap map)
         {
-            InstructionList instructions = new(expression.Tokens.Length << 1);
+            _instructions = new(expression.Tokens.Length);
 
-            Stack<Func<(int, CodeAddress)>> callback = new();
+            BranchCallback callback = new();
 
             for (int i = 0; i < expression.Tokens.Length; i++)
             {
@@ -210,7 +217,7 @@ namespace userinterface.Models.Script.Generation
                     case TokenType.Number:
                         if (double.TryParse(current.Symbol, out double value))
                         {
-                            instructions.AddInstruction(
+                            _instructions.AddInstruction(
                                 InstructionType.LoadNumber,
                                 BitConverter.GetBytes(value));
                             break;
@@ -219,9 +226,9 @@ namespace userinterface.Models.Script.Generation
                         throw new InterpreterException(token.Line, "Cannot parse number!");
                     case TokenType.Parameter:
                     case TokenType.Variable:
-                        if (indices.TryGetValue(current.Symbol, out MemoryAddress loadIndex))
+                        if (map.TryGetValue(current.Symbol, out MemoryAddress loadIndex))
                         {
-                            instructions.AddInstruction(
+                            _instructions.AddInstruction(
                                 InstructionType.Load,
                                 loadIndex.GetBytes());
                             break;
@@ -229,16 +236,17 @@ namespace userinterface.Models.Script.Generation
 
                         throw new InterpreterException(token.Line, "Unable to obtain address!");
                     case TokenType.Input:
-                        instructions.AddInstruction(InstructionType.LoadIn);
+                        _instructions.AddInstruction(InstructionType.LoadIn);
                         break;
                     case TokenType.Output:
-                        instructions.AddInstruction(InstructionType.LoadOut);
+                        _instructions.AddInstruction(InstructionType.LoadOut);
                         break;
                     case TokenType.Constant:
-                        OnConstant(instructions, token, current);
+                        _instructions.AddInstruction(
+                            OnConstant(token.Line, current.Symbol));
                         break;
                     case TokenType.Branch:
-                        callback.Push(() => (i, new(instructions.Count)));
+                        callback.Push(() => (i, new(_instructions.Count)));
                         break;
                     case TokenType.BranchEnd:
                         if (callback.TryPop(out var result))
@@ -248,21 +256,21 @@ namespace userinterface.Models.Script.Generation
                             Token oldtoken = expression.Tokens[old];
                             if (oldtoken.Base.Symbol == Tokens.BRANCH_WHILE)
                             {
-                                instructions.AddInstruction(
+                                _instructions.AddInstruction(
                                     InstructionType.Jmp,
                                     insert.GetBytes());
                             }
 
                             // + 1, since the insert will realign it with the first unconditional instruction
-                            CodeAddress address = new(instructions.Count + 1);
+                            CodeAddress address = new(_instructions.Count + 1);
 
-                            instructions.InsertInstruction(
+                            _instructions.InsertInstruction(
                                 insert.Address,
                                 InstructionType.Jz,
                                 address.GetBytes());
                             break;
                         }
-                        
+
                         throw new InterpreterException(token.Line, "Unexpected branch end!");
                     case TokenType.Assignment:
                         // MUTATES i, because we don't want to add it again on the next iteration
@@ -271,273 +279,187 @@ namespace userinterface.Models.Script.Generation
 
                         if (symbol == Tokens.INPUT)
                         {
-                            instructions.AddInstruction(InstructionType.StoreIn);
+                            _instructions.AddInstruction(InstructionType.StoreIn);
                             break;
                         }
                         else if (symbol == Tokens.OUTPUT)
                         {
-                            instructions.AddInstruction(InstructionType.StoreOut);
+                            _instructions.AddInstruction(InstructionType.StoreOut);
                             break;
                         }
-                        else if (indices.TryGetValue(symbol, out MemoryAddress storeIndex))
+                        else if (map.TryGetValue(symbol, out MemoryAddress storeIndex))
                         {
-                            OnAssignment(instructions, token, current, storeIndex.GetBytes());
+                            OnAssignment(token.Line, current.Symbol, storeIndex.GetBytes());
                             break;
                         }
 
                         throw new InterpreterException(token.Line, "Unable to obtain target address!");
                     case TokenType.Arithmetic:
-                        OnArithmetic(instructions, token, current);
+                        OnArithmetic(token.Line, current.Symbol);
                         break;
                     case TokenType.Comparison:
-                        OnComparison(instructions, token, current);
+                        _instructions.AddInstruction(OnComparison(token.Line, current.Symbol));
                         break;
                     case TokenType.Function:
-                        OnFunction(instructions, token, current);
+                        _instructions.AddInstruction(OnFunction(token.Line, current.Symbol));
                         break;
                     default:
                         throw new InterpreterException(token.Line, "Cannot emit token!");
                 }
             }
 
-            instructions.AddInstruction(InstructionType.End);
+            _instructions.AddInstruction(InstructionType.End);
 
-            return instructions.ToArray();
+            Instructions = _instructions.ToArray();
         }
 
-        private static void OnConstant(
-            in InstructionList instructions,
-            Token token, BaseToken current)
+        #endregion Constructors
+
+        #region Properties
+
+        public Instruction[] Instructions { get; }
+
+        #endregion Properties
+
+        #region Jump Tables
+
+        private InstructionType OnConstant(uint line, string symbol)
         {
-            switch (current.Symbol)
+            return symbol switch
             {
-                case Tokens.CONST_E:
-                    instructions.AddInstruction(InstructionType.LoadE);
-                    break;
-                case Tokens.CONST_PI:
-                    instructions.AddInstruction(InstructionType.LoadPi);
-                    break;
-                case Tokens.CONST_TAU:
-                    instructions.AddInstruction(InstructionType.LoadTau);
-                    break;
-                case Tokens.ZERO:
-                    instructions.AddInstruction(InstructionType.LoadZero);
-                    break;
-                default:
-                    throw new InterpreterException(token.Line, "Cannot emit constant!");
-            }
+                Tokens.CONST_E => InstructionType.LoadE,
+                Tokens.CONST_PI => InstructionType.LoadPi,
+                Tokens.CONST_TAU => InstructionType.LoadTau,
+                Tokens.ZERO => InstructionType.LoadZero,
+                _ => throw new InterpreterException(line, "Cannot emit constant!"),
+            };
         }
 
-        private static void OnAssignment(
-            in InstructionList instructions,
-            Token token, BaseToken current,
-            byte[] ptr)
+        private void OnAssignment(uint line, string symbol, byte[] ptr)
         {
-            void LoadModifyStore(in InstructionList instructions, InstructionType modification)
+            void LoadModifyStore(InstructionType modification)
             {
-                instructions.AddInstruction(InstructionType.Load, ptr);
-                instructions.AddInstruction(modification);
-                instructions.AddInstruction(InstructionType.Store, ptr);
+                _instructions.AddInstruction(InstructionType.Load, ptr);
+                _instructions.AddInstruction(modification);
+                _instructions.AddInstruction(InstructionType.Store, ptr);
             }
 
-            switch (current.Symbol)
+            switch (symbol)
             {
                 case Tokens.ASSIGN:
-                    instructions.AddInstruction(InstructionType.Store, ptr);
+                    _instructions.AddInstruction(InstructionType.Store, ptr);
                     break;
                 case Tokens.IADD:
-                    LoadModifyStore(instructions, InstructionType.Add);
+                    LoadModifyStore(InstructionType.Add);
                     break;
                 case Tokens.ISUB:
-                    LoadModifyStore(instructions, InstructionType.Sub);
+                    LoadModifyStore(InstructionType.Sub);
                     break;
                 case Tokens.IMUL:
-                    LoadModifyStore(instructions, InstructionType.Mul);
+                    LoadModifyStore(InstructionType.Mul);
                     break;
                 case Tokens.IDIV:
-                    LoadModifyStore(instructions, InstructionType.Div);
+                    LoadModifyStore(InstructionType.Div);
                     break;
                 case Tokens.IMOD:
-                    LoadModifyStore(instructions, InstructionType.Mod);
+                    LoadModifyStore(InstructionType.Mod);
                     break;
                 case Tokens.IEXP:
-                    LoadModifyStore(instructions, InstructionType.Exp);
+                    LoadModifyStore(InstructionType.Exp);
                     break;
                 default:
-                    throw new InterpreterException(token.Line, "Cannot emit assignment!");
+                    throw new InterpreterException(line, "Cannot emit assignment!");
             }
         }
 
-        private static void OnArithmetic(
-            in InstructionList instructions,
-            Token token, BaseToken current)
+        private void OnArithmetic(uint line, string symbol)
         {
-            switch (current.Symbol)
+            switch (symbol)
             {
                 case Tokens.ADD:
-                    instructions.AddInstruction(InstructionType.Add);
+                    _instructions.AddInstruction(InstructionType.Add);
                     break;
                 case Tokens.SUB:
-                    instructions.AddInstruction(InstructionType.Sub);
+                    _instructions.AddInstruction(InstructionType.Sub);
                     break;
                 case Tokens.MUL:
-                    instructions.AddInstruction(InstructionType.Mul);
+                    _instructions.AddInstruction(InstructionType.Mul);
                     break;
                 case Tokens.DIV:
-                    instructions.AddInstruction(InstructionType.Div);
+                    _instructions.AddInstruction(InstructionType.Div);
                     break;
                 case Tokens.MOD:
-                    instructions.AddInstruction(InstructionType.Mod);
+                    _instructions.AddInstruction(InstructionType.Mod);
                     break;
                 case Tokens.EXP:
                     // Try to convert E^ -> Exp()
-                    if (instructions.Count > 0 &&
-                        instructions[^1].GrabType() == InstructionType.LoadE)
+                    if (_instructions.Count > 0 &&
+                        _instructions[^1].GrabType() == InstructionType.LoadE)
                     {
-                        instructions.RemoveAt(instructions.Count - 1);
-                        instructions.AddInstruction(InstructionType.ExpE);
+                        _instructions.RemoveAt(_instructions.Count - 1);
+                        _instructions.AddInstruction(InstructionType.ExpE);
                     }
                     else
                     {
-                        instructions.AddInstruction(InstructionType.Exp);
+                        _instructions.AddInstruction(InstructionType.Exp);
                     }
 
                     break;
                 default:
-                    throw new InterpreterException(token.Line, "Cannot emit arithmetic!");
+                    throw new InterpreterException(line, "Cannot emit arithmetic!");
             }
         }
 
-        private static void OnComparison(
-            in InstructionList instructions,
-            Token token, BaseToken current)
+        private static InstructionType OnComparison(uint line, string symbol)
         {
-            switch (current.Symbol)
+            return symbol switch
             {
-                case Tokens.OR:
-                    instructions.AddInstruction(InstructionType.Or);
-                    break;
-                case Tokens.AND:
-                    instructions.AddInstruction(InstructionType.And);
-                    break;
-                case Tokens.LT:
-                    instructions.AddInstruction(InstructionType.Lt);
-                    break;
-                case Tokens.GT:
-                    instructions.AddInstruction(InstructionType.Gt);
-                    break;
-                case Tokens.LE:
-                    instructions.AddInstruction(InstructionType.Le);
-                    break;
-                case Tokens.GE:
-                    instructions.AddInstruction(InstructionType.Ge);
-                    break;
-                case Tokens.EQ:
-                    instructions.AddInstruction(InstructionType.Eq);
-                    break;
-                case Tokens.NE:
-                    instructions.AddInstruction(InstructionType.Ne);
-                    break;
-                case Tokens.NOT:
-                    instructions.AddInstruction(InstructionType.Not);
-                    break;
-                default:
-                    throw new InterpreterException(token.Line, "Cannot emit comparison!");
-            }
+                Tokens.OR => InstructionType.Or,
+                Tokens.AND => InstructionType.And,
+                Tokens.LT => InstructionType.Lt,
+                Tokens.GT => InstructionType.Gt,
+                Tokens.LE => InstructionType.Le,
+                Tokens.GE => InstructionType.Ge,
+                Tokens.EQ => InstructionType.Eq,
+                Tokens.NE => InstructionType.Ne,
+                Tokens.NOT => InstructionType.Not,
+
+                _ => throw new InterpreterException(line, "Cannot emit comparison!"),
+            };
         }
 
-        private static void OnFunction(
-            in InstructionList instructions,
-            Token token, BaseToken current)
+        private static InstructionType OnFunction(uint line, string symbol)
         {
-            switch (current.Symbol)
+            return symbol switch
             {
-                case Tokens.ABS:
-                    instructions.AddInstruction(InstructionType.Abs);
-                    break;
-                case Tokens.SQRT:
-                    instructions.AddInstruction(InstructionType.Sqrt);
-                    break;
-                case Tokens.CBRT:
-                    instructions.AddInstruction(InstructionType.Cbrt);
-                    break;
-                case Tokens.ROUND:
-                    instructions.AddInstruction(InstructionType.Round);
-                    break;
-                case Tokens.TRUNC:
-                    instructions.AddInstruction(InstructionType.Trunc);
-                    break;
-                case Tokens.CEIL:
-                    instructions.AddInstruction(InstructionType.Ceil);
-                    break;
-                case Tokens.FLOOR:
-                    instructions.AddInstruction(InstructionType.Floor);
-                    break;
-                case Tokens.LOG:
-                    instructions.AddInstruction(InstructionType.Log);
-                    break;
-                case Tokens.LOG2:
-                    instructions.AddInstruction(InstructionType.Log2);
-                    break;
-                case Tokens.LOG10:
-                    instructions.AddInstruction(InstructionType.Log10);
-                    break;
-                case Tokens.SIN:
-                    instructions.AddInstruction(InstructionType.Sin);
-                    break;
-                case Tokens.SINH:
-                    instructions.AddInstruction(InstructionType.Sinh);
-                    break;
-                case Tokens.ASIN:
-                    instructions.AddInstruction(InstructionType.Asin);
-                    break;
-                case Tokens.ASINH:
-                    instructions.AddInstruction(InstructionType.Asinh);
-                    break;
-                case Tokens.COS:
-                    instructions.AddInstruction(InstructionType.Cos);
-                    break;
-                case Tokens.COSH:
-                    instructions.AddInstruction(InstructionType.Cosh);
-                    break;
-                case Tokens.ACOS:
-                    instructions.AddInstruction(InstructionType.Acos);
-                    break;
-                case Tokens.ACOSH:
-                    instructions.AddInstruction(InstructionType.Acosh);
-                    break;
-                case Tokens.TAN:
-                    instructions.AddInstruction(InstructionType.Tan);
-                    break;
-                case Tokens.TANH:
-                    instructions.AddInstruction(InstructionType.Tanh);
-                    break;
-                case Tokens.ATAN:
-                    instructions.AddInstruction(InstructionType.Atan);
-                    break;
-                case Tokens.ATANH:
-                    instructions.AddInstruction(InstructionType.Atanh);
-                    break;
-                default:
-                    throw new InterpreterException(token.Line, "Cannot emit function!");
-            }
-        }
-    }
+                Tokens.ABS      => InstructionType.Abs,
+                Tokens.SQRT     => InstructionType.Sqrt,
+                Tokens.CBRT     => InstructionType.Cbrt,
+                Tokens.ROUND    => InstructionType.Round,
+                Tokens.TRUNC    => InstructionType.Trunc,
+                Tokens.CEIL     => InstructionType.Ceil,
+                Tokens.FLOOR    => InstructionType.Floor,
+                Tokens.LOG      => InstructionType.Log,
+                Tokens.LOG2     => InstructionType.Log2,
+                Tokens.LOG10    => InstructionType.Log10,
+                Tokens.SIN      => InstructionType.Sin,
+                Tokens.SINH     => InstructionType.Sinh,
+                Tokens.ASIN     => InstructionType.Asin,
+                Tokens.ASINH    => InstructionType.Asinh,
+                Tokens.COS      => InstructionType.Cos,
+                Tokens.COSH     => InstructionType.Cosh,
+                Tokens.ACOS     => InstructionType.Acos,
+                Tokens.ACOSH    => InstructionType.Acosh,
+                Tokens.TAN      => InstructionType.Tan,
+                Tokens.TANH     => InstructionType.Tanh,
+                Tokens.ATAN     => InstructionType.Atan,
+                Tokens.ATANH    => InstructionType.Atanh,
 
-    public class HeapMemory
-    {
-        private readonly double[] Mem = new double[Tokens.CAPACITY];
-
-        public double this[int index]
-        {
-            get { return Mem[index]; }
-            set { Mem[index] = value; }
+                _ => throw new InterpreterException(line, "Cannot emit function!"),
+            };
         }
 
-        public void Restore(HeapMemory other)
-        {
-            other.Mem.CopyTo(Mem, 0);
-        }
+        #endregion Jump Tables
     }
 
     public class InstructionList : List<Instruction>
@@ -565,4 +487,40 @@ namespace userinterface.Models.Script.Generation
             Insert(index, instruction);
         }
     }
+
+    public class MemoryHeap
+    {
+        private readonly double[] Mem = new double[Tokens.CAPACITY];
+
+        public double this[int index]
+        {
+            get { return Mem[index]; }
+            set { Mem[index] = value; }
+        }
+
+        public void RestoreTo(MemoryHeap other)
+        {
+            other.Mem.CopyTo(Mem, 0);
+        }
+    }
+
+    public class ParameterNameValuePairs
+    {
+        public readonly record struct ParameterNameValue(string Name, double Value);
+
+        public ParameterNameValue[] Parameters { get; set; } =
+            new ParameterNameValue[Tokens.MAX_PARAMETERS];
+
+        public ParameterNameValue this[int index]
+        {
+            get { return Parameters[index]; }
+            set { Parameters[index] = value; }
+        }
+    }
+
+    public class MemoryMap : Dictionary<string, MemoryAddress>, IDictionary<string, MemoryAddress>
+    { }
+
+    public class BranchCallback : Stack<Func<(int, CodeAddress)>>
+    { }
 }
