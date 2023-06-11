@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Avalonia.Threading;
+using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
@@ -697,6 +698,11 @@ namespace userinterface.Models.Mouse
             RegisterRawInputDevices(devices, 1, Marshal.SizeOf(typeof(RAWINPUTDEVICE)));
             Stopwatch = new Stopwatch();
             Stopwatch.Start();
+
+            LastMouseMoveDisplayTimer = new DispatcherTimer();
+            LastMouseMoveDisplayTimer.IsEnabled = true;
+            LastMouseMoveDisplayTimer.Interval = TimeSpan.FromMilliseconds(10);
+            LastMouseMoveDisplayTimer.Tick += OnLastMouseMoveTimerTick;
         }
 
         #endregion Constructors
@@ -706,6 +712,8 @@ namespace userinterface.Models.Mouse
         private IMouseMoveDisplayer MouseMoveDisplayer { get; }
 
         private Stopwatch Stopwatch { get; }
+
+        private DispatcherTimer LastMouseMoveDisplayTimer { get; }
 
         private double PollTime
         {
@@ -737,6 +745,11 @@ namespace userinterface.Models.Mouse
                     rawInput.Data.Mouse.LastX,
                     rawInput.Data.Mouse.LastY);
             }
+        }
+
+        private void OnLastMouseMoveTimerTick(object sender, EventArgs e)
+        {
+            MouseMoveDisplayer.ShowLastMouseMove();
         }
 
         #endregion Methods

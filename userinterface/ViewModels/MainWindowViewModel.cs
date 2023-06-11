@@ -24,9 +24,18 @@ namespace userinterface.ViewModels
         {
             MouseListen.LastY = (int)y;
             MouseListen.LastX = (int)x;
+        }
 
-            var size = MathF.Sqrt(x * x + y * y);
-            Profiles.SetLastMouseMove(size, 1);
+        public void ShowLastMouseMove()
+        {
+            System.Diagnostics.Debug.WriteLine($"Updating last mouse move at time {DateTime.Now.Millisecond}");
+            if (!MouseListen.DisplayUpdated)
+            {
+                MouseListen.UpdateDisplay();
+
+                var size = MathF.Sqrt(MouseListen.LastX * MouseListen.LastX + MouseListen.LastY * MouseListen.LastY);
+                Profiles.SetLastMouseMove(size, 1);
+            }
         }
     }
 }
