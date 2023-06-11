@@ -115,8 +115,8 @@ namespace userinterface.Models.Script.Generation
             {
                 if (isComments)
                 {
-                    startingLine += (uint)(c == NewLine ? 1 : 0);
                     isComments ^= CmpCharStr(c, Tokens.PARAMS_START);
+                    startingLine += (uint)(c == NewLine ? 1 : 0);
                     startingIndex = isComments ? ++startingIndex : --startingIndex;
                     continue;
                 }
@@ -180,7 +180,7 @@ namespace userinterface.Models.Script.Generation
                     return true;
                 case CharBufferState.Number:
                     TokenizerError("Letter detected inside number!");
-                    goto default;
+                    return false;
                 default:
                     return false;
             }
@@ -210,10 +210,11 @@ namespace userinterface.Models.Script.Generation
             switch (BufferState)
             {
                 case CharBufferState.Idle: // No buffer, so one character?
-                    if (PeekNext(out char c))
+                    if (PeekNext(out char c1))
                     {
-                        Debug.Assert(c != Tokens.SECOND);
+                        Debug.Assert(c1 != Tokens.SECOND);
                     }
+
                     BufferCurrentChar();
                     AddBufferedToken();
                     return true;
@@ -225,7 +226,7 @@ namespace userinterface.Models.Script.Generation
                     goto SpecialCheck;
                 SpecialCheck:
                     BufferCurrentChar();
-                    if (PeekNext(out c) && c == Tokens.SECOND)
+                    if (PeekNext(out char c2) && c2 == Tokens.SECOND)
                     {
                         BufferState = CharBufferState.Special;
                     }

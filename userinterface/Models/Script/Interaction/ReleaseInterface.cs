@@ -4,12 +4,12 @@
     {
         public void HandleException(ScriptException exception)
         {
-            System.Console.WriteLine(exception);
+            // How to show exceptions to user?
         }
 
         public void HandleMessage(string message)
         {
-            System.Console.WriteLine(message);
+            // How to show messages to user?
         }
     }
 }

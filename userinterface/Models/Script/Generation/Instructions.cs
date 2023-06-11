@@ -7,19 +7,20 @@ namespace userinterface.Models.Script.Generation
 {
     public enum InstructionType : byte
     {
-        End,   // End of script marker
+        Start, End,     // Helps with jumps not going out of bounds
 
         Load, Store,        // Gets or Sets an Address in 'virtual' heap, to/from TOS.
         LoadIn, StoreIn,    // Gets or Sets the input register (x), to/from TOS.
         LoadOut, StoreOut,  // Gets or Sets the output register (y), to/from TOS.
-        LoadNumber,         // Loads a number
+        LoadNumber,         // Loads a number.
+        Swap,               // Swaps the top two stack elements.
 
         // Branch,
         // Evaluates the TOS and jumps/skips to the next branch end marker if zero (Jz).
         // The jump itself can be unconditional (Jmp) instead, to implement loops (Jmp backwards).
         Jmp, Jz,
 
-        LoadE, LoadPi, LoadTau, LoadZero,   // Loads a constant to TOS
+        LoadE, LoadPi, LoadTau, LoadZero,   // Loads a constant to TOS.
 
         // Operator,
         // does an operation on the second and first Stack item respectively,
@@ -41,12 +42,14 @@ namespace userinterface.Models.Script.Generation
         Cos, Cosh, Acos, Acosh,
         Tan, Tanh, Atan, Atanh,
 
-        // Leave this at the bottom of the enum for obvious reasons
+        // Leave this at the bottom of the enum for obvious reasons.
         Count,
     }
 
     public readonly struct Instruction
     {
+        public const int Size = sizeof(byte);
+
         private readonly byte[] ByteCode;
 
         public Instruction(InstructionType type)
@@ -143,9 +146,16 @@ namespace userinterface.Models.Script.Generation
         }
     }
 
-    public struct Number
+    public readonly struct Number
     {
         public const int Size = sizeof(double);
+
+        public static readonly Number Zero = new(0);
+
+        public Number(double value)
+        {
+            Value = value;
+        }
 
         public Number(Instruction number)
         {
@@ -155,6 +165,27 @@ namespace userinterface.Models.Script.Generation
         }
 
         public double Value { get; }
+
+        public byte[] GetBytes()
+        {
+            return BitConverter.GetBytes(Value);
+        }
+    }
+
+    public readonly struct BranchContext
+    {
+        public BranchContext(int index, CodeAddress condition, CodeAddress insert)
+        {
+            Index = index;
+            Condition = condition;
+            Insert = insert;
+        }
+
+        public int Index { get; }
+
+        public CodeAddress Condition { get; }
+
+        public CodeAddress Insert { get; }
     }
 
     public static class Instructions
@@ -218,21 +249,24 @@ namespace userinterface.Models.Script.Generation
         public static Func<double, double, double>[] Table { get; } =
             new Func<double, double, double>[InstructionType.Count.ToByte()];
 
-        public static byte ToByte(this InstructionType type) => (byte)type;
+        public static byte ToByte(this InstructionType type)
+        {
+            return (byte)type;
+        }
 
         public static int Size(this InstructionType type)
         {
             return type switch
             {
-                InstructionType.LoadNumber => 9,
+                InstructionType.LoadNumber  => Instruction.Size + Number.Size,
 
-                InstructionType.Jmp => 3,
-                InstructionType.Jz => 3,
+                InstructionType.Jmp         => Instruction.Size + CodeAddress.Size,
+                InstructionType.Jz          => Instruction.Size + CodeAddress.Size,
 
-                InstructionType.Load => 2,
-                InstructionType.Store => 2,
+                InstructionType.Load        => Instruction.Size + MemoryAddress.Size,
+                InstructionType.Store       => Instruction.Size + MemoryAddress.Size,
 
-                _ => 1,
+                _ => Instruction.Size,
             };
         }
     }
@@ -241,13 +275,15 @@ namespace userinterface.Models.Script.Generation
     {
         #region Constructors
 
-        public Program(Expression expression, MemoryMap map, MemoryAddress? owner)
+        public Program(Expression expression, MemoryMap map)
         {
             Instructions = new(expression.Tokens.Length);
 
-            Owner = owner;
+            Instructions.AddInstruction(InstructionType.Start);
 
-            CallbackStack callback = new();
+            BranchStack stack = new();
+
+            int lastExprStart = 0;
 
             for (int i = 0; i < expression.Tokens.Length; i++)
             {
@@ -258,9 +294,10 @@ namespace userinterface.Models.Script.Generation
                     case TokenType.Number:
                         if (double.TryParse(current.Symbol, out double value))
                         {
+                            Number number = new(value);
                             Instructions.AddInstruction(
                                 InstructionType.LoadNumber,
-                                BitConverter.GetBytes(value));
+                                number.GetBytes());
                             break;
                         }
 
@@ -282,26 +319,24 @@ namespace userinterface.Models.Script.Generation
                             OnConstant(token.Line, current.Symbol));
                         break;
                     case TokenType.Branch:
-                        callback.Push(() => (i, new(Instructions.Count)));
+                        BranchContext context = new(i, new(lastExprStart), new(Instructions.Count));
+                        stack.Push(context);
                         break;
                     case TokenType.BranchEnd:
-                        if (callback.TryPop(out var result))
+                        if (stack.TryPop(out BranchContext ctx))
                         {
-                            (int old, CodeAddress insert) = result();
-
-                            Token oldtoken = expression.Tokens[old];
+                            Token oldtoken = expression.Tokens[ctx.Index];
                             if (oldtoken.Base.Symbol == Tokens.BRANCH_WHILE)
                             {
                                 Instructions.AddInstruction(
                                     InstructionType.Jmp,
-                                    insert.GetBytes());
+                                    ctx.Condition.GetBytes());
                             }
 
-                            // + 1, since the insert will realign it with the first unconditional instruction
-                            CodeAddress address = new(Instructions.Count + 1);
+                            // Not - 1 because the insert readjusts it again
+                            CodeAddress address = new(Instructions.Count);
 
-                            Instructions.InsertInstruction(
-                                insert.Address,
+                            Instructions.InsertInstruction(ctx.Insert,
                                 InstructionType.Jz,
                                 address.GetBytes());
                             break;
@@ -309,23 +344,30 @@ namespace userinterface.Models.Script.Generation
 
                         throw new InterpreterException(token.Line, "Unexpected branch end!");
                     case TokenType.Assignment:
-                        // MUTATES i, because we don't want to add it again on the next iteration
+                        InstructionType type = OnAssignment(token.Line, current.Symbol);
+
+                        // MUTATES i, because we don't want to add this token again on the next iteration
                         Token target = expression.Tokens[++i];
                         string symbol = target.Base.Symbol;
 
                         if (symbol == Tokens.INPUT)
                         {
-                            Instructions.AddInstruction(InstructionType.StoreIn);
+                            OnAssignment(InstructionType.LoadIn, type, InstructionType.StoreIn,
+                                Array.Empty<byte>());
                         }
                         else if (symbol == Tokens.OUTPUT)
                         {
-                            Instructions.AddInstruction(InstructionType.StoreOut);
+                            OnAssignment(InstructionType.LoadOut, type, InstructionType.StoreOut,
+                                Array.Empty<byte>());
                         }
                         else
                         {
-                            OnAssignment(token.Line, current.Symbol, map[symbol].GetBytes());
+                            MemoryAddress address = map[symbol];
+                            byte[] pointer = address.GetBytes();
+                            OnAssignment(InstructionType.Load, type, InstructionType.Store, pointer);
                         }
 
+                        lastExprStart = i; // Takes into account the program counter incrementing
                         break;
                     case TokenType.Arithmetic:
                         OnArithmetic(token.Line, current.Symbol);
@@ -350,15 +392,13 @@ namespace userinterface.Models.Script.Generation
 
         #region Properties
 
-        public MemoryAddress? Owner { get; }
-
         public InstructionList Instructions { get; }
 
         #endregion Properties
 
         #region Jump Tables
 
-        private InstructionType OnConstant(uint line, string symbol)
+        private static InstructionType OnConstant(uint line, string symbol)
         {
             return symbol switch
             {
@@ -366,45 +406,42 @@ namespace userinterface.Models.Script.Generation
                 Tokens.CONST_PI => InstructionType.LoadPi,
                 Tokens.CONST_TAU => InstructionType.LoadTau,
                 Tokens.ZERO => InstructionType.LoadZero,
+
                 _ => throw new InterpreterException(line, "Cannot emit constant!"),
             };
         }
 
-        private void OnAssignment(uint line, string symbol, byte[] ptr)
+        private static InstructionType OnAssignment(uint line, string symbol)
         {
-            void LoadModifyStore(InstructionType modification)
+            return symbol switch
             {
-                Instructions.AddInstruction(InstructionType.Load, ptr);
-                Instructions.AddInstruction(modification);
-                Instructions.AddInstruction(InstructionType.Store, ptr);
-            }
+                Tokens.ASSIGN => InstructionType.Store,
+                Tokens.IADD => InstructionType.Add,
+                Tokens.ISUB => InstructionType.Sub,
+                Tokens.IMUL => InstructionType.Mul,
+                Tokens.IDIV => InstructionType.Div,
+                Tokens.IMOD => InstructionType.Mod,
+                Tokens.IEXP => InstructionType.Exp,
 
-            switch (symbol)
+                _ => throw new InterpreterException(line, "Cannot emit assignment!"),
+            };
+        }
+
+        private void OnAssignment(
+            InstructionType load,
+            InstructionType modify,
+            InstructionType store,
+            byte[] pointer)
+        {
+            bool isInline = modify != InstructionType.Store;
+            if (isInline)
             {
-                case Tokens.ASSIGN:
-                    Instructions.AddInstruction(InstructionType.Store, ptr);
-                    break;
-                case Tokens.IADD:
-                    LoadModifyStore(InstructionType.Add);
-                    break;
-                case Tokens.ISUB:
-                    LoadModifyStore(InstructionType.Sub);
-                    break;
-                case Tokens.IMUL:
-                    LoadModifyStore(InstructionType.Mul);
-                    break;
-                case Tokens.IDIV:
-                    LoadModifyStore(InstructionType.Div);
-                    break;
-                case Tokens.IMOD:
-                    LoadModifyStore(InstructionType.Mod);
-                    break;
-                case Tokens.IEXP:
-                    LoadModifyStore(InstructionType.Exp);
-                    break;
-                default:
-                    throw new InterpreterException(line, "Cannot emit assignment!");
+                Instructions.AddInstruction(load, pointer);
+                Instructions.AddInstruction(InstructionType.Swap);
+                Instructions.AddInstruction(modify);
             }
+            
+            Instructions.AddInstruction(store, pointer);
         }
 
         private void OnArithmetic(uint line, string symbol)
@@ -516,11 +553,11 @@ namespace userinterface.Models.Script.Generation
             Add(instruction);
         }
 
-        public void InsertInstruction(int index, InstructionType type, byte[] data)
+        public void InsertInstruction(CodeAddress address, InstructionType type, byte[] data)
         {
             Instruction instruction = new(type);
             instruction.CopyFrom(data);
-            Insert(index, instruction);
+            Insert(address.Address, instruction);
         }
     }
 
@@ -572,6 +609,9 @@ namespace userinterface.Models.Script.Generation
     public class MemoryMap : Dictionary<string, MemoryAddress>, IDictionary<string, MemoryAddress>
     { }
 
-    public class CallbackStack : Stack<Func<(int, CodeAddress)>>
+    public class ProgramStack : Stack<Number>
+    { }
+
+    public class BranchStack : Stack<BranchContext>
     { }
 }

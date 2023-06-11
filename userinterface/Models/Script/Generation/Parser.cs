@@ -54,6 +54,7 @@ namespace userinterface.Models.Script.Generation
             Debug.Assert(CurrentIndex == 1, "We don't need to check for PARAMS_START at runtime.");
 
             PreviousToken = CurrentToken;
+
             Parse();
         }
 
@@ -121,6 +122,7 @@ namespace userinterface.Models.Script.Generation
             {
                 throw new ParserException("End reached unexpectedly!");
             }
+
             PreviousToken = CurrentToken;
             CurrentToken = TokenList[++CurrentIndex];
         }
@@ -248,6 +250,9 @@ namespace userinterface.Models.Script.Generation
             {
                 ParserError($"Expected {Tokens.ASSIGN}");
             }
+
+            output.Add(eq);
+            output.Add(t);
 
             Variables.Add(new(t, output));
         }

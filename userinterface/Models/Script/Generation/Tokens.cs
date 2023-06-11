@@ -236,6 +236,8 @@ namespace userinterface.Models.Script.Generation
 
         static Tokens()
         {
+            // Adds all reserved tokens,
+            // including the optional second operator character (hence + 1)
             int totalLength = ReservedArray.Length + 1;
 
             ReservedMap = new TokenMap(totalLength);
