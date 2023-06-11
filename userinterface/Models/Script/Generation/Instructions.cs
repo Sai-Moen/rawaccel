@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 
@@ -8,18 +9,17 @@ namespace userinterface.Models.Script.Generation
     {
         End,   // End of script marker
 
-        Push, Pop,          // Adds to or Takes from the Top Of Stack (TOS).
         Load, Store,        // Gets or Sets an Address in 'virtual' heap, to/from TOS.
         LoadIn, StoreIn,    // Gets or Sets the input register (x), to/from TOS.
         LoadOut, StoreOut,  // Gets or Sets the output register (y), to/from TOS.
         LoadNumber,         // Loads a number
 
-        LoadE, LoadPi, LoadTau, LoadZero,   // Loads a constant to TOS
-
         // Branch,
         // Evaluates the TOS and jumps/skips to the next branch end marker if zero (Jz).
         // The jump itself can be unconditional (Jmp) instead, to implement loops (Jmp backwards).
         Jmp, Jz,
+
+        LoadE, LoadPi, LoadTau, LoadZero,   // Loads a constant to TOS
 
         // Operator,
         // does an operation on the second and first Stack item respectively,
@@ -61,15 +61,28 @@ namespace userinterface.Models.Script.Generation
             return (InstructionType)ByteCode[0];
         }
 
+        public byte this[int index]
+        {
+            get { return ByteCode[index]; }
+        }
+
         public void CopyFrom(byte[] bytes)
         {
             bytes.CopyTo(ByteCode, 1);
         }
+
+        public void CopyTo(ref byte[] bytes)
+        {
+            Span<byte> span = new(ByteCode, 1, ByteCode.Length - 1);
+            span.CopyTo(bytes);
+        }
     }
 
-    public struct MemoryAddress
+    public readonly struct MemoryAddress
     {
         public const byte MaxValue = byte.MaxValue;
+
+        public const int Size = sizeof(byte);
 
         public MemoryAddress(byte address)
         {
@@ -86,17 +99,24 @@ namespace userinterface.Models.Script.Generation
             Address = (byte)address;
         }
 
+        public MemoryAddress(Instruction address)
+        {
+            Address = address[1];
+        }
+
         public byte Address { get; }
 
-        public readonly byte[] GetBytes()
+        public byte[] GetBytes()
         {
             return new byte[1]{ Address };
         }
     }
 
-    public struct CodeAddress
+    public readonly struct CodeAddress
     {
         public const ushort MaxValue = ushort.MaxValue;
+
+        public const int Size = sizeof(ushort);
 
         public CodeAddress(int address)
         {
@@ -108,12 +128,33 @@ namespace userinterface.Models.Script.Generation
             Address = (ushort)address;
         }
 
+        public CodeAddress(Instruction address)
+        {
+            byte[] bytes = new byte[Size];
+            address.CopyTo(ref bytes);
+            Address = BitConverter.ToUInt16(bytes);
+        }
+
         public ushort Address { get; }
 
-        public readonly byte[] GetBytes()
+        public byte[] GetBytes()
         {
             return BitConverter.GetBytes(Address);
         }
+    }
+
+    public struct Number
+    {
+        public const int Size = sizeof(double);
+
+        public Number(Instruction number)
+        {
+            byte[] bytes = new byte[Size];
+            number.CopyTo(ref bytes);
+            Value = BitConverter.ToDouble(bytes);
+        }
+
+        public double Value { get; }
     }
 
     public static class Instructions
@@ -122,56 +163,56 @@ namespace userinterface.Models.Script.Generation
         {
             // Arguments are reversed because of the Stack Pop order
 
-            Table[InstructionType.LoadE.ToByte()] = (_, _) => Math.E;
-            Table[InstructionType.LoadPi.ToByte()] = (_, _) => Math.PI;
-            Table[InstructionType.LoadTau.ToByte()] = (_, _) => Math.Tau;
-            Table[InstructionType.LoadZero.ToByte()] = (_, _) => 0;
+            Table[InstructionType.LoadE.ToByte()]       = (_, _) => Math.E;
+            Table[InstructionType.LoadPi.ToByte()]      = (_, _) => Math.PI;
+            Table[InstructionType.LoadTau.ToByte()]     = (_, _) => Math.Tau;
+            Table[InstructionType.LoadZero.ToByte()]    = (_, _) => 0;
 
-            Table[InstructionType.Add.ToByte()] = (y, x) => x + y;
-            Table[InstructionType.Sub.ToByte()] = (y, x) => x - y;
-            Table[InstructionType.Mul.ToByte()] = (y, x) => x * y;
-            Table[InstructionType.Div.ToByte()] = (y, x) => x / y;
-            Table[InstructionType.Mod.ToByte()] = (y, x) => x % y;
-            Table[InstructionType.Exp.ToByte()] = (y, x) => Math.Pow(x, y);
-            Table[InstructionType.ExpE.ToByte()] = (y, _) => Math.Exp(y);
+            Table[InstructionType.Add.ToByte()]         = (y, x) => x + y;
+            Table[InstructionType.Sub.ToByte()]         = (y, x) => x - y;
+            Table[InstructionType.Mul.ToByte()]         = (y, x) => x * y;
+            Table[InstructionType.Div.ToByte()]         = (y, x) => x / y;
+            Table[InstructionType.Mod.ToByte()]         = (y, x) => x % y;
+            Table[InstructionType.Exp.ToByte()]         = (y, x) => Math.Pow(x, y);
+            Table[InstructionType.ExpE.ToByte()]        = (y, _) => Math.Exp(y);
 
-            Table[InstructionType.Or.ToByte()] = (y, x) => Convert.ToDouble((x != 0) | (y != 0));
-            Table[InstructionType.And.ToByte()] = (y, x) => Convert.ToDouble((x != 0) & (y != 0));
-            Table[InstructionType.Lt.ToByte()] = (y, x) => Convert.ToDouble(x < y);
-            Table[InstructionType.Gt.ToByte()] = (y, x) => Convert.ToDouble(x > y);
-            Table[InstructionType.Le.ToByte()] = (y, x) => Convert.ToDouble(x <= y);
-            Table[InstructionType.Ge.ToByte()] = (y, x) => Convert.ToDouble(x >= y);
-            Table[InstructionType.Eq.ToByte()] = (y, x) => Convert.ToDouble(x == y);
-            Table[InstructionType.Ne.ToByte()] = (y, x) => Convert.ToDouble(x != y);
-            Table[InstructionType.Not.ToByte()] = (y, _) => Convert.ToDouble(y == 0);
+            Table[InstructionType.Or.ToByte()]          = (y, x) => Convert.ToDouble((x != 0) | (y != 0));
+            Table[InstructionType.And.ToByte()]         = (y, x) => Convert.ToDouble((x != 0) & (y != 0));
+            Table[InstructionType.Lt.ToByte()]          = (y, x) => Convert.ToDouble(x < y);
+            Table[InstructionType.Gt.ToByte()]          = (y, x) => Convert.ToDouble(x > y);
+            Table[InstructionType.Le.ToByte()]          = (y, x) => Convert.ToDouble(x <= y);
+            Table[InstructionType.Ge.ToByte()]          = (y, x) => Convert.ToDouble(x >= y);
+            Table[InstructionType.Eq.ToByte()]          = (y, x) => Convert.ToDouble(x == y);
+            Table[InstructionType.Ne.ToByte()]          = (y, x) => Convert.ToDouble(x != y);
+            Table[InstructionType.Not.ToByte()]         = (y, _) => Convert.ToDouble(y == 0);
 
-            Table[InstructionType.Abs.ToByte()] = (y, _) => Math.Abs(y);
-            Table[InstructionType.Sqrt.ToByte()] = (y, _) => Math.Sqrt(y);
-            Table[InstructionType.Cbrt.ToByte()] = (y, _) => Math.Cbrt(y);
+            Table[InstructionType.Abs.ToByte()]         = (y, _) => Math.Abs(y);
+            Table[InstructionType.Sqrt.ToByte()]        = (y, _) => Math.Sqrt(y);
+            Table[InstructionType.Cbrt.ToByte()]        = (y, _) => Math.Cbrt(y);
 
-            Table[InstructionType.Round.ToByte()] = (y, _) => Math.Round(y);
-            Table[InstructionType.Trunc.ToByte()] = (y, _) => Math.Truncate(y);
-            Table[InstructionType.Ceil.ToByte()] = (y, _) => Math.Ceiling(y);
-            Table[InstructionType.Floor.ToByte()] = (y, _) => Math.Floor(y);
+            Table[InstructionType.Round.ToByte()]       = (y, _) => Math.Round(y);
+            Table[InstructionType.Trunc.ToByte()]       = (y, _) => Math.Truncate(y);
+            Table[InstructionType.Ceil.ToByte()]        = (y, _) => Math.Ceiling(y);
+            Table[InstructionType.Floor.ToByte()]       = (y, _) => Math.Floor(y);
 
-            Table[InstructionType.Log.ToByte()] = (y, _) => Math.Log(y);
-            Table[InstructionType.Log2.ToByte()] = (y, _) => Math.Log2(y);
-            Table[InstructionType.Log10.ToByte()] = (y, _) => Math.Log10(y);
+            Table[InstructionType.Log.ToByte()]         = (y, _) => Math.Log(y);
+            Table[InstructionType.Log2.ToByte()]        = (y, _) => Math.Log2(y);
+            Table[InstructionType.Log10.ToByte()]       = (y, _) => Math.Log10(y);
 
-            Table[InstructionType.Sin.ToByte()] = (y, _) => Math.Sin(y);
-            Table[InstructionType.Sinh.ToByte()] = (y, _) => Math.Sinh(y);
-            Table[InstructionType.Asin.ToByte()] = (y, _) => Math.Asin(y);
-            Table[InstructionType.Asinh.ToByte()] = (y, _) => Math.Asinh(y);
+            Table[InstructionType.Sin.ToByte()]         = (y, _) => Math.Sin(y);
+            Table[InstructionType.Sinh.ToByte()]        = (y, _) => Math.Sinh(y);
+            Table[InstructionType.Asin.ToByte()]        = (y, _) => Math.Asin(y);
+            Table[InstructionType.Asinh.ToByte()]       = (y, _) => Math.Asinh(y);
 
-            Table[InstructionType.Cos.ToByte()] = (y, _) => Math.Cos(y);
-            Table[InstructionType.Cosh.ToByte()] = (y, _) => Math.Cosh(y);
-            Table[InstructionType.Acos.ToByte()] = (y, _) => Math.Acos(y);
-            Table[InstructionType.Acosh.ToByte()] = (y, _) => Math.Acosh(y);
+            Table[InstructionType.Cos.ToByte()]         = (y, _) => Math.Cos(y);
+            Table[InstructionType.Cosh.ToByte()]        = (y, _) => Math.Cosh(y);
+            Table[InstructionType.Acos.ToByte()]        = (y, _) => Math.Acos(y);
+            Table[InstructionType.Acosh.ToByte()]       = (y, _) => Math.Acosh(y);
 
-            Table[InstructionType.Tan.ToByte()] = (y, _) => Math.Tan(y);
-            Table[InstructionType.Tanh.ToByte()] = (y, _) => Math.Tanh(y);
-            Table[InstructionType.Atan.ToByte()] = (y, _) => Math.Atan(y);
-            Table[InstructionType.Atanh.ToByte()] = (y, _) => Math.Atanh(y);
+            Table[InstructionType.Tan.ToByte()]         = (y, _) => Math.Tan(y);
+            Table[InstructionType.Tanh.ToByte()]        = (y, _) => Math.Tanh(y);
+            Table[InstructionType.Atan.ToByte()]        = (y, _) => Math.Atan(y);
+            Table[InstructionType.Atanh.ToByte()]       = (y, _) => Math.Atanh(y);
         }
 
         public static Func<double, double, double>[] Table { get; } =
@@ -198,15 +239,15 @@ namespace userinterface.Models.Script.Generation
 
     public class Program
     {
-        private readonly InstructionList _instructions;
-
         #region Constructors
 
-        public Program(Expression expression, MemoryMap map)
+        public Program(Expression expression, MemoryMap map, MemoryAddress? owner)
         {
-            _instructions = new(expression.Tokens.Length);
+            Instructions = new(expression.Tokens.Length);
 
-            BranchCallback callback = new();
+            Owner = owner;
+
+            CallbackStack callback = new();
 
             for (int i = 0; i < expression.Tokens.Length; i++)
             {
@@ -217,7 +258,7 @@ namespace userinterface.Models.Script.Generation
                     case TokenType.Number:
                         if (double.TryParse(current.Symbol, out double value))
                         {
-                            _instructions.AddInstruction(
+                            Instructions.AddInstruction(
                                 InstructionType.LoadNumber,
                                 BitConverter.GetBytes(value));
                             break;
@@ -226,27 +267,22 @@ namespace userinterface.Models.Script.Generation
                         throw new InterpreterException(token.Line, "Cannot parse number!");
                     case TokenType.Parameter:
                     case TokenType.Variable:
-                        if (map.TryGetValue(current.Symbol, out MemoryAddress loadIndex))
-                        {
-                            _instructions.AddInstruction(
-                                InstructionType.Load,
-                                loadIndex.GetBytes());
-                            break;
-                        }
-
-                        throw new InterpreterException(token.Line, "Unable to obtain address!");
+                        Instructions.AddInstruction(
+                            InstructionType.Load,
+                            map[current.Symbol].GetBytes());
+                        break;
                     case TokenType.Input:
-                        _instructions.AddInstruction(InstructionType.LoadIn);
+                        Instructions.AddInstruction(InstructionType.LoadIn);
                         break;
                     case TokenType.Output:
-                        _instructions.AddInstruction(InstructionType.LoadOut);
+                        Instructions.AddInstruction(InstructionType.LoadOut);
                         break;
                     case TokenType.Constant:
-                        _instructions.AddInstruction(
+                        Instructions.AddInstruction(
                             OnConstant(token.Line, current.Symbol));
                         break;
                     case TokenType.Branch:
-                        callback.Push(() => (i, new(_instructions.Count)));
+                        callback.Push(() => (i, new(Instructions.Count)));
                         break;
                     case TokenType.BranchEnd:
                         if (callback.TryPop(out var result))
@@ -256,15 +292,15 @@ namespace userinterface.Models.Script.Generation
                             Token oldtoken = expression.Tokens[old];
                             if (oldtoken.Base.Symbol == Tokens.BRANCH_WHILE)
                             {
-                                _instructions.AddInstruction(
+                                Instructions.AddInstruction(
                                     InstructionType.Jmp,
                                     insert.GetBytes());
                             }
 
                             // + 1, since the insert will realign it with the first unconditional instruction
-                            CodeAddress address = new(_instructions.Count + 1);
+                            CodeAddress address = new(Instructions.Count + 1);
 
-                            _instructions.InsertInstruction(
+                            Instructions.InsertInstruction(
                                 insert.Address,
                                 InstructionType.Jz,
                                 address.GetBytes());
@@ -279,45 +315,44 @@ namespace userinterface.Models.Script.Generation
 
                         if (symbol == Tokens.INPUT)
                         {
-                            _instructions.AddInstruction(InstructionType.StoreIn);
-                            break;
+                            Instructions.AddInstruction(InstructionType.StoreIn);
                         }
                         else if (symbol == Tokens.OUTPUT)
                         {
-                            _instructions.AddInstruction(InstructionType.StoreOut);
-                            break;
+                            Instructions.AddInstruction(InstructionType.StoreOut);
                         }
-                        else if (map.TryGetValue(symbol, out MemoryAddress storeIndex))
+                        else
                         {
-                            OnAssignment(token.Line, current.Symbol, storeIndex.GetBytes());
-                            break;
+                            OnAssignment(token.Line, current.Symbol, map[symbol].GetBytes());
                         }
 
-                        throw new InterpreterException(token.Line, "Unable to obtain target address!");
+                        break;
                     case TokenType.Arithmetic:
                         OnArithmetic(token.Line, current.Symbol);
                         break;
                     case TokenType.Comparison:
-                        _instructions.AddInstruction(OnComparison(token.Line, current.Symbol));
+                        Instructions.AddInstruction(OnComparison(token.Line, current.Symbol));
                         break;
                     case TokenType.Function:
-                        _instructions.AddInstruction(OnFunction(token.Line, current.Symbol));
+                        Instructions.AddInstruction(OnFunction(token.Line, current.Symbol));
                         break;
                     default:
                         throw new InterpreterException(token.Line, "Cannot emit token!");
                 }
             }
 
-            _instructions.AddInstruction(InstructionType.End);
+            Instructions.AddInstruction(InstructionType.End);
 
-            Instructions = _instructions.ToArray();
+            Instructions.TrimExcess();
         }
 
         #endregion Constructors
 
         #region Properties
 
-        public Instruction[] Instructions { get; }
+        public MemoryAddress? Owner { get; }
+
+        public InstructionList Instructions { get; }
 
         #endregion Properties
 
@@ -339,15 +374,15 @@ namespace userinterface.Models.Script.Generation
         {
             void LoadModifyStore(InstructionType modification)
             {
-                _instructions.AddInstruction(InstructionType.Load, ptr);
-                _instructions.AddInstruction(modification);
-                _instructions.AddInstruction(InstructionType.Store, ptr);
+                Instructions.AddInstruction(InstructionType.Load, ptr);
+                Instructions.AddInstruction(modification);
+                Instructions.AddInstruction(InstructionType.Store, ptr);
             }
 
             switch (symbol)
             {
                 case Tokens.ASSIGN:
-                    _instructions.AddInstruction(InstructionType.Store, ptr);
+                    Instructions.AddInstruction(InstructionType.Store, ptr);
                     break;
                 case Tokens.IADD:
                     LoadModifyStore(InstructionType.Add);
@@ -377,31 +412,32 @@ namespace userinterface.Models.Script.Generation
             switch (symbol)
             {
                 case Tokens.ADD:
-                    _instructions.AddInstruction(InstructionType.Add);
+                    Instructions.AddInstruction(InstructionType.Add);
                     break;
                 case Tokens.SUB:
-                    _instructions.AddInstruction(InstructionType.Sub);
+                    Instructions.AddInstruction(InstructionType.Sub);
                     break;
                 case Tokens.MUL:
-                    _instructions.AddInstruction(InstructionType.Mul);
+                    Instructions.AddInstruction(InstructionType.Mul);
                     break;
                 case Tokens.DIV:
-                    _instructions.AddInstruction(InstructionType.Div);
+                    Instructions.AddInstruction(InstructionType.Div);
                     break;
                 case Tokens.MOD:
-                    _instructions.AddInstruction(InstructionType.Mod);
+                    Instructions.AddInstruction(InstructionType.Mod);
                     break;
                 case Tokens.EXP:
                     // Try to convert E^ -> Exp()
-                    if (_instructions.Count > 0 &&
-                        _instructions[^1].GrabType() == InstructionType.LoadE)
+                    int lastIndex = Instructions.Count - 1;
+                    if (Instructions.Count > 0 &&
+                        Instructions[lastIndex].GrabType() == InstructionType.LoadE)
                     {
-                        _instructions.RemoveAt(_instructions.Count - 1);
-                        _instructions.AddInstruction(InstructionType.ExpE);
+                        Instructions.RemoveAt(lastIndex);
+                        Instructions.AddInstruction(InstructionType.ExpE);
                     }
                     else
                     {
-                        _instructions.AddInstruction(InstructionType.Exp);
+                        Instructions.AddInstruction(InstructionType.Exp);
                     }
 
                     break;
@@ -490,12 +526,12 @@ namespace userinterface.Models.Script.Generation
 
     public class MemoryHeap
     {
-        private readonly double[] Mem = new double[Tokens.CAPACITY];
+        private readonly double[] Mem = new double[Parsing.CAPACITY];
 
-        public double this[int index]
+        public double this[MemoryAddress address]
         {
-            get { return Mem[index]; }
-            set { Mem[index] = value; }
+            get { return Mem[address.Address]; }
+            set { Mem[address.Address] = value; }
         }
 
         public void RestoreTo(MemoryHeap other)
@@ -504,23 +540,38 @@ namespace userinterface.Models.Script.Generation
         }
     }
 
-    public class ParameterNameValuePairs
+    public class ParameterPairs : IEnumerable<ParameterPairs.ParameterNameValue?>
     {
         public readonly record struct ParameterNameValue(string Name, double Value);
 
-        public ParameterNameValue[] Parameters { get; set; } =
-            new ParameterNameValue[Tokens.MAX_PARAMETERS];
+        private readonly ParameterNameValue?[] Parameters =
+            new ParameterNameValue?[Parsing.MAX_PARAMETERS];
 
-        public ParameterNameValue this[int index]
+        /// <summary>
+        /// Accesses the parameter at an index.
+        /// </summary>
+        /// <param name="index">The index to get/set an element.</param>
+        /// <returns>The element at this index, null if there is not an element.</returns>
+        public ParameterNameValue? this[int index]
         {
             get { return Parameters[index]; }
             set { Parameters[index] = value; }
+        }
+
+        public IEnumerator<ParameterNameValue?> GetEnumerator()
+        {
+            return ((IEnumerable<ParameterNameValue?>)Parameters).GetEnumerator();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return Parameters.GetEnumerator();
         }
     }
 
     public class MemoryMap : Dictionary<string, MemoryAddress>, IDictionary<string, MemoryAddress>
     { }
 
-    public class BranchCallback : Stack<Func<(int, CodeAddress)>>
+    public class CallbackStack : Stack<Func<(int, CodeAddress)>>
     { }
 }

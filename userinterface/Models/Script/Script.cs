@@ -30,6 +30,8 @@ namespace userinterface.Models.Script
                 Tokenizer tokenizer = new(ScriptLoader.LoadScript(scriptPath));
                 Parser parser = new(tokenizer.TokenList);
                 _interpreter = new(parser.Parameters, parser.Variables, parser.TokenCode);
+                _interpreter.Init();
+                double y = _interpreter.Calculate(16);
 #if DEBUG
                 StringBuilder builder = new();
                 foreach (Token token in tokenizer.TokenList)
@@ -57,6 +59,7 @@ namespace userinterface.Models.Script
                 }
 
                 UI.HandleMessage(builder.ToString());
+                UI.HandleMessage(y.ToString());
 #endif
             }
             catch (ScriptException e)

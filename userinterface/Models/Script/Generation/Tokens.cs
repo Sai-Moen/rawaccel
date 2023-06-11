@@ -43,11 +43,6 @@ namespace userinterface.Models.Script.Generation
     {
         #region Constants
 
-        // Declarations
-        public const int CAPACITY = byte.MaxValue + 1;
-        public const int MAX_PARAMETERS     = 8;
-        public const int MAX_VARIABLES      = CAPACITY - MAX_PARAMETERS; // Important for addressing
-
         // Keywords
         // Calculation IO
         public const string INPUT           = "x";
@@ -87,7 +82,7 @@ namespace userinterface.Models.Script.Generation
         // Operators
         // Assignment
         public const string ASSIGN  = ":=";
-        public const char SECOND = '='; // assume the second character of an operator is 2 char
+        public const char SECOND = '=';     // if there is a second character, it should be this!
         // Inline Arithmetic
         public const string IADD    = "+=";
         public const string ISUB    = "-=";
@@ -254,8 +249,6 @@ namespace userinterface.Models.Script.Generation
             ReservedMap.Add(second, new(new(TokenType.Undefined, second)));
 
             Debug.Assert(ReservedMap.Count == totalLength);
-
-            Debug.Assert(CAPACITY == MAX_PARAMETERS + MAX_VARIABLES);
         }
 
         #endregion Constructors

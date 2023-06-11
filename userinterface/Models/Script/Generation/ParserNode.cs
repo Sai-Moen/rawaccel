@@ -8,6 +8,19 @@ namespace userinterface.Models.Script.Generation
         public Expression(TokenList tokens) : this(tokens.ToArray()) { }
     }
 
+    public static class Parsing
+    {
+        // Declarations
+        public const int CAPACITY = byte.MaxValue + 1;
+        public const int MAX_PARAMETERS = 8;
+        public const int MAX_VARIABLES = CAPACITY - MAX_PARAMETERS; // Important for addressing
+
+        static Parsing()
+        {
+            Debug.Assert(CAPACITY == MAX_PARAMETERS + MAX_VARIABLES);
+        }
+    }
+
     public abstract class ParserNode
     {
         public abstract Token Token { get; }
