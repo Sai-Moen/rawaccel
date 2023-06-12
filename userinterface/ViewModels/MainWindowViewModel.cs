@@ -15,26 +15,17 @@ namespace userinterface.ViewModels
             Script script = new(Models.Script.Interaction.ScriptInterfaceType.Debug);
             script.LoadScript(Script.DebugPath);
 
-            const int end = 0x80;
-            const int cap = 0x100;
-            const int div = cap / end;
-            var x = (int i) => ((double)i) / div;
+            const int cap = 0x10000;
             double[] y = new double[cap];
 
             Stopwatch sw = Stopwatch.StartNew();
             for (int i = 0; i < cap; i++)
             {
-                y[i] = script.Interpreter.Calculate(x(i));
+                y[i] = script.Interpreter.Calculate(i);
             }
             sw.Stop();
 
-            StringBuilder sb = new();
-            for (int i = 0; i < cap; i++)
-            {
-                sb.AppendLine((y[i] * x(i)).ToString());
-            }
-            sb.AppendLine(sw.Elapsed.TotalMilliseconds.ToString());
-            script.UI.HandleMessage(sb.ToString());
+            script.UI.HandleMessage($"{sw.Elapsed.TotalMilliseconds} ms");
 
             Environment.Exit(0);
 #else

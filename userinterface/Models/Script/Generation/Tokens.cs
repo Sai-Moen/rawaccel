@@ -35,10 +35,23 @@ namespace userinterface.Models.Script.Generation
         Function,
     }
 
+    /// <summary>
+    /// Holds the basic requirements for a Token.
+    /// </summary>
+    /// <param name="Type">Type of the Token.</param>
+    /// <param name="Symbol">String representation of the Token.</param>
     public record BaseToken(TokenType Type, string Symbol);
 
+    /// <summary>
+    /// Holds a BaseToken including some extra information.
+    /// </summary>
+    /// <param name="Base">The BaseToken.</param>
+    /// <param name="Line">The line in the file where this came from.</param>
     public record Token(BaseToken Base, uint Line = 0);
 
+    /// <summary>
+    /// Defines all reserved kinds of Tokens.
+    /// </summary>
     public static class Tokens
     {
         #region Constants
@@ -257,6 +270,9 @@ namespace userinterface.Models.Script.Generation
 
         #region Properties
 
+        /// <summary>
+        /// Maps all of the reserved Tokens to a string representation.
+        /// </summary>
         public static TokenMap ReservedMap { get; }
 
         #endregion Properties

@@ -170,7 +170,6 @@ namespace userinterface.Models.Script.Generation
             {
                 Instruction instruction = program.Instructions[i];
                 InstructionType type = (InstructionType)instruction[0];
-                
                 switch (type)
                 {
                     case InstructionType.Start:

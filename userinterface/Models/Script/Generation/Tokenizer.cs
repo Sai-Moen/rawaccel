@@ -48,6 +48,10 @@ namespace userinterface.Models.Script.Generation
 
         #region Constructors
 
+        /// <summary>
+        /// Processes and tokenizes the input script.
+        /// </summary>
+        /// <param name="script">The input script.</param>
         public Tokenizer(string script)
         {
             Characters = script

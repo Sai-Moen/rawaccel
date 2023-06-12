@@ -39,6 +39,10 @@ namespace userinterface.Models.Script.Generation
 
         #region Constructors
 
+        /// <summary>
+        /// Parses the input list of Tokens.
+        /// </summary>
+        /// <param name="tokenList">List of tokens from the script.</param>
         public Parser(TokenList tokenList)
         {
             TokenList = tokenList;

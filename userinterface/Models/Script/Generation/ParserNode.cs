@@ -3,6 +3,10 @@ using System.Diagnostics;
 
 namespace userinterface.Models.Script.Generation
 {
+    /// <summary>
+    /// Represents a parsed expression in a list of tokens.
+    /// </summary>
+    /// <param name="Tokens"></param>
     public record Expression(Token[] Tokens)
     {
         public Expression(TokenList tokens) : this(tokens.ToArray()) { }
@@ -13,6 +17,9 @@ namespace userinterface.Models.Script.Generation
         }
     }
 
+    /// <summary>
+    /// Holds parsing constants.
+    /// </summary>
     public static class Parsing
     {
         // Declarations
@@ -26,6 +33,9 @@ namespace userinterface.Models.Script.Generation
         }
     }
 
+    /// <summary>
+    /// Base class for assignment nodes.
+    /// </summary>
     public abstract class ParserNode
     {
         public abstract Token Token { get; }
@@ -35,6 +45,9 @@ namespace userinterface.Models.Script.Generation
         public abstract Expression? Expr { get; }
     }
 
+    /// <summary>
+    /// Saves the Token of a Parameter and its value.
+    /// </summary>
     public class ParameterAssignment : ParserNode
     {
         public ParameterAssignment(Token token, Token value)
@@ -60,6 +73,9 @@ namespace userinterface.Models.Script.Generation
         public override Expression? Expr => null;
     }
 
+    /// <summary>
+    /// Saves the Token of a Variable and its Expression.
+    /// </summary>
     public class VariableAssignment : ParserNode
     {
         public VariableAssignment(Token token, TokenList expr)
@@ -68,7 +84,7 @@ namespace userinterface.Models.Script.Generation
             Token = token;
 
             Debug.Assert(expr.Count != 0);
-            Expr = new(expr);
+            Expr = expr;
         }
 
         public override Token Token { get; }
