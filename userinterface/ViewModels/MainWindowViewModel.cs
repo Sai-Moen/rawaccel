@@ -18,21 +18,20 @@ namespace userinterface.ViewModels
             const int end = 0x80;
             const int cap = 0x100;
             const int div = cap / end;
-            double[] ys = new double[cap];
+            var x = (int i) => ((double)i) / div;
+            double[] y = new double[cap];
 
             Stopwatch sw = Stopwatch.StartNew();
             for (int i = 0; i < cap; i++)
             {
-                double x = ((double)i) / div;
-                ys[i] = script.Interpreter.Calculate(x);
+                y[i] = script.Interpreter.Calculate(x(i));
             }
             sw.Stop();
 
             StringBuilder sb = new();
             for (int i = 0; i < cap; i++)
             {
-                double x = ((double)i) / div;
-                sb.AppendLine((ys[i] * x).ToString());
+                sb.AppendLine((y[i] * x(i)).ToString());
             }
             sb.AppendLine(sw.Elapsed.TotalMilliseconds.ToString());
             script.UI.HandleMessage(sb.ToString());

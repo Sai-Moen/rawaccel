@@ -1,16 +1,20 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading.Tasks;
 
 namespace userinterface.Models.Script.Generation
 {
+    /// <summary>
+    /// Executes Programs.
+    /// </summary>
     public class Interpreter
     {
         #region Fields
 
-        private Number X = new(0);
+        private Number X = Number.DefaultX;
 
-        private Number Y = new(1);
+        private Number Y = Number.DefaultY;
 
         private readonly MemoryMap Addresses = new();
 
@@ -30,6 +34,13 @@ namespace userinterface.Models.Script.Generation
 
         #region Constructors
 
+        /// <summary>
+        /// Initializes the script and its default settings.
+        /// </summary>
+        /// <param name="parameters">The Parameters of the script with their default values.</param>
+        /// <param name="variables">The Variables of the script, with their Expression.</param>
+        /// <param name="code">The main code of the calculation block.</param>
+        /// <exception cref="InterpreterException">Thrown on execution failure.</exception>
         public Interpreter(
             List<ParameterAssignment> parameters,
             List<VariableAssignment> variables,
@@ -38,7 +49,7 @@ namespace userinterface.Models.Script.Generation
             Debug.Assert(parameters.Count <= Parsing.MAX_PARAMETERS);
             for (int i = 0; i < parameters.Count; i++)
             {
-                MemoryAddress address = new(i);
+                MemoryAddress address = i;
 
                 ParameterAssignment parameter = parameters[i];
 
@@ -57,7 +68,7 @@ namespace userinterface.Models.Script.Generation
             Debug.Assert(variables.Count <= Parsing.MAX_VARIABLES);
             for (int i = 0; i < variables.Count; i++)
             {
-                MemoryAddress address = new(i + Parsing.MAX_PARAMETERS);
+                MemoryAddress address = i + Parsing.MAX_PARAMETERS;
 
                 VariableAssignment variable = variables[i];
 
@@ -71,7 +82,7 @@ namespace userinterface.Models.Script.Generation
                 Startup[i] = new(expr, Addresses);
             }
 
-            MainProgram = new(new(code), Addresses);
+            MainProgram = new(code, Addresses);
 
             Settings = Defaults; // Make sure Startup is initialized before this
         }
@@ -103,17 +114,22 @@ namespace userinterface.Models.Script.Generation
 
         #region Methods
 
+        /// <summary>
+        /// Performs a calculation on the currently loaded script and settings.
+        /// </summary>
+        /// <param name="x">The input value to inject into the loaded script and settings.</param>
+        /// <returns>The resulting output value.</returns>
         public double Calculate(double x)
         {
-            X = new(x);
+            X = x;
 
             Exec(MainProgram, MainStack);
             Debug.Assert(MainStack.Count == 0);
 
-            double y = Y.Value;
+            double y = Y;
             Restore();
 
-            Y = new(1);
+            Y = Number.DefaultY;
             return y;
         }
 
@@ -125,7 +141,7 @@ namespace userinterface.Models.Script.Generation
                 {
                     ParameterPairs.ParameterNameValue value = pair.Value;
                     
-                    Stable[new(Addresses[value.Name].Address)] = value.Value;
+                    Stable[Addresses[value.Name]] = value.Value;
                 }
             }
 
@@ -145,7 +161,7 @@ namespace userinterface.Models.Script.Generation
             Parallel.ForEach(Startup, (p) => Exec(p, new()));
 
             // Load everything to Stable
-            InitStable();
+            Stable.RestoreTo(Volatile);
         }
 
         private void Exec(Program program, ProgramStack stack)
@@ -154,10 +170,7 @@ namespace userinterface.Models.Script.Generation
             {
                 Instruction instruction = program.Instructions[i];
                 InstructionType type = (InstructionType)instruction[0];
-
-                byte tableIndex = type.ToByte();
-                (Number, Number) tableArgs = (Number.Zero, Number.Zero); // 0 means ignore
-
+                
                 switch (type)
                 {
                     case InstructionType.Start:
@@ -170,12 +183,12 @@ namespace userinterface.Models.Script.Generation
 
                         return;
                     case InstructionType.Load:
-                        MemoryAddress loadAddress = new(instruction);
-                        stack.Push(new(Volatile[loadAddress]));
+                        MemoryAddress loadAddress = instruction;
+                        stack.Push(Volatile[loadAddress]);
                         break;
                     case InstructionType.Store:
-                        MemoryAddress storeAddress = new(instruction);
-                        Volatile[storeAddress] = stack.Pop().Value;
+                        MemoryAddress storeAddress = instruction;
+                        Volatile[storeAddress] = stack.Pop();
                         break;
                     case InstructionType.LoadIn:
                         stack.Push(X);
@@ -190,7 +203,7 @@ namespace userinterface.Models.Script.Generation
                         Y = stack.Pop();
                         break;
                     case InstructionType.LoadNumber:
-                        Number number = new(instruction);
+                        Number number = instruction;
                         stack.Push(number);
                         break;
                     case InstructionType.Swap:
@@ -201,14 +214,14 @@ namespace userinterface.Models.Script.Generation
                         stack.Push(swap2);
                         break;
                     case InstructionType.Jmp:
-                        CodeAddress jmpAddress = new(instruction);
-                        i = jmpAddress.Address;
+                        CodeAddress jmpAddress = instruction;
+                        i = jmpAddress;
                         break;
                     case InstructionType.Jz:
-                        CodeAddress jzAddress = new(instruction);
-                        if (stack.Pop().Value == 0)
+                        CodeAddress jzAddress = instruction;
+                        if (stack.Pop() == 0)
                         {
-                            i = jzAddress.Address;
+                            i = jzAddress;
                         }
 
                         break;
@@ -216,8 +229,8 @@ namespace userinterface.Models.Script.Generation
                     case InstructionType.LoadPi:
                     case InstructionType.LoadTau:
                     case InstructionType.LoadZero:
-                        // Already initialized correctly (two Zeros)
-                        goto Lookup;
+                        stack.Push(Lookup(type, 0, 0));
+                        break;
                     case InstructionType.Add:
                     case InstructionType.Sub:
                     case InstructionType.Mul:
@@ -232,8 +245,8 @@ namespace userinterface.Models.Script.Generation
                     case InstructionType.Ge:
                     case InstructionType.Eq:
                     case InstructionType.Ne:
-                        tableArgs = (stack.Pop(), stack.Pop());
-                        goto Lookup;
+                        stack.Push(Lookup(type, stack.Pop(), stack.Pop()));
+                        break;
                     case InstructionType.ExpE: // implicit first argument
                     case InstructionType.Not: // unary
                     case InstructionType.Abs:
@@ -258,12 +271,7 @@ namespace userinterface.Models.Script.Generation
                     case InstructionType.Tanh:
                     case InstructionType.Atan:
                     case InstructionType.Atanh:
-                        tableArgs = (stack.Pop(), Number.Zero);
-                        goto Lookup;
-                    Lookup:
-                        stack.Push(new(
-                            Instructions.Table[tableIndex]
-                            (tableArgs.Item1.Value, tableArgs.Item2.Value)));
+                        stack.Push(Lookup(type, 0, stack.Pop()));
                         break;
                     case InstructionType.Count:
                     default:
@@ -273,14 +281,65 @@ namespace userinterface.Models.Script.Generation
             }
         }
 
+        private static Number Lookup(InstructionType type, Number y, Number x)
+        {
+            // Arguments are reversed because of stack pop order,
+            // In postfix notation, rhs comes before lhs on the stack.
+            return type switch
+            {
+                InstructionType.LoadE       => Math.E,
+                InstructionType.LoadPi      => Math.PI,
+                InstructionType.LoadTau     => Math.Tau,
+                InstructionType.LoadZero    => 0,
+
+                InstructionType.Add         => x + y,
+                InstructionType.Sub         => x - y,
+                InstructionType.Mul         => x * y,
+                InstructionType.Div         => x / y,
+                InstructionType.Mod         => x % y,
+                InstructionType.Exp         => Math.Pow(x, y),
+                InstructionType.ExpE        => Math.Exp(x),
+
+                InstructionType.Or          => x | y,
+                InstructionType.And         => x & y,
+                InstructionType.Lt          => x < y,
+                InstructionType.Gt          => x > y,
+                InstructionType.Le          => x <= y,
+                InstructionType.Ge          => x >= y,
+                InstructionType.Eq          => x == y,
+                InstructionType.Ne          => x != y,
+                InstructionType.Not         => !x,
+
+                InstructionType.Abs         => Math.Abs(x),
+                InstructionType.Sqrt        => Math.Sqrt(x),
+                InstructionType.Cbrt        => Math.Cbrt(x),
+                InstructionType.Round       => Math.Round(x),
+                InstructionType.Trunc       => Math.Truncate(x),
+                InstructionType.Ceil        => Math.Ceiling(x),
+                InstructionType.Floor       => Math.Floor(x),
+                InstructionType.Log         => Math.Log(x),
+                InstructionType.Log2        => Math.Log2(x),
+                InstructionType.Log10       => Math.Log10(x),
+                InstructionType.Sin         => Math.Sin(x),
+                InstructionType.Sinh        => Math.Sinh(x),
+                InstructionType.Asin        => Math.Asin(x),
+                InstructionType.Asinh       => Math.Asinh(x),
+                InstructionType.Cos         => Math.Cos(x),
+                InstructionType.Cosh        => Math.Cosh(x),
+                InstructionType.Acos        => Math.Acos(x),
+                InstructionType.Acosh       => Math.Acosh(x),
+                InstructionType.Tan         => Math.Tan(x),
+                InstructionType.Tanh        => Math.Tanh(x),
+                InstructionType.Atan        => Math.Atan(x),
+                InstructionType.Atanh       => Math.Atanh(x),
+
+                _ => throw new InterpreterException("Not a function!"),
+            };
+        }
+
         private void Restore()
         {
             Volatile.RestoreTo(Stable);
-        }
-
-        private void InitStable()
-        {
-            Stable.RestoreTo(Volatile);
         }
 
         #endregion Methods

@@ -6,6 +6,11 @@ namespace userinterface.Models.Script.Generation
     public record Expression(Token[] Tokens)
     {
         public Expression(TokenList tokens) : this(tokens.ToArray()) { }
+
+        public static implicit operator Expression(TokenList list)
+        {
+            return new(list);
+        }
     }
 
     public static class Parsing

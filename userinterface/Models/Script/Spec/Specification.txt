@@ -44,32 +44,42 @@ Scripting language specification:
 	Using control flow cleverly should make it so that multiple return, or even return at all, is not necessary,
 	so there is not a return keyword.
 
-	When a variable is used that has not been declared before the body,
-	or an existing variable is used before the body, an error is thrown.
-
 	Sections:
-		1. Comments
+		1. Comments:
 			This section exists because the tokenizer does not tokenize until the Parameters section is entered.
 			Therefore, the script writer is allowed to write anything here.
 
-		2. Parameters
+		2. Parameters:
 			Delimited by []
 			This section holds a maximum of 8 parameters.
 			These parameters correspond to RawAccel parameters in the UI, and are bound accordingly.
 
-		3. Variables (not user-facing)
-			This section holds temporary variables that store Numbers or Parameters.
-			The maximum amount should be at least 256 minus the maximum amount of parameters,
-			because of allowing 1-byte addressing, but is otherwise left to implementation details.
+			The assignment format is fixed, and only allows the script writer to assign a number to them.
+			These numbers are parsed immediately upon going through the Parser,
+			and can be queried through the Interpreter as soon as the constructor is done.
+			When the parameters are changed, the Interpreter can be updated through a property.
 
-		4. Calculation
+		3. Variables:
+			This section holds temporary variables that store expressions.
+			The expressions can only contain Parameters, Constants and Numbers.
+			The maximum amount of Variables should be at least 256 minus the maximum amount of Parameters,
+			because of it enabling 1-byte addressing, but is otherwise left to implementation details.
+
+		4. Calculation:
 			Delimited by {}
 			This section is where the calculation actually happens.
+			A statement does not just have to be normal assignment, but can also be inline assignment,
+			or a branch statement. A branch statement itself can contain multiple statements.
+			It starts with a condition, that makes it jump past the block if the input is equal to 0.
+			Inline assignment performs a calculation with the expression after it and the old value of the variable,
+			and assigns it to that variable.
+			Parameters cannot be assigned to, only Input, Output and Variables.
+			Expressions however, can contain all of those, but numbers will have to appear in the variable declarations.
 
-			Input variable 'x' will be selected externally, and then given to the Interpreter.
+			Input variable 'x' will be selected externally, and then given to the Interpreter through a public method.
 			At the same time, Output variable 'y' will be accumulating until the end of the Calculation block,
 			It starts at 1, which means by default the smallest possible script "[]{}" will generate a static curve.
-			After the Calculation block it will be returned to caller.
+			After the Calculation block it will be returned to the caller of the aforementioned public method.
 
 	Keywords:
 		x y			"Input/Output variables"

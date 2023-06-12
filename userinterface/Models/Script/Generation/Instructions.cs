@@ -46,215 +46,213 @@ namespace userinterface.Models.Script.Generation
         Count,
     }
 
+    /// <summary>
+    /// Represents the context needed by a BranchEnd Token to determine the emitted instruction(s).
+    /// </summary>
+    /// <param name="Index">The index of the Token where the Branch occurred.</param>
+    /// <param name="Condition">The instruction address where the Branch condition starts.</param>
+    /// <param name="Insert">The instruction address where a conditional jump should be inserted.</param>
+    public readonly record struct BranchContext(int Index, CodeAddress Condition, CodeAddress Insert);
+
+    /// <summary>
+    /// Represents an address in the Interpreter's Heap Memory.
+    /// </summary>
+    /// <param name="Address">Heap Memory address.</param>
+    public readonly record struct MemoryAddress(byte Address)
+    {
+        public const int Size = sizeof(byte);
+        public const byte MaxValue = byte.MaxValue;
+
+        public static implicit operator MemoryAddress(byte pointer)
+        {
+            return new(pointer);
+        }
+
+        public static implicit operator MemoryAddress(int pointer)
+        {
+            if (pointer > MaxValue)
+            {
+                throw new InterpreterException("Memory address overflow!");
+            }
+
+            return (byte)pointer;
+        }
+
+        public static implicit operator MemoryAddress(Instruction pointer)
+        {
+            return pointer[1];
+        }
+
+        public static implicit operator byte[](MemoryAddress address)
+        {
+            return new byte[1]{ address.Address };
+        }
+
+        public static implicit operator byte(MemoryAddress address)
+        {
+            return address.Address;
+        }
+    }
+
+    /// <summary>
+    /// Represents an Instruction address in the Program in which it is present.
+    /// </summary>
+    /// <param name="Address">Instruction address.</param>
+    public readonly record struct CodeAddress(ushort Address)
+    {
+        public const int Size = sizeof(ushort);
+        public const ushort MaxValue = ushort.MaxValue;
+
+        public static implicit operator CodeAddress(ushort pointer)
+        {
+            return new(pointer);
+        }
+
+        public static implicit operator CodeAddress(int pointer)
+        {
+            if (pointer > MaxValue)
+            {
+                throw new InterpreterException("Code address overflow!");
+            }
+
+            return (ushort)pointer;
+        }
+
+        public static implicit operator CodeAddress(Instruction pointer)
+        {
+            byte[] bytes = new byte[Size];
+            pointer.CopyTo(ref bytes);
+            return BitConverter.ToUInt16(bytes);
+        }
+
+        public static implicit operator byte[](CodeAddress address)
+        {
+            return BitConverter.GetBytes(address.Address);
+        }
+
+        public static implicit operator ushort(CodeAddress address)
+        {
+            return address.Address;
+        }
+    }
+
+    /// <summary>
+    /// Represents a number or pseudo-boolean in the script.
+    /// </summary>
+    /// <param name="Value">Value of the Number.</param>
+    public readonly record struct Number(double Value)
+    {
+        public const int Size = sizeof(double);
+        public const double DefaultX = 0;
+        public const double DefaultY = 1;
+
+        public static implicit operator Number(bool value)
+        {
+            return Convert.ToDouble(value);
+        }
+
+        public static implicit operator Number(double value)
+        {
+            return new(value);
+        }
+
+        public static implicit operator Number(Instruction value)
+        {
+            byte[] bytes = new byte[Size];
+            value.CopyTo(ref bytes);
+            return BitConverter.ToDouble(bytes);
+        }
+
+        public static implicit operator byte[](Number number)
+        {
+            return BitConverter.GetBytes(number);
+        }
+
+        public static implicit operator double(Number number)
+        {
+            return number.Value;
+        }
+
+        public static Number operator |(Number left, Number right)
+        {
+            return (left != 0) | (right != 0);
+        }
+
+        public static Number operator &(Number left, Number right)
+        {
+            return (left != 0) & (right != 0);
+        }
+
+        public static Number operator !(Number number)
+        {
+            return number == 0;
+        }
+
+        public static Number Parse(string s)
+        {
+            if (double.TryParse(s, out double result))
+            {
+                return result;
+            }
+
+            throw new InterpreterException("Cannot parse number!");
+        }
+    }
+
+    /// <summary>
+    /// Represents an Instruction that can be executed by the Interpreter.
+    /// </summary>
     public readonly struct Instruction
     {
         public const int Size = sizeof(byte);
 
-        private readonly byte[] ByteCode;
-
         public Instruction(InstructionType type)
         {
-            ByteCode = new byte[type.Size()];
+            ByteCode = new byte[type.SizeOf()];
             ByteCode[0] = type.ToByte();
         }
 
-        public InstructionType GrabType()
-        {
-            Debug.Assert(ByteCode[0] < InstructionType.Count.ToByte());
-            return (InstructionType)ByteCode[0];
-        }
+        public byte[] ByteCode { get; }
 
         public byte this[int index]
         {
             get { return ByteCode[index]; }
         }
 
+        public static implicit operator Instruction(InstructionType type)
+        {
+            return new(type);
+        }
+
+        public static implicit operator InstructionType(Instruction instruction)
+        {
+            Debug.Assert(instruction.ByteCode[0] < InstructionType.Count.ToByte());
+            return (InstructionType)instruction.ByteCode[0];
+        }
+
         public void CopyFrom(byte[] bytes)
         {
-            bytes.CopyTo(ByteCode, 1);
+            bytes.CopyTo(ByteCode, Size);
         }
 
         public void CopyTo(ref byte[] bytes)
         {
-            Span<byte> span = new(ByteCode, 1, ByteCode.Length - 1);
+            Span<byte> span = new(ByteCode, Size, ByteCode.Length - Size);
             span.CopyTo(bytes);
         }
     }
 
-    public readonly struct MemoryAddress
-    {
-        public const byte MaxValue = byte.MaxValue;
-
-        public const int Size = sizeof(byte);
-
-        public MemoryAddress(byte address)
-        {
-            Address = address;
-        }
-
-        public MemoryAddress(int address)
-        {
-            if (address > MaxValue)
-            {
-                throw new InterpreterException("Memory address overflow!");
-            }
-
-            Address = (byte)address;
-        }
-
-        public MemoryAddress(Instruction address)
-        {
-            Address = address[1];
-        }
-
-        public byte Address { get; }
-
-        public byte[] GetBytes()
-        {
-            return new byte[1]{ Address };
-        }
-    }
-
-    public readonly struct CodeAddress
-    {
-        public const ushort MaxValue = ushort.MaxValue;
-
-        public const int Size = sizeof(ushort);
-
-        public CodeAddress(int address)
-        {
-            if (address > MaxValue)
-            {
-                throw new InterpreterException("Code address overflow!");
-            }
-
-            Address = (ushort)address;
-        }
-
-        public CodeAddress(Instruction address)
-        {
-            byte[] bytes = new byte[Size];
-            address.CopyTo(ref bytes);
-            Address = BitConverter.ToUInt16(bytes);
-        }
-
-        public ushort Address { get; }
-
-        public byte[] GetBytes()
-        {
-            return BitConverter.GetBytes(Address);
-        }
-    }
-
-    public readonly struct Number
-    {
-        public const int Size = sizeof(double);
-
-        public static readonly Number Zero = new(0);
-
-        public Number(double value)
-        {
-            Value = value;
-        }
-
-        public Number(Instruction number)
-        {
-            byte[] bytes = new byte[Size];
-            number.CopyTo(ref bytes);
-            Value = BitConverter.ToDouble(bytes);
-        }
-
-        public double Value { get; }
-
-        public byte[] GetBytes()
-        {
-            return BitConverter.GetBytes(Value);
-        }
-    }
-
-    public readonly struct BranchContext
-    {
-        public BranchContext(int index, CodeAddress condition, CodeAddress insert)
-        {
-            Index = index;
-            Condition = condition;
-            Insert = insert;
-        }
-
-        public int Index { get; }
-
-        public CodeAddress Condition { get; }
-
-        public CodeAddress Insert { get; }
-    }
-
+    /// <summary>
+    /// Provides extension methods for InstructionType.
+    /// </summary>
     public static class Instructions
     {
-        static Instructions()
-        {
-            // Arguments are reversed because of the Stack Pop order
-
-            Table[InstructionType.LoadE.ToByte()]       = (_, _) => Math.E;
-            Table[InstructionType.LoadPi.ToByte()]      = (_, _) => Math.PI;
-            Table[InstructionType.LoadTau.ToByte()]     = (_, _) => Math.Tau;
-            Table[InstructionType.LoadZero.ToByte()]    = (_, _) => 0;
-
-            Table[InstructionType.Add.ToByte()]         = (y, x) => x + y;
-            Table[InstructionType.Sub.ToByte()]         = (y, x) => x - y;
-            Table[InstructionType.Mul.ToByte()]         = (y, x) => x * y;
-            Table[InstructionType.Div.ToByte()]         = (y, x) => x / y;
-            Table[InstructionType.Mod.ToByte()]         = (y, x) => x % y;
-            Table[InstructionType.Exp.ToByte()]         = (y, x) => Math.Pow(x, y);
-            Table[InstructionType.ExpE.ToByte()]        = (y, _) => Math.Exp(y);
-
-            Table[InstructionType.Or.ToByte()]          = (y, x) => Convert.ToDouble((x != 0) | (y != 0));
-            Table[InstructionType.And.ToByte()]         = (y, x) => Convert.ToDouble((x != 0) & (y != 0));
-            Table[InstructionType.Lt.ToByte()]          = (y, x) => Convert.ToDouble(x < y);
-            Table[InstructionType.Gt.ToByte()]          = (y, x) => Convert.ToDouble(x > y);
-            Table[InstructionType.Le.ToByte()]          = (y, x) => Convert.ToDouble(x <= y);
-            Table[InstructionType.Ge.ToByte()]          = (y, x) => Convert.ToDouble(x >= y);
-            Table[InstructionType.Eq.ToByte()]          = (y, x) => Convert.ToDouble(x == y);
-            Table[InstructionType.Ne.ToByte()]          = (y, x) => Convert.ToDouble(x != y);
-            Table[InstructionType.Not.ToByte()]         = (y, _) => Convert.ToDouble(y == 0);
-
-            Table[InstructionType.Abs.ToByte()]         = (y, _) => Math.Abs(y);
-            Table[InstructionType.Sqrt.ToByte()]        = (y, _) => Math.Sqrt(y);
-            Table[InstructionType.Cbrt.ToByte()]        = (y, _) => Math.Cbrt(y);
-
-            Table[InstructionType.Round.ToByte()]       = (y, _) => Math.Round(y);
-            Table[InstructionType.Trunc.ToByte()]       = (y, _) => Math.Truncate(y);
-            Table[InstructionType.Ceil.ToByte()]        = (y, _) => Math.Ceiling(y);
-            Table[InstructionType.Floor.ToByte()]       = (y, _) => Math.Floor(y);
-
-            Table[InstructionType.Log.ToByte()]         = (y, _) => Math.Log(y);
-            Table[InstructionType.Log2.ToByte()]        = (y, _) => Math.Log2(y);
-            Table[InstructionType.Log10.ToByte()]       = (y, _) => Math.Log10(y);
-
-            Table[InstructionType.Sin.ToByte()]         = (y, _) => Math.Sin(y);
-            Table[InstructionType.Sinh.ToByte()]        = (y, _) => Math.Sinh(y);
-            Table[InstructionType.Asin.ToByte()]        = (y, _) => Math.Asin(y);
-            Table[InstructionType.Asinh.ToByte()]       = (y, _) => Math.Asinh(y);
-
-            Table[InstructionType.Cos.ToByte()]         = (y, _) => Math.Cos(y);
-            Table[InstructionType.Cosh.ToByte()]        = (y, _) => Math.Cosh(y);
-            Table[InstructionType.Acos.ToByte()]        = (y, _) => Math.Acos(y);
-            Table[InstructionType.Acosh.ToByte()]       = (y, _) => Math.Acosh(y);
-
-            Table[InstructionType.Tan.ToByte()]         = (y, _) => Math.Tan(y);
-            Table[InstructionType.Tanh.ToByte()]        = (y, _) => Math.Tanh(y);
-            Table[InstructionType.Atan.ToByte()]        = (y, _) => Math.Atan(y);
-            Table[InstructionType.Atanh.ToByte()]       = (y, _) => Math.Atanh(y);
-        }
-
-        public static Func<double, double, double>[] Table { get; } =
-            new Func<double, double, double>[InstructionType.Count.ToByte()];
-
         public static byte ToByte(this InstructionType type)
         {
             return (byte)type;
         }
 
-        public static int Size(this InstructionType type)
+        public static int SizeOf(this InstructionType type)
         {
             return type switch
             {
@@ -271,17 +269,26 @@ namespace userinterface.Models.Script.Generation
         }
     }
 
+    /// <summary>
+    /// Represents a program consisting of executable Instructions.
+    /// </summary>
     public class Program
     {
         #region Constructors
 
+        /// <summary>
+        /// Initializes the InstructionList so that the Interpreter can execute it in order.
+        /// </summary>
+        /// <param name="expression">Contains a parsed TokenList that can be emitted to bytecode.</param>
+        /// <param name="map">Maps identifiers to memory addresses.</param>
+        /// <exception cref="InterpreterException">Thrown when emitting fails.</exception>
         public Program(Expression expression, MemoryMap map)
         {
             Instructions = new(expression.Tokens.Length);
 
             Instructions.AddInstruction(InstructionType.Start);
 
-            BranchStack stack = new();
+            Stack<BranchContext> stack = new();
 
             int lastExprStart = 0;
 
@@ -292,21 +299,12 @@ namespace userinterface.Models.Script.Generation
                 switch (current.Type)
                 {
                     case TokenType.Number:
-                        if (double.TryParse(current.Symbol, out double value))
-                        {
-                            Number number = new(value);
-                            Instructions.AddInstruction(
-                                InstructionType.LoadNumber,
-                                number.GetBytes());
-                            break;
-                        }
-
-                        throw new InterpreterException(token.Line, "Cannot parse number!");
+                        Number number = Number.Parse(current.Symbol);
+                        Instructions.AddInstruction(InstructionType.LoadNumber, number);
+                        break;
                     case TokenType.Parameter:
                     case TokenType.Variable:
-                        Instructions.AddInstruction(
-                            InstructionType.Load,
-                            map[current.Symbol].GetBytes());
+                        Instructions.AddInstruction(InstructionType.Load, map[current.Symbol]);
                         break;
                     case TokenType.Input:
                         Instructions.AddInstruction(InstructionType.LoadIn);
@@ -319,7 +317,7 @@ namespace userinterface.Models.Script.Generation
                             OnConstant(token.Line, current.Symbol));
                         break;
                     case TokenType.Branch:
-                        BranchContext context = new(i, new(lastExprStart), new(Instructions.Count));
+                        BranchContext context = new(i, lastExprStart, Instructions.Count);
                         stack.Push(context);
                         break;
                     case TokenType.BranchEnd:
@@ -328,17 +326,12 @@ namespace userinterface.Models.Script.Generation
                             Token oldtoken = expression.Tokens[ctx.Index];
                             if (oldtoken.Base.Symbol == Tokens.BRANCH_WHILE)
                             {
-                                Instructions.AddInstruction(
-                                    InstructionType.Jmp,
-                                    ctx.Condition.GetBytes());
+                                Instructions.AddInstruction(InstructionType.Jmp, ctx.Condition);
                             }
 
                             // Not - 1 because the insert readjusts it again
-                            CodeAddress address = new(Instructions.Count);
-
-                            Instructions.InsertInstruction(ctx.Insert,
-                                InstructionType.Jz,
-                                address.GetBytes());
+                            CodeAddress address = Instructions.Count;
+                            Instructions.InsertInstruction(ctx.Insert, InstructionType.Jz, address);
                             break;
                         }
 
@@ -363,11 +356,11 @@ namespace userinterface.Models.Script.Generation
                         else
                         {
                             MemoryAddress address = map[symbol];
-                            byte[] pointer = address.GetBytes();
+                            byte[] pointer = address;
                             OnAssignment(InstructionType.Load, type, InstructionType.Store, pointer);
                         }
 
-                        lastExprStart = i; // Takes into account the program counter incrementing
+                        lastExprStart = i;
                         break;
                     case TokenType.Arithmetic:
                         OnArithmetic(token.Line, current.Symbol);
@@ -467,7 +460,7 @@ namespace userinterface.Models.Script.Generation
                     // Try to convert E^ -> Exp()
                     int lastIndex = Instructions.Count - 1;
                     if (Instructions.Count > 0 &&
-                        Instructions[lastIndex].GrabType() == InstructionType.LoadE)
+                        Instructions[lastIndex] == InstructionType.LoadE)
                     {
                         Instructions.RemoveAt(lastIndex);
                         Instructions.AddInstruction(InstructionType.ExpE);
@@ -543,32 +536,32 @@ namespace userinterface.Models.Script.Generation
 
         public void AddInstruction(InstructionType type)
         {
-            Add(new(type));
+            Add(type);
         }
 
         public void AddInstruction(InstructionType type, byte[] data)
         {
-            Instruction instruction = new(type);
+            Instruction instruction = type;
             instruction.CopyFrom(data);
             Add(instruction);
         }
 
         public void InsertInstruction(CodeAddress address, InstructionType type, byte[] data)
         {
-            Instruction instruction = new(type);
+            Instruction instruction = type;
             instruction.CopyFrom(data);
-            Insert(address.Address, instruction);
+            Insert(address, instruction);
         }
     }
 
     public class MemoryHeap
     {
-        private readonly double[] Mem = new double[Parsing.CAPACITY];
+        private readonly Number[] Mem = new Number[Parsing.CAPACITY];
 
         public double this[MemoryAddress address]
         {
-            get { return Mem[address.Address]; }
-            set { Mem[address.Address] = value; }
+            get { return Mem[address]; }
+            set { Mem[address] = value; }
         }
 
         public void RestoreTo(MemoryHeap other)
@@ -584,11 +577,6 @@ namespace userinterface.Models.Script.Generation
         private readonly ParameterNameValue?[] Parameters =
             new ParameterNameValue?[Parsing.MAX_PARAMETERS];
 
-        /// <summary>
-        /// Accesses the parameter at an index.
-        /// </summary>
-        /// <param name="index">The index to get/set an element.</param>
-        /// <returns>The element at this index, null if there is not an element.</returns>
         public ParameterNameValue? this[int index]
         {
             get { return Parameters[index]; }
@@ -610,8 +598,5 @@ namespace userinterface.Models.Script.Generation
     { }
 
     public class ProgramStack : Stack<Number>
-    { }
-
-    public class BranchStack : Stack<BranchContext>
     { }
 }
