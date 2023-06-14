@@ -1,15 +1,17 @@
-﻿namespace userinterface.Models.Script.Interaction
+﻿using System.Diagnostics;
+
+namespace userinterface.Models.Script.Interaction
 {
     public class ReleaseInterface : IScriptInterface
     {
         public void HandleException(ScriptException exception)
         {
-            // How to show exceptions to user?
+            Trace.WriteLine(exception);
         }
 
         public void HandleMessage(string message)
         {
-            // How to show messages to user?
+            Trace.WriteLine(message);
         }
     }
 }

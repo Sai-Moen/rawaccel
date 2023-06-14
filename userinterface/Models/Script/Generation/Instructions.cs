@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
 
 namespace userinterface.Models.Script.Generation
 {
@@ -80,17 +79,17 @@ namespace userinterface.Models.Script.Generation
 
         public static implicit operator MemoryAddress(Instruction pointer)
         {
-            return pointer[1];
-        }
-
-        public static implicit operator byte[](MemoryAddress address)
-        {
-            return new byte[1]{ address.Address };
+            return pointer.ByteCode[0];
         }
 
         public static implicit operator byte(MemoryAddress address)
         {
             return address.Address;
+        }
+
+        public static implicit operator byte[](MemoryAddress address)
+        {
+            return new byte[1]{ address.Address };
         }
     }
 
@@ -125,14 +124,14 @@ namespace userinterface.Models.Script.Generation
             return BitConverter.ToUInt16(bytes);
         }
 
-        public static implicit operator byte[](CodeAddress address)
-        {
-            return BitConverter.GetBytes(address.Address);
-        }
-
         public static implicit operator ushort(CodeAddress address)
         {
             return address.Address;
+        }
+
+        public static implicit operator byte[](CodeAddress address)
+        {
+            return BitConverter.GetBytes(address.Address);
         }
     }
 
@@ -143,7 +142,8 @@ namespace userinterface.Models.Script.Generation
     public readonly record struct Number(double Value)
     {
         public const int Size = sizeof(double);
-        public const double DefaultX = 0;
+        public const double Zero = 0;
+        public const double DefaultX = Zero;
         public const double DefaultY = 1;
 
         public static implicit operator Number(bool value)
@@ -163,9 +163,9 @@ namespace userinterface.Models.Script.Generation
             return BitConverter.ToDouble(bytes);
         }
 
-        public static implicit operator byte[](Number number)
+        public static implicit operator bool(Number number)
         {
-            return BitConverter.GetBytes(number);
+            return number.Value != Zero;
         }
 
         public static implicit operator double(Number number)
@@ -173,19 +173,24 @@ namespace userinterface.Models.Script.Generation
             return number.Value;
         }
 
+        public static implicit operator byte[](Number number)
+        {
+            return BitConverter.GetBytes(number.Value);
+        }
+
         public static Number operator |(Number left, Number right)
         {
-            return (left != 0) | (right != 0);
+            return (left != Zero) | (right != Zero);
         }
 
         public static Number operator &(Number left, Number right)
         {
-            return (left != 0) & (right != 0);
+            return (left != Zero) & (right != Zero);
         }
 
         public static Number operator !(Number number)
         {
-            return number == 0;
+            return number == Zero;
         }
 
         public static Number Parse(string s)
@@ -202,69 +207,48 @@ namespace userinterface.Models.Script.Generation
     /// <summary>
     /// Represents an Instruction that can be executed by the Interpreter.
     /// </summary>
-    public readonly struct Instruction
+    public readonly record struct Instruction(InstructionType Type, byte[] ByteCode)
     {
-        public const int Size = sizeof(byte);
-
-        public Instruction(InstructionType type)
-        {
-            ByteCode = new byte[type.SizeOf()];
-            ByteCode[0] = type.ToByte();
-        }
-
-        public byte[] ByteCode { get; }
-
-        public byte this[int index]
-        {
-            get { return ByteCode[index]; }
-        }
-
         public static implicit operator Instruction(InstructionType type)
         {
-            return new(type);
+            return new(type, new byte[type.SizeOf()]);
         }
 
         public static implicit operator InstructionType(Instruction instruction)
         {
-            Debug.Assert(instruction.ByteCode[0] < InstructionType.Count.ToByte());
-            return (InstructionType)instruction.ByteCode[0];
+            return instruction.Type;
         }
 
         public void CopyFrom(byte[] bytes)
         {
-            bytes.CopyTo(ByteCode, Size);
+            bytes.CopyTo(ByteCode, 0);
         }
 
         public void CopyTo(ref byte[] bytes)
         {
-            Span<byte> span = new(ByteCode, Size, ByteCode.Length - Size);
+            Span<byte> span = new(ByteCode, 0, ByteCode.Length);
             span.CopyTo(bytes);
         }
     }
 
     /// <summary>
-    /// Provides extension methods for InstructionType.
+    /// Provides extension methods for Instruction and InstructionType.
     /// </summary>
     public static class Instructions
     {
-        public static byte ToByte(this InstructionType type)
-        {
-            return (byte)type;
-        }
-
         public static int SizeOf(this InstructionType type)
         {
             return type switch
             {
-                InstructionType.LoadNumber  => Instruction.Size + Number.Size,
+                InstructionType.LoadNumber  => Number.Size,
 
-                InstructionType.Jmp         => Instruction.Size + CodeAddress.Size,
-                InstructionType.Jz          => Instruction.Size + CodeAddress.Size,
+                InstructionType.Jmp         => CodeAddress.Size,
+                InstructionType.Jz          => CodeAddress.Size,
 
-                InstructionType.Load        => Instruction.Size + MemoryAddress.Size,
-                InstructionType.Store       => Instruction.Size + MemoryAddress.Size,
+                InstructionType.Load        => MemoryAddress.Size,
+                InstructionType.Store       => MemoryAddress.Size,
 
-                _ => Instruction.Size,
+                _ => 0,
             };
         }
     }
@@ -317,8 +301,9 @@ namespace userinterface.Models.Script.Generation
                             OnConstant(token.Line, current.Symbol));
                         break;
                     case TokenType.Branch:
-                        BranchContext context = new(i, lastExprStart, Instructions.Count);
+                        BranchContext context = new(i, lastExprStart + stack.Count, Instructions.Count);
                         stack.Push(context);
+                        lastExprStart = Instructions.Count - 1;
                         break;
                     case TokenType.BranchEnd:
                         if (stack.TryPop(out BranchContext ctx))
@@ -329,8 +314,7 @@ namespace userinterface.Models.Script.Generation
                                 Instructions.AddInstruction(InstructionType.Jmp, ctx.Condition);
                             }
 
-                            // Not - 1 because the insert readjusts it again
-                            CodeAddress address = Instructions.Count;
+                            CodeAddress address = Instructions.Count + stack.Count;
                             Instructions.InsertInstruction(ctx.Insert, InstructionType.Jz, address);
                             break;
                         }
@@ -360,7 +344,7 @@ namespace userinterface.Models.Script.Generation
                             OnAssignment(InstructionType.Load, type, InstructionType.Store, pointer);
                         }
 
-                        lastExprStart = i;
+                        lastExprStart = Instructions.Count - 1;
                         break;
                     case TokenType.Arithmetic:
                         OnArithmetic(token.Line, current.Symbol);
@@ -374,6 +358,11 @@ namespace userinterface.Models.Script.Generation
                     default:
                         throw new InterpreterException(token.Line, "Cannot emit token!");
                 }
+            }
+
+            if (stack.Count != 0)
+            {
+                throw new InterpreterException("Branch mismatch!");
             }
 
             Instructions.AddInstruction(InstructionType.End);

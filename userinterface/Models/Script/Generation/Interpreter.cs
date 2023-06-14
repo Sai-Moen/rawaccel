@@ -122,9 +122,7 @@ namespace userinterface.Models.Script.Generation
         public double Calculate(double x)
         {
             X = x;
-
             Exec(MainProgram, MainStack);
-            Debug.Assert(MainStack.Count == 0);
 
             double y = Y;
             Restore();
@@ -169,8 +167,7 @@ namespace userinterface.Models.Script.Generation
             for (int i = 0; i < program.Instructions.Count; i++)
             {
                 Instruction instruction = program.Instructions[i];
-                InstructionType type = (InstructionType)instruction[0];
-                switch (type)
+                switch (instruction.Type)
                 {
                     case InstructionType.Start:
                         break;
@@ -180,6 +177,7 @@ namespace userinterface.Models.Script.Generation
                             InterpreterError("Unexpected program end!");
                         }
 
+                        Debug.Assert(stack.Count == 0);
                         return;
                     case InstructionType.Load:
                         MemoryAddress loadAddress = instruction;
@@ -218,59 +216,137 @@ namespace userinterface.Models.Script.Generation
                         break;
                     case InstructionType.Jz:
                         CodeAddress jzAddress = instruction;
-                        if (stack.Pop() == 0)
+                        if (!stack.Pop())
                         {
                             i = jzAddress;
                         }
 
                         break;
                     case InstructionType.LoadE:
+                        stack.Push(Math.E);
+                        break;
                     case InstructionType.LoadPi:
+                        stack.Push(Math.PI);
+                        break;
                     case InstructionType.LoadTau:
+                        stack.Push(Math.Tau);
+                        break;
                     case InstructionType.LoadZero:
-                        stack.Push(Lookup(type, 0, 0));
+                        stack.Push(Number.Zero);
                         break;
                     case InstructionType.Add:
+                        stack.Push(Op2((x, y) => x + y, stack.Pop(), stack.Pop()));
+                        break;
                     case InstructionType.Sub:
+                        stack.Push(Op2((x, y) => x - y, stack.Pop(), stack.Pop()));
+                        break;
                     case InstructionType.Mul:
+                        stack.Push(Op2((x, y) => x * y, stack.Pop(), stack.Pop()));
+                        break;
                     case InstructionType.Div:
+                        stack.Push(Op2((x, y) => x / y, stack.Pop(), stack.Pop()));
+                        break;
                     case InstructionType.Mod:
+                        stack.Push(Op2((x, y) => x % y, stack.Pop(), stack.Pop()));
+                        break;
                     case InstructionType.Exp:
-                    case InstructionType.Or:
-                    case InstructionType.And:
-                    case InstructionType.Lt:
-                    case InstructionType.Gt:
-                    case InstructionType.Le:
-                    case InstructionType.Ge:
-                    case InstructionType.Eq:
-                    case InstructionType.Ne:
-                        stack.Push(Lookup(type, stack.Pop(), stack.Pop()));
+                        stack.Push(Op2((x, y) => Math.Pow(x, y), stack.Pop(), stack.Pop()));
                         break;
                     case InstructionType.ExpE: // implicit first argument
+                        stack.Push(Math.Exp(stack.Pop()));
+                        break;
+                    case InstructionType.Or:
+                        stack.Push(Op2((x, y) => x | y, stack.Pop(), stack.Pop()));
+                        break;
+                    case InstructionType.And:
+                        stack.Push(Op2((x, y) => x & y, stack.Pop(), stack.Pop()));
+                        break;
+                    case InstructionType.Lt:
+                        stack.Push(Op2((x, y) => x < y, stack.Pop(), stack.Pop()));
+                        break;
+                    case InstructionType.Gt:
+                        stack.Push(Op2((x, y) => x > y, stack.Pop(), stack.Pop()));
+                        break;
+                    case InstructionType.Le:
+                        stack.Push(Op2((x, y) => x <= y, stack.Pop(), stack.Pop()));
+                        break;
+                    case InstructionType.Ge:
+                        stack.Push(Op2((x, y) => x >= y, stack.Pop(), stack.Pop()));
+                        break;
+                    case InstructionType.Eq:
+                        stack.Push(Op2((x, y) => x == y, stack.Pop(), stack.Pop()));
+                        break;
+                    case InstructionType.Ne:
+                        stack.Push(Op2((x, y) => x != y, stack.Pop(), stack.Pop()));
+                        break;
                     case InstructionType.Not: // unary
+                        stack.Push(!stack.Pop());
+                        break;
                     case InstructionType.Abs:
+                        stack.Push(Math.Abs(stack.Pop()));
+                        break;
                     case InstructionType.Sqrt:
+                        stack.Push(Math.Sqrt(stack.Pop()));
+                        break;
                     case InstructionType.Cbrt:
+                        stack.Push(Math.Cbrt(stack.Pop()));
+                        break;
                     case InstructionType.Round:
+                        stack.Push(Math.Round(stack.Pop()));
+                        break;
                     case InstructionType.Trunc:
+                        stack.Push(Math.Truncate(stack.Pop()));
+                        break;
                     case InstructionType.Ceil:
+                        stack.Push(Math.Ceiling(stack.Pop()));
+                        break;
                     case InstructionType.Floor:
+                        stack.Push(Math.Floor(stack.Pop()));
+                        break;
                     case InstructionType.Log:
+                        stack.Push(Math.Log(stack.Pop()));
+                        break;
                     case InstructionType.Log2:
+                        stack.Push(Math.Log2(stack.Pop()));
+                        break;
                     case InstructionType.Log10:
+                        stack.Push(Math.Log10(stack.Pop()));
+                        break;
                     case InstructionType.Sin:
+                        stack.Push(Math.Sin(stack.Pop()));
+                        break;
                     case InstructionType.Sinh:
+                        stack.Push(Math.Sinh(stack.Pop()));
+                        break;
                     case InstructionType.Asin:
+                        stack.Push(Math.Asin(stack.Pop()));
+                        break;
                     case InstructionType.Asinh:
+                        stack.Push(Math.Asinh(stack.Pop()));
+                        break;
                     case InstructionType.Cos:
+                        stack.Push(Math.Cos(stack.Pop()));
+                        break;
                     case InstructionType.Cosh:
+                        stack.Push(Math.Cosh(stack.Pop()));
+                        break;
                     case InstructionType.Acos:
+                        stack.Push(Math.Acos(stack.Pop()));
+                        break;
                     case InstructionType.Acosh:
+                        stack.Push(Math.Acosh(stack.Pop()));
+                        break;
                     case InstructionType.Tan:
+                        stack.Push(Math.Tan(stack.Pop()));
+                        break;
                     case InstructionType.Tanh:
+                        stack.Push(Math.Tanh(stack.Pop()));
+                        break;
                     case InstructionType.Atan:
+                        stack.Push(Math.Atan(stack.Pop()));
+                        break;
                     case InstructionType.Atanh:
-                        stack.Push(Lookup(type, 0, stack.Pop()));
+                        stack.Push(Math.Atanh(stack.Pop()));
                         break;
                     case InstructionType.Count:
                     default:
@@ -280,60 +356,10 @@ namespace userinterface.Models.Script.Generation
             }
         }
 
-        private static Number Lookup(InstructionType type, Number y, Number x)
+        private static Number Op2(Func<Number, Number, Number> func, Number right, Number left)
         {
-            // Arguments are reversed because of stack pop order,
-            // In postfix notation, rhs comes before lhs on the stack.
-            return type switch
-            {
-                InstructionType.LoadE       => Math.E,
-                InstructionType.LoadPi      => Math.PI,
-                InstructionType.LoadTau     => Math.Tau,
-                InstructionType.LoadZero    => 0,
-
-                InstructionType.Add         => x + y,
-                InstructionType.Sub         => x - y,
-                InstructionType.Mul         => x * y,
-                InstructionType.Div         => x / y,
-                InstructionType.Mod         => x % y,
-                InstructionType.Exp         => Math.Pow(x, y),
-                InstructionType.ExpE        => Math.Exp(x),
-
-                InstructionType.Or          => x | y,
-                InstructionType.And         => x & y,
-                InstructionType.Lt          => x < y,
-                InstructionType.Gt          => x > y,
-                InstructionType.Le          => x <= y,
-                InstructionType.Ge          => x >= y,
-                InstructionType.Eq          => x == y,
-                InstructionType.Ne          => x != y,
-                InstructionType.Not         => !x,
-
-                InstructionType.Abs         => Math.Abs(x),
-                InstructionType.Sqrt        => Math.Sqrt(x),
-                InstructionType.Cbrt        => Math.Cbrt(x),
-                InstructionType.Round       => Math.Round(x),
-                InstructionType.Trunc       => Math.Truncate(x),
-                InstructionType.Ceil        => Math.Ceiling(x),
-                InstructionType.Floor       => Math.Floor(x),
-                InstructionType.Log         => Math.Log(x),
-                InstructionType.Log2        => Math.Log2(x),
-                InstructionType.Log10       => Math.Log10(x),
-                InstructionType.Sin         => Math.Sin(x),
-                InstructionType.Sinh        => Math.Sinh(x),
-                InstructionType.Asin        => Math.Asin(x),
-                InstructionType.Asinh       => Math.Asinh(x),
-                InstructionType.Cos         => Math.Cos(x),
-                InstructionType.Cosh        => Math.Cosh(x),
-                InstructionType.Acos        => Math.Acos(x),
-                InstructionType.Acosh       => Math.Acosh(x),
-                InstructionType.Tan         => Math.Tan(x),
-                InstructionType.Tanh        => Math.Tanh(x),
-                InstructionType.Atan        => Math.Atan(x),
-                InstructionType.Atanh       => Math.Atanh(x),
-
-                _ => throw new InterpreterException("Not a function!"),
-            };
+            // Reversed method args because of stack unwinding in reverse ^^
+            return func(left, right);
         }
 
         private void Restore()

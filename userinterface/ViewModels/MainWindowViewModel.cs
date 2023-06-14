@@ -10,12 +10,11 @@ namespace userinterface.ViewModels
     {
         public MainWindowViewModel()
         {
-#if DEBUG
             // Only for debugging RawAccelScript!
-            Script script = new(Models.Script.Interaction.ScriptInterfaceType.Debug);
+            Script script = new(Models.Script.Interaction.ScriptInterfaceType.Release);
             script.LoadScript(Script.DebugPath);
 
-            const int cap = 0x10000;
+            const int cap = 0x100;
             double[] y = new double[cap];
 
             Stopwatch sw = Stopwatch.StartNew();
@@ -25,10 +24,16 @@ namespace userinterface.ViewModels
             }
             sw.Stop();
 
+            StringBuilder sb = new(cap);
+            for (int i = 0; i < cap; i++)
+            {
+                sb.AppendLine(y[i].ToString());
+            }
+            script.UI.HandleMessage(sb.ToString());
             script.UI.HandleMessage($"{sw.Elapsed.TotalMilliseconds} ms");
 
             Environment.Exit(0);
-#else
+#if false
             Profiles = new ProfilesViewModel();
             MouseListen = new MouseListenViewModel();
             MouseWindow = new MouseWindow(this);
