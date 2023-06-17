@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 
 namespace userinterface.Models.Script.Generation
@@ -559,28 +558,11 @@ namespace userinterface.Models.Script.Generation
         }
     }
 
-    public class ParameterPairs : IEnumerable<ParameterPairs.ParameterNameValue?>
+    public readonly record struct ParameterNameValue(string Name, double Value);
+
+    public class ParameterPairs : List<ParameterNameValue>, IEnumerable<ParameterNameValue>
     {
-        public readonly record struct ParameterNameValue(string Name, double Value);
-
-        private readonly ParameterNameValue?[] Parameters =
-            new ParameterNameValue?[Parsing.MAX_PARAMETERS];
-
-        public ParameterNameValue? this[int index]
-        {
-            get { return Parameters[index]; }
-            set { Parameters[index] = value; }
-        }
-
-        public IEnumerator<ParameterNameValue?> GetEnumerator()
-        {
-            return ((IEnumerable<ParameterNameValue?>)Parameters).GetEnumerator();
-        }
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return Parameters.GetEnumerator();
-        }
+        public ParameterPairs() : base(Parsing.MAX_PARAMETERS) { }
     }
 
     public class MemoryMap : Dictionary<string, MemoryAddress>, IDictionary<string, MemoryAddress>

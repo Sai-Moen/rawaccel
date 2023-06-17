@@ -60,7 +60,7 @@ namespace userinterface.Models.Script.Generation
                 double value = parameter.Value ??
                     throw new InterpreterException(parameter.Token.Line, "Parameter Value not set!");
 
-                Defaults[i] = new(name, value);
+                Defaults.Add(new(name, value));
             }
 
             Startup = new Program[variables.Count];
@@ -133,14 +133,9 @@ namespace userinterface.Models.Script.Generation
 
         private void Init()
         {
-            foreach (ParameterPairs.ParameterNameValue? pair in Settings)
+            foreach (ParameterNameValue pair in Settings)
             {
-                if (pair.HasValue)
-                {
-                    ParameterPairs.ParameterNameValue value = pair.Value;
-                    
-                    Stable[Addresses[value.Name]] = value.Value;
-                }
+                Stable[Addresses[pair.Name]] = pair.Value;
             }
 
             // Load Parameters to Volatile

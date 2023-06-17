@@ -1,8 +1,5 @@
 using System;
-using System.Diagnostics;
-using System.Text;
 using userinterface.Models.Mouse;
-using userinterface.Models.Script;
 
 namespace userinterface.ViewModels
 {
@@ -10,34 +7,10 @@ namespace userinterface.ViewModels
     {
         public MainWindowViewModel()
         {
-            // Only for debugging RawAccelScript!
-            Script script = new(Models.Script.Interaction.ScriptInterfaceType.Release);
-            script.LoadScript(Script.DebugPath);
-
-            const int cap = 0x100;
-            double[] y = new double[cap];
-
-            Stopwatch sw = Stopwatch.StartNew();
-            for (int i = 0; i < cap; i++)
-            {
-                y[i] = script.Interpreter.Calculate(i);
-            }
-            sw.Stop();
-
-            StringBuilder sb = new(cap);
-            for (int i = 0; i < cap; i++)
-            {
-                sb.AppendLine(y[i].ToString());
-            }
-            script.UI.HandleMessage(sb.ToString());
-            script.UI.HandleMessage($"{sw.Elapsed.TotalMilliseconds} ms");
-
-            Environment.Exit(0);
-#if false
             Profiles = new ProfilesViewModel();
             MouseListen = new MouseListenViewModel();
             MouseWindow = new MouseWindow(this);
-#endif
+            Script = new ScriptViewModel();
         }
 
         public ProfilesViewModel Profiles { get; }
@@ -45,6 +18,8 @@ namespace userinterface.ViewModels
         public MouseListenViewModel MouseListen { get; }
 
         public MouseWindow MouseWindow { get; }
+
+        public ScriptViewModel Script { get; }
 
         public void SetLastMouseMove(float x, float y)
         {
