@@ -135,7 +135,7 @@ namespace userinterface.Models.Script.Generation
     }
 
     /// <summary>
-    /// Represents a number or pseudo-boolean in the script.
+    /// Represents a number or boolean in the script.
     /// </summary>
     /// <param name="Value">Value of the Number.</param>
     public readonly record struct Number(double Value)
@@ -153,6 +153,11 @@ namespace userinterface.Models.Script.Generation
         public static implicit operator Number(double value)
         {
             return new(value);
+        }
+
+        public static implicit operator Number(Token token)
+        {
+            return Parse(token.Line, token.Base.Symbol);
         }
 
         public static implicit operator Number(Instruction value)
@@ -201,6 +206,16 @@ namespace userinterface.Models.Script.Generation
 
             throw new InterpreterException("Cannot parse number!");
         }
+
+        public static Number Parse(uint line, string s)
+        {
+            if (double.TryParse(s, out double result))
+            {
+                return result;
+            }
+
+            throw new InterpreterException(line, "Cannot parse number!");
+        }
     }
 
     /// <summary>
@@ -208,6 +223,8 @@ namespace userinterface.Models.Script.Generation
     /// </summary>
     public readonly record struct Instruction(InstructionType Type, byte[] ByteCode)
     {
+        public const int Offset = 0;
+
         public static implicit operator Instruction(InstructionType type)
         {
             return new(type, new byte[type.SizeOf()]);
@@ -220,12 +237,12 @@ namespace userinterface.Models.Script.Generation
 
         public void CopyFrom(byte[] bytes)
         {
-            bytes.CopyTo(ByteCode, 0);
+            bytes.CopyTo(ByteCode, Offset);
         }
 
         public void CopyTo(ref byte[] bytes)
         {
-            Span<byte> span = new(ByteCode, 0, ByteCode.Length);
+            Span<byte> span = new(ByteCode, Offset, ByteCode.Length);
             span.CopyTo(bytes);
         }
     }
@@ -287,7 +304,8 @@ namespace userinterface.Models.Script.Generation
                         break;
                     case TokenType.Parameter:
                     case TokenType.Variable:
-                        Instructions.AddInstruction(InstructionType.Load, map[current.Symbol]);
+                        MemoryAddress mAddress = map[current.Symbol];
+                        Instructions.AddInstruction(InstructionType.Load, mAddress);
                         break;
                     case TokenType.Input:
                         Instructions.AddInstruction(InstructionType.LoadIn);
@@ -313,8 +331,8 @@ namespace userinterface.Models.Script.Generation
                                 Instructions.AddInstruction(InstructionType.Jmp, ctx.Condition);
                             }
 
-                            CodeAddress address = Instructions.Count + stack.Count;
-                            Instructions.InsertInstruction(ctx.Insert, InstructionType.Jz, address);
+                            CodeAddress cAddress = Instructions.Count + stack.Count;
+                            Instructions.InsertInstruction(ctx.Insert, InstructionType.Jz, cAddress);
                             break;
                         }
 
@@ -544,7 +562,7 @@ namespace userinterface.Models.Script.Generation
 
     public class MemoryHeap
     {
-        private readonly Number[] Mem = new Number[Parsing.CAPACITY];
+        private readonly Number[] Mem = new Number[Constants.CAPACITY];
 
         public double this[MemoryAddress address]
         {
@@ -556,13 +574,6 @@ namespace userinterface.Models.Script.Generation
         {
             other.Mem.CopyTo(Mem, 0);
         }
-    }
-
-    public readonly record struct ParameterNameValue(string Name, double Value);
-
-    public class ParameterPairs : List<ParameterNameValue>, IEnumerable<ParameterNameValue>
-    {
-        public ParameterPairs() : base(Parsing.MAX_PARAMETERS) { }
     }
 
     public class MemoryMap : Dictionary<string, MemoryAddress>, IDictionary<string, MemoryAddress>

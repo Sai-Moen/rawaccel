@@ -1,32 +1,16 @@
 ﻿using userinterface.Models.Script;
-using userinterface.Models.Script.Generation;
 
 namespace userinterface.ViewModels
 {
     public class ScriptViewModel : ViewModelBase
     {
-        public const int LUT_MAX = 0x100;
+        public const int LUT_MAX = 0x100; // Replace with global constant when available
 
         private readonly Script Script = new(Models.Script.Interaction.ScriptInterfaceType.Release);
 
         public ScriptViewModel(string filePath = Script.DebugPath)
         {
             Script.LoadScript(filePath);
-        }
-
-        public ParameterPairs GetDefaults()
-        {
-            return Script.Interpreter.Defaults;
-        }
-
-        public ParameterPairs GetParameters()
-        {
-            return Script.Interpreter.Settings;
-        }
-
-        public void SetParameters(ParameterPairs parameters)
-        {
-            Script.Interpreter.Settings = parameters;
         }
 
         public double[] GetRange(double end)

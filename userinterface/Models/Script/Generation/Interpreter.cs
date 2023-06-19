@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading.Tasks;
 
@@ -28,7 +27,7 @@ namespace userinterface.Models.Script.Generation
 
         private readonly Program[] Startup;
 
-        private ParameterPairs _settings = new();
+        private Parameters _settings = new();
 
         #endregion Fields
 
@@ -42,44 +41,28 @@ namespace userinterface.Models.Script.Generation
         /// <param name="code">The main code of the calculation block.</param>
         /// <exception cref="InterpreterException">Thrown on execution failure.</exception>
         public Interpreter(
-            List<ParameterAssignment> parameters,
-            List<VariableAssignment> variables,
+            Parameters parameters,
+            Variables variables,
             TokenList code)
         {
-            Debug.Assert(parameters.Count <= Parsing.MAX_PARAMETERS);
+            Debug.Assert(parameters.Count <= Constants.MAX_PARAMETERS);
             for (int i = 0; i < parameters.Count; i++)
             {
                 MemoryAddress address = i;
-
-                ParameterAssignment parameter = parameters[i];
-
-                string name = parameter.Token.Base.Symbol;
-
-                Addresses.Add(name, address);
-
-                double value = parameter.Value ??
-                    throw new InterpreterException(parameter.Token.Line, "Parameter Value not set!");
-
-                Defaults.Add(new(name, value));
+                Addresses.Add(parameters[i].Name, address);
             }
+
+            Defaults = parameters;
 
             Startup = new Program[variables.Count];
 
-            Debug.Assert(variables.Count <= Parsing.MAX_VARIABLES);
+            Debug.Assert(variables.Count <= Constants.MAX_VARIABLES);
             for (int i = 0; i < variables.Count; i++)
             {
-                MemoryAddress address = i + Parsing.MAX_PARAMETERS;
-
+                MemoryAddress address = i + Constants.MAX_PARAMETERS;
                 VariableAssignment variable = variables[i];
-
-                string name = variable.Token.Base.Symbol;
-
-                Addresses.Add(name, address);
-
-                Expression expr = variable.Expr ??
-                    throw new InterpreterException(variable.Token.Line, "Variable Expr not set!");
-
-                Startup[i] = new(expr, Addresses);
+                Addresses.Add(variable.Name, address);
+                Startup[i] = new(variable.Expr, Addresses);
             }
 
             MainProgram = new(code, Addresses);
@@ -94,13 +77,13 @@ namespace userinterface.Models.Script.Generation
         /// <summary>
         /// The parameters and their default values, according to the script.
         /// </summary>
-        public ParameterPairs Defaults { get; } = new();
+        public Parameters Defaults { get; } = new();
 
         /// <summary>
         /// The current values of all parameters.
         /// Setting this property will automatically update the values of all variables.
         /// </summary>
-        public ParameterPairs Settings
+        public Parameters Settings
         {
             get { return _settings; }
             set
@@ -125,32 +108,26 @@ namespace userinterface.Models.Script.Generation
             Exec(MainProgram, MainStack);
 
             double y = Y;
-            Restore();
-
             Y = Number.DefaultY;
+
+            Restore();
             return y;
         }
 
         private void Init()
         {
-            foreach (ParameterNameValue pair in Settings)
+            // Load Parameters to Stable
+            foreach (ParameterAssignment parameter in Settings)
             {
-                Stable[Addresses[pair.Name]] = pair.Value;
+                Stable[Addresses[parameter.Name]] = parameter.Value;
             }
 
             // Load Parameters to Volatile
             Restore();
 
-            /*
-             * The reasons this can be done multithreaded are:
-             *   variable expressions can only read
-             *     numbers, constants and parameters (which are already here),
-             *   variable expressions can only write
-             *     to themselves and not other variables.
-             * This should be checked in the parser, not the interpreter,
-             *   so that's why Exec seems to have access to all instructions at this point,
-             *   but the startup code shouldn't.
-             */
+            // Do startup tasks
+            // If startup tasks modified something other than their own address,
+            // that is a bug in the parser, not here.
             Parallel.ForEach(Startup, (p) => Exec(p, new()));
 
             // Load everything to Stable
@@ -201,7 +178,6 @@ namespace userinterface.Models.Script.Generation
                     case InstructionType.Swap:
                         Number swap1 = stack.Pop();
                         Number swap2 = stack.Pop();
-
                         stack.Push(swap1);
                         stack.Push(swap2);
                         break;

@@ -56,7 +56,7 @@ namespace userinterface.Models.Script.Generation
         {
             Characters = script
                 .ReplaceLineEndings(NewLine.ToString())
-                .Replace(" ", null)
+                .Replace(Tokens.SPACE, null)
                 .Replace("\t", null)
                 .ToCharArray();
 
@@ -88,12 +88,14 @@ namespace userinterface.Models.Script.Generation
 
         private static bool IsAlphabeticCharacter(char c)
         {
-            return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
+            return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') ||
+                CmpCharStr(c, Tokens.UNDER);
         }
 
         private static bool IsNumericCharacter(char c)
         {
-            return (c >= '0' && c <= '9') || CmpCharStr(c, Tokens.FPOINT);
+            return (c >= '0' && c <= '9') ||
+                CmpCharStr(c, Tokens.FPOINT);
         }
 
         #endregion Static Methods
@@ -216,7 +218,7 @@ namespace userinterface.Models.Script.Generation
                 case CharBufferState.Idle: // No buffer, so one character?
                     if (PeekNext(out char c1))
                     {
-                        Debug.Assert(c1 != Tokens.SECOND);
+                        Debug.Assert(!CmpCharStr(c1, Tokens.SECOND));
                     }
 
                     BufferCurrentChar();
@@ -230,7 +232,7 @@ namespace userinterface.Models.Script.Generation
                     goto SpecialCheck;
                 SpecialCheck:
                     BufferCurrentChar();
-                    if (PeekNext(out char c2) && c2 == Tokens.SECOND)
+                    if (PeekNext(out char c2) && CmpCharStr(c2, Tokens.SECOND))
                     {
                         BufferState = CharBufferState.Special;
                     }
@@ -241,7 +243,7 @@ namespace userinterface.Models.Script.Generation
 
                     return true;
                 case CharBufferState.Special:
-                    Debug.Assert(CurrentChar == Tokens.SECOND);
+                    Debug.Assert(CmpCharStr(CurrentChar, Tokens.SECOND));
                     BufferCurrentChar();
                     AddBufferedToken();
                     return true;
@@ -272,7 +274,7 @@ namespace userinterface.Models.Script.Generation
             }
             else
             {
-                token = new(new(TokenType.Identifier, s), CurrentLine);
+                token = new(new(TokenType.Identifier, Tokens.SpaceReplace(s)), CurrentLine);
             }
 
             AddToken(token);

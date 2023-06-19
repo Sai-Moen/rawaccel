@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 
 namespace userinterface.Models.Script.Generation
@@ -11,15 +10,15 @@ namespace userinterface.Models.Script.Generation
     {
         #region Fields
 
-        public List<ParameterAssignment> Parameters { get; } = new(Parsing.MAX_PARAMETERS);
+        public Parameters Parameters { get; } = new();
 
-        public List<VariableAssignment> Variables { get; } = new(Parsing.MAX_VARIABLES);
+        public Variables Variables { get; } = new();
 
         public TokenList TokenCode { get; } = new();
 
-        private readonly List<string> ParameterNames = new(Parsing.MAX_PARAMETERS);
+        private readonly Identifiers ParameterNames = new(Constants.MAX_PARAMETERS);
 
-        private readonly List<string> VariableNames = new(Parsing.MAX_VARIABLES);
+        private readonly Identifiers VariableNames = new(Constants.MAX_VARIABLES);
 
         private readonly TokenQueue TokenBuffer = new();
 
@@ -102,7 +101,7 @@ namespace userinterface.Models.Script.Generation
             }
         }
 
-        private void CoerceAll(in List<string> list, TokenType type)
+        private void CoerceAll(in Identifiers list, TokenType type)
         {
             for (int i = 0; i <= MaxIndex; i++)
             {
@@ -144,10 +143,10 @@ namespace userinterface.Models.Script.Generation
                 token = token with { Base = token.Base with { Type = TokenType.Parameter } };
                 TokenList[idx] = token;
 
-                Debug.Assert(ParameterNames.Count <= Parsing.MAX_PARAMETERS);
-                if (ParameterNames.Count == Parsing.MAX_PARAMETERS)
+                Debug.Assert(ParameterNames.Count <= Constants.MAX_PARAMETERS);
+                if (ParameterNames.Count == Constants.MAX_PARAMETERS)
                 {
-                    ParserError($"Too many parameters! (max {Parsing.MAX_PARAMETERS})");
+                    ParserError($"Too many parameters! (max {Constants.MAX_PARAMETERS})");
                 }
 
                 ParameterNames.Add(token.Base.Symbol);
@@ -182,10 +181,10 @@ namespace userinterface.Models.Script.Generation
                 token = token with { Base = token.Base with { Type = TokenType.Variable } };
                 TokenList[idx] = token;
 
-                Debug.Assert(VariableNames.Count <= Parsing.MAX_VARIABLES);
-                if (VariableNames.Count == Parsing.MAX_VARIABLES)
+                Debug.Assert(VariableNames.Count <= Constants.MAX_VARIABLES);
+                if (VariableNames.Count == Constants.MAX_VARIABLES)
                 {
-                    ParserError($"Too many variables! (max {Parsing.MAX_VARIABLES})");
+                    ParserError($"Too many variables! (max {Constants.MAX_VARIABLES})");
                 }
                 else if (ParameterNames.Contains(token.Base.Symbol))
                 {

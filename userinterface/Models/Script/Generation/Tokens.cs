@@ -76,6 +76,8 @@ namespace userinterface.Models.Script.Generation
 
         // Separators
         // Delimiters
+        public const string SPACE           = " ";
+        public const string UNDER           = "_";
         public const string FPOINT          = ".";
         public const string TERMINATOR      = ";";
         public const string BLOCK           = ":";
@@ -95,7 +97,7 @@ namespace userinterface.Models.Script.Generation
         // Operators
         // Assignment
         public const string ASSIGN  = ":=";
-        public const char SECOND = '=';     // if there is a second character, it should be this!
+        public const string SECOND  = "=";     // if there is a second character, it should be this!
         // Inline Arithmetic
         public const string IADD    = "+=";
         public const string ISUB    = "-=";
@@ -164,83 +166,87 @@ namespace userinterface.Models.Script.Generation
 
         private static readonly BaseToken[] ReservedArray =
         {
-            new BaseToken(TokenType.Input, INPUT),
-            new BaseToken(TokenType.Output, OUTPUT),
+            // Special untyped 'characters' that show up sometimes
+            new(TokenType.Undefined, SECOND),
+            new(TokenType.Undefined, UNDER),
 
-            new BaseToken(TokenType.Constant, ZERO),
-            new BaseToken(TokenType.Constant, CONST_E),
-            new BaseToken(TokenType.Constant, CONST_PI),
-            new BaseToken(TokenType.Constant, CONST_TAU),
+            new(TokenType.Input, INPUT),
+            new(TokenType.Output, OUTPUT),
 
-            new BaseToken(TokenType.Branch, BRANCH_IF),
-            new BaseToken(TokenType.Branch, BRANCH_WHILE),
-            new BaseToken(TokenType.BranchEnd, BRANCH_END),
+            new(TokenType.Constant, ZERO),
+            new(TokenType.Constant, CONST_E),
+            new(TokenType.Constant, CONST_PI),
+            new(TokenType.Constant, CONST_TAU),
 
-            new BaseToken(TokenType.Number, FPOINT),
-            new BaseToken(TokenType.Terminator, TERMINATOR),
-            new BaseToken(TokenType.Block, BLOCK),
+            new(TokenType.Branch, BRANCH_IF),
+            new(TokenType.Branch, BRANCH_WHILE),
+            new(TokenType.BranchEnd, BRANCH_END),
 
-            new BaseToken(TokenType.Open, OPEN),
-            new BaseToken(TokenType.Close, CLOSE),
+            new(TokenType.Number, FPOINT),
+            new(TokenType.Terminator, TERMINATOR),
+            new(TokenType.Block, BLOCK),
 
-            new BaseToken(TokenType.ParameterStart, PARAMS_START),
-            new BaseToken(TokenType.ParameterEnd, PARAMS_END),
+            new(TokenType.Open, OPEN),
+            new(TokenType.Close, CLOSE),
 
-            new BaseToken(TokenType.CalculationStart, CALC_START),
-            new BaseToken(TokenType.CalculationEnd, CALC_END),
+            new(TokenType.ParameterStart, PARAMS_START),
+            new(TokenType.ParameterEnd, PARAMS_END),
 
-            new BaseToken(TokenType.Assignment, ASSIGN),
-            new BaseToken(TokenType.Assignment, IADD),
-            new BaseToken(TokenType.Assignment, ISUB),
-            new BaseToken(TokenType.Assignment, IMUL),
-            new BaseToken(TokenType.Assignment, IDIV),
-            new BaseToken(TokenType.Assignment, IMOD),
-            new BaseToken(TokenType.Assignment, IEXP),
+            new(TokenType.CalculationStart, CALC_START),
+            new(TokenType.CalculationEnd, CALC_END),
 
-            new BaseToken(TokenType.Arithmetic, ADD),
-            new BaseToken(TokenType.Arithmetic, SUB),
-            new BaseToken(TokenType.Arithmetic, MUL),
-            new BaseToken(TokenType.Arithmetic, DIV),
-            new BaseToken(TokenType.Arithmetic, MOD),
-            new BaseToken(TokenType.Arithmetic, EXP),
+            new(TokenType.Assignment, ASSIGN),
+            new(TokenType.Assignment, IADD),
+            new(TokenType.Assignment, ISUB),
+            new(TokenType.Assignment, IMUL),
+            new(TokenType.Assignment, IDIV),
+            new(TokenType.Assignment, IMOD),
+            new(TokenType.Assignment, IEXP),
 
-            new BaseToken(TokenType.Comparison, NOT),
-            new BaseToken(TokenType.Comparison, LT),
-            new BaseToken(TokenType.Comparison, GT),
-            new BaseToken(TokenType.Comparison, LE),
-            new BaseToken(TokenType.Comparison, GE),
-            new BaseToken(TokenType.Comparison, EQ),
-            new BaseToken(TokenType.Comparison, NE),
-            new BaseToken(TokenType.Comparison, AND),
-            new BaseToken(TokenType.Comparison, OR),
+            new(TokenType.Arithmetic, ADD),
+            new(TokenType.Arithmetic, SUB),
+            new(TokenType.Arithmetic, MUL),
+            new(TokenType.Arithmetic, DIV),
+            new(TokenType.Arithmetic, MOD),
+            new(TokenType.Arithmetic, EXP),
 
-            new BaseToken(TokenType.Function, ABS),
-            new BaseToken(TokenType.Function, SQRT),
-            new BaseToken(TokenType.Function, CBRT),
+            new(TokenType.Comparison, NOT),
+            new(TokenType.Comparison, LT),
+            new(TokenType.Comparison, GT),
+            new(TokenType.Comparison, LE),
+            new(TokenType.Comparison, GE),
+            new(TokenType.Comparison, EQ),
+            new(TokenType.Comparison, NE),
+            new(TokenType.Comparison, AND),
+            new(TokenType.Comparison, OR),
 
-            new BaseToken(TokenType.Function, ROUND),
-            new BaseToken(TokenType.Function, TRUNC),
-            new BaseToken(TokenType.Function, CEIL),
-            new BaseToken(TokenType.Function, FLOOR),
+            new(TokenType.Function, ABS),
+            new(TokenType.Function, SQRT),
+            new(TokenType.Function, CBRT),
 
-            new BaseToken(TokenType.Function, LOG),
-            new BaseToken(TokenType.Function, LOG2),
-            new BaseToken(TokenType.Function, LOG10),
+            new(TokenType.Function, ROUND),
+            new(TokenType.Function, TRUNC),
+            new(TokenType.Function, CEIL),
+            new(TokenType.Function, FLOOR),
 
-            new BaseToken(TokenType.Function, SIN),
-            new BaseToken(TokenType.Function, SINH),
-            new BaseToken(TokenType.Function, ASIN),
-            new BaseToken(TokenType.Function, ASINH),
+            new(TokenType.Function, LOG),
+            new(TokenType.Function, LOG2),
+            new(TokenType.Function, LOG10),
 
-            new BaseToken(TokenType.Function, COS),
-            new BaseToken(TokenType.Function, COSH),
-            new BaseToken(TokenType.Function, ACOS),
-            new BaseToken(TokenType.Function, ACOSH),
+            new(TokenType.Function, SIN),
+            new(TokenType.Function, SINH),
+            new(TokenType.Function, ASIN),
+            new(TokenType.Function, ASINH),
 
-            new BaseToken(TokenType.Function, TAN),
-            new BaseToken(TokenType.Function, TANH),
-            new BaseToken(TokenType.Function, ATAN),
-            new BaseToken(TokenType.Function, ATANH),
+            new(TokenType.Function, COS),
+            new(TokenType.Function, COSH),
+            new(TokenType.Function, ACOS),
+            new(TokenType.Function, ACOSH),
+
+            new(TokenType.Function, TAN),
+            new(TokenType.Function, TANH),
+            new(TokenType.Function, ATAN),
+            new(TokenType.Function, ATANH),
         };
 
         #endregion Fields
@@ -249,21 +255,14 @@ namespace userinterface.Models.Script.Generation
 
         static Tokens()
         {
-            // Adds all reserved tokens,
-            // including the optional second operator character (hence + 1)
-            int totalLength = ReservedArray.Length + 1;
+            ReservedMap = new(ReservedArray.Length);
 
-            ReservedMap = new TokenMap(totalLength);
-
-            foreach(BaseToken baseToken in ReservedArray)
+            foreach (BaseToken baseToken in ReservedArray)
             {
-                ReservedMap.Add(baseToken.Symbol, new Token(baseToken));
+                ReservedMap.Add(baseToken.Symbol, new(baseToken));
             }
 
-            string second = SECOND.ToString();
-            ReservedMap.Add(second, new(new(TokenType.Undefined, second)));
-
-            Debug.Assert(ReservedMap.Count == totalLength);
+            Debug.Assert(ReservedMap.Count == ReservedArray.Length);
         }
 
         #endregion Constructors
@@ -278,6 +277,11 @@ namespace userinterface.Models.Script.Generation
         #endregion Properties
 
         #region Methods
+
+        public static string SpaceReplace(string s)
+        {
+            return s.Replace(UNDER, SPACE);
+        }
 
         public static int Precedence(string s)
         {
@@ -319,8 +323,6 @@ namespace userinterface.Models.Script.Generation
 
     public class TokenMap : Dictionary<string, Token>, IDictionary<string, Token>
     {
-        public TokenMap() : base() { }
-
         public TokenMap(int capacity) : base(capacity) { }
     }
 

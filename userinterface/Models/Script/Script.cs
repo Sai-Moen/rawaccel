@@ -38,6 +38,36 @@ namespace userinterface.Models.Script
             Tokenizer tokenizer = new(script);
             Parser parser = new(tokenizer.TokenList);
             Interpreter = new(parser.Parameters, parser.Variables, parser.TokenCode);
+
+#if DEBUG
+            Test(Interpreter);
+#endif
+        }
+
+        public Parameters GetDefaults()
+        {
+            return Interpreter.Defaults;
+        }
+
+        public Parameters GetParameters()
+        {
+            return Interpreter.Settings;
+        }
+
+        public void SetParameters(Parameters parameters)
+        {
+            Interpreter.Settings = parameters;
+        }
+
+        private static void Test(Interpreter interpreter)
+        {
+            const int cap = 0x1000;
+
+            double[] ys = new double[cap];
+            for (int i = 0; i < cap; i++)
+            {
+                ys[i] = interpreter.Calculate(i);
+            }
         }
     }
 

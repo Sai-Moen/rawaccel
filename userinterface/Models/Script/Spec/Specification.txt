@@ -40,7 +40,6 @@ Basic File Structure:
 
 Scripting language specification:
 	The input variable will be x, and the output variable will be whatever is in y (1 by default).
-	By reserving those tokens and using ref double it should be possible to go through iterations to make a LUT.
 	Using control flow cleverly should make it so that multiple return, or even return at all, is not necessary,
 	so there is not a return keyword.
 
@@ -117,7 +116,6 @@ Scripting language specification:
 		cos cosh acos acosh
 		tan tanh atan atanh
 
-		pow	"indirectly, with the ^ operator"
+		pow, exp	"indirectly, with the ^ operator"
 
-		These are all C# System.Math-supported functions with a very similar signature,
-		namely "Func<double, double>".
+		These are all C# System.Math-supported functions with only one argument.
