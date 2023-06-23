@@ -278,9 +278,19 @@ namespace userinterface.Models.Script.Generation
 
         #region Methods
 
+        public static bool IsLoop(this Token token)
+        {
+            return token.Base.Symbol == BRANCH_WHILE;
+        }
+
         public static string SpaceReplace(string s)
         {
             return s.Replace(UNDER, SPACE);
+        }
+
+        public static bool LeftAssociative(string s)
+        {
+            return s != EXP;
         }
 
         public static int Precedence(string s)
@@ -311,11 +321,6 @@ namespace userinterface.Models.Script.Generation
 
                 _ => throw new ScriptException("Unexpected Precedence call!"),
             };
-        }
-
-        public static bool LeftAssociative(string s)
-        {
-            return s != EXP;
         }
 
         #endregion Methods

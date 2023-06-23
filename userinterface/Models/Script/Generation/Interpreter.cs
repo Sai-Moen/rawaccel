@@ -106,11 +106,10 @@ namespace userinterface.Models.Script.Generation
         {
             X = x;
             Exec(MainProgram, MainStack);
+            Restore();
 
             double y = Y;
             Y = Number.DefaultY;
-
-            Restore();
             return y;
         }
 
@@ -152,11 +151,11 @@ namespace userinterface.Models.Script.Generation
                         Debug.Assert(stack.Count == 0);
                         return;
                     case InstructionType.Load:
-                        MemoryAddress loadAddress = instruction;
+                        MemoryAddress loadAddress = (MemoryAddress)instruction;
                         stack.Push(Volatile[loadAddress]);
                         break;
                     case InstructionType.Store:
-                        MemoryAddress storeAddress = instruction;
+                        MemoryAddress storeAddress = (MemoryAddress)instruction;
                         Volatile[storeAddress] = stack.Pop();
                         break;
                     case InstructionType.LoadIn:
@@ -172,7 +171,7 @@ namespace userinterface.Models.Script.Generation
                         Y = stack.Pop();
                         break;
                     case InstructionType.LoadNumber:
-                        Number number = instruction;
+                        Number number = (Number)instruction;
                         stack.Push(number);
                         break;
                     case InstructionType.Swap:
@@ -182,11 +181,11 @@ namespace userinterface.Models.Script.Generation
                         stack.Push(swap2);
                         break;
                     case InstructionType.Jmp:
-                        CodeAddress jmpAddress = instruction;
+                        CodeAddress jmpAddress = (CodeAddress)instruction;
                         i = jmpAddress;
                         break;
                     case InstructionType.Jz:
-                        CodeAddress jzAddress = instruction;
+                        CodeAddress jzAddress = (CodeAddress)instruction;
                         if (!stack.Pop())
                         {
                             i = jzAddress;

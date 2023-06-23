@@ -47,10 +47,10 @@ namespace userinterface.Models.Script.Generation
     /// <summary>
     /// Represents the context needed by a BranchEnd Token to determine the emitted instruction(s).
     /// </summary>
-    /// <param name="Index">The index of the Token where the Branch occurred.</param>
+    /// <param name="IsLoop">Whether or not this context refers to a looping body.</param>
     /// <param name="Condition">The instruction address where the Branch condition starts.</param>
     /// <param name="Insert">The instruction address where a conditional jump should be inserted.</param>
-    public readonly record struct BranchContext(int Index, CodeAddress Condition, CodeAddress Insert);
+    public readonly record struct BranchContext(bool IsLoop, CodeAddress Condition, CodeAddress Insert);
 
     /// <summary>
     /// Represents an address in the Interpreter's Heap Memory.
@@ -68,15 +68,17 @@ namespace userinterface.Models.Script.Generation
 
         public static implicit operator MemoryAddress(int pointer)
         {
-            if (pointer > MaxValue)
+            byte address = (byte)pointer;
+
+            if (address > MaxValue)
             {
                 throw new InterpreterException("Memory address overflow!");
             }
 
-            return (byte)pointer;
+            return address;
         }
 
-        public static implicit operator MemoryAddress(Instruction pointer)
+        public static explicit operator MemoryAddress(Instruction pointer)
         {
             return pointer.ByteCode[0];
         }
@@ -86,7 +88,7 @@ namespace userinterface.Models.Script.Generation
             return address.Address;
         }
 
-        public static implicit operator byte[](MemoryAddress address)
+        public static explicit operator byte[](MemoryAddress address)
         {
             return new byte[1]{ address.Address };
         }
@@ -108,15 +110,17 @@ namespace userinterface.Models.Script.Generation
 
         public static implicit operator CodeAddress(int pointer)
         {
-            if (pointer > MaxValue)
+            ushort address = (ushort)pointer;
+
+            if (address > MaxValue)
             {
                 throw new InterpreterException("Code address overflow!");
             }
 
-            return (ushort)pointer;
+            return address;
         }
 
-        public static implicit operator CodeAddress(Instruction pointer)
+        public static explicit operator CodeAddress(Instruction pointer)
         {
             byte[] bytes = new byte[Size];
             pointer.CopyTo(ref bytes);
@@ -128,7 +132,7 @@ namespace userinterface.Models.Script.Generation
             return address.Address;
         }
 
-        public static implicit operator byte[](CodeAddress address)
+        public static explicit operator byte[](CodeAddress address)
         {
             return BitConverter.GetBytes(address.Address);
         }
@@ -155,12 +159,12 @@ namespace userinterface.Models.Script.Generation
             return new(value);
         }
 
-        public static implicit operator Number(Token token)
+        public static explicit operator Number(Token token)
         {
             return Parse(token.Line, token.Base.Symbol);
         }
 
-        public static implicit operator Number(Instruction value)
+        public static explicit operator Number(Instruction value)
         {
             byte[] bytes = new byte[Size];
             value.CopyTo(ref bytes);
@@ -177,7 +181,7 @@ namespace userinterface.Models.Script.Generation
             return number.Value;
         }
 
-        public static implicit operator byte[](Number number)
+        public static explicit operator byte[](Number number)
         {
             return BitConverter.GetBytes(number.Value);
         }
@@ -279,33 +283,32 @@ namespace userinterface.Models.Script.Generation
         /// <summary>
         /// Initializes the InstructionList so that the Interpreter can execute it in order.
         /// </summary>
-        /// <param name="expression">Contains a parsed TokenList that can be emitted to bytecode.</param>
+        /// <param name="code">Contains a parsed TokenList that can be emitted to bytecode.</param>
         /// <param name="map">Maps identifiers to memory addresses.</param>
         /// <exception cref="InterpreterException">Thrown when emitting fails.</exception>
-        public Program(Expression expression, MemoryMap map)
+        public Program(Expression code, MemoryMap map)
         {
-            Instructions = new(expression.Tokens.Length);
-
+            Instructions = new(code.Tokens.Length);
             Instructions.AddInstruction(InstructionType.Start);
 
             Stack<BranchContext> stack = new();
 
             int lastExprStart = 0;
 
-            for (int i = 0; i < expression.Tokens.Length; i++)
+            for (int i = 0; i < code.Tokens.Length; i++)
             {
-                Token token = expression.Tokens[i];
-                BaseToken current = token.Base;
-                switch (current.Type)
+                Token token = code.Tokens[i];
+                string symbol = token.Base.Symbol;
+                switch (token.Base.Type)
                 {
                     case TokenType.Number:
-                        Number number = Number.Parse(current.Symbol);
-                        Instructions.AddInstruction(InstructionType.LoadNumber, number);
+                        Number number = Number.Parse(symbol);
+                        Instructions.AddInstruction(InstructionType.LoadNumber, (byte[])number);
                         break;
                     case TokenType.Parameter:
                     case TokenType.Variable:
-                        MemoryAddress mAddress = map[current.Symbol];
-                        Instructions.AddInstruction(InstructionType.Load, mAddress);
+                        MemoryAddress mAddress = map[symbol];
+                        Instructions.AddInstruction(InstructionType.Load, (byte[])mAddress);
                         break;
                     case TokenType.Input:
                         Instructions.AddInstruction(InstructionType.LoadIn);
@@ -315,62 +318,61 @@ namespace userinterface.Models.Script.Generation
                         break;
                     case TokenType.Constant:
                         Instructions.AddInstruction(
-                            OnConstant(token.Line, current.Symbol));
+                            OnConstant(token.Line, symbol));
                         break;
                     case TokenType.Branch:
-                        BranchContext context = new(i, lastExprStart + stack.Count, Instructions.Count);
+                        BranchContext context = new(token.IsLoop(), lastExprStart + stack.Count, Instructions.Count);
                         stack.Push(context);
                         lastExprStart = Instructions.Count - 1;
                         break;
                     case TokenType.BranchEnd:
                         if (stack.TryPop(out BranchContext ctx))
                         {
-                            Token oldtoken = expression.Tokens[ctx.Index];
-                            if (oldtoken.Base.Symbol == Tokens.BRANCH_WHILE)
+                            if (ctx.IsLoop)
                             {
-                                Instructions.AddInstruction(InstructionType.Jmp, ctx.Condition);
+                                Instructions.AddInstruction(InstructionType.Jmp, (byte[])ctx.Condition);
                             }
 
                             CodeAddress cAddress = Instructions.Count + stack.Count;
-                            Instructions.InsertInstruction(ctx.Insert, InstructionType.Jz, cAddress);
+                            Instructions.InsertInstruction(ctx.Insert, InstructionType.Jz, (byte[])cAddress);
                             break;
                         }
 
                         throw new InterpreterException(token.Line, "Unexpected branch end!");
                     case TokenType.Assignment:
-                        InstructionType type = OnAssignment(token.Line, current.Symbol);
+                        InstructionType type = OnAssignment(token.Line, symbol);
 
                         // MUTATES i, because we don't want to add this token again on the next iteration
-                        Token target = expression.Tokens[++i];
-                        string symbol = target.Base.Symbol;
+                        Token target = code.Tokens[++i];
+                        string aSymbol = target.Base.Symbol;
 
-                        if (symbol == Tokens.INPUT)
+                        if (aSymbol == Tokens.INPUT)
                         {
                             OnAssignment(InstructionType.LoadIn, type, InstructionType.StoreIn,
                                 Array.Empty<byte>());
                         }
-                        else if (symbol == Tokens.OUTPUT)
+                        else if (aSymbol == Tokens.OUTPUT)
                         {
                             OnAssignment(InstructionType.LoadOut, type, InstructionType.StoreOut,
                                 Array.Empty<byte>());
                         }
                         else
                         {
-                            MemoryAddress address = map[symbol];
-                            byte[] pointer = address;
+                            MemoryAddress address = map[aSymbol];
+                            byte[] pointer = (byte[])address;
                             OnAssignment(InstructionType.Load, type, InstructionType.Store, pointer);
                         }
 
                         lastExprStart = Instructions.Count - 1;
                         break;
                     case TokenType.Arithmetic:
-                        OnArithmetic(token.Line, current.Symbol);
+                        OnArithmetic(token.Line, symbol);
                         break;
                     case TokenType.Comparison:
-                        Instructions.AddInstruction(OnComparison(token.Line, current.Symbol));
+                        Instructions.AddInstruction(OnComparison(token.Line, symbol));
                         break;
                     case TokenType.Function:
-                        Instructions.AddInstruction(OnFunction(token.Line, current.Symbol));
+                        Instructions.AddInstruction(OnFunction(token.Line, symbol));
                         break;
                     default:
                         throw new InterpreterException(token.Line, "Cannot emit token!");
@@ -383,7 +385,6 @@ namespace userinterface.Models.Script.Generation
             }
 
             Instructions.AddInstruction(InstructionType.End);
-
             Instructions.TrimExcess();
         }
 

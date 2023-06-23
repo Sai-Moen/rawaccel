@@ -59,15 +59,19 @@ namespace userinterface.Models.Script
             Interpreter.Settings = parameters;
         }
 
-        private static void Test(Interpreter interpreter)
+        private void Test(Interpreter interpreter)
         {
             const int cap = 0x1000;
-
             double[] ys = new double[cap];
+
+            System.Diagnostics.Stopwatch sw = System.Diagnostics.Stopwatch.StartNew();
             for (int i = 0; i < cap; i++)
             {
                 ys[i] = interpreter.Calculate(i);
             }
+            sw.Stop();
+
+            UI.HandleMessage(sw.Elapsed.TotalMilliseconds.ToString());
         }
     }
 

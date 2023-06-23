@@ -23,7 +23,7 @@ namespace userinterface.Models.Script.Generation
     public record ParameterAssignment(string Name, Number Value)
     {
         public ParameterAssignment(Token token, Token value)
-            : this(token.Base.Symbol, value)
+            : this(token.Base.Symbol, (Number)value)
         {
             Debug.Assert(token.Base.Type == TokenType.Parameter);
             Debug.Assert(value.Base.Type == TokenType.Number);
