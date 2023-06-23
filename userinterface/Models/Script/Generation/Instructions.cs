@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Globalization;
 
 namespace userinterface.Models.Script.Generation
 {
@@ -69,12 +71,10 @@ namespace userinterface.Models.Script.Generation
         public static implicit operator MemoryAddress(int pointer)
         {
             byte address = (byte)pointer;
-
             if (address > MaxValue)
             {
                 throw new InterpreterException("Memory address overflow!");
             }
-
             return address;
         }
 
@@ -111,12 +111,10 @@ namespace userinterface.Models.Script.Generation
         public static implicit operator CodeAddress(int pointer)
         {
             ushort address = (ushort)pointer;
-
             if (address > MaxValue)
             {
                 throw new InterpreterException("Code address overflow!");
             }
-
             return address;
         }
 
@@ -201,24 +199,25 @@ namespace userinterface.Models.Script.Generation
             return number == Zero;
         }
 
-        public static Number Parse(string s)
+        private static Number Parse(string s, InterpreterException e)
         {
-            if (double.TryParse(s, out double result))
+            if (double.TryParse(s, NumberStyles.Float, NumberFormatInfo.InvariantInfo,
+                out double result))
             {
                 return result;
             }
 
-            throw new InterpreterException("Cannot parse number!");
+            throw e;
+        }
+
+        public static Number Parse(string s)
+        {
+            return Parse(s, new InterpreterException("Cannot parse number!"));
         }
 
         public static Number Parse(uint line, string s)
         {
-            if (double.TryParse(s, out double result))
-            {
-                return result;
-            }
-
-            throw new InterpreterException(line, "Cannot parse number!");
+            return Parse(s, new InterpreterException(line, "Cannot parse number!"));
         }
     }
 
@@ -227,8 +226,6 @@ namespace userinterface.Models.Script.Generation
     /// </summary>
     public readonly record struct Instruction(InstructionType Type, byte[] ByteCode)
     {
-        public const int Offset = 0;
-
         public static implicit operator Instruction(InstructionType type)
         {
             return new(type, new byte[type.SizeOf()]);
@@ -241,12 +238,12 @@ namespace userinterface.Models.Script.Generation
 
         public void CopyFrom(byte[] bytes)
         {
-            bytes.CopyTo(ByteCode, Offset);
+            bytes.CopyTo(ByteCode, 0);
         }
 
         public void CopyTo(ref byte[] bytes)
         {
-            Span<byte> span = new(ByteCode, Offset, ByteCode.Length);
+            Span<byte> span = new(ByteCode, 0, ByteCode.Length);
             span.CopyTo(bytes);
         }
     }
@@ -302,7 +299,7 @@ namespace userinterface.Models.Script.Generation
                 switch (token.Base.Type)
                 {
                     case TokenType.Number:
-                        Number number = Number.Parse(symbol);
+                        Number number = Number.Parse(token.Line, symbol);
                         Instructions.AddInstruction(InstructionType.LoadNumber, (byte[])number);
                         break;
                     case TokenType.Parameter:
@@ -317,11 +314,13 @@ namespace userinterface.Models.Script.Generation
                         Instructions.AddInstruction(InstructionType.LoadOut);
                         break;
                     case TokenType.Constant:
-                        Instructions.AddInstruction(
-                            OnConstant(token.Line, symbol));
+                        Instructions.AddInstruction(OnConstant(token.Line, symbol));
                         break;
                     case TokenType.Branch:
-                        BranchContext context = new(token.IsLoop(), lastExprStart + stack.Count, Instructions.Count);
+                        BranchContext context = new(
+                            token.IsLoop(),
+                            lastExprStart + stack.Count,
+                            Instructions.Count);
                         stack.Push(context);
                         lastExprStart = Instructions.Count - 1;
                         break;
@@ -332,7 +331,6 @@ namespace userinterface.Models.Script.Generation
                             {
                                 Instructions.AddInstruction(InstructionType.Jmp, (byte[])ctx.Condition);
                             }
-
                             CodeAddress cAddress = Instructions.Count + stack.Count;
                             Instructions.InsertInstruction(ctx.Insert, InstructionType.Jz, (byte[])cAddress);
                             break;
@@ -343,26 +341,23 @@ namespace userinterface.Models.Script.Generation
                         InstructionType type = OnAssignment(token.Line, symbol);
 
                         // MUTATES i, because we don't want to add this token again on the next iteration
-                        Token target = code.Tokens[++i];
-                        string aSymbol = target.Base.Symbol;
-
-                        if (aSymbol == Tokens.INPUT)
+                        BaseToken target = code.Tokens[++i].Base;
+                        if (target.Type == TokenType.Input)
                         {
                             OnAssignment(InstructionType.LoadIn, type, InstructionType.StoreIn,
                                 Array.Empty<byte>());
                         }
-                        else if (aSymbol == Tokens.OUTPUT)
+                        else if (target.Type == TokenType.Output)
                         {
                             OnAssignment(InstructionType.LoadOut, type, InstructionType.StoreOut,
                                 Array.Empty<byte>());
                         }
                         else
                         {
-                            MemoryAddress address = map[aSymbol];
+                            MemoryAddress address = map[target.Symbol];
                             byte[] pointer = (byte[])address;
                             OnAssignment(InstructionType.Load, type, InstructionType.Store, pointer);
                         }
-
                         lastExprStart = Instructions.Count - 1;
                         break;
                     case TokenType.Arithmetic:
@@ -543,6 +538,8 @@ namespace userinterface.Models.Script.Generation
 
         public void AddInstruction(InstructionType type)
         {
+            Debug.Assert(type.SizeOf() == 0);
+
             Add(type);
         }
 
@@ -571,7 +568,7 @@ namespace userinterface.Models.Script.Generation
             set { Mem[address] = value; }
         }
 
-        public void RestoreTo(MemoryHeap other)
+        public void CopyFrom(MemoryHeap other)
         {
             other.Mem.CopyTo(Mem, 0);
         }

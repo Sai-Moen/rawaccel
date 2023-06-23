@@ -19,9 +19,7 @@ namespace userinterface.Models.Script.Generation
         #region Constants
 
         public const int MaxIdentifierLength = 0x10;
-
         public const int MaxNumberLength = 0x20;
-
         public const char NewLine = '\n';
 
         #endregion Constants
@@ -59,11 +57,8 @@ namespace userinterface.Models.Script.Generation
                 .Replace(Tokens.SPACE, null)
                 .Replace("\t", null)
                 .ToCharArray();
-
             MaxIndex = Characters.Length - 1;
-
             CheckCharacters();
-
             Tokenize();
         }
 
@@ -116,7 +111,6 @@ namespace userinterface.Models.Script.Generation
             int startingIndex = 0;
             uint startingLine = 1;
             bool isComments = true;
-
             foreach (char c in Characters)
             {
                 if (isComments)
@@ -147,10 +141,10 @@ namespace userinterface.Models.Script.Generation
         {
             Debug.Assert(CmpCharStr(Characters[CurrentIndex + 1], Tokens.PARAMS_START),
                 "Current Char should start at the parameter opening!");
+
             while (++CurrentIndex <= MaxIndex)
             {
                 CurrentChar = Characters[CurrentIndex];
-
                 if (CurrentChar == NewLine)
                 {
                     ++CurrentLine;
@@ -240,10 +234,10 @@ namespace userinterface.Models.Script.Generation
                     {
                         AddBufferedToken();
                     }
-
                     return true;
                 case CharBufferState.Special:
                     Debug.Assert(CmpCharStr(CurrentChar, Tokens.SECOND));
+
                     BufferCurrentChar();
                     AddBufferedToken();
                     return true;

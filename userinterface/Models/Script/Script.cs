@@ -72,6 +72,7 @@ namespace userinterface.Models.Script
             sw.Stop();
 
             UI.HandleMessage(sw.Elapsed.TotalMilliseconds.ToString());
+            UI.HandleMessage((ys[16] * 16).ToString());
         }
     }
 

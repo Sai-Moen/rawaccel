@@ -3,7 +3,7 @@ Arc mode by SaiMoen
 [
 
 	Offset := 0;
-	Limit := 4;
+	Limit := 3.5;
 	Midpoint := 16;
 
 ]

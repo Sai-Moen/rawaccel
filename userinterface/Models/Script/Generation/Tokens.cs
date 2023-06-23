@@ -256,7 +256,6 @@ namespace userinterface.Models.Script.Generation
         static Tokens()
         {
             ReservedMap = new(ReservedArray.Length);
-
             foreach (BaseToken baseToken in ReservedArray)
             {
                 ReservedMap.Add(baseToken.Symbol, new(baseToken));

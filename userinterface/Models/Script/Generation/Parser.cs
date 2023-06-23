@@ -57,7 +57,6 @@ namespace userinterface.Models.Script.Generation
             Debug.Assert(CurrentIndex == 1, "We don't need to check for PARAMS_START at runtime.");
 
             PreviousToken = CurrentToken;
-
             Parse();
         }
 
@@ -193,14 +192,12 @@ namespace userinterface.Models.Script.Generation
 
                 VariableNames.Add(token.Base.Symbol);
             }
-
             TokenBuffer.Enqueue(token);
         }
 
         private void ExprVar()
         {
             TokenQueue input = new();
-
             while (CurrentToken.Base.Type != TokenType.Terminator)
             {
                 if (CurrentToken.Base.Type == TokenType.CalculationStart)
@@ -216,7 +213,6 @@ namespace userinterface.Models.Script.Generation
 
             // Shunting Yard Algorithm (RPN)
             TokenList output = new(input.Count);
-
             while (input.Count != 0)
             {
                 Token token = input.Dequeue();
@@ -242,10 +238,10 @@ namespace userinterface.Models.Script.Generation
                         break;
                 }
             }
-
             OnEmptyQueue(output);
 
             Debug.Assert(TokenBuffer.Count == 2);
+
             Token t = TokenBuffer.Dequeue();
             Token eq = TokenBuffer.Dequeue();
 
@@ -256,7 +252,6 @@ namespace userinterface.Models.Script.Generation
 
             output.Add(eq);
             output.Add(t);
-
             Variables.Add(new(t, output));
         }
 
@@ -281,7 +276,6 @@ namespace userinterface.Models.Script.Generation
                 AdvanceToken();
                 return true;
             }
-
             return false;
         }
 
@@ -329,24 +323,19 @@ namespace userinterface.Models.Script.Generation
                 }
 
                 AdvanceToken();
-
                 TokenType nextType = CurrentToken.Base.Type;
                 bool onlyEnd = after == TokenType.Undefined;
                 bool afterIsNext = after == nextType;
-
                 if (currentType == end && (onlyEnd || afterIsNext))
                 {
                     if (afterIsNext)
                     {
                         AdvanceToken();
                     }
-
                     break;
                 }
-
                 input.Enqueue(current);
             }
-
             return ShuntingYard(input);
         }
 
@@ -356,7 +345,6 @@ namespace userinterface.Models.Script.Generation
 
             // Shunting Yard Algorithm (RPN)
             TokenList output = new(input.Count);
-
             while (input.Count != 0)
             {
                 Token token = input.Dequeue();
@@ -385,9 +373,7 @@ namespace userinterface.Models.Script.Generation
                         break;
                 }
             }
-
             OnEmptyQueue(output);
-
             return output;
         }
 
@@ -430,21 +416,18 @@ namespace userinterface.Models.Script.Generation
         {
             int pToken = Tokens.Precedence(token.Base.Symbol);
             bool left = Tokens.LeftAssociative(token.Base.Symbol);
-
             while (true)
             {
                 if (OperatorStack.Count == 0)
                 {
                     break;
                 }
-
                 Token op = OperatorStack.Peek();
                 TokenType optype = op.Base.Type;
                 if (optype != TokenType.Comparison && optype != TokenType.Arithmetic)
                 {
                     break;
                 }
-
                 int pOperator = Tokens.Precedence(op.Base.Symbol);
                 if (pToken < pOperator || (left && pToken == pOperator))
                 {
@@ -455,7 +438,6 @@ namespace userinterface.Models.Script.Generation
                     break;
                 }
             }
-
             OperatorStack.Push(token);
         }
 
@@ -497,7 +479,6 @@ namespace userinterface.Models.Script.Generation
                 AdvanceToken();
                 return true;
             }
-
             return false;
         }
 

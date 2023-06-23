@@ -106,10 +106,9 @@ namespace userinterface.Models.Script.Generation
         {
             X = x;
             Exec(MainProgram, MainStack);
-            Restore();
-
             double y = Y;
-            Y = Number.DefaultY;
+
+            Reset();
             return y;
         }
 
@@ -122,19 +121,34 @@ namespace userinterface.Models.Script.Generation
             }
 
             // Load Parameters to Volatile
-            Restore();
+            Reset();
 
             // Do startup tasks
-            // If startup tasks modified something other than their own address,
-            // that is a bug in the parser, not here.
-            Parallel.ForEach(Startup, (p) => Exec(p, new()));
+            //      Synchronization and/or Locking is not used in Exec,
+            //      as each thread should only be able to do independent work on their own address.
+            _ = Parallel.ForEach(Startup, (p) => Exec(p, new()));
 
             // Load everything to Stable
-            Stable.RestoreTo(Volatile);
+            Stable.CopyFrom(Volatile);
+        }
+
+        private void Reset()
+        {
+            Volatile.CopyFrom(Stable);
+            Y = Number.DefaultY;
         }
 
         private void Exec(Program program, ProgramStack stack)
         {
+            Number Op2(Func<Number, Number, Number> func)
+            {
+                Debug.Assert(stack.Count >= 2);
+
+                Number right = stack.Pop();
+                Number left = stack.Pop();
+                return func(left, right);
+            }
+
             for (int i = 0; i < program.Instructions.Count; i++)
             {
                 Instruction instruction = program.Instructions[i];
@@ -147,7 +161,6 @@ namespace userinterface.Models.Script.Generation
                         {
                             InterpreterError("Unexpected program end!");
                         }
-
                         Debug.Assert(stack.Count == 0);
                         return;
                     case InstructionType.Load:
@@ -190,7 +203,6 @@ namespace userinterface.Models.Script.Generation
                         {
                             i = jzAddress;
                         }
-
                         break;
                     case InstructionType.LoadE:
                         stack.Push(Math.E);
@@ -205,49 +217,49 @@ namespace userinterface.Models.Script.Generation
                         stack.Push(Number.Zero);
                         break;
                     case InstructionType.Add:
-                        stack.Push(Op2((x, y) => x + y, stack.Pop(), stack.Pop()));
+                        stack.Push(Op2((x, y) => x + y));
                         break;
                     case InstructionType.Sub:
-                        stack.Push(Op2((x, y) => x - y, stack.Pop(), stack.Pop()));
+                        stack.Push(Op2((x, y) => x - y));
                         break;
                     case InstructionType.Mul:
-                        stack.Push(Op2((x, y) => x * y, stack.Pop(), stack.Pop()));
+                        stack.Push(Op2((x, y) => x * y));
                         break;
                     case InstructionType.Div:
-                        stack.Push(Op2((x, y) => x / y, stack.Pop(), stack.Pop()));
+                        stack.Push(Op2((x, y) => x / y));
                         break;
                     case InstructionType.Mod:
-                        stack.Push(Op2((x, y) => x % y, stack.Pop(), stack.Pop()));
+                        stack.Push(Op2((x, y) => x % y));
                         break;
                     case InstructionType.Exp:
-                        stack.Push(Op2((x, y) => Math.Pow(x, y), stack.Pop(), stack.Pop()));
+                        stack.Push(Op2((x, y) => Math.Pow(x, y)));
                         break;
                     case InstructionType.ExpE: // implicit first argument
                         stack.Push(Math.Exp(stack.Pop()));
                         break;
                     case InstructionType.Or:
-                        stack.Push(Op2((x, y) => x | y, stack.Pop(), stack.Pop()));
+                        stack.Push(Op2((x, y) => x | y));
                         break;
                     case InstructionType.And:
-                        stack.Push(Op2((x, y) => x & y, stack.Pop(), stack.Pop()));
+                        stack.Push(Op2((x, y) => x & y));
                         break;
                     case InstructionType.Lt:
-                        stack.Push(Op2((x, y) => x < y, stack.Pop(), stack.Pop()));
+                        stack.Push(Op2((x, y) => x < y));
                         break;
                     case InstructionType.Gt:
-                        stack.Push(Op2((x, y) => x > y, stack.Pop(), stack.Pop()));
+                        stack.Push(Op2((x, y) => x > y));
                         break;
                     case InstructionType.Le:
-                        stack.Push(Op2((x, y) => x <= y, stack.Pop(), stack.Pop()));
+                        stack.Push(Op2((x, y) => x <= y));
                         break;
                     case InstructionType.Ge:
-                        stack.Push(Op2((x, y) => x >= y, stack.Pop(), stack.Pop()));
+                        stack.Push(Op2((x, y) => x >= y));
                         break;
                     case InstructionType.Eq:
-                        stack.Push(Op2((x, y) => x == y, stack.Pop(), stack.Pop()));
+                        stack.Push(Op2((x, y) => x == y));
                         break;
                     case InstructionType.Ne:
-                        stack.Push(Op2((x, y) => x != y, stack.Pop(), stack.Pop()));
+                        stack.Push(Op2((x, y) => x != y));
                         break;
                     case InstructionType.Not: // unary
                         stack.Push(!stack.Pop());
@@ -324,17 +336,6 @@ namespace userinterface.Models.Script.Generation
                         break;
                 }
             }
-        }
-
-        private static Number Op2(Func<Number, Number, Number> func, Number right, Number left)
-        {
-            // Reversed method args because of stack unwinding in reverse ^^
-            return func(left, right);
-        }
-
-        private void Restore()
-        {
-            Volatile.RestoreTo(Stable);
         }
 
         #endregion Methods
