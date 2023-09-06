@@ -43,7 +43,7 @@ namespace userinterface.Models.Script.Generation
         Tan, Tanh, Atan, Atanh,
 
         // Leave this at the bottom of the enum for obvious reasons.
-        Count,
+        Count
     }
 
     /// <summary>
@@ -80,7 +80,7 @@ namespace userinterface.Models.Script.Generation
 
         public static explicit operator MemoryAddress(Instruction pointer)
         {
-            return pointer.ByteCode[0];
+            return pointer.Data[0];
         }
 
         public static implicit operator byte(MemoryAddress address)
@@ -159,7 +159,7 @@ namespace userinterface.Models.Script.Generation
 
         public static explicit operator Number(Token token)
         {
-            return Parse(token.Line, token.Base.Symbol);
+            return Parse(token.Base.Symbol, token.Line);
         }
 
         public static explicit operator Number(Instruction value)
@@ -215,7 +215,7 @@ namespace userinterface.Models.Script.Generation
             return Parse(s, new InterpreterException("Cannot parse number!"));
         }
 
-        public static Number Parse(uint line, string s)
+        public static Number Parse(string s, uint line)
         {
             return Parse(s, new InterpreterException(line, "Cannot parse number!"));
         }
@@ -224,7 +224,7 @@ namespace userinterface.Models.Script.Generation
     /// <summary>
     /// Represents an Instruction that can be executed by the Interpreter.
     /// </summary>
-    public readonly record struct Instruction(InstructionType Type, byte[] ByteCode)
+    public readonly record struct Instruction(InstructionType Type, byte[] Data)
     {
         public static implicit operator Instruction(InstructionType type)
         {
@@ -238,12 +238,12 @@ namespace userinterface.Models.Script.Generation
 
         public void CopyFrom(byte[] bytes)
         {
-            bytes.CopyTo(ByteCode, 0);
+            bytes.CopyTo(Data, 0);
         }
 
         public void CopyTo(ref byte[] bytes)
         {
-            Span<byte> span = new(ByteCode, 0, ByteCode.Length);
+            Span<byte> span = new(Data, 0, Data.Length);
             span.CopyTo(bytes);
         }
     }
@@ -285,6 +285,7 @@ namespace userinterface.Models.Script.Generation
         /// <exception cref="InterpreterException">Thrown when emitting fails.</exception>
         public Program(Expression code, MemoryMap map)
         {
+            // Allocates mostly enough, but not guaranteed, therefore List
             Instructions = new(code.Tokens.Length);
             Instructions.AddInstruction(InstructionType.Start);
 
@@ -299,7 +300,7 @@ namespace userinterface.Models.Script.Generation
                 switch (token.Base.Type)
                 {
                     case TokenType.Number:
-                        Number number = Number.Parse(token.Line, symbol);
+                        Number number = Number.Parse(symbol, token.Line);
                         Instructions.AddInstruction(InstructionType.LoadNumber, (byte[])number);
                         break;
                     case TokenType.Parameter:
@@ -314,7 +315,7 @@ namespace userinterface.Models.Script.Generation
                         Instructions.AddInstruction(InstructionType.LoadOut);
                         break;
                     case TokenType.Constant:
-                        Instructions.AddInstruction(OnConstant(token.Line, symbol));
+                        Instructions.AddInstruction(OnConstant(symbol, token.Line));
                         break;
                     case TokenType.Branch:
                         BranchContext context = new(
@@ -338,7 +339,7 @@ namespace userinterface.Models.Script.Generation
 
                         throw new InterpreterException(token.Line, "Unexpected branch end!");
                     case TokenType.Assignment:
-                        InstructionType type = OnAssignment(token.Line, symbol);
+                        InstructionType type = OnAssignment(symbol, token.Line);
 
                         // MUTATES i, because we don't want to add this token again on the next iteration
                         BaseToken target = code.Tokens[++i].Base;
@@ -361,13 +362,13 @@ namespace userinterface.Models.Script.Generation
                         lastExprStart = Instructions.Count - 1;
                         break;
                     case TokenType.Arithmetic:
-                        OnArithmetic(token.Line, symbol);
+                        OnArithmetic(symbol, token.Line);
                         break;
                     case TokenType.Comparison:
-                        Instructions.AddInstruction(OnComparison(token.Line, symbol));
+                        Instructions.AddInstruction(OnComparison(symbol, token.Line));
                         break;
                     case TokenType.Function:
-                        Instructions.AddInstruction(OnFunction(token.Line, symbol));
+                        Instructions.AddInstruction(OnFunction(symbol, token.Line));
                         break;
                     default:
                         throw new InterpreterException(token.Line, "Cannot emit token!");
@@ -393,7 +394,7 @@ namespace userinterface.Models.Script.Generation
 
         #region Jump Tables
 
-        private static InstructionType OnConstant(uint line, string symbol)
+        private static InstructionType OnConstant(string symbol, uint line)
         {
             return symbol switch
             {
@@ -406,7 +407,7 @@ namespace userinterface.Models.Script.Generation
             };
         }
 
-        private static InstructionType OnAssignment(uint line, string symbol)
+        private static InstructionType OnAssignment(string symbol, uint line)
         {
             return symbol switch
             {
@@ -439,7 +440,7 @@ namespace userinterface.Models.Script.Generation
             Instructions.AddInstruction(store, pointer);
         }
 
-        private void OnArithmetic(uint line, string symbol)
+        private void OnArithmetic(string symbol, uint line)
         {
             switch (symbol)
             {
@@ -478,7 +479,7 @@ namespace userinterface.Models.Script.Generation
             }
         }
 
-        private static InstructionType OnComparison(uint line, string symbol)
+        private static InstructionType OnComparison(string symbol, uint line)
         {
             return symbol switch
             {
@@ -496,7 +497,7 @@ namespace userinterface.Models.Script.Generation
             };
         }
 
-        private static InstructionType OnFunction(uint line, string symbol)
+        private static InstructionType OnFunction(string symbol, uint line)
         {
             return symbol switch
             {
@@ -560,7 +561,12 @@ namespace userinterface.Models.Script.Generation
 
     public class MemoryHeap
     {
-        private readonly Number[] Mem = new Number[Constants.CAPACITY];
+        private readonly Number[] Mem;
+
+        public MemoryHeap(int capacity)
+        {
+            Mem = new Number[capacity];
+        }
 
         public double this[MemoryAddress address]
         {

@@ -17,9 +17,9 @@ namespace userinterface.Models.Script.Generation
 
         private readonly MemoryMap Addresses = new();
 
-        private readonly MemoryHeap Stable = new();
+        private readonly MemoryHeap Stable;
 
-        private readonly MemoryHeap Volatile = new();
+        private readonly MemoryHeap Volatile;
 
         private readonly ProgramStack MainStack = new();
 
@@ -45,21 +45,25 @@ namespace userinterface.Models.Script.Generation
             Variables variables,
             TokenList code)
         {
-            Debug.Assert(parameters.Count <= Constants.MAX_PARAMETERS);
-            for (int i = 0; i < parameters.Count; i++)
+            int numParameters = parameters.Count;
+            Debug.Assert(numParameters <= Constants.MAX_PARAMETERS);
+            for (int i = 0; i < numParameters; i++)
             {
                 MemoryAddress address = i;
                 Addresses.Add(parameters[i].Name, address);
             }
 
-            Defaults = parameters;
+            int numVariables = variables.Count;
+            int capacity = Constants.MAX_PARAMETERS + numVariables;
+            Stable = new(capacity);
+            Volatile = new(capacity);
 
-            Startup = new Program[variables.Count];
+            Startup = new Program[numVariables];
 
-            Debug.Assert(variables.Count <= Constants.MAX_VARIABLES);
-            for (int i = 0; i < variables.Count; i++)
+            Debug.Assert(numVariables <= Constants.MAX_VARIABLES);
+            for (int i = 0; i < numVariables; i++)
             {
-                MemoryAddress address = i + Constants.MAX_PARAMETERS;
+                MemoryAddress address = Constants.MAX_PARAMETERS + i;
                 VariableAssignment variable = variables[i];
                 Addresses.Add(variable.Name, address);
                 Startup[i] = new(variable.Expr, Addresses);
@@ -67,6 +71,8 @@ namespace userinterface.Models.Script.Generation
 
             MainProgram = new(code, Addresses);
 
+            // Responsibility to change settings from script defaults to saved settings is on the caller
+            Defaults = parameters;
             Settings = Defaults; // Make sure Startup is initialized before this
         }
 
@@ -77,7 +83,7 @@ namespace userinterface.Models.Script.Generation
         /// <summary>
         /// The parameters and their default values, according to the script.
         /// </summary>
-        public Parameters Defaults { get; } = new();
+        public Parameters Defaults { get; }
 
         /// <summary>
         /// The current values of all parameters.
@@ -85,7 +91,11 @@ namespace userinterface.Models.Script.Generation
         /// </summary>
         public Parameters Settings
         {
-            get { return _settings; }
+            get
+            {
+                return _settings;
+            }
+
             set
             {
                 _settings = value;

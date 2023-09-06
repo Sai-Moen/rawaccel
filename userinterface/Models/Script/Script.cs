@@ -24,12 +24,15 @@ namespace userinterface.Models.Script
             {
                 return _interpreter ?? throw new ScriptException("No script loaded!");
             }
-            private set { _interpreter = value; }
+
+            private set
+            {
+                _interpreter = value;
+            }
         }
 
         /// <summary>
-        /// Attempts to load a RawAccelScript script from
-        /// <paramref name="scriptPath"/>.
+        /// Attempts to load a RawAccelScript script from <paramref name="scriptPath"/>.
         /// Throws <see cref="ScriptException"/> on bad script input
         /// </summary>
         public void LoadScript(string scriptPath)
@@ -59,6 +62,7 @@ namespace userinterface.Models.Script
             Interpreter.Settings = parameters;
         }
 
+#if DEBUG
         private void Test(Interpreter interpreter)
         {
             const int cap = 0x1000;
@@ -74,6 +78,7 @@ namespace userinterface.Models.Script
             UI.HandleMessage(sw.Elapsed.TotalMilliseconds.ToString());
             UI.HandleMessage((ys[16] * 16).ToString());
         }
+#endif
     }
 
     public class ScriptException : Exception
