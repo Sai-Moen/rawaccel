@@ -10,11 +10,11 @@ namespace userinterface.Models.Script.Interaction
         {
             if (!File.Exists(scriptPath))
             {
-                throw new ScriptException("File not found!");
+                throw new LoaderException("File not found!");
             }
             else if (new FileInfo(scriptPath).Length > MaxScriptFileLength)
             {
-                throw new ScriptException("File too big!");
+                throw new LoaderException("File too big!");
             }
 
             try
@@ -25,8 +25,16 @@ namespace userinterface.Models.Script.Interaction
             {
                 // Could differentiate between certain exceptions,
                 // keep in mind that File.Exists already catches a decent amount.
-                throw new ScriptException("File not readable!");
+                throw new LoaderException("File not readable!");
             }
         }
+    }
+
+    /// <summary>
+    /// Exception for errors with loading scripts.
+    /// </summary>
+    public sealed class LoaderException : ScriptException
+    {
+        public LoaderException(string message) : base(message) { }
     }
 }

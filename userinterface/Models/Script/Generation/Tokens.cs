@@ -3,6 +3,9 @@ using System.Diagnostics;
 
 namespace userinterface.Models.Script.Generation
 {
+    /// <summary>
+    /// Enumerates all possible Token types.
+    /// </summary>
     public enum TokenType
     {
         Undefined,
@@ -48,6 +51,16 @@ namespace userinterface.Models.Script.Generation
     /// <param name="Base">The BaseToken.</param>
     /// <param name="Line">The line in the file where this came from.</param>
     public record Token(BaseToken Base, uint Line = 0);
+
+    /// <summary>
+    /// List of tokens.
+    /// </summary>
+    public class TokenList : List<Token>, IList<Token>
+    {
+        public TokenList() : base() { }
+
+        public TokenList(int capacity) : base(capacity) { }
+    }
 
     /// <summary>
     /// Defines all reserved kinds of Tokens.
@@ -318,22 +331,18 @@ namespace userinterface.Models.Script.Generation
 
                 NOT => 7,
 
-                _ => throw new ScriptException("Unexpected Precedence call!"),
+                _ => throw new ParserException("Unexpected Precedence call!"),
             };
         }
 
         #endregion Methods
     }
 
+    /// <summary>
+    /// Maps a string to a reserved Token.
+    /// </summary>
     public class TokenMap : Dictionary<string, Token>, IDictionary<string, Token>
     {
         public TokenMap(int capacity) : base(capacity) { }
-    }
-
-    public class TokenList : List<Token>, IList<Token>
-    {
-        public TokenList() : base() { }
-
-        public TokenList(int capacity) : base(capacity) { }
     }
 }

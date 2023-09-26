@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Collections.Generic;
 
 namespace userinterface.Models.Script.Generation
 {
@@ -10,19 +11,13 @@ namespace userinterface.Models.Script.Generation
     {
         #region Fields
 
-        public Parameters Parameters { get; } = new();
-
-        public Variables Variables { get; } = new();
-
-        public TokenList TokenCode { get; } = new();
-
         private readonly Identifiers ParameterNames = new(Constants.MAX_PARAMETERS);
 
         private readonly Identifiers VariableNames = new(Constants.MAX_VARIABLES);
 
-        private readonly TokenQueue TokenBuffer = new();
+        private readonly Queue<Token> TokenBuffer = new();
 
-        private readonly TokenStack OperatorStack = new();
+        private readonly Stack<Token> OperatorStack = new();
 
         private int CurrentIndex;
 
@@ -62,6 +57,16 @@ namespace userinterface.Models.Script.Generation
 
         #endregion Constructors
 
+        #region Properties
+
+        public Parameters Parameters { get; } = new();
+
+        public Variables Variables { get; } = new();
+
+        public TokenList TokenCode { get; } = new();
+
+        #endregion Properties
+
         #region Helpers
 
         private void Parse()
@@ -100,13 +105,13 @@ namespace userinterface.Models.Script.Generation
             }
         }
 
-        private void CoerceAll(in Identifiers list, TokenType type)
+        private void CoerceAll(in Identifiers identifiers, TokenType type)
         {
             for (int i = 0; i <= MaxIndex; i++)
             {
                 Token token = TokenList[i];
 
-                if (list.Contains(token.Base.Symbol))
+                if (identifiers.Contains(token.Base.Symbol))
                 {
                     TokenList[i] = token with { Base = token.Base with { Type = type } };
                 }
@@ -122,7 +127,8 @@ namespace userinterface.Models.Script.Generation
         {
             if (CurrentIndex == MaxIndex)
             {
-                throw new ParserException("End reached unexpectedly!");
+                ParserError("End reached unexpectedly!");
+                return;
             }
 
             PreviousToken = CurrentToken;
@@ -197,7 +203,7 @@ namespace userinterface.Models.Script.Generation
 
         private void ExprVar()
         {
-            TokenQueue input = new();
+            Queue<Token> input = new();
             while (CurrentToken.Base.Type != TokenType.Terminator)
             {
                 if (CurrentToken.Base.Type == TokenType.CalculationStart)
@@ -310,8 +316,7 @@ namespace userinterface.Models.Script.Generation
 
         private TokenList Expression(TokenType end, TokenType after = TokenType.Undefined)
         {
-            TokenQueue input = new();
-
+            Queue<Token> input = new();
             while (true)
             {
                 Token current = CurrentToken;
@@ -339,7 +344,7 @@ namespace userinterface.Models.Script.Generation
             return ShuntingYard(input);
         }
 
-        private TokenList ShuntingYard(TokenQueue input)
+        private TokenList ShuntingYard(Queue<Token> input)
         {
             Debug.Assert(OperatorStack.Count == 0);
 
@@ -486,14 +491,17 @@ namespace userinterface.Models.Script.Generation
 
         private void ParserError(string error)
         {
-            throw new ParserException(CurrentToken.Line, error);
+            throw new ParserException(error, CurrentToken.Line);
         }
     }
 
-    public class ParserException : ScriptException
+    /// <summary>
+    /// Exception for parsing-related errors.
+    /// </summary>
+    public sealed class ParserException : GenerationException
     {
         public ParserException(string message) : base(message) { }
 
-        public ParserException(uint line, string message) : base($"Line {line}: {message}") { }
+        public ParserException(string message, uint line) : base(message, line) { }
     }
 }

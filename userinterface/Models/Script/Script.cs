@@ -4,11 +4,11 @@ using userinterface.Models.Script.Interaction;
 
 namespace userinterface.Models.Script
 {
+    /// <summary>
+    /// Combines all components of Script.
+    /// </summary>
     public class Script
     {
-        public const string ScriptPath = @"Scripts/"; // Maybe move to constants and remove debugpath later
-        public const string DebugPath = @"../../../Models/Script/Spec/arc.rascript";
-
         private Interpreter? _interpreter;
 
         public Script(ScriptInterfaceType type)
@@ -18,11 +18,15 @@ namespace userinterface.Models.Script
 
         public IScriptInterface UI { get; }
 
+        /// <summary>
+        /// Returns Interpreter instance if one was loaded,
+        /// otherwise throws <see cref="LoaderException"/>.
+        /// </summary>
         public Interpreter Interpreter
         {
             get
             {
-                return _interpreter ?? throw new ScriptException("No script loaded!");
+                return _interpreter ?? throw new LoaderException("No script loaded!");
             }
 
             private set
@@ -33,7 +37,7 @@ namespace userinterface.Models.Script
 
         /// <summary>
         /// Attempts to load a RawAccelScript script from <paramref name="scriptPath"/>.
-        /// Throws <see cref="ScriptException"/> on bad script input
+        /// Throws <see cref="ScriptException"/> on bad script input.
         /// </summary>
         public void LoadScript(string scriptPath)
         {
@@ -41,10 +45,6 @@ namespace userinterface.Models.Script
             Tokenizer tokenizer = new(script);
             Parser parser = new(tokenizer.TokenList);
             Interpreter = new(parser.Parameters, parser.Variables, parser.TokenCode);
-
-#if DEBUG
-            Test(Interpreter);
-#endif
         }
 
         public Parameters GetDefaults()
@@ -61,27 +61,12 @@ namespace userinterface.Models.Script
         {
             Interpreter.Settings = parameters;
         }
-
-#if DEBUG
-        private void Test(Interpreter interpreter)
-        {
-            const int cap = 0x1000;
-            double[] ys = new double[cap];
-
-            System.Diagnostics.Stopwatch sw = System.Diagnostics.Stopwatch.StartNew();
-            for (int i = 0; i < cap; i++)
-            {
-                ys[i] = interpreter.Calculate(i);
-            }
-            sw.Stop();
-
-            UI.HandleMessage(sw.Elapsed.TotalMilliseconds.ToString());
-            UI.HandleMessage((ys[16] * 16).ToString());
-        }
-#endif
     }
 
-    public class ScriptException : Exception
+    /// <summary>
+    /// Exception to derive from when doing anything inside the Script namespace.
+    /// </summary>
+    public abstract class ScriptException : Exception
     {
         public ScriptException(string message) : base(message) { }
     }

@@ -11,9 +11,9 @@ namespace userinterface.Models.Script.Generation
     {
         #region Fields
 
-        private Number X = Number.DefaultX;
+        private Number X = Number.DEFAULT_X;
 
-        private Number Y = Number.DefaultY;
+        private Number Y = Number.DEFAULT_Y;
 
         private readonly MemoryMap Addresses = new();
 
@@ -43,7 +43,7 @@ namespace userinterface.Models.Script.Generation
         public Interpreter(
             Parameters parameters,
             Variables variables,
-            TokenList code)
+            TokenCode code)
         {
             int numParameters = parameters.Count;
             Debug.Assert(numParameters <= Constants.MAX_PARAMETERS);
@@ -145,7 +145,7 @@ namespace userinterface.Models.Script.Generation
         private void Reset()
         {
             Volatile.CopyFrom(Stable);
-            Y = Number.DefaultY;
+            Y = Number.DEFAULT_Y;
         }
 
         private void Exec(Program program, ProgramStack stack)
@@ -224,7 +224,7 @@ namespace userinterface.Models.Script.Generation
                         stack.Push(Math.Tau);
                         break;
                     case InstructionType.LoadZero:
-                        stack.Push(Number.Zero);
+                        stack.Push(Number.ZERO);
                         break;
                     case InstructionType.Add:
                         stack.Push(Op2((x, y) => x + y));
@@ -356,10 +356,13 @@ namespace userinterface.Models.Script.Generation
         }
     }
 
-    public class InterpreterException : ScriptException
+    /// <summary>
+    /// Exception for interpretation-related errors.
+    /// </summary>
+    public sealed class InterpreterException : GenerationException
     {
         public InterpreterException(string message) : base(message) { }
 
-        public InterpreterException(uint line, string message) : base($"Line {line}: {message}") { }
+        public InterpreterException(string message, uint line) : base(message, line) { }
     }
 }

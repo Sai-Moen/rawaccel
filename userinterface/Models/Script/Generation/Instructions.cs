@@ -60,8 +60,9 @@ namespace userinterface.Models.Script.Generation
     /// <param name="Address">Heap Memory address.</param>
     public readonly record struct MemoryAddress(byte Address)
     {
-        public const int Size = sizeof(byte);
-        public const byte MaxValue = byte.MaxValue;
+        public const int SIZE = sizeof(byte);
+        public const byte MAX_VALUE = byte.MaxValue;
+        public const ushort CAPACITY = MAX_VALUE + 1;
 
         public static implicit operator MemoryAddress(byte pointer)
         {
@@ -71,7 +72,7 @@ namespace userinterface.Models.Script.Generation
         public static implicit operator MemoryAddress(int pointer)
         {
             byte address = (byte)pointer;
-            if (address > MaxValue)
+            if (address > MAX_VALUE)
             {
                 throw new InterpreterException("Memory address overflow!");
             }
@@ -100,8 +101,8 @@ namespace userinterface.Models.Script.Generation
     /// <param name="Address">Instruction address.</param>
     public readonly record struct CodeAddress(ushort Address)
     {
-        public const int Size = sizeof(ushort);
-        public const ushort MaxValue = ushort.MaxValue;
+        public const int SIZE = sizeof(ushort);
+        public const ushort MAX_VALUE = ushort.MaxValue;
 
         public static implicit operator CodeAddress(ushort pointer)
         {
@@ -111,7 +112,7 @@ namespace userinterface.Models.Script.Generation
         public static implicit operator CodeAddress(int pointer)
         {
             ushort address = (ushort)pointer;
-            if (address > MaxValue)
+            if (address > MAX_VALUE)
             {
                 throw new InterpreterException("Code address overflow!");
             }
@@ -120,7 +121,7 @@ namespace userinterface.Models.Script.Generation
 
         public static explicit operator CodeAddress(Instruction pointer)
         {
-            byte[] bytes = new byte[Size];
+            byte[] bytes = new byte[SIZE];
             pointer.CopyTo(ref bytes);
             return BitConverter.ToUInt16(bytes);
         }
@@ -142,10 +143,10 @@ namespace userinterface.Models.Script.Generation
     /// <param name="Value">Value of the Number.</param>
     public readonly record struct Number(double Value)
     {
-        public const int Size = sizeof(double);
-        public const double Zero = 0;
-        public const double DefaultX = Zero;
-        public const double DefaultY = 1;
+        public const int SIZE = sizeof(double);
+        public const double ZERO = 0;
+        public const double DEFAULT_X = ZERO;
+        public const double DEFAULT_Y = 1;
 
         public static implicit operator Number(bool value)
         {
@@ -164,14 +165,14 @@ namespace userinterface.Models.Script.Generation
 
         public static explicit operator Number(Instruction value)
         {
-            byte[] bytes = new byte[Size];
+            byte[] bytes = new byte[SIZE];
             value.CopyTo(ref bytes);
             return BitConverter.ToDouble(bytes);
         }
 
         public static implicit operator bool(Number number)
         {
-            return number.Value != Zero;
+            return number.Value != ZERO;
         }
 
         public static implicit operator double(Number number)
@@ -186,17 +187,17 @@ namespace userinterface.Models.Script.Generation
 
         public static Number operator |(Number left, Number right)
         {
-            return (left != Zero) | (right != Zero);
+            return (left != ZERO) | (right != ZERO);
         }
 
         public static Number operator &(Number left, Number right)
         {
-            return (left != Zero) & (right != Zero);
+            return (left != ZERO) & (right != ZERO);
         }
 
         public static Number operator !(Number number)
         {
-            return number == Zero;
+            return number == ZERO;
         }
 
         private static Number Parse(string s, InterpreterException e)
@@ -217,9 +218,46 @@ namespace userinterface.Models.Script.Generation
 
         public static Number Parse(string s, uint line)
         {
-            return Parse(s, new InterpreterException(line, "Cannot parse number!"));
+            return Parse(s, new InterpreterException("Cannot parse number!", line));
         }
     }
+
+    /// <summary>
+    /// Represents a heap of memory used by:
+    /// Parameters (indices [0, 7])
+    /// Variables (indices after that, as many as needed)
+    /// </summary>
+    public class MemoryHeap
+    {
+        private readonly Number[] Memory;
+
+        public MemoryHeap(int capacity)
+        {
+            if (capacity > MemoryAddress.CAPACITY)
+            {
+                throw new InterpreterException("MemoryHeap capacity overflow!");
+            }
+
+            Memory = new Number[capacity];
+        }
+
+        public Number this[MemoryAddress address]
+        {
+            get { return Memory[address]; }
+            set { Memory[address] = value; }
+        }
+
+        public void CopyFrom(MemoryHeap other)
+        {
+            other.Memory.CopyTo(Memory, 0);
+        }
+    }
+
+    /// <summary>
+    /// Represents a stack used while executing a Program.
+    /// </summary>
+    public class ProgramStack : Stack<Number>
+    { }
 
     /// <summary>
     /// Represents an Instruction that can be executed by the Interpreter.
@@ -257,13 +295,13 @@ namespace userinterface.Models.Script.Generation
         {
             return type switch
             {
-                InstructionType.LoadNumber  => Number.Size,
+                InstructionType.LoadNumber  => Number.SIZE,
 
-                InstructionType.Jmp         => CodeAddress.Size,
-                InstructionType.Jz          => CodeAddress.Size,
+                InstructionType.Jmp         => CodeAddress.SIZE,
+                InstructionType.Jz          => CodeAddress.SIZE,
 
-                InstructionType.Load        => MemoryAddress.Size,
-                InstructionType.Store       => MemoryAddress.Size,
+                InstructionType.Load        => MemoryAddress.SIZE,
+                InstructionType.Store       => MemoryAddress.SIZE,
 
                 _ => 0,
             };
@@ -283,19 +321,19 @@ namespace userinterface.Models.Script.Generation
         /// <param name="code">Contains a parsed TokenList that can be emitted to bytecode.</param>
         /// <param name="map">Maps identifiers to memory addresses.</param>
         /// <exception cref="InterpreterException">Thrown when emitting fails.</exception>
-        public Program(Expression code, MemoryMap map)
+        public Program(TokenCode code, MemoryMap map)
         {
             // Allocates mostly enough, but not guaranteed, therefore List
-            Instructions = new(code.Tokens.Length);
+            Instructions = new(code.Length);
             Instructions.AddInstruction(InstructionType.Start);
 
             Stack<BranchContext> stack = new();
 
             int lastExprStart = 0;
 
-            for (int i = 0; i < code.Tokens.Length; i++)
+            for (int i = 0; i < code.Length; i++)
             {
-                Token token = code.Tokens[i];
+                Token token = code[i];
                 string symbol = token.Base.Symbol;
                 switch (token.Base.Type)
                 {
@@ -337,12 +375,12 @@ namespace userinterface.Models.Script.Generation
                             break;
                         }
 
-                        throw new InterpreterException(token.Line, "Unexpected branch end!");
+                        throw new InterpreterException("Unexpected branch end!", token.Line);
                     case TokenType.Assignment:
                         InstructionType type = OnAssignment(symbol, token.Line);
 
                         // MUTATES i, because we don't want to add this token again on the next iteration
-                        BaseToken target = code.Tokens[++i].Base;
+                        BaseToken target = code[++i].Base;
                         if (target.Type == TokenType.Input)
                         {
                             OnAssignment(InstructionType.LoadIn, type, InstructionType.StoreIn,
@@ -371,7 +409,7 @@ namespace userinterface.Models.Script.Generation
                         Instructions.AddInstruction(OnFunction(symbol, token.Line));
                         break;
                     default:
-                        throw new InterpreterException(token.Line, "Cannot emit token!");
+                        throw new InterpreterException("Cannot emit token!", token.Line);
                 }
             }
 
@@ -403,7 +441,7 @@ namespace userinterface.Models.Script.Generation
                 Tokens.CONST_TAU => InstructionType.LoadTau,
                 Tokens.ZERO => InstructionType.LoadZero,
 
-                _ => throw new InterpreterException(line, "Cannot emit constant!"),
+                _ => throw new InterpreterException("Cannot emit constant!", line),
             };
         }
 
@@ -419,7 +457,7 @@ namespace userinterface.Models.Script.Generation
                 Tokens.IMOD => InstructionType.Mod,
                 Tokens.IEXP => InstructionType.Exp,
 
-                _ => throw new InterpreterException(line, "Cannot emit assignment!"),
+                _ => throw new InterpreterException("Cannot emit assignment!", line),
             };
         }
 
@@ -475,7 +513,7 @@ namespace userinterface.Models.Script.Generation
 
                     break;
                 default:
-                    throw new InterpreterException(line, "Cannot emit arithmetic!");
+                    throw new InterpreterException("Cannot emit arithmetic!", line);
             }
         }
 
@@ -493,7 +531,7 @@ namespace userinterface.Models.Script.Generation
                 Tokens.NE => InstructionType.Ne,
                 Tokens.NOT => InstructionType.Not,
 
-                _ => throw new InterpreterException(line, "Cannot emit comparison!"),
+                _ => throw new InterpreterException("Cannot emit comparison!", line),
             };
         }
 
@@ -524,13 +562,22 @@ namespace userinterface.Models.Script.Generation
                 Tokens.ATAN     => InstructionType.Atan,
                 Tokens.ATANH    => InstructionType.Atanh,
 
-                _ => throw new InterpreterException(line, "Cannot emit function!"),
+                _ => throw new InterpreterException("Cannot emit function!", line),
             };
         }
 
         #endregion Jump Tables
     }
 
+    /// <summary>
+    /// Represents a collection of identifiers mapped to addresses.
+    /// </summary>
+    public class MemoryMap : Dictionary<string, MemoryAddress>, IDictionary<string, MemoryAddress>
+    { }
+
+    /// <summary>
+    /// Represents a list of instructions.
+    /// </summary>
     public class InstructionList : List<Instruction>
     {
         public InstructionList() : base() { }
@@ -558,31 +605,4 @@ namespace userinterface.Models.Script.Generation
             Insert(address, instruction);
         }
     }
-
-    public class MemoryHeap
-    {
-        private readonly Number[] Mem;
-
-        public MemoryHeap(int capacity)
-        {
-            Mem = new Number[capacity];
-        }
-
-        public double this[MemoryAddress address]
-        {
-            get { return Mem[address]; }
-            set { Mem[address] = value; }
-        }
-
-        public void CopyFrom(MemoryHeap other)
-        {
-            other.Mem.CopyTo(Mem, 0);
-        }
-    }
-
-    public class MemoryMap : Dictionary<string, MemoryAddress>, IDictionary<string, MemoryAddress>
-    { }
-
-    public class ProgramStack : Stack<Number>
-    { }
 }

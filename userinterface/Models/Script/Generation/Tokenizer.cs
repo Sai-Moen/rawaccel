@@ -324,12 +324,15 @@ namespace userinterface.Models.Script.Generation
 
         private void TokenizerError(string error)
         {
-            throw new TokenizerException(CurrentLine, error);
+            throw new TokenizerException(error, CurrentLine);
         }
     }
 
-    public class TokenizerException : ScriptException
+    /// <summary>
+    /// Exception for tokenizing-related errors.
+    /// </summary>
+    public sealed class TokenizerException : GenerationException
     {
-        public TokenizerException(uint line, string message) : base($"Line {line}: {message}") { }
+        public TokenizerException(string message, uint line) : base(message, line) { }
     }
 }
