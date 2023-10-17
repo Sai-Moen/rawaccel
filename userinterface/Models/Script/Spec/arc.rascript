@@ -2,9 +2,9 @@ Arc mode by SaiMoen
 
 [
 
-	Offset := 0;
+	Input_Offset := 0 >= 0;
 	Limit := 4;
-	Midpoint := 16;
+	Midpoint := 16 > 0;
 
 ]
 
@@ -12,8 +12,8 @@ Arc mode by SaiMoen
 
 {
 
-	if (x > Offset):
-		x -= Offset;
+	if (x > Input_Offset):
+		x -= Input_Offset;
 		y += (pLimit / x) * (x - Midpoint * atan(x / Midpoint));
 	:
 

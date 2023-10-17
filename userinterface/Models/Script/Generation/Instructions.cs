@@ -144,9 +144,9 @@ namespace userinterface.Models.Script.Generation
     public readonly record struct Number(double Value)
     {
         public const int SIZE = sizeof(double);
-        public const double ZERO = 0;
+        public const double ZERO = 0.0;
         public const double DEFAULT_X = ZERO;
-        public const double DEFAULT_Y = 1;
+        public const double DEFAULT_Y = 1.0;
 
         public static implicit operator Number(bool value)
         {
@@ -160,6 +160,7 @@ namespace userinterface.Models.Script.Generation
 
         public static explicit operator Number(Token token)
         {
+            Debug.Assert(token.Base.Type == TokenType.Number);
             return Parse(token.Base.Symbol, token.Line);
         }
 
@@ -291,21 +292,18 @@ namespace userinterface.Models.Script.Generation
     /// </summary>
     public static class Instructions
     {
-        public static int SizeOf(this InstructionType type)
+        public static int SizeOf(this InstructionType type) => type switch
         {
-            return type switch
-            {
-                InstructionType.LoadNumber  => Number.SIZE,
+            InstructionType.LoadNumber  => Number.SIZE,
 
-                InstructionType.Jmp         => CodeAddress.SIZE,
-                InstructionType.Jz          => CodeAddress.SIZE,
+            InstructionType.Jmp         => CodeAddress.SIZE,
+            InstructionType.Jz          => CodeAddress.SIZE,
 
-                InstructionType.Load        => MemoryAddress.SIZE,
-                InstructionType.Store       => MemoryAddress.SIZE,
+            InstructionType.Load        => MemoryAddress.SIZE,
+            InstructionType.Store       => MemoryAddress.SIZE,
 
-                _ => 0,
-            };
-        }
+            _ => 0,
+        };
     }
 
     /// <summary>
@@ -432,34 +430,28 @@ namespace userinterface.Models.Script.Generation
 
         #region Jump Tables
 
-        private static InstructionType OnConstant(string symbol, uint line)
+        private static InstructionType OnConstant(string symbol, uint line) => symbol switch
         {
-            return symbol switch
-            {
-                Tokens.CONST_E => InstructionType.LoadE,
-                Tokens.CONST_PI => InstructionType.LoadPi,
-                Tokens.CONST_TAU => InstructionType.LoadTau,
-                Tokens.ZERO => InstructionType.LoadZero,
+            Tokens.CONST_E => InstructionType.LoadE,
+            Tokens.CONST_PI => InstructionType.LoadPi,
+            Tokens.CONST_TAU => InstructionType.LoadTau,
+            Tokens.ZERO => InstructionType.LoadZero,
 
-                _ => throw new InterpreterException("Cannot emit constant!", line),
-            };
-        }
+            _ => throw new InterpreterException("Cannot emit constant!", line),
+        };
 
-        private static InstructionType OnAssignment(string symbol, uint line)
+        private static InstructionType OnAssignment(string symbol, uint line) => symbol switch
         {
-            return symbol switch
-            {
-                Tokens.ASSIGN => InstructionType.Store,
-                Tokens.IADD => InstructionType.Add,
-                Tokens.ISUB => InstructionType.Sub,
-                Tokens.IMUL => InstructionType.Mul,
-                Tokens.IDIV => InstructionType.Div,
-                Tokens.IMOD => InstructionType.Mod,
-                Tokens.IEXP => InstructionType.Exp,
+            Tokens.ASSIGN => InstructionType.Store,
+            Tokens.IADD => InstructionType.Add,
+            Tokens.ISUB => InstructionType.Sub,
+            Tokens.IMUL => InstructionType.Mul,
+            Tokens.IDIV => InstructionType.Div,
+            Tokens.IMOD => InstructionType.Mod,
+            Tokens.IEXP => InstructionType.Exp,
 
-                _ => throw new InterpreterException("Cannot emit assignment!", line),
-            };
-        }
+            _ => throw new InterpreterException("Cannot emit assignment!", line),
+        };
 
         private void OnAssignment(
             InstructionType load,
@@ -517,54 +509,48 @@ namespace userinterface.Models.Script.Generation
             }
         }
 
-        private static InstructionType OnComparison(string symbol, uint line)
+        private static InstructionType OnComparison(string symbol, uint line) => symbol switch
         {
-            return symbol switch
-            {
-                Tokens.OR => InstructionType.Or,
-                Tokens.AND => InstructionType.And,
-                Tokens.LT => InstructionType.Lt,
-                Tokens.GT => InstructionType.Gt,
-                Tokens.LE => InstructionType.Le,
-                Tokens.GE => InstructionType.Ge,
-                Tokens.EQ => InstructionType.Eq,
-                Tokens.NE => InstructionType.Ne,
-                Tokens.NOT => InstructionType.Not,
+            Tokens.OR => InstructionType.Or,
+            Tokens.AND => InstructionType.And,
+            Tokens.LT => InstructionType.Lt,
+            Tokens.GT => InstructionType.Gt,
+            Tokens.LE => InstructionType.Le,
+            Tokens.GE => InstructionType.Ge,
+            Tokens.EQ => InstructionType.Eq,
+            Tokens.NE => InstructionType.Ne,
+            Tokens.NOT => InstructionType.Not,
 
-                _ => throw new InterpreterException("Cannot emit comparison!", line),
-            };
-        }
+            _ => throw new InterpreterException("Cannot emit comparison!", line),
+        };
 
-        private static InstructionType OnFunction(string symbol, uint line)
+        private static InstructionType OnFunction(string symbol, uint line) => symbol switch
         {
-            return symbol switch
-            {
-                Tokens.ABS      => InstructionType.Abs,
-                Tokens.SQRT     => InstructionType.Sqrt,
-                Tokens.CBRT     => InstructionType.Cbrt,
-                Tokens.ROUND    => InstructionType.Round,
-                Tokens.TRUNC    => InstructionType.Trunc,
-                Tokens.CEIL     => InstructionType.Ceil,
-                Tokens.FLOOR    => InstructionType.Floor,
-                Tokens.LOG      => InstructionType.Log,
-                Tokens.LOG2     => InstructionType.Log2,
-                Tokens.LOG10    => InstructionType.Log10,
-                Tokens.SIN      => InstructionType.Sin,
-                Tokens.SINH     => InstructionType.Sinh,
-                Tokens.ASIN     => InstructionType.Asin,
-                Tokens.ASINH    => InstructionType.Asinh,
-                Tokens.COS      => InstructionType.Cos,
-                Tokens.COSH     => InstructionType.Cosh,
-                Tokens.ACOS     => InstructionType.Acos,
-                Tokens.ACOSH    => InstructionType.Acosh,
-                Tokens.TAN      => InstructionType.Tan,
-                Tokens.TANH     => InstructionType.Tanh,
-                Tokens.ATAN     => InstructionType.Atan,
-                Tokens.ATANH    => InstructionType.Atanh,
+            Tokens.ABS      => InstructionType.Abs,
+            Tokens.SQRT     => InstructionType.Sqrt,
+            Tokens.CBRT     => InstructionType.Cbrt,
+            Tokens.ROUND    => InstructionType.Round,
+            Tokens.TRUNC    => InstructionType.Trunc,
+            Tokens.CEIL     => InstructionType.Ceil,
+            Tokens.FLOOR    => InstructionType.Floor,
+            Tokens.LOG      => InstructionType.Log,
+            Tokens.LOG2     => InstructionType.Log2,
+            Tokens.LOG10    => InstructionType.Log10,
+            Tokens.SIN      => InstructionType.Sin,
+            Tokens.SINH     => InstructionType.Sinh,
+            Tokens.ASIN     => InstructionType.Asin,
+            Tokens.ASINH    => InstructionType.Asinh,
+            Tokens.COS      => InstructionType.Cos,
+            Tokens.COSH     => InstructionType.Cosh,
+            Tokens.ACOS     => InstructionType.Acos,
+            Tokens.ACOSH    => InstructionType.Acosh,
+            Tokens.TAN      => InstructionType.Tan,
+            Tokens.TANH     => InstructionType.Tanh,
+            Tokens.ATAN     => InstructionType.Atan,
+            Tokens.ATANH    => InstructionType.Atanh,
 
-                _ => throw new InterpreterException("Cannot emit function!", line),
-            };
-        }
+            _ => throw new InterpreterException("Cannot emit function!", line),
+        };
 
         #endregion Jump Tables
     }

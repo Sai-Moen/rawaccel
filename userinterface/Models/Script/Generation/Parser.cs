@@ -73,10 +73,7 @@ namespace userinterface.Models.Script.Generation
         {
             while (!CmpCurrentTokenType(TokenType.ParameterEnd))
             {
-                DeclParam(TokenType.Identifier);
-                DeclParam(TokenType.Assignment);
-                DeclParam(TokenType.Number);
-                DeclParam(TokenType.Terminator);
+                DeclParam();
             }
 
             AdvanceToken();
@@ -87,10 +84,7 @@ namespace userinterface.Models.Script.Generation
             // Parameters MUST be coerced before this!
             while (!CmpCurrentTokenType(TokenType.CalculationStart))
             {
-                DeclVar(TokenType.Identifier);
-                DeclVar(TokenType.Assignment);
-                ExprVar();
-                AdvanceToken();
+                DeclVar();
             }
 
             AdvanceToken();
@@ -139,14 +133,13 @@ namespace userinterface.Models.Script.Generation
 
         #region Declarations
 
-        private void DeclParam(TokenType type)
+        private void DeclParam()
         {
-            (int idx, Token token) = DeclExpect(type);
-
-            if (type == TokenType.Identifier)
             {
+                int previousIndex = DeclExpect(TokenType.Identifier);
+                Token token = PreviousToken;
                 token = token with { Base = token.Base with { Type = TokenType.Parameter } };
-                TokenList[idx] = token;
+                TokenList[previousIndex] = token;
 
                 Debug.Assert(ParameterNames.Count <= Constants.MAX_PARAMETERS);
                 if (ParameterNames.Count == Constants.MAX_PARAMETERS)
@@ -155,11 +148,17 @@ namespace userinterface.Models.Script.Generation
                 }
 
                 ParameterNames.Add(token.Base.Symbol);
+                TokenBuffer.Enqueue(token);
             }
-            
-            if (type == TokenType.Terminator)
+
+            BufferExpectedToken(TokenType.Assignment);
+            BufferExpectedToken(TokenType.Number);
+
+            ParseGuards();
+
             {
-                Debug.Assert(TokenBuffer.Count == 3);
+                _ = DeclExpect(TokenType.Terminator);
+
                 Token t = TokenBuffer.Dequeue();
                 Token eq = TokenBuffer.Dequeue();
                 Token value = TokenBuffer.Dequeue();
@@ -169,22 +168,66 @@ namespace userinterface.Models.Script.Generation
                     ParserError($"Expected {Tokens.ASSIGN}");
                 }
 
-                Parameters.Add(new(t, value));
-            }
-            else
-            {
-                TokenBuffer.Enqueue(token);
+                Token? minGuard = TokenBuffer.Dequeue().NullifyUndefined();
+                Token? min      = TokenBuffer.Dequeue().NullifyUndefined();
+                Token? maxGuard = TokenBuffer.Dequeue().NullifyUndefined();
+                Token? max      = TokenBuffer.Dequeue().NullifyUndefined();
+
+                Parameters.Add(new(t, value, minGuard, min, maxGuard, max));
             }
         }
 
-        private void DeclVar(TokenType type)
+        private void ParseGuards(bool firstguard = true)
         {
-            (int idx, Token token) = DeclExpect(type);
-
-            if (type == TokenType.Identifier)
+            void AddDummy(uint amount)
             {
+                for (uint i = 0; i < amount; i++)
+                {
+                    TokenBuffer.Enqueue(new(new(TokenType.Undefined, "")));
+                }
+            }
+
+            if (DeclAccept(TokenType.Comparison))
+            {
+                if (PreviousToken.IsGuardMinimum())
+                {
+                    TokenBuffer.Enqueue(PreviousToken);
+                    BufferExpectedToken(TokenType.Number);
+
+                    ParseGuards(false);
+                }
+                else if (PreviousToken.IsGuardMaximum())
+                {
+                    if (firstguard)
+                    {
+                        AddDummy(2);
+                    }
+
+                    TokenBuffer.Enqueue(PreviousToken);
+                    BufferExpectedToken(TokenType.Number);
+                }
+                else
+                {
+                    ParserError("Incorrect comparison for Guard!");
+                }
+            }
+            else if (firstguard)
+            {
+                AddDummy(4);
+            }
+            else
+            {
+                AddDummy(2);
+            }
+        }
+
+        private void DeclVar()
+        {
+            {
+                int previousIndex = DeclExpect(TokenType.Identifier);
+                Token token = PreviousToken;
                 token = token with { Base = token.Base with { Type = TokenType.Variable } };
-                TokenList[idx] = token;
+                TokenList[previousIndex] = token;
 
                 Debug.Assert(VariableNames.Count <= Constants.MAX_VARIABLES);
                 if (VariableNames.Count == Constants.MAX_VARIABLES)
@@ -197,8 +240,13 @@ namespace userinterface.Models.Script.Generation
                 }
 
                 VariableNames.Add(token.Base.Symbol);
+                TokenBuffer.Enqueue(token);
             }
-            TokenBuffer.Enqueue(token);
+
+            BufferExpectedToken(TokenType.Assignment);
+
+            ExprVar();
+            AdvanceToken();
         }
 
         private void ExprVar()
@@ -229,15 +277,17 @@ namespace userinterface.Models.Script.Generation
                     case TokenType.Constant:
                         output.Add(token);
                         continue;
+                    case TokenType.Arithmetic:
+                        OnPrecedence(output, token);
+                        continue;
+                    case TokenType.ArgumentSeparator:
+                        continue;
                     case TokenType.Function:
                     case TokenType.Open:
                         OperatorStack.Push(token);
                         continue;
                     case TokenType.Close:
                         OnClose(output);
-                        continue;
-                    case TokenType.Arithmetic:
-                        OnPrecedence(output, token);
                         continue;
                     default:
                         ParserError("Unexpected expression token!");
@@ -261,18 +311,21 @@ namespace userinterface.Models.Script.Generation
             Variables.Add(new(t, output));
         }
 
-        private (int, Token) DeclExpect(TokenType type)
+        private void BufferExpectedToken(TokenType type)
         {
-            // Accept has a side-effect, better save these here!
-            int idx = CurrentIndex;
-            Token token = CurrentToken;
+            _ = DeclExpect(type);
+            TokenBuffer.Enqueue(PreviousToken);
+        }
 
-            if (!DeclAccept(type))
+        private int DeclExpect(TokenType type)
+        {
+            if (DeclAccept(type))
             {
-                ParserError("Unexpected declaration!");
+                return CurrentIndex - 1;
             }
 
-            return (idx, token);
+            ParserError("Unexpected declaration!");
+            return -1;
         }
 
         private bool DeclAccept(TokenType type)
@@ -362,16 +415,18 @@ namespace userinterface.Models.Script.Generation
                     case TokenType.Constant:
                         output.Add(token);
                         continue;
+                    case TokenType.Arithmetic:
+                    case TokenType.Comparison:
+                        OnPrecedence(output, token);
+                        continue;
+                    case TokenType.ArgumentSeparator:
+                        continue;
                     case TokenType.Function:
                     case TokenType.Open:
                         OperatorStack.Push(token);
                         continue;
                     case TokenType.Close:
                         OnClose(output);
-                        continue;
-                    case TokenType.Arithmetic:
-                    case TokenType.Comparison:
-                        OnPrecedence(output, token);
                         continue;
                     default:
                         ParserError("Unexpected expression token!");

@@ -4,7 +4,7 @@ namespace userinterface.Models.Script.Test
 {
     public class Misc
     {
-        private void Perf(Interpreter interpreter)
+        public static void Perf(Interpreter interpreter)
         {
             const int cap = 0x1000;
             double[] ys = new double[cap];

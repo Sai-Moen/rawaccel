@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 
 namespace userinterface.Models.Script.Generation
@@ -33,16 +34,88 @@ namespace userinterface.Models.Script.Generation
     }
 
     /// <summary>
-    /// Saves the Token of a Parameter and its (default) value.
+    /// The operation to validate a Number against a certain value with.
     /// </summary>
-    public record ParameterAssignment(string Name, Number Value)
+    public enum Guard
     {
-        public ParameterAssignment(Token token, Token value)
-            : this(token.Base.Symbol, (Number)value)
+        None,
+        Less,
+        LessEq,
+        Greater,
+        GreaterEq,
+    }
+
+    /// <summary>
+    /// Determines how to validate a parameter.
+    /// </summary>
+    public record ParameterValidation(Guard GuardType, Number GuardValue = default)
+    {
+        public bool IsValid(Number value) => GuardType switch
+        {
+            Guard.None => true,
+            Guard.Less => value < GuardValue,
+            Guard.LessEq => value <= GuardValue,
+            Guard.Greater => value > GuardValue,
+            Guard.GreaterEq => value >= GuardValue,
+
+            _ => throw new ParserException("Invalid Guard value!")
+        };
+    }
+
+    /// <summary>
+    /// Saves the Token of a Parameter and its (default) value.
+    /// Additionally, information about the bounds (Guard) of the parameter can be saved.
+    /// </summary>
+    public class ParameterAssignment
+    {
+        public ParameterAssignment(
+            Token token, Token value,
+            Token? minGuard, Token? min,
+            Token? maxGuard, Token? max)
         {
             Debug.Assert(token.Base.Type == TokenType.Parameter);
+            Name = token.Base.Symbol;
+
             Debug.Assert(value.Base.Type == TokenType.Number);
+            Value = (Number)value;
+
+            Min = GuardHelper(minGuard, min, OnMinGuard);
+            Max = GuardHelper(maxGuard, max, OnMaxGuard);
         }
+
+        public string Name { get; }
+
+        public Number Value { get; }
+
+        public ParameterValidation Min { get; }
+
+        public ParameterValidation Max { get; }
+
+        private static ParameterValidation GuardHelper(Token? token, Token? value, Func<string, Guard> func)
+        {
+            if (token is not null && value is not null)
+            {
+                Guard guard = func(token.Base.Symbol);
+                return new ParameterValidation(guard, (Number)value);
+            }
+            return new ParameterValidation(Guard.None);
+        }
+
+        private static Guard OnMinGuard(string symbol) => symbol switch
+        {
+            Tokens.GT => Guard.Greater,
+            Tokens.GE => Guard.GreaterEq,
+
+            _ => throw new ParserException("Incorrect guard! (minimum)")
+        };
+
+        private static Guard OnMaxGuard(string symbol) => symbol switch
+        {
+            Tokens.LT => Guard.Less,
+            Tokens.LE => Guard.LessEq,
+
+            _ => throw new ParserException("Incorrect guard! (maximum)")
+        };
     }
 
     /// <summary>

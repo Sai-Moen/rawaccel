@@ -8,7 +8,7 @@ namespace userinterface.Models.Script.Generation
     /// </summary>
     public enum TokenType
     {
-        Undefined,
+        Undefined, // Doesn't mean invalid right away, depends on if you expect a certain symbol
 
         Identifier,
         Number,
@@ -34,7 +34,10 @@ namespace userinterface.Models.Script.Generation
         Assignment,
         Arithmetic,
         Comparison,
+        GuardMinimum,
+        GuardMaximum,
 
+        ArgumentSeparator,
         Function,
     }
 
@@ -71,61 +74,63 @@ namespace userinterface.Models.Script.Generation
 
         // Keywords
         // Calculation IO
-        public const string INPUT           = "x";
-        public const string OUTPUT          = "y";
+        public const string INPUT  = "x";
+        public const string OUTPUT = "y";
 
         // Unary Minus Hack
-        public const string ZERO            = "zero";
+        public const string ZERO = "zero";
 
         // Constants
-        public const string CONST_E         = "e";
-        public const string CONST_PI        = "pi";
-        public const string CONST_TAU       = "tau";
+        public const string CONST_E   = "e";
+        public const string CONST_PI  = "pi";
+        public const string CONST_TAU = "tau";
 
         // Branching
-        public const string BRANCH_IF       = "if";
-        public const string BRANCH_WHILE    = "while";
-        public const string BRANCH_END      = ""; // Using an empty string to avoid tokenization, be careful...
+        public const string BRANCH_IF    = "if";
+        public const string BRANCH_WHILE = "while";
+        public const string BRANCH_END   = ""; // Using an empty string to avoid tokenization, be careful...
 
         // Separators
         // Delimiters
-        public const string SPACE           = " ";
-        public const string UNDER           = "_";
-        public const string FPOINT          = ".";
-        public const string TERMINATOR      = ";";
-        public const string BLOCK           = ":";
+        public const string SPACE      = " ";
+        public const string UNDER      = "_"; // For: spaces in parameter names
+        public const string ARG_SEP    = ","; // For: multiple function arguments
+        public const string FPOINT     = ".";
+        public const string TERMINATOR = ";";
+        public const string BLOCK      = ":";
 
         // Precendence
-        public const string OPEN            = "(";
-        public const string CLOSE           = ")";
+        public const string OPEN  = "(";
+        public const string CLOSE = ")";
 
         // Header (Parameters)
-        public const string PARAMS_START    = "[";
-        public const string PARAMS_END      = "]";
+        public const string PARAMS_START = "[";
+        public const string PARAMS_END   = "]";
 
         // Calculation
-        public const string CALC_START      = "{";
-        public const string CALC_END        = "}";
+        public const string CALC_START = "{";
+        public const string CALC_END   = "}";
 
         // Operators
         // Assignment
-        public const string ASSIGN  = ":=";
-        public const string SECOND  = "=";     // if there is a second character, it should be this!
+        public const string ASSIGN = ":=";
+        public const string SECOND = "="; // if there is a second character, it should be this!
+
         // Inline Arithmetic
-        public const string IADD    = "+=";
-        public const string ISUB    = "-=";
-        public const string IMUL    = "*=";
-        public const string IDIV    = "/=";
-        public const string IMOD    = "%=";
-        public const string IEXP    = "^=";
+        public const string IADD = "+=";
+        public const string ISUB = "-=";
+        public const string IMUL = "*=";
+        public const string IDIV = "/=";
+        public const string IMOD = "%=";
+        public const string IEXP = "^=";
 
         // Normal Arithmetic
-        public const string ADD     = "+";
-        public const string SUB     = "-";
-        public const string MUL     = "*";
-        public const string DIV     = "/";
-        public const string MOD     = "%";
-        public const string EXP     = "^";
+        public const string ADD = "+";
+        public const string SUB = "-";
+        public const string MUL = "*";
+        public const string DIV = "/";
+        public const string MOD = "%";
+        public const string EXP = "^";
 
         // Comparison
         public const string NOT = "!";
@@ -140,38 +145,38 @@ namespace userinterface.Models.Script.Generation
 
         // Functions
         // General
-        public const string ABS     = "abs";    // Absolute Value
-        public const string SQRT    = "sqrt";   // Square Root
-        public const string CBRT    = "cbrt";   // Cube Root
+        public const string ABS  = "abs";  // Absolute Value
+        public const string SQRT = "sqrt"; // Square Root
+        public const string CBRT = "cbrt"; // Cube Root
 
         // Rounding
-        public const string ROUND   = "round";  // Round to nearest
-        public const string TRUNC   = "trunc";  // Round to 0
-        public const string CEIL    = "ceil";   // Round to infinity
-        public const string FLOOR   = "floor";  // Round to -infinity
+        public const string ROUND = "round"; // Round to nearest
+        public const string TRUNC = "trunc"; // Round to 0
+        public const string CEIL  = "ceil";  // Round to infinity
+        public const string FLOOR = "floor"; // Round to -infinity
 
         // Logarithm
-        public const string LOG     = "log";    // Natural Logarithm (loge x)
-        public const string LOG2    = "log2";   // Binary Logarithm (log2 x)
-        public const string LOG10   = "log10";  // Decimal Logarithm (log10 x)
+        public const string LOG   = "log";   // Natural Logarithm (loge x)
+        public const string LOG2  = "log2";  // Binary Logarithm (log2 x)
+        public const string LOG10 = "log10"; // Decimal Logarithm (log10 x)
 
         // Sine
-        public const string SIN     = "sin";    // Normal
-        public const string SINH    = "sinh";   // Hyperbolic
-        public const string ASIN    = "asin";   // Inverse
-        public const string ASINH   = "asinh";  // Inverse Hyperbolic
+        public const string SIN   = "sin";   // Normal
+        public const string SINH  = "sinh";  // Hyperbolic
+        public const string ASIN  = "asin";  // Inverse
+        public const string ASINH = "asinh"; // Inverse Hyperbolic
 
         // Cosine
-        public const string COS     = "cos";    // Normal
-        public const string COSH    = "cosh";   // Hyperbolic
-        public const string ACOS    = "acos";   // Inverse
-        public const string ACOSH   = "acosh";  // Inverse Hyperbolic
+        public const string COS   = "cos";   // Normal
+        public const string COSH  = "cosh";  // Hyperbolic
+        public const string ACOS  = "acos";  // Inverse
+        public const string ACOSH = "acosh"; // Inverse Hyperbolic
 
         // Tangent
-        public const string TAN     = "tan";    // Normal
-        public const string TANH    = "tanh";   // Hyperbolic
-        public const string ATAN    = "atan";   // Inverse
-        public const string ATANH   = "atanh";  // Inverse Hyperbolic
+        public const string TAN   = "tan";   // Normal
+        public const string TANH  = "tanh";  // Hyperbolic
+        public const string ATAN  = "atan";  // Inverse
+        public const string ATANH = "atanh"; // Inverse Hyperbolic
 
         #endregion Constants
 
@@ -180,8 +185,8 @@ namespace userinterface.Models.Script.Generation
         private static readonly BaseToken[] ReservedArray =
         {
             // Special untyped 'characters' that show up sometimes
-            new(TokenType.Undefined, SECOND),
             new(TokenType.Undefined, UNDER),
+            new(TokenType.Undefined, SECOND),
 
             new(TokenType.Input, INPUT),
             new(TokenType.Output, OUTPUT),
@@ -195,6 +200,7 @@ namespace userinterface.Models.Script.Generation
             new(TokenType.Branch, BRANCH_WHILE),
             new(TokenType.BranchEnd, BRANCH_END),
 
+            new(TokenType.ArgumentSeparator, ARG_SEP),
             new(TokenType.Number, FPOINT),
             new(TokenType.Terminator, TERMINATOR),
             new(TokenType.Block, BLOCK),
@@ -305,35 +311,49 @@ namespace userinterface.Models.Script.Generation
             return s != EXP;
         }
 
-        public static int Precedence(string s)
+        public static int Precedence(string s) => s switch
         {
-            return s switch
-            {
-                OR => 0,
-                AND => 1,
+            OR => 0,
+            AND => 1,
 
-                EQ => 2,
-                NE => 2,
+            EQ => 2,
+            NE => 2,
 
-                LT => 3,
-                GT => 3,
-                LE => 3,
-                GE => 3,
+            LT => 3,
+            GT => 3,
+            LE => 3,
+            GE => 3,
 
-                ADD => 4,
-                SUB => 4,
+            ADD => 4,
+            SUB => 4,
 
-                MUL => 5,
-                DIV => 5,
-                MOD => 5,
+            MUL => 5,
+            DIV => 5,
+            MOD => 5,
 
-                EXP => 6,
+            EXP => 6,
 
-                NOT => 7,
+            NOT => 7,
 
-                _ => throw new ParserException("Unexpected Precedence call!"),
-            };
+            _ => throw new ParserException("Unexpected Precedence call!"),
+        };
+
+        public static Token? NullifyUndefined(this Token token)
+        {
+            return token.Base.Type == TokenType.Undefined ? null : token;
         }
+
+        public static bool IsGuardMinimum(this Token token) => token.Base.Symbol switch
+        {
+            GT or GE => true,
+            _ => false,
+        };
+
+        public static bool IsGuardMaximum(this Token token) => token.Base.Symbol switch
+        {
+            LT or LE => true,
+            _ => false,
+        };
 
         #endregion Methods
     }
