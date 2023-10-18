@@ -150,13 +150,22 @@ namespace userinterface.Models.Script.Generation
 
         private void Exec(Program program, ProgramStack stack)
         {
-            Number Op2(Func<Number, Number, Number> func)
+            void Fn1(Func<Number, Number> func)
+            {
+                Debug.Assert(stack.Count >= 1);
+                stack.Push(func(stack.Pop()));
+            }
+
+            void Fn2(Func<Number, Number, Number> func)
             {
                 Debug.Assert(stack.Count >= 2);
+                stack.Push(func(stack.Pop(), stack.Pop()));
+            }
 
-                Number right = stack.Pop();
-                Number left = stack.Pop();
-                return func(left, right);
+            void Fn3(Func<Number, Number, Number, Number> func)
+            {
+                Debug.Assert(stack.Count >= 3);
+                stack.Push(func(stack.Pop(), stack.Pop(), stack.Pop()));
             }
 
             for (int i = 0; i < program.Instructions.Count; i++)
@@ -164,186 +173,207 @@ namespace userinterface.Models.Script.Generation
                 Instruction instruction = program.Instructions[i];
                 switch (instruction.Type)
                 {
-                    case InstructionType.Start:
-                        break;
-                    case InstructionType.End:
-                        if (i != program.Instructions.Count - 1)
-                        {
-                            InterpreterError("Unexpected program end!");
-                        }
-                        Debug.Assert(stack.Count == 0);
-                        return;
-                    case InstructionType.Load:
-                        MemoryAddress loadAddress = (MemoryAddress)instruction;
-                        stack.Push(Volatile[loadAddress]);
-                        break;
-                    case InstructionType.Store:
-                        MemoryAddress storeAddress = (MemoryAddress)instruction;
-                        Volatile[storeAddress] = stack.Pop();
-                        break;
-                    case InstructionType.LoadIn:
-                        stack.Push(X);
-                        break;
-                    case InstructionType.StoreIn:
-                        X = stack.Pop();
-                        break;
-                    case InstructionType.LoadOut:
-                        stack.Push(Y);
-                        break;
-                    case InstructionType.StoreOut:
-                        Y = stack.Pop();
-                        break;
-                    case InstructionType.LoadNumber:
-                        Number number = (Number)instruction;
-                        stack.Push(number);
-                        break;
-                    case InstructionType.Swap:
-                        Number swap1 = stack.Pop();
-                        Number swap2 = stack.Pop();
-                        stack.Push(swap1);
-                        stack.Push(swap2);
-                        break;
-                    case InstructionType.Jmp:
-                        CodeAddress jmpAddress = (CodeAddress)instruction;
-                        i = jmpAddress;
-                        break;
-                    case InstructionType.Jz:
-                        CodeAddress jzAddress = (CodeAddress)instruction;
-                        if (!stack.Pop())
-                        {
-                            i = jzAddress;
-                        }
-                        break;
-                    case InstructionType.LoadE:
-                        stack.Push(Math.E);
-                        break;
-                    case InstructionType.LoadPi:
-                        stack.Push(Math.PI);
-                        break;
-                    case InstructionType.LoadTau:
-                        stack.Push(Math.Tau);
-                        break;
-                    case InstructionType.LoadZero:
-                        stack.Push(Number.ZERO);
-                        break;
-                    case InstructionType.Add:
-                        stack.Push(Op2((x, y) => x + y));
-                        break;
-                    case InstructionType.Sub:
-                        stack.Push(Op2((x, y) => x - y));
-                        break;
-                    case InstructionType.Mul:
-                        stack.Push(Op2((x, y) => x * y));
-                        break;
-                    case InstructionType.Div:
-                        stack.Push(Op2((x, y) => x / y));
-                        break;
-                    case InstructionType.Mod:
-                        stack.Push(Op2((x, y) => x % y));
-                        break;
-                    case InstructionType.Exp:
-                        stack.Push(Op2((x, y) => Math.Pow(x, y)));
-                        break;
-                    case InstructionType.ExpE: // implicit first argument
-                        stack.Push(Math.Exp(stack.Pop()));
-                        break;
-                    case InstructionType.Or:
-                        stack.Push(Op2((x, y) => x | y));
-                        break;
-                    case InstructionType.And:
-                        stack.Push(Op2((x, y) => x & y));
-                        break;
-                    case InstructionType.Lt:
-                        stack.Push(Op2((x, y) => x < y));
-                        break;
-                    case InstructionType.Gt:
-                        stack.Push(Op2((x, y) => x > y));
-                        break;
-                    case InstructionType.Le:
-                        stack.Push(Op2((x, y) => x <= y));
-                        break;
-                    case InstructionType.Ge:
-                        stack.Push(Op2((x, y) => x >= y));
-                        break;
-                    case InstructionType.Eq:
-                        stack.Push(Op2((x, y) => x == y));
-                        break;
-                    case InstructionType.Ne:
-                        stack.Push(Op2((x, y) => x != y));
-                        break;
-                    case InstructionType.Not: // unary
-                        stack.Push(!stack.Pop());
-                        break;
-                    case InstructionType.Abs:
-                        stack.Push(Math.Abs(stack.Pop()));
-                        break;
-                    case InstructionType.Sqrt:
-                        stack.Push(Math.Sqrt(stack.Pop()));
-                        break;
-                    case InstructionType.Cbrt:
-                        stack.Push(Math.Cbrt(stack.Pop()));
-                        break;
-                    case InstructionType.Round:
-                        stack.Push(Math.Round(stack.Pop()));
-                        break;
-                    case InstructionType.Trunc:
-                        stack.Push(Math.Truncate(stack.Pop()));
-                        break;
-                    case InstructionType.Ceil:
-                        stack.Push(Math.Ceiling(stack.Pop()));
-                        break;
-                    case InstructionType.Floor:
-                        stack.Push(Math.Floor(stack.Pop()));
-                        break;
-                    case InstructionType.Log:
-                        stack.Push(Math.Log(stack.Pop()));
-                        break;
-                    case InstructionType.Log2:
-                        stack.Push(Math.Log2(stack.Pop()));
-                        break;
-                    case InstructionType.Log10:
-                        stack.Push(Math.Log10(stack.Pop()));
-                        break;
-                    case InstructionType.Sin:
-                        stack.Push(Math.Sin(stack.Pop()));
-                        break;
-                    case InstructionType.Sinh:
-                        stack.Push(Math.Sinh(stack.Pop()));
-                        break;
-                    case InstructionType.Asin:
-                        stack.Push(Math.Asin(stack.Pop()));
-                        break;
-                    case InstructionType.Asinh:
-                        stack.Push(Math.Asinh(stack.Pop()));
-                        break;
-                    case InstructionType.Cos:
-                        stack.Push(Math.Cos(stack.Pop()));
-                        break;
-                    case InstructionType.Cosh:
-                        stack.Push(Math.Cosh(stack.Pop()));
-                        break;
-                    case InstructionType.Acos:
-                        stack.Push(Math.Acos(stack.Pop()));
-                        break;
-                    case InstructionType.Acosh:
-                        stack.Push(Math.Acosh(stack.Pop()));
-                        break;
-                    case InstructionType.Tan:
-                        stack.Push(Math.Tan(stack.Pop()));
-                        break;
-                    case InstructionType.Tanh:
-                        stack.Push(Math.Tanh(stack.Pop()));
-                        break;
-                    case InstructionType.Atan:
-                        stack.Push(Math.Atan(stack.Pop()));
-                        break;
-                    case InstructionType.Atanh:
-                        stack.Push(Math.Atanh(stack.Pop()));
-                        break;
-                    case InstructionType.Count:
-                    default:
-                        InterpreterError("Not an instruction!");
-                        break;
+                case InstructionType.Start:
+                    break;
+                case InstructionType.End:
+                    if (i != program.Instructions.Count - 1)
+                    {
+                        InterpreterError("Unexpected program end!");
+                    }
+                    Debug.Assert(stack.Count == 0);
+                    return;
+                case InstructionType.Load:
+                    MemoryAddress loadAddress = (MemoryAddress)instruction;
+                    stack.Push(Volatile[loadAddress]);
+                    break;
+                case InstructionType.Store:
+                    MemoryAddress storeAddress = (MemoryAddress)instruction;
+                    Volatile[storeAddress] = stack.Pop();
+                    break;
+                case InstructionType.LoadIn:
+                    stack.Push(X);
+                    break;
+                case InstructionType.StoreIn:
+                    X = stack.Pop();
+                    break;
+                case InstructionType.LoadOut:
+                    stack.Push(Y);
+                    break;
+                case InstructionType.StoreOut:
+                    Y = stack.Pop();
+                    break;
+                case InstructionType.LoadNumber:
+                    Number number = (Number)instruction;
+                    stack.Push(number);
+                    break;
+                case InstructionType.Swap:
+                    Number swap1 = stack.Pop();
+                    Number swap2 = stack.Pop();
+                    stack.Push(swap1);
+                    stack.Push(swap2);
+                    break;
+                case InstructionType.Jmp:
+                    CodeAddress jmpAddress = (CodeAddress)instruction;
+                    i = jmpAddress;
+                    break;
+                case InstructionType.Jz:
+                    CodeAddress jzAddress = (CodeAddress)instruction;
+                    if (!stack.Pop())
+                    {
+                        i = jzAddress;
+                    }
+                    break;
+                case InstructionType.LoadE:
+                    stack.Push(Math.E);
+                    break;
+                case InstructionType.LoadPi:
+                    stack.Push(Math.PI);
+                    break;
+                case InstructionType.LoadTau:
+                    stack.Push(Math.Tau);
+                    break;
+                case InstructionType.LoadZero:
+                    stack.Push(Number.ZERO);
+                    break;
+                case InstructionType.Add:
+                    Fn2((y, x) => x + y);
+                    break;
+                case InstructionType.Sub:
+                    Fn2((y, x) => x - y);
+                    break;
+                case InstructionType.Mul:
+                    Fn2((y, x) => x * y);
+                    break;
+                case InstructionType.Div:
+                    Fn2((y, x) => x / y);
+                    break;
+                case InstructionType.Mod:
+                    Fn2((y, x) => x % y);
+                    break;
+                case InstructionType.Pow:
+                    Fn2((y, x) => Math.Pow(x, y));
+                    break;
+                case InstructionType.Exp: // implicit first argument
+                    Fn1(a => Math.Exp(a));
+                    break;
+                case InstructionType.Or:
+                    Fn2((y, x) => x | y);
+                    break;
+                case InstructionType.And:
+                    Fn2((y, x) => x & y);
+                    break;
+                case InstructionType.Lt:
+                    Fn2((y, x) => x < y);
+                    break;
+                case InstructionType.Gt:
+                    Fn2((y, x) => x > y);
+                    break;
+                case InstructionType.Le:
+                    Fn2((y, x) => x <= y);
+                    break;
+                case InstructionType.Ge:
+                    Fn2((y, x) => x >= y);
+                    break;
+                case InstructionType.Eq:
+                    Fn2((y, x) => x == y);
+                    break;
+                case InstructionType.Ne:
+                    Fn2((y, x) => x != y);
+                    break;
+                case InstructionType.Not: // unary
+                    stack.Push(!stack.Pop());
+                    break;
+                case InstructionType.Abs:
+                    Fn1(a => Math.Abs(a));
+                    break;
+                case InstructionType.Sqrt:
+                    Fn1(a => Math.Sqrt(a));
+                    break;
+                case InstructionType.Cbrt:
+                    Fn1(a => Math.Cbrt(a));
+                    break;
+                case InstructionType.Sign:
+                    Fn1(a => Math.Sign(a));
+                    break;
+                case InstructionType.CopySign:
+                    Fn2((b, a) => Math.CopySign(a, b));
+                    break;
+                case InstructionType.Round:
+                    Fn1(a => Math.Round(a));
+                    break;
+                case InstructionType.Trunc:
+                    Fn1(a => Math.Truncate(a));
+                    break;
+                case InstructionType.Ceil:
+                    Fn1(a => Math.Ceiling(a));
+                    break;
+                case InstructionType.Floor:
+                    Fn1(a => Math.Floor(a));
+                    break;
+                case InstructionType.Clamp:
+                    Fn3((c, b, a) => Math.Clamp(a, b, c));
+                    break;
+                case InstructionType.Log:
+                    Fn1(a => Math.Log(a));
+                    break;
+                case InstructionType.Log2:
+                    Fn1(a => Math.Log2(a));
+                    break;
+                case InstructionType.Log10:
+                    Fn1(a => Math.Log10(a));
+                    break;
+                case InstructionType.Logx:
+                    Fn2((b, a) => Math.Log(a, b));
+                    break;
+                case InstructionType.Sin:
+                    Fn1(a => Math.Sin(a));
+                    break;
+                case InstructionType.Sinh:
+                    Fn1(a => Math.Sinh(a));
+                    break;
+                case InstructionType.Asin:
+                    Fn1(a => Math.Asin(a));
+                    break;
+                case InstructionType.Asinh:
+                    Fn1(a => Math.Asinh(a));
+                    break;
+                case InstructionType.Cos:
+                    Fn1(a => Math.Cos(a));
+                    break;
+                case InstructionType.Cosh:
+                    Fn1(a => Math.Cosh(a));
+                    break;
+                case InstructionType.Acos:
+                    Fn1(a => Math.Acos(a));
+                    break;
+                case InstructionType.Acosh:
+                    Fn1(a => Math.Acosh(a));
+                    break;
+                case InstructionType.Tan:
+                    Fn1(a => Math.Tan(a));
+                    break;
+                case InstructionType.Tanh:
+                    Fn1(a => Math.Tanh(a));
+                    break;
+                case InstructionType.Atan:
+                    Fn1(a => Math.Atan(a));
+                    break;
+                case InstructionType.Atanh:
+                    Fn1(a => Math.Atanh(a));
+                    break;
+                case InstructionType.Atan2:
+                    Fn2((b, a) => Math.Atan2(a, b));
+                    break;
+                case InstructionType.FusedMultiplyAdd:
+                    Fn3((c, b, a) => Math.FusedMultiplyAdd(a, b, c));
+                    break;
+                case InstructionType.ScaleB:
+                    Fn2((b, a) => Math.ScaleB(a, (int)b)); // lol
+                    break;
+                case InstructionType.Count:
+                default:
+                    InterpreterError("Not an instruction!");
+                    break;
                 }
             }
         }

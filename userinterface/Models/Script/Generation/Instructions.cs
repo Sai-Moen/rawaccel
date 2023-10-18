@@ -25,7 +25,7 @@ namespace userinterface.Models.Script.Generation
         // Operator,
         // does an operation on the second and first Stack item respectively,
         // pushes the result onto the stack if the next instruction is not another operator.
-        Add, Sub, Mul, Div, Mod, Exp, ExpE,
+        Add, Sub, Mul, Div, Mod, Pow, Exp,
 
         // Comparison,
         // returns, for some condition, 1.0 when true, 0.0 when false.
@@ -35,12 +35,13 @@ namespace userinterface.Models.Script.Generation
 
         // Function,
         // Take the TOS and Push a transformed version back.
-        Abs, Sqrt, Cbrt,
-        Round, Trunc, Ceil, Floor,
-        Log, Log2, Log10,
+        Abs, Sqrt, Cbrt, Sign, CopySign,
+        Round, Trunc, Ceil, Floor, Clamp,
+        Log, Log2, Log10, Logx,
         Sin, Sinh, Asin, Asinh,
         Cos, Cosh, Acos, Acosh,
-        Tan, Tanh, Atan, Atanh,
+        Tan, Tanh, Atan, Atanh, Atan2,
+        FusedMultiplyAdd, ScaleB,
 
         // Leave this at the bottom of the enum for obvious reasons.
         Count
@@ -60,9 +61,15 @@ namespace userinterface.Models.Script.Generation
     /// <param name="Address">Heap Memory address.</param>
     public readonly record struct MemoryAddress(byte Address)
     {
+        #region Constants
+
         public const int SIZE = sizeof(byte);
         public const byte MAX_VALUE = byte.MaxValue;
         public const ushort CAPACITY = MAX_VALUE + 1;
+
+        #endregion Constants
+
+        #region Operators
 
         public static implicit operator MemoryAddress(byte pointer)
         {
@@ -93,6 +100,8 @@ namespace userinterface.Models.Script.Generation
         {
             return new byte[1]{ address.Address };
         }
+
+        #endregion Operators
     }
 
     /// <summary>
@@ -101,8 +110,14 @@ namespace userinterface.Models.Script.Generation
     /// <param name="Address">Instruction address.</param>
     public readonly record struct CodeAddress(ushort Address)
     {
+        #region Constants
+
         public const int SIZE = sizeof(ushort);
         public const ushort MAX_VALUE = ushort.MaxValue;
+
+        #endregion Constants
+
+        #region Operators
 
         public static implicit operator CodeAddress(ushort pointer)
         {
@@ -135,6 +150,8 @@ namespace userinterface.Models.Script.Generation
         {
             return BitConverter.GetBytes(address.Address);
         }
+
+        #endregion Operators
     }
 
     /// <summary>
@@ -143,10 +160,41 @@ namespace userinterface.Models.Script.Generation
     /// <param name="Value">Value of the Number.</param>
     public readonly record struct Number(double Value)
     {
+        #region Constants
+
         public const int SIZE = sizeof(double);
         public const double ZERO = 0.0;
         public const double DEFAULT_X = ZERO;
         public const double DEFAULT_Y = 1.0;
+
+        #endregion Constants
+
+        #region Static Methods
+
+        public static Number Parse(string s)
+        {
+            return Parse(s, new InterpreterException("Cannot parse number!"));
+        }
+
+        public static Number Parse(string s, uint line)
+        {
+            return Parse(s, new InterpreterException("Cannot parse number!", line));
+        }
+
+        private static Number Parse(string s, InterpreterException e)
+        {
+            if (double.TryParse(s, NumberStyles.Float, NumberFormatInfo.InvariantInfo,
+                out double result))
+            {
+                return result;
+            }
+
+            throw e;
+        }
+
+        #endregion Static Methods
+
+        #region Operators
 
         public static implicit operator Number(bool value)
         {
@@ -201,26 +249,7 @@ namespace userinterface.Models.Script.Generation
             return number == ZERO;
         }
 
-        private static Number Parse(string s, InterpreterException e)
-        {
-            if (double.TryParse(s, NumberStyles.Float, NumberFormatInfo.InvariantInfo,
-                out double result))
-            {
-                return result;
-            }
-
-            throw e;
-        }
-
-        public static Number Parse(string s)
-        {
-            return Parse(s, new InterpreterException("Cannot parse number!"));
-        }
-
-        public static Number Parse(string s, uint line)
-        {
-            return Parse(s, new InterpreterException("Cannot parse number!", line));
-        }
+        #endregion Operators
     }
 
     /// <summary>
@@ -381,12 +410,14 @@ namespace userinterface.Models.Script.Generation
                         BaseToken target = code[++i].Base;
                         if (target.Type == TokenType.Input)
                         {
-                            OnAssignment(InstructionType.LoadIn, type, InstructionType.StoreIn,
+                            OnAssignment(
+                                InstructionType.LoadIn, type, InstructionType.StoreIn,
                                 Array.Empty<byte>());
                         }
                         else if (target.Type == TokenType.Output)
                         {
-                            OnAssignment(InstructionType.LoadOut, type, InstructionType.StoreOut,
+                            OnAssignment(
+                                InstructionType.LoadOut, type, InstructionType.StoreOut,
                                 Array.Empty<byte>());
                         }
                         else
@@ -432,10 +463,10 @@ namespace userinterface.Models.Script.Generation
 
         private static InstructionType OnConstant(string symbol, uint line) => symbol switch
         {
-            Tokens.CONST_E => InstructionType.LoadE,
-            Tokens.CONST_PI => InstructionType.LoadPi,
+            Tokens.CONST_E   => InstructionType.LoadE,
+            Tokens.CONST_PI  => InstructionType.LoadPi,
             Tokens.CONST_TAU => InstructionType.LoadTau,
-            Tokens.ZERO => InstructionType.LoadZero,
+            Tokens.ZERO      => InstructionType.LoadZero,
 
             _ => throw new InterpreterException("Cannot emit constant!", line),
         };
@@ -443,12 +474,12 @@ namespace userinterface.Models.Script.Generation
         private static InstructionType OnAssignment(string symbol, uint line) => symbol switch
         {
             Tokens.ASSIGN => InstructionType.Store,
-            Tokens.IADD => InstructionType.Add,
-            Tokens.ISUB => InstructionType.Sub,
-            Tokens.IMUL => InstructionType.Mul,
-            Tokens.IDIV => InstructionType.Div,
-            Tokens.IMOD => InstructionType.Mod,
-            Tokens.IEXP => InstructionType.Exp,
+            Tokens.IADD   => InstructionType.Add,
+            Tokens.ISUB   => InstructionType.Sub,
+            Tokens.IMUL   => InstructionType.Mul,
+            Tokens.IDIV   => InstructionType.Div,
+            Tokens.IMOD   => InstructionType.Mod,
+            Tokens.IPOW   => InstructionType.Pow,
 
             _ => throw new InterpreterException("Cannot emit assignment!", line),
         };
@@ -489,18 +520,18 @@ namespace userinterface.Models.Script.Generation
                 case Tokens.MOD:
                     Instructions.AddInstruction(InstructionType.Mod);
                     break;
-                case Tokens.EXP:
+                case Tokens.POW:
                     // Try to convert E^ -> Exp()
                     int lastIndex = Instructions.Count - 1;
                     if (Instructions.Count > 0 &&
                         Instructions[lastIndex] == InstructionType.LoadE)
                     {
                         Instructions.RemoveAt(lastIndex);
-                        Instructions.AddInstruction(InstructionType.ExpE);
+                        Instructions.AddInstruction(InstructionType.Exp);
                     }
                     else
                     {
-                        Instructions.AddInstruction(InstructionType.Exp);
+                        Instructions.AddInstruction(InstructionType.Pow);
                     }
 
                     break;
@@ -511,14 +542,14 @@ namespace userinterface.Models.Script.Generation
 
         private static InstructionType OnComparison(string symbol, uint line) => symbol switch
         {
-            Tokens.OR => InstructionType.Or,
+            Tokens.OR  => InstructionType.Or,
             Tokens.AND => InstructionType.And,
-            Tokens.LT => InstructionType.Lt,
-            Tokens.GT => InstructionType.Gt,
-            Tokens.LE => InstructionType.Le,
-            Tokens.GE => InstructionType.Ge,
-            Tokens.EQ => InstructionType.Eq,
-            Tokens.NE => InstructionType.Ne,
+            Tokens.LT  => InstructionType.Lt,
+            Tokens.GT  => InstructionType.Gt,
+            Tokens.LE  => InstructionType.Le,
+            Tokens.GE  => InstructionType.Ge,
+            Tokens.EQ  => InstructionType.Eq,
+            Tokens.NE  => InstructionType.Ne,
             Tokens.NOT => InstructionType.Not,
 
             _ => throw new InterpreterException("Cannot emit comparison!", line),
@@ -526,28 +557,28 @@ namespace userinterface.Models.Script.Generation
 
         private static InstructionType OnFunction(string symbol, uint line) => symbol switch
         {
-            Tokens.ABS      => InstructionType.Abs,
-            Tokens.SQRT     => InstructionType.Sqrt,
-            Tokens.CBRT     => InstructionType.Cbrt,
-            Tokens.ROUND    => InstructionType.Round,
-            Tokens.TRUNC    => InstructionType.Trunc,
-            Tokens.CEIL     => InstructionType.Ceil,
-            Tokens.FLOOR    => InstructionType.Floor,
-            Tokens.LOG      => InstructionType.Log,
-            Tokens.LOG2     => InstructionType.Log2,
-            Tokens.LOG10    => InstructionType.Log10,
-            Tokens.SIN      => InstructionType.Sin,
-            Tokens.SINH     => InstructionType.Sinh,
-            Tokens.ASIN     => InstructionType.Asin,
-            Tokens.ASINH    => InstructionType.Asinh,
-            Tokens.COS      => InstructionType.Cos,
-            Tokens.COSH     => InstructionType.Cosh,
-            Tokens.ACOS     => InstructionType.Acos,
-            Tokens.ACOSH    => InstructionType.Acosh,
-            Tokens.TAN      => InstructionType.Tan,
-            Tokens.TANH     => InstructionType.Tanh,
-            Tokens.ATAN     => InstructionType.Atan,
-            Tokens.ATANH    => InstructionType.Atanh,
+            Tokens.ABS   => InstructionType.Abs,
+            Tokens.SQRT  => InstructionType.Sqrt,
+            Tokens.CBRT  => InstructionType.Cbrt,
+            Tokens.ROUND => InstructionType.Round,
+            Tokens.TRUNC => InstructionType.Trunc,
+            Tokens.CEIL  => InstructionType.Ceil,
+            Tokens.FLOOR => InstructionType.Floor,
+            Tokens.LOG   => InstructionType.Log,
+            Tokens.LOG2  => InstructionType.Log2,
+            Tokens.LOG10 => InstructionType.Log10,
+            Tokens.SIN   => InstructionType.Sin,
+            Tokens.SINH  => InstructionType.Sinh,
+            Tokens.ASIN  => InstructionType.Asin,
+            Tokens.ASINH => InstructionType.Asinh,
+            Tokens.COS   => InstructionType.Cos,
+            Tokens.COSH  => InstructionType.Cosh,
+            Tokens.ACOS  => InstructionType.Acos,
+            Tokens.ACOSH => InstructionType.Acosh,
+            Tokens.TAN   => InstructionType.Tan,
+            Tokens.TANH  => InstructionType.Tanh,
+            Tokens.ATAN  => InstructionType.Atan,
+            Tokens.ATANH => InstructionType.Atanh,
 
             _ => throw new InterpreterException("Cannot emit function!", line),
         };

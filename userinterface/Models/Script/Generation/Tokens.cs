@@ -122,7 +122,7 @@ namespace userinterface.Models.Script.Generation
         public const string IMUL = "*=";
         public const string IDIV = "/=";
         public const string IMOD = "%=";
-        public const string IEXP = "^=";
+        public const string IPOW = "^=";
 
         // Normal Arithmetic
         public const string ADD = "+";
@@ -130,7 +130,7 @@ namespace userinterface.Models.Script.Generation
         public const string MUL = "*";
         public const string DIV = "/";
         public const string MOD = "%";
-        public const string EXP = "^";
+        public const string POW = "^";
 
         // Comparison
         public const string NOT = "!";
@@ -220,14 +220,14 @@ namespace userinterface.Models.Script.Generation
             new(TokenType.Assignment, IMUL),
             new(TokenType.Assignment, IDIV),
             new(TokenType.Assignment, IMOD),
-            new(TokenType.Assignment, IEXP),
+            new(TokenType.Assignment, IPOW),
 
             new(TokenType.Arithmetic, ADD),
             new(TokenType.Arithmetic, SUB),
             new(TokenType.Arithmetic, MUL),
             new(TokenType.Arithmetic, DIV),
             new(TokenType.Arithmetic, MOD),
-            new(TokenType.Arithmetic, EXP),
+            new(TokenType.Arithmetic, POW),
 
             new(TokenType.Comparison, NOT),
             new(TokenType.Comparison, LT),
@@ -308,7 +308,7 @@ namespace userinterface.Models.Script.Generation
 
         public static bool LeftAssociative(string s)
         {
-            return s != EXP;
+            return s != POW;
         }
 
         public static int Precedence(string s) => s switch
@@ -331,7 +331,7 @@ namespace userinterface.Models.Script.Generation
             DIV => 5,
             MOD => 5,
 
-            EXP => 6,
+            POW => 6,
 
             NOT => 7,
 
