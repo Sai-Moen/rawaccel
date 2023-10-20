@@ -136,7 +136,7 @@ namespace userinterface.Models.Script.Generation
             // Do startup tasks
             //      Synchronization and/or Locking is not used in Exec,
             //      as each thread should only be able to do independent work on their own address.
-            _ = Parallel.ForEach(Startup, (p) => Exec(p, new()));
+            _ = Parallel.ForEach(Startup, p => Exec(p, new()));
 
             // Load everything to Stable
             Stable.CopyFrom(Volatile);

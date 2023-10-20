@@ -9,7 +9,7 @@ namespace userinterface.Models.Script.Generation
     {
         Start, End,     // Helps with jumps not going out of bounds
 
-        Load, Store,        // Gets or Sets an Address in 'virtual' heap, to/from TOS.
+        Load, Store,        // Gets or Sets an Address in the 'heap', to/from TOS.
         LoadIn, StoreIn,    // Gets or Sets the input register (x), to/from TOS.
         LoadOut, StoreOut,  // Gets or Sets the output register (y), to/from TOS.
         LoadNumber,         // Loads a number.
@@ -45,6 +45,82 @@ namespace userinterface.Models.Script.Generation
 
         // Leave this at the bottom of the enum for obvious reasons.
         Count
+    }
+
+    /// <summary>
+    /// Provides extension methods for Instruction and InstructionType.
+    /// </summary>
+    public static class Instructions
+    {
+        public static int SizeOf(this InstructionType type) => type switch
+        {
+            InstructionType.LoadNumber  => Number.SIZE,
+
+            InstructionType.Jmp         => CodeAddress.SIZE,
+            InstructionType.Jz          => CodeAddress.SIZE,
+
+            InstructionType.Load        => MemoryAddress.SIZE,
+            InstructionType.Store       => MemoryAddress.SIZE,
+
+            _ => 0,
+        };
+    }
+
+    /// <summary>
+    /// Represents an Instruction that can be executed by the Interpreter.
+    /// </summary>
+    public readonly record struct Instruction(InstructionType Type, byte[] Data)
+    {
+        public static implicit operator Instruction(InstructionType type)
+        {
+            return new(type, new byte[type.SizeOf()]);
+        }
+
+        public static implicit operator InstructionType(Instruction instruction)
+        {
+            return instruction.Type;
+        }
+
+        public void CopyFrom(byte[] bytes)
+        {
+            bytes.CopyTo(Data, 0);
+        }
+
+        public void CopyTo(ref byte[] bytes)
+        {
+            Span<byte> span = new(Data, 0, Data.Length);
+            span.CopyTo(bytes);
+        }
+    }
+
+    /// <summary>
+    /// Represents a list of instructions.
+    /// </summary>
+    public class InstructionList : List<Instruction>
+    {
+        public InstructionList() : base() { }
+
+        public InstructionList(int capacity) : base(capacity) { }
+
+        public void AddInstruction(InstructionType type)
+        {
+            Debug.Assert(type.SizeOf() == 0);
+            Add(type);
+        }
+
+        public void AddInstruction(InstructionType type, byte[] data)
+        {
+            Instruction instruction = type;
+            instruction.CopyFrom(data);
+            Add(instruction);
+        }
+
+        public void InsertInstruction(CodeAddress address, InstructionType type, byte[] data)
+        {
+            Instruction instruction = type;
+            instruction.CopyFrom(data);
+            Insert(address, instruction);
+        }
     }
 
     /// <summary>
@@ -103,6 +179,63 @@ namespace userinterface.Models.Script.Generation
 
         #endregion Operators
     }
+
+    /// <summary>
+    /// Represents an address of static program data.
+    /// </summary>
+    /// <param name="Address">Data address.</param>
+    public readonly record struct DataAddress(ushort Address)
+    {
+        #region Constants
+
+        public const int SIZE = sizeof(ushort);
+        public const ushort MAX_VALUE = ushort.MaxValue;
+        public const int CAPACITY = MAX_VALUE + 1;
+
+        #endregion Constants
+
+        #region Operators
+
+        public static implicit operator DataAddress(ushort pointer)
+        {
+            return new(pointer);
+        }
+
+        public static implicit operator DataAddress(int pointer)
+        {
+            ushort address = (ushort)pointer;
+            if (address > MAX_VALUE)
+            {
+                throw new InterpreterException("Data address overflow!");
+            }
+            return address;
+        }
+
+        public static explicit operator DataAddress(Instruction pointer)
+        {
+            byte[] bytes = new byte[SIZE];
+            pointer.CopyTo(ref bytes);
+            return BitConverter.ToUInt16(bytes);
+        }
+
+        public static implicit operator ushort(DataAddress address)
+        {
+            return address.Address;
+        }
+
+        public static explicit operator byte[](DataAddress address)
+        {
+            return BitConverter.GetBytes(address.Address);
+        }
+
+        #endregion Operators
+    }
+
+    /// <summary>
+    /// Represents a collection of identifiers mapped to addresses.
+    /// </summary>
+    public class MemoryMap : Dictionary<string, MemoryAddress>, IDictionary<string, MemoryAddress>
+    { }
 
     /// <summary>
     /// Represents an Instruction address in the Program in which it is present.
@@ -253,6 +386,12 @@ namespace userinterface.Models.Script.Generation
     }
 
     /// <summary>
+    /// Represents a stack used while executing a Program.
+    /// </summary>
+    public class ProgramStack : Stack<Number>
+    { }
+
+    /// <summary>
     /// Represents a heap of memory used by:
     /// Parameters (indices [0, 7])
     /// Variables (indices after that, as many as needed)
@@ -283,56 +422,25 @@ namespace userinterface.Models.Script.Generation
         }
     }
 
-    /// <summary>
-    /// Represents a stack used while executing a Program.
-    /// </summary>
-    public class ProgramStack : Stack<Number>
-    { }
-
-    /// <summary>
-    /// Represents an Instruction that can be executed by the Interpreter.
-    /// </summary>
-    public readonly record struct Instruction(InstructionType Type, byte[] Data)
+    public class StaticData
     {
-        public static implicit operator Instruction(InstructionType type)
+        private readonly Number[] Data;
+
+        public StaticData(int capacity)
         {
-            return new(type, new byte[type.SizeOf()]);
+            if (capacity > DataAddress.CAPACITY)
+            {
+                throw new InterpreterException("StaticData capacity overflow!");
+            }
+
+            Data = new Number[capacity];
         }
 
-        public static implicit operator InstructionType(Instruction instruction)
+        public Number this[DataAddress address]
         {
-            return instruction.Type;
+            get { return Data[address]; }
+            set { Data[address] = value; }
         }
-
-        public void CopyFrom(byte[] bytes)
-        {
-            bytes.CopyTo(Data, 0);
-        }
-
-        public void CopyTo(ref byte[] bytes)
-        {
-            Span<byte> span = new(Data, 0, Data.Length);
-            span.CopyTo(bytes);
-        }
-    }
-
-    /// <summary>
-    /// Provides extension methods for Instruction and InstructionType.
-    /// </summary>
-    public static class Instructions
-    {
-        public static int SizeOf(this InstructionType type) => type switch
-        {
-            InstructionType.LoadNumber  => Number.SIZE,
-
-            InstructionType.Jmp         => CodeAddress.SIZE,
-            InstructionType.Jz          => CodeAddress.SIZE,
-
-            InstructionType.Load        => MemoryAddress.SIZE,
-            InstructionType.Store       => MemoryAddress.SIZE,
-
-            _ => 0,
-        };
     }
 
     /// <summary>
@@ -584,42 +692,5 @@ namespace userinterface.Models.Script.Generation
         };
 
         #endregion Jump Tables
-    }
-
-    /// <summary>
-    /// Represents a collection of identifiers mapped to addresses.
-    /// </summary>
-    public class MemoryMap : Dictionary<string, MemoryAddress>, IDictionary<string, MemoryAddress>
-    { }
-
-    /// <summary>
-    /// Represents a list of instructions.
-    /// </summary>
-    public class InstructionList : List<Instruction>
-    {
-        public InstructionList() : base() { }
-
-        public InstructionList(int capacity) : base(capacity) { }
-
-        public void AddInstruction(InstructionType type)
-        {
-            Debug.Assert(type.SizeOf() == 0);
-
-            Add(type);
-        }
-
-        public void AddInstruction(InstructionType type, byte[] data)
-        {
-            Instruction instruction = type;
-            instruction.CopyFrom(data);
-            Add(instruction);
-        }
-
-        public void InsertInstruction(CodeAddress address, InstructionType type, byte[] data)
-        {
-            Instruction instruction = type;
-            instruction.CopyFrom(data);
-            Insert(address, instruction);
-        }
     }
 }
