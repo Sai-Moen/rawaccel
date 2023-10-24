@@ -145,20 +145,30 @@ namespace userinterface.Models.Script.Generation
 
         // Functions
         // General
-        public const string ABS  = "abs";  // Absolute Value
-        public const string SQRT = "sqrt"; // Square Root
-        public const string CBRT = "cbrt"; // Cube Root
+        public const string ABS       = "abs";      // Absolute Value
+        public const string SQRT      = "sqrt";     // Square Root
+        public const string CBRT      = "cbrt";     // Cube Root
+        public const string SIGN      = "sign";     // Sign
+        public const string COPY_SIGN = "copysign"; // Copy Sign
 
         // Rounding
         public const string ROUND = "round"; // Round to nearest
         public const string TRUNC = "trunc"; // Round to 0
         public const string CEIL  = "ceil";  // Round to infinity
         public const string FLOOR = "floor"; // Round to -infinity
+        public const string CLAMP = "clamp"; // Clamps second argument between the first and third
+
+        // MinMax
+        public const string MIN           = "min";  // Minimum of the two arguments
+        public const string MAX           = "max";  // Maximum of the two arguments
+        public const string MIN_MAGNITUDE = "minm"; // Closest to 0 of the two arguments
+        public const string MAX_MAGNITUDE = "maxm"; // Furthest from 0 of the two arguments
 
         // Logarithm
         public const string LOG   = "log";   // Natural Logarithm (loge x)
         public const string LOG2  = "log2";  // Binary Logarithm (log2 x)
         public const string LOG10 = "log10"; // Decimal Logarithm (log10 x)
+        public const string LOGN  = "logn";  // N-th Logarithm (logn x)
 
         // Sine
         public const string SIN   = "sin";   // Normal
@@ -177,6 +187,11 @@ namespace userinterface.Models.Script.Generation
         public const string TANH  = "tanh";  // Hyperbolic
         public const string ATAN  = "atan";  // Inverse
         public const string ATANH = "atanh"; // Inverse Hyperbolic
+        public const string ATAN2 = "atan2"; // Angle of which the tangent is y / x
+
+        // Miscellaneous
+        public const string FUSED_MULTIPLY_ADD = "fma";    // x * y + z
+        public const string SCALE_B            = "scaleb"; // Binary Scale (IEEE exponent trickery)
 
         #endregion Constants
 
@@ -242,15 +257,24 @@ namespace userinterface.Models.Script.Generation
             new(TokenType.Function, ABS),
             new(TokenType.Function, SQRT),
             new(TokenType.Function, CBRT),
+            new(TokenType.Function, SIGN),
+            new(TokenType.Function, COPY_SIGN),
 
             new(TokenType.Function, ROUND),
             new(TokenType.Function, TRUNC),
             new(TokenType.Function, CEIL),
             new(TokenType.Function, FLOOR),
+            new(TokenType.Function, CLAMP),
+
+            new(TokenType.Function, MIN),
+            new(TokenType.Function, MAX),
+            new(TokenType.Function, MIN_MAGNITUDE),
+            new(TokenType.Function, MAX_MAGNITUDE),
 
             new(TokenType.Function, LOG),
             new(TokenType.Function, LOG2),
             new(TokenType.Function, LOG10),
+            new(TokenType.Function, LOGN),
 
             new(TokenType.Function, SIN),
             new(TokenType.Function, SINH),
@@ -266,6 +290,10 @@ namespace userinterface.Models.Script.Generation
             new(TokenType.Function, TANH),
             new(TokenType.Function, ATAN),
             new(TokenType.Function, ATANH),
+            new(TokenType.Function, ATAN2),
+
+            new(TokenType.Function, FUSED_MULTIPLY_ADD),
+            new(TokenType.Function, SCALE_B),
         };
 
         #endregion Fields

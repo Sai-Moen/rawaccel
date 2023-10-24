@@ -168,15 +168,15 @@ namespace userinterface.Models.Script.Generation
                 stack.Push(func(stack.Pop(), stack.Pop(), stack.Pop()));
             }
 
-            for (int i = 0; i < program.Instructions.Count; i++)
+            for (CodeAddress i = 0; i < program.Count; i++)
             {
-                Instruction instruction = program.Instructions[i];
+                Instruction instruction = program[i];
                 switch (instruction.Type)
                 {
                 case InstructionType.Start:
                     break;
                 case InstructionType.End:
-                    if (i != program.Instructions.Count - 1)
+                    if (i != program.Count - 1)
                     {
                         InterpreterError("Unexpected program end!");
                     }
@@ -313,6 +313,18 @@ namespace userinterface.Models.Script.Generation
                 case InstructionType.Clamp:
                     Fn3((c, b, a) => Math.Clamp(a, b, c));
                     break;
+                case InstructionType.Min:
+                    Fn2((b, a) => Math.Min(a, b));
+                    break;
+                case InstructionType.Max:
+                    Fn2((b, a) => Math.Max(a, b));
+                    break;
+                case InstructionType.MinM:
+                    Fn2((b, a) => Math.MinMagnitude(a, b));
+                    break;
+                case InstructionType.MaxM:
+                    Fn2((b, a) => Math.MaxMagnitude(a, b));
+                    break;
                 case InstructionType.Log:
                     Fn1(a => Math.Log(a));
                     break;
@@ -322,7 +334,7 @@ namespace userinterface.Models.Script.Generation
                 case InstructionType.Log10:
                     Fn1(a => Math.Log10(a));
                     break;
-                case InstructionType.Logx:
+                case InstructionType.LogN:
                     Fn2((b, a) => Math.Log(a, b));
                     break;
                 case InstructionType.Sin:
