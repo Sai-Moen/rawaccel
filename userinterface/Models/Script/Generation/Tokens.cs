@@ -318,7 +318,7 @@ namespace userinterface.Models.Script.Generation
         /// <summary>
         /// Maps all of the reserved Tokens to a string representation.
         /// </summary>
-        public static TokenMap ReservedMap { get; }
+        public static Dictionary<string, Token> ReservedMap { get; }
 
         #endregion Properties
 
@@ -384,13 +384,5 @@ namespace userinterface.Models.Script.Generation
         };
 
         #endregion Methods
-    }
-
-    /// <summary>
-    /// Maps a string to a reserved Token.
-    /// </summary>
-    public class TokenMap : Dictionary<string, Token>, IDictionary<string, Token>
-    {
-        public TokenMap(int capacity) : base(capacity) { }
     }
 }
