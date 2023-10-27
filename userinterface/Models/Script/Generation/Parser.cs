@@ -99,7 +99,7 @@ namespace userinterface.Models.Script.Generation
             }
         }
 
-        private void CoerceAll(in Identifiers identifiers, TokenType type)
+        private void CoerceAll(Identifiers identifiers, TokenType type)
         {
             for (int i = 0; i <= MaxIndex; i++)
             {
@@ -437,7 +437,7 @@ namespace userinterface.Models.Script.Generation
             return output;
         }
 
-        private void OnClose(in TokenList output)
+        private void OnClose(TokenList output)
         {
             Token top;
 
@@ -472,7 +472,7 @@ namespace userinterface.Models.Script.Generation
             }
         }
 
-        private void OnPrecedence(in TokenList output, Token token)
+        private void OnPrecedence(TokenList output, Token token)
         {
             int pToken = Tokens.Precedence(token.Base.Symbol);
             bool left = Tokens.LeftAssociative(token.Base.Symbol);
@@ -501,7 +501,7 @@ namespace userinterface.Models.Script.Generation
             OperatorStack.Push(token);
         }
 
-        private void OnEmptyQueue(in TokenList output)
+        private void OnEmptyQueue(TokenList output)
         {
             while (OperatorStack.Count != 0)
             {

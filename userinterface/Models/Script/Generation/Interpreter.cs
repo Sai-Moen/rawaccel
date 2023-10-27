@@ -135,7 +135,7 @@ namespace userinterface.Models.Script.Generation
             Reset();
 
             // Do startup tasks
-            //      Synchronization and/or Locking is not used in Exec,
+            //      Synchronization is not used in Exec,
             //      as each thread should only be able to do independent work on their own address.
             _ = Parallel.ForEach(Startup, p => Exec(p, new()));
 
@@ -170,13 +170,13 @@ namespace userinterface.Models.Script.Generation
             }
             
             // Cursed, but helps against bulky switch indenting
-            for (CodeAddress i = 0; i < program.Count; i++)
+            for (CodeAddress i = 0; i < program.Length; i++)
             switch (program[i].instruction.Type)
             {
             case InstructionType.Start:
                 break;
             case InstructionType.End:
-                if (i != program.Count - 1)
+                if (i != program.Length - 1)
                 {
                     InterpreterError("Unexpected program end!");
                 }

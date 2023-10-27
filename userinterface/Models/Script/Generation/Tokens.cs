@@ -72,6 +72,9 @@ namespace userinterface.Models.Script.Generation
     {
         #region Constants
 
+        // For tokens that are required for context, but are not tokenized otherwise.
+        public const string NONE = "";
+
         // Keywords
         // Calculation IO
         public const string INPUT  = "x";
@@ -88,7 +91,7 @@ namespace userinterface.Models.Script.Generation
         // Branching
         public const string BRANCH_IF    = "if";
         public const string BRANCH_WHILE = "while";
-        public const string BRANCH_END   = ""; // Using an empty string to avoid tokenization, be careful...
+        public const string BRANCH_END   = NONE;
 
         // Separators
         // Delimiters
@@ -146,8 +149,6 @@ namespace userinterface.Models.Script.Generation
         // Functions
         // General
         public const string ABS       = "abs";      // Absolute Value
-        public const string SQRT      = "sqrt";     // Square Root
-        public const string CBRT      = "cbrt";     // Cube Root
         public const string SIGN      = "sign";     // Sign
         public const string COPY_SIGN = "copysign"; // Copy Sign
 
@@ -163,6 +164,10 @@ namespace userinterface.Models.Script.Generation
         public const string MAX           = "max";  // Maximum of the two arguments
         public const string MIN_MAGNITUDE = "minm"; // Closest to 0 of the two arguments
         public const string MAX_MAGNITUDE = "maxm"; // Furthest from 0 of the two arguments
+
+        // Roots (bloody roots)
+        public const string SQRT      = "sqrt"; // Square Root
+        public const string CBRT      = "cbrt"; // Cube Root
 
         // Logarithm
         public const string LOG   = "log";   // Natural Logarithm (loge x)
@@ -191,7 +196,7 @@ namespace userinterface.Models.Script.Generation
 
         // Miscellaneous
         public const string FUSED_MULTIPLY_ADD = "fma";    // x * y + z
-        public const string SCALE_B            = "scaleb"; // Binary Scale (IEEE exponent trickery)
+        public const string SCALE_B            = "scaleb"; // Binary Scale (IEEE754 exponent trickery idfk)
 
         #endregion Constants
 
@@ -255,8 +260,6 @@ namespace userinterface.Models.Script.Generation
             new(TokenType.Comparison, OR),
 
             new(TokenType.Function, ABS),
-            new(TokenType.Function, SQRT),
-            new(TokenType.Function, CBRT),
             new(TokenType.Function, SIGN),
             new(TokenType.Function, COPY_SIGN),
 
@@ -270,6 +273,9 @@ namespace userinterface.Models.Script.Generation
             new(TokenType.Function, MAX),
             new(TokenType.Function, MIN_MAGNITUDE),
             new(TokenType.Function, MAX_MAGNITUDE),
+
+            new(TokenType.Function, SQRT),
+            new(TokenType.Function, CBRT),
 
             new(TokenType.Function, LOG),
             new(TokenType.Function, LOG2),
