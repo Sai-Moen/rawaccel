@@ -183,7 +183,7 @@ namespace userinterface.Models.Script.Generation
             {
                 for (uint i = 0; i < amount; i++)
                 {
-                    TokenBuffer.Enqueue(new(new(TokenType.Undefined, "")));
+                    TokenBuffer.Enqueue(new(new(TokenType.Undefined, Tokens.NONE)));
                 }
             }
 
@@ -382,9 +382,8 @@ namespace userinterface.Models.Script.Generation
 
                 AdvanceToken();
                 TokenType nextType = CurrentToken.Base.Type;
-                bool onlyEnd = after == TokenType.Undefined;
                 bool afterIsNext = after == nextType;
-                if (currentType == end && (onlyEnd || afterIsNext))
+                if (currentType == end && (after == TokenType.Undefined || afterIsNext))
                 {
                     if (afterIsNext)
                     {

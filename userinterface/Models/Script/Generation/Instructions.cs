@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
+using System.Reflection;
 using System.Runtime.InteropServices;
 
 namespace userinterface.Models.Script.Generation
@@ -15,23 +16,28 @@ namespace userinterface.Models.Script.Generation
         Load, Store,       // Gets or Sets an Address in the 'heap', to/from TOS.
         LoadIn, StoreIn,   // Gets or Sets the input register (x), to/from TOS.
         LoadOut, StoreOut, // Gets or Sets the output register (y), to/from TOS.
-        LoadNumber,        // Loads a number.
+        LoadNumber,        // Loads a number from data.
         Swap,              // Swaps the top two stack elements.
 
         // Branch,
         // Evaluates the TOS and jumps/skips to the next branch end marker if zero (Jz).
         // The jump itself can be unconditional (Jmp) instead, to implement loops (Jmp backwards).
         Jmp, Jz,
+        BranchMarker,
 
-        LoadE, LoadPi, LoadTau, LoadZero, // Loads a constant to TOS.
+        // Constant,
+        // Pushes a constant to the stack.
+        LoadE, LoadPi, LoadTau, LoadZero, 
 
         // Operator,
-        // does an operation on the second and first Stack item respectively,
-        // pushes the result onto the stack if the next instruction is not another operator.
-        Add, Sub, Mul, Div, Mod, Pow, Exp,
+        // Does an operation on the second and first Stack item respectively,
+        // Pushes the result onto the stack if the next instruction is not another operator.
+        Add, Sub,
+        Mul, Div, Mod,
+        Pow, Exp,
 
         // Comparison,
-        // returns, for some condition, 1.0 when true, 0.0 when false.
+        // Returns, for some condition, 1.0 when true, 0.0 when false.
         Or, And,
         Lt, Gt, Le, Ge,
         Eq, Ne, Not,
@@ -53,29 +59,55 @@ namespace userinterface.Models.Script.Generation
     }
 
     /// <summary>
-    /// Provides helper methods for InstructionType.
+    /// Provides helper methods and invariant checking.
     /// </summary>
     public static class Instructions
     {
-        public static byte OperandsNeeded(this InstructionType type) => type switch
+        static Instructions()
         {
-            InstructionType.Load => 1,
-            InstructionType.Store => 1,
+            Debug.Assert(InstructionType.Jz.Size() == InstructionType.BranchMarker.Size());
+        }
 
-            InstructionType.LoadNumber => 1,
+        public static byte Size(this InstructionType type) => type switch
+        {
+            InstructionType.Load => 2,
+            InstructionType.Store => 2,
+            InstructionType.LoadNumber => 2,
 
-            InstructionType.Jz => 1,
-            InstructionType.Jmp => 1,
+            InstructionType.Jz => 2,
+            InstructionType.Jmp => 2,
+            InstructionType.BranchMarker => 2,
 
-            _ => 0,
+            _ => 1,
         };
+    }
+
+    /// <summary>
+    /// Flags for the second part of an Instruction.
+    /// </summary>
+    [Flags]
+    public enum InstructionFlags : byte
+    {
+        None = 0,
+
+        /// <summary>
+        /// Whether this instruction expects operands.
+        /// </summary>
+        Continuation = 1 << 0,
+
+        /// <summary>
+        /// Whether this instruction is expecting to be replaced by a looping body.
+        /// </summary>
+        IsLoop = 1 << 1,
     }
 
     /// <summary>
     /// Represents an Instruction that can be executed by the Interpreter.
     /// </summary>
-    public readonly record struct Instruction(InstructionType Type, byte OperandAmount = 0)
-    { }
+    public readonly record struct Instruction(InstructionType Type, InstructionFlags Flags = InstructionFlags.None)
+    {
+        public bool IsFlagSet(InstructionFlags flag) => (Flags & flag) != InstructionFlags.None;
+    }
 
     /// <summary>
     /// Can represent any address type.
@@ -113,34 +145,6 @@ namespace userinterface.Models.Script.Generation
     }
 
     /// <summary>
-    /// Represents the operand needed by a BranchEnd Token to determine the emitted instruction(s).
-    /// </summary>
-    /// <param name="IsLoop">Whether or not this operand refers to a looping body.</param>
-    /// <param name="Condition">The instruction address where the Branch condition starts.</param>
-    /// <param name="Insert">The instruction address where a conditional jump should be inserted.</param>
-    public readonly record struct BranchContext(bool IsLoop, CodeAddress Condition, CodeAddress Insert);
-
-    public class BranchStack : Stack<BranchContext>
-    {
-        public BranchStack() : base() { }
-
-        public void Offset(CodeAddress index, int offset)
-        {
-            BranchContext[] array = ToArray();
-            Clear();
-            for (int i = 0; i < array.Length; i++)
-            {
-                BranchContext current = array[i];
-                Push(new(
-                    current.IsLoop,
-                    current.Condition + index < current.Condition ? offset : 0,
-                    current.Insert + index < current.Insert ? offset : 0)
-                );
-            }
-        }
-    }
-
-    /// <summary>
     /// Represents a list of instructions.
     /// </summary>
     public class InstructionList : List<InstructionUnion>
@@ -153,22 +157,27 @@ namespace userinterface.Models.Script.Generation
 
         #endregion Constructors
 
-        #region Methods
+        #region Add
 
-        public void AddInstruction(InstructionType type)
+        public void Add(Instruction instruction)
         {
             InstructionUnion unionI = new()
             {
-                instruction = new(type)
+                instruction = instruction
             };
             Add(unionI);
         }
 
-        public void AddInstruction(InstructionType type, InstructionOperand operand)
+        public void Add(InstructionType type)
+        {
+            Add(new Instruction(type));
+        }
+
+        public void Add(Instruction instruction, InstructionOperand operand)
         {
             InstructionUnion unionI = new()
             {
-                instruction = new(type, 1)
+                instruction = instruction
             };
             InstructionUnion unionO = new()
             {
@@ -177,37 +186,96 @@ namespace userinterface.Models.Script.Generation
             AddRange(new InstructionUnion[2] { unionI, unionO });
         }
 
-        public void InsertInstruction(CodeAddress address, InstructionType type, BranchStack stack)
+        public void Add(InstructionType type, InstructionOperand operand)
         {
-            InstructionUnion unionI = new()
-            {
-                instruction = new(type)
-            };
-            Insert(address, unionI);
-            //stack.Offset(address, 1); FIXME
+            Add(new Instruction(type, InstructionFlags.Continuation), operand);
         }
 
-        public void InsertInstruction(CodeAddress address, InstructionType type, InstructionOperand operand, BranchStack stack)
+        #endregion Add
+
+        #region Insert
+
+        public void Insert(CodeAddress address, Instruction instruction)
         {
             InstructionUnion unionI = new()
             {
-                instruction = new(type, 1)
+                instruction = instruction
+            };
+            Insert(address, unionI);
+        }
+
+        public void Insert(CodeAddress address, InstructionType type)
+        {
+            Insert(address, new Instruction(type));
+        }
+
+        public void Insert(CodeAddress address, Instruction instruction, InstructionOperand operand)
+        {
+            InstructionUnion unionI = new()
+            {
+                instruction = instruction
             };
             InstructionUnion unionO = new()
             {
                 operand = operand
             };
             InsertRange(address, new InstructionUnion[2] { unionI, unionO });
-            //stack.Offset(address, 2); FIXME
         }
 
-        public void RemoveInstruction(CodeAddress address, BranchStack stack)
+        public void Insert(CodeAddress address, InstructionType type, InstructionOperand operand)
         {
-            RemoveAt(address);
-            stack.Offset(address, -1);
+            Insert(address, new Instruction(type, InstructionFlags.Continuation), operand);
         }
 
-        #endregion Methods
+        #endregion Insert
+
+        #region Find
+
+        public bool TryFind(Instruction instruction, out CodeAddress index)
+        {
+            for (CodeAddress i = 0; i < Count; i += this[i].instruction.Type.Size())
+            {
+                if (this[i].instruction == instruction)
+                {
+                    index = i;
+                    return true;
+                }
+            }
+
+            index = default;
+            return false;
+        }
+
+        public bool TryFind(Instruction instruction, CodeAddress depth, out CodeAddress index)
+        {
+            for (CodeAddress i = 0; i < Count; i += this[i].instruction.Type.Size())
+            {
+                if (this[i].instruction.Type == instruction.Type && depth-- == 0)
+                {
+                    index = i;
+                    return true;
+                }
+            }
+
+            index = default;
+            return false;
+        }
+
+        #endregion Find
+
+        #region Remove
+
+        public void RemoveAt(CodeAddress address)
+        {
+            base.RemoveAt(address);
+        }
+
+        public void RemoveRange(CodeAddress index, CodeAddress count)
+        {
+            base.RemoveRange(index, count);
+        }
+
+        #endregion Remove
     }
 
     /// <summary>
@@ -511,15 +579,16 @@ namespace userinterface.Models.Script.Generation
         /// <exception cref="InterpreterException">Thrown when emitting fails.</exception>
         public Program(TokenCode code, Dictionary<string, MemoryAddress> memoryMap)
         {
-            // Allocates mostly enough, but not guaranteed, therefore List
-            InstructionList instructionList = new(code.Length);
-            instructionList.AddInstruction(InstructionType.Start);
+            InstructionList instructionList = new(code.Length)
+            {
+                InstructionType.Start
+            };
 
             DataAddress dataIndex = 0;
             Dictionary<Number, DataAddress> numberMap = new();
 
+            CodeAddress depth = 0;
             CodeAddress lastExprStart = 0;
-            BranchStack stack = new();
 
             for (int i = 0; i < code.Length; i++)
             {
@@ -528,111 +597,122 @@ namespace userinterface.Models.Script.Generation
                 string symbol = baseToken.Symbol;
                 switch (baseToken.Type)
                 {
-                case TokenType.Number:
-                    Number number = Number.Parse(symbol, token.Line);
+                    case TokenType.Number:
+                        Number number = Number.Parse(symbol, token.Line);
 
-                    // See if the number is already present before assigning a new index
-                    if (!numberMap.TryGetValue(number, out DataAddress dAddress))
-                    {
-                        numberMap.Add(number, dAddress = dataIndex++);
-                    }
-                    instructionList.AddInstruction(InstructionType.LoadNumber, new(dAddress));
-                    break;
-                case TokenType.Parameter:
-                case TokenType.Variable:
-                    MemoryAddress mAddress = memoryMap[symbol];
-                    instructionList.AddInstruction(InstructionType.Load, new(mAddress));
-                    break;
-                case TokenType.Input:
-                    instructionList.AddInstruction(InstructionType.LoadIn);
-                    break;
-                case TokenType.Output:
-                    instructionList.AddInstruction(InstructionType.LoadOut);
-                    break;
-                case TokenType.Constant:
-                    instructionList.AddInstruction(OnConstant(symbol, token.Line));
-                    break;
-                case TokenType.Branch:
-                    // Determine how much the condition will move due to other inserts.
-                    CodeAddress condition = DetermineBranchSway(lastExprStart, stack.Count);
-                    BranchContext context = new(token.IsLoop(), condition, instructionList.Count);
-                    stack.Push(context);
-                    lastExprStart = instructionList.Count - 1;
-                    break;
-                case TokenType.BranchEnd:
-                    if (stack.TryPop(out BranchContext ctx))
-                    {
-                        if (ctx.IsLoop)
+                        // See if the number is already present before assigning a new index
+                        if (!numberMap.TryGetValue(number, out DataAddress dAddress))
                         {
-                            instructionList.AddInstruction(InstructionType.Jmp, new(ctx.Condition));
+                            numberMap.Add(number, dAddress = dataIndex++);
                         }
-                        CodeAddress cAddress = DetermineBranchSway(instructionList.Count + 1, stack.Count);
-                        instructionList.InsertInstruction(ctx.Insert, InstructionType.Jz, new(cAddress), stack);
+                        instructionList.Add(InstructionType.LoadNumber, new(dAddress));
                         break;
-                    }
+                    case TokenType.Parameter:
+                    case TokenType.Variable:
+                        MemoryAddress mAddress = memoryMap[symbol];
+                        instructionList.Add(InstructionType.Load, new(mAddress));
+                        break;
+                    case TokenType.Input:
+                        instructionList.Add(InstructionType.LoadIn);
+                        break;
+                    case TokenType.Output:
+                        instructionList.Add(InstructionType.LoadOut);
+                        break;
+                    case TokenType.Constant:
+                        instructionList.Add(OnConstant(symbol, token.Line));
+                        break;
+                    case TokenType.Branch:
+                        CodeAddress condition = lastExprStart;
+                        lastExprStart = instructionList.Count - 1;
 
-                    throw new InterpreterException("Unexpected branch end!", token.Line);
-                case TokenType.Assignment:
-                    InstructionType modify = OnAssignment(symbol, token.Line);
-                    bool isInline = modify != InstructionType.Store;
+                        InstructionFlags flags = InstructionFlags.Continuation |
+                            (token.IsLoop() ? InstructionFlags.IsLoop : InstructionFlags.None);
+                        instructionList.Add(new Instruction(InstructionType.BranchMarker, flags), new(condition));
 
-                    // MUTATES i, because we don't want to add this token again on the next iteration
-                    BaseToken target = code[++i].Base;
-                    if (target.Type == TokenType.Input)
-                    {
-                        SpecialAssignment(
-                            instructionList, isInline,
-                            InstructionType.LoadIn, modify, InstructionType.StoreIn);
-                    }
-                    else if (target.Type == TokenType.Output)
-                    {
-                        SpecialAssignment(
-                            instructionList, isInline,
-                            InstructionType.LoadOut, modify, InstructionType.StoreOut);
-                    }
-                    else
-                    {
-                        MemoryAddress address = memoryMap[target.Symbol];
-                        if (isInline)
+                        depth++;
+                        break;
+                    case TokenType.BranchEnd:
+                        if (depth-- != 0)
                         {
-                            instructionList.AddInstruction(InstructionType.Load, new(address));
-                            instructionList.AddInstruction(InstructionType.Swap);
-                            instructionList.AddInstruction(modify);
+                            Instruction marker = new(InstructionType.BranchMarker);
+                            if (instructionList.TryFind(marker, depth, out CodeAddress index))
+                            {
+                                marker = instructionList[index].instruction;
+                                if (marker.IsFlagSet(InstructionFlags.IsLoop))
+                                {
+                                    InstructionOperand markerCondition = instructionList[index + 1].operand;
+                                    instructionList.Add(InstructionType.Jmp, markerCondition);
+                                }
+
+                                CodeAddress cAddress = instructionList.Count - 1;
+                                instructionList.RemoveRange(index, 2);
+                                instructionList.Insert(index, InstructionType.Jz, new(cAddress));
+                                break;
+                            }
                         }
-                        instructionList.AddInstruction(InstructionType.Store, new(address));
-                    }
 
-                    lastExprStart = instructionList.Count - 1;
-                    break;
-                case TokenType.Arithmetic:
-                    InstructionType arithmetic = OnArithmetic(symbol, token.Line);
+                        throw new InterpreterException("Unexpected branch end!", token.Line);
+                    case TokenType.Assignment:
+                        InstructionType modify = OnAssignment(symbol, token.Line);
+                        bool isInline = modify != InstructionType.Store;
 
-                    // Attempt to convert [...LoadE, Pow,...] to [...Exp,...]
-                    if (arithmetic == InstructionType.Pow && instructionList.Count > 1)
-                    {
-                        Index lastIndex;
-                        if (instructionList[lastIndex = ^1].instruction.Type == InstructionType.LoadE)
+                        // MUTATES i, because we don't want to add this token again on the next iteration
+                        BaseToken target = code[++i].Base;
+                        if (target.Type == TokenType.Input)
                         {
-                            instructionList.RemoveAt(lastIndex.Value);
-                            instructionList.AddInstruction(InstructionType.Exp);
-                            break;
+                                SpecialAssignment(
+                                instructionList, isInline,
+                                InstructionType.LoadIn, modify, InstructionType.StoreIn);
                         }
-                    }
+                        else if (target.Type == TokenType.Output)
+                        {
+                                SpecialAssignment(
+                                instructionList, isInline,
+                                InstructionType.LoadOut, modify, InstructionType.StoreOut);
+                        }
+                        else
+                        {
+                            MemoryAddress address = memoryMap[target.Symbol];
+                            if (isInline)
+                            {
+                                instructionList.Add(InstructionType.Load, new(address));
+                                instructionList.Add(InstructionType.Swap);
+                                instructionList.Add(modify);
+                            }
+                            instructionList.Add(InstructionType.Store, new(address));
+                        }
 
-                    instructionList.AddInstruction(arithmetic);
-                    break;
-                case TokenType.Comparison:
-                    instructionList.AddInstruction(OnComparison(symbol, token.Line));
-                    break;
-                case TokenType.Function:
-                    instructionList.AddInstruction(OnFunction(symbol, token.Line));
-                    break;
-                default:
-                    throw new InterpreterException("Cannot emit token!", token.Line);
+                        lastExprStart = instructionList.Count - 1;
+                        break;
+                    case TokenType.Arithmetic:
+                        InstructionType arithmetic = OnArithmetic(symbol, token.Line);
+
+                        // Attempt to convert [...LoadE, Pow,...] to [...Exp,...]
+                        if (arithmetic == InstructionType.Pow && instructionList.Count > 1)
+                        {
+                            Index lastIndex;
+                            if (instructionList[lastIndex = ^1].instruction.Type == InstructionType.LoadE)
+                            {
+                                instructionList.RemoveAt(lastIndex.Value);
+                                instructionList.Add(InstructionType.Exp);
+                                break;
+                            }
+                        }
+
+                        instructionList.Add(arithmetic);
+                        break;
+                    case TokenType.Comparison:
+                        instructionList.Add(OnComparison(symbol, token.Line));
+                        break;
+                    case TokenType.Function:
+                        instructionList.Add(OnFunction(symbol, token.Line));
+                        break;
+                    default:
+                        throw new InterpreterException("Cannot emit token!", token.Line);
                 }
             }
 
-            if (stack.Count != 0)
+            if (depth != 0)
             {
                 throw new InterpreterException("Branch mismatch!");
             }
@@ -643,7 +723,7 @@ namespace userinterface.Models.Script.Generation
                 data[dAddress] = number;
             }
 
-            instructionList.AddInstruction(InstructionType.End);
+            instructionList.Add(InstructionType.End);
             instructions = instructionList.ToArray();
         }
 
@@ -659,22 +739,17 @@ namespace userinterface.Models.Script.Generation
 
         public Number GetData(DataAddress index) => data[index];
 
-        private static CodeAddress DetermineBranchSway(int offset, int depth)
-        {
-            return offset + depth * (InstructionType.Jz.OperandsNeeded() + 1);
-        }
-
-        private void SpecialAssignment(
+        private static void SpecialAssignment(
             InstructionList instructionList, bool isInline,
             InstructionType load, InstructionType modify, InstructionType store)
         {
             if (isInline)
             {
-                instructionList.AddInstruction(load);
-                instructionList.AddInstruction(InstructionType.Swap);
-                instructionList.AddInstruction(modify);
+                instructionList.Add(load);
+                instructionList.Add(InstructionType.Swap);
+                instructionList.Add(modify);
             }
-            instructionList.AddInstruction(store);
+            instructionList.Add(store);
         }
 
         #endregion Properties and Methods

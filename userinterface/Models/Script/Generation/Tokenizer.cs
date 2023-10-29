@@ -122,7 +122,7 @@ namespace userinterface.Models.Script.Generation
                 }
                 else if (c == NewLine)
                 {
-                    ++CurrentLine;
+                    CurrentLine++;
                     continue;
                 }
                 else if (IsAlphabeticCharacter(c) || IsNumericCharacter(c) || IsReserved(c))
@@ -147,7 +147,7 @@ namespace userinterface.Models.Script.Generation
                 CurrentChar = Characters[CurrentIndex];
                 if (CurrentChar == NewLine)
                 {
-                    ++CurrentLine;
+                    CurrentLine++;
                     continue;
                 }
                 else if (IsAlphabeticCharacter(CurrentChar))
