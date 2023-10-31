@@ -183,7 +183,7 @@ namespace userinterface.Models.Script.Generation
             {
                 for (uint i = 0; i < amount; i++)
                 {
-                    TokenBuffer.Enqueue(new(new(TokenType.Undefined, Tokens.NONE)));
+                    TokenBuffer.Enqueue(Tokens.DUMMY);
                 }
             }
 
@@ -407,6 +407,7 @@ namespace userinterface.Models.Script.Generation
                 Token token = input.Dequeue();
                 switch (token.Base.Type)
                 {
+                    case TokenType.Number:
                     case TokenType.Parameter:
                     case TokenType.Variable:
                     case TokenType.Input:
@@ -446,7 +447,7 @@ namespace userinterface.Models.Script.Generation
             }
             catch (InvalidOperationException)
             {
-                ParserError($"Unexpected {Tokens.CLOSE}");
+                ParserError($"Unexpected: {Tokens.CLOSE}");
                 return;
             }
 
@@ -456,7 +457,7 @@ namespace userinterface.Models.Script.Generation
 
                 if (OperatorStack.Count == 0)
                 {
-                    ParserError($"No matching {Tokens.OPEN}");
+                    ParserError($"No matching: {Tokens.OPEN}");
                 }
 
                 top = OperatorStack.Peek();
@@ -508,7 +509,7 @@ namespace userinterface.Models.Script.Generation
 
                 if (token.Base.Type == TokenType.Open)
                 {
-                    ParserError($"No matching {Tokens.CLOSE}");
+                    ParserError($"No matching: {Tokens.CLOSE}");
                 }
 
                 output.Add(token);

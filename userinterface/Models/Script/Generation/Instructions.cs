@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
-using System.Reflection;
 using System.Runtime.InteropServices;
 
 namespace userinterface.Models.Script.Generation
@@ -59,7 +58,7 @@ namespace userinterface.Models.Script.Generation
     }
 
     /// <summary>
-    /// Provides helper methods and invariant checking.
+    /// Provides helper methods and static checking.
     /// </summary>
     public static class Instructions
     {
@@ -80,6 +79,8 @@ namespace userinterface.Models.Script.Generation
 
             _ => 1,
         };
+
+        public static bool IsInline(this InstructionType type) => type != InstructionType.Store;
     }
 
     /// <summary>
@@ -106,7 +107,9 @@ namespace userinterface.Models.Script.Generation
     /// </summary>
     public readonly record struct Instruction(InstructionType Type, InstructionFlags Flags = InstructionFlags.None)
     {
-        public bool IsFlagSet(InstructionFlags flag) => (Flags & flag) != InstructionFlags.None;
+        public bool AnyFlags(InstructionFlags flags) => (Flags & flags) != InstructionFlags.None;
+
+        public bool AllFlags(InstructionFlags flags) => (Flags & flags) == flags;
     }
 
     /// <summary>
@@ -114,6 +117,8 @@ namespace userinterface.Models.Script.Generation
     /// </summary>
     public readonly struct InstructionOperand
     {
+        #region Constructors
+
         public InstructionOperand(MemoryAddress address)
         {
             Operand = address;
@@ -129,7 +134,13 @@ namespace userinterface.Models.Script.Generation
             Operand = address;
         }
 
+        #endregion Constructors
+
+        #region Properties
+
         public readonly ushort Operand { get; }
+
+        #endregion Properties
     }
 
     /// <summary>
@@ -161,6 +172,8 @@ namespace userinterface.Models.Script.Generation
 
         public void Add(Instruction instruction)
         {
+            Debug.Assert(instruction.Type.Size() == 1);
+
             InstructionUnion unionI = new()
             {
                 instruction = instruction
@@ -175,6 +188,8 @@ namespace userinterface.Models.Script.Generation
 
         public void Add(Instruction instruction, InstructionOperand operand)
         {
+            Debug.Assert(instruction.Type.Size() == 2);
+
             InstructionUnion unionI = new()
             {
                 instruction = instruction
@@ -197,6 +212,8 @@ namespace userinterface.Models.Script.Generation
 
         public void Insert(CodeAddress address, Instruction instruction)
         {
+            Debug.Assert(instruction.Type.Size() == 1);
+
             InstructionUnion unionI = new()
             {
                 instruction = instruction
@@ -211,6 +228,8 @@ namespace userinterface.Models.Script.Generation
 
         public void Insert(CodeAddress address, Instruction instruction, InstructionOperand operand)
         {
+            Debug.Assert(instruction.Type.Size() == 2);
+
             InstructionUnion unionI = new()
             {
                 instruction = instruction
@@ -246,7 +265,7 @@ namespace userinterface.Models.Script.Generation
             return false;
         }
 
-        public bool TryFind(Instruction instruction, CodeAddress depth, out CodeAddress index)
+        public bool TryFind(Instruction instruction, int depth, out CodeAddress index)
         {
             for (CodeAddress i = 0; i < Count; i += this[i].instruction.Type.Size())
             {
@@ -262,6 +281,30 @@ namespace userinterface.Models.Script.Generation
         }
 
         #endregion Find
+
+        #region Replace
+
+        public void Replace(CodeAddress instructionIndex, Instruction instruction, InstructionOperand operand)
+        {
+            CodeAddress operandIndex = instructionIndex + 1;
+            Debug.Assert(operandIndex < Count);
+
+            InstructionUnion instructionUnion = this[instructionIndex];
+            InstructionUnion operandUnion = this[operandIndex];
+
+            instructionUnion.instruction = instruction;
+            operandUnion.operand = operand;
+
+            this[instructionIndex] = instructionUnion;
+            this[operandIndex] = operandUnion;
+        }
+
+        public void Replace(CodeAddress instructionIndex, InstructionType type, InstructionOperand operand)
+        {
+            Replace(instructionIndex, new Instruction(type), operand);
+        }
+
+        #endregion Replace
 
         #region Remove
 
@@ -587,8 +630,8 @@ namespace userinterface.Models.Script.Generation
             DataAddress dataIndex = 0;
             Dictionary<Number, DataAddress> numberMap = new();
 
-            CodeAddress depth = 0;
             CodeAddress lastExprStart = 0;
+            int depth = 0;
 
             for (int i = 0; i < code.Length; i++)
             {
@@ -622,12 +665,11 @@ namespace userinterface.Models.Script.Generation
                         instructionList.Add(OnConstant(symbol, token.Line));
                         break;
                     case TokenType.Branch:
-                        CodeAddress condition = lastExprStart;
-                        lastExprStart = instructionList.Count - 1;
+                        InstructionFlags flags = InstructionFlags.Continuation;
+                        if (token.IsLoop()) flags |= InstructionFlags.IsLoop;
 
-                        InstructionFlags flags = InstructionFlags.Continuation |
-                            (token.IsLoop() ? InstructionFlags.IsLoop : InstructionFlags.None);
-                        instructionList.Add(new Instruction(InstructionType.BranchMarker, flags), new(condition));
+                        instructionList.Add(new Instruction(InstructionType.BranchMarker, flags), new(lastExprStart));
+                        lastExprStart = instructionList.Count - 1;
 
                         depth++;
                         break;
@@ -638,15 +680,14 @@ namespace userinterface.Models.Script.Generation
                             if (instructionList.TryFind(marker, depth, out CodeAddress index))
                             {
                                 marker = instructionList[index].instruction;
-                                if (marker.IsFlagSet(InstructionFlags.IsLoop))
+                                if (marker.AllFlags(InstructionFlags.IsLoop))
                                 {
                                     InstructionOperand markerCondition = instructionList[index + 1].operand;
                                     instructionList.Add(InstructionType.Jmp, markerCondition);
                                 }
 
-                                CodeAddress cAddress = instructionList.Count - 1;
-                                instructionList.RemoveRange(index, 2);
-                                instructionList.Insert(index, InstructionType.Jz, new(cAddress));
+                                CodeAddress condition = instructionList.Count - 1;
+                                instructionList.Replace(index, InstructionType.Jz, new(condition));
                                 break;
                             }
                         }
@@ -654,19 +695,19 @@ namespace userinterface.Models.Script.Generation
                         throw new InterpreterException("Unexpected branch end!", token.Line);
                     case TokenType.Assignment:
                         InstructionType modify = OnAssignment(symbol, token.Line);
-                        bool isInline = modify != InstructionType.Store;
+                        bool isInline = modify.IsInline();
 
                         // MUTATES i, because we don't want to add this token again on the next iteration
                         BaseToken target = code[++i].Base;
                         if (target.Type == TokenType.Input)
                         {
-                                SpecialAssignment(
+                            SpecialAssignment(
                                 instructionList, isInline,
                                 InstructionType.LoadIn, modify, InstructionType.StoreIn);
                         }
                         else if (target.Type == TokenType.Output)
                         {
-                                SpecialAssignment(
+                            SpecialAssignment(
                                 instructionList, isInline,
                                 InstructionType.LoadOut, modify, InstructionType.StoreOut);
                         }

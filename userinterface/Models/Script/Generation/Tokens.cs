@@ -198,6 +198,9 @@ namespace userinterface.Models.Script.Generation
         public const string FUSED_MULTIPLY_ADD = "fma";    // x * y + z
         public const string SCALE_B            = "scaleb"; // Binary Scale (IEEE754 exponent trickery idfk)
 
+        // Premade Tokens
+        public static readonly Token DUMMY = new(new(TokenType.Undefined, NONE));
+
         #endregion Constants
 
         #region Fields
