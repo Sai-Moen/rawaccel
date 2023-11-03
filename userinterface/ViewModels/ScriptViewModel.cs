@@ -5,7 +5,7 @@ namespace userinterface.ViewModels
 {
     public class ScriptViewModel : ViewModelBase
     {
-        private readonly Script Script = new(Models.Script.Interaction.ScriptInterfaceType.Release);
+        private readonly Script Script = new();
 
         public ScriptViewModel(string filePath = Models.Script.Test.Test.DebugPath)
         {

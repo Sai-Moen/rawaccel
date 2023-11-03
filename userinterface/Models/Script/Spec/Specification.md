@@ -34,16 +34,15 @@ and allows the grapher to automatically calculate the points based on given para
 This is the main object (not god object) that strings everything together.
 The whole program is kind of a restrictive interpreter to C#,
 
-#### Interaction:
-
-These are the files concerned with loading the (human-readable) script,
-and communicating with the rest of the UI (via the Script).
-
 #### Generation:
 
 These are the files that model the actual formula itself.
 They do so by interpreting the script that is loaded in from the frontend via the Script.
 This will only support very simple actions so that you can't delete System32 or anti-cheat from there.
+
+#### Test:
+
+These are testing files, either made to perform simple checks, or to do more thorough testing.
 
 ### Scripting language specification:
 
