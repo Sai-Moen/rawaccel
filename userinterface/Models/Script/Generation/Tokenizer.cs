@@ -18,15 +18,12 @@ public class Tokenizer
 {
     #region Constants
 
-    public const int MaxIdentifierLength = 0x10;
-    public const int MaxNumberLength = 0x20;
-    public const char NewLine = '\n';
+    public const char NEWLINE = '\n';
+    public const string TAB = "\t";
 
     #endregion Constants
 
     #region Fields
-
-    public TokenList TokenList { get; } = new();
 
     private readonly StringBuilder CharBuffer = new();
 
@@ -53,9 +50,9 @@ public class Tokenizer
     public Tokenizer(string script)
     {
         Characters = script
-            .ReplaceLineEndings(NewLine.ToString())
+            .ReplaceLineEndings(NEWLINE.ToString())
             .Replace(Tokens.SPACE, null)
-            .Replace("\t", null)
+            .Replace(TAB, null)
             .ToCharArray();
         MaxIndex = Characters.Length - 1;
         CheckCharacters();
@@ -63,6 +60,12 @@ public class Tokenizer
     }
 
     #endregion Constructors
+
+    #region Properties
+
+    public TokenList TokenList { get; } = new();
+
+    #endregion Properties
 
     #region Static Methods
 
@@ -116,11 +119,11 @@ public class Tokenizer
             if (isComments)
             {
                 isComments ^= CmpCharStr(c, Tokens.PARAMS_START);
-                startingLine += (uint)(c == NewLine ? 1 : 0);
+                startingLine += (uint)(c == NEWLINE ? 1 : 0);
                 startingIndex = isComments ? ++startingIndex : --startingIndex;
                 continue;
             }
-            else if (c == NewLine)
+            else if (c == NEWLINE)
             {
                 CurrentLine++;
                 continue;
@@ -145,7 +148,7 @@ public class Tokenizer
         while (++CurrentIndex <= MaxIndex)
         {
             CurrentChar = Characters[CurrentIndex];
-            if (CurrentChar == NewLine)
+            if (CurrentChar == NEWLINE)
             {
                 CurrentLine++;
                 continue;
@@ -306,17 +309,17 @@ public class Tokenizer
 
     private void CapIdentifierLength()
     {
-        if (CharBuffer.Length > MaxIdentifierLength)
+        if (CharBuffer.Length > Constants.MaxIdentifierLength)
         {
-            TokenizerError($"Identifier name too long! (max {MaxIdentifierLength} characters)");
+            TokenizerError($"Identifier name too long! (max {Constants.MaxIdentifierLength} characters)");
         }
     }
 
     private void CapNumberLength()
     {
-        if (CharBuffer.Length > MaxNumberLength)
+        if (CharBuffer.Length > Constants.MaxNumberLength)
         {
-            TokenizerError($"Number too long! (max {MaxNumberLength} characters)");
+            TokenizerError($"Number too long! (max {Constants.MaxNumberLength} characters)");
         }
     }
 
