@@ -7,8 +7,8 @@ namespace userinterface.Models.Script.Generation;
 /// </summary>
 public static class Constants
 {
-    public const int MaxIdentifierLength = 0x10;
-    public const int MaxNumberLength = 0x20;
+    public const int MAX_IDENTIFIER_LEN = 0x10;
+    public const int MAX_NUMBER_LEN = 0x20;
 
     public const int CAPACITY = MemoryAddress.CAPACITY;
     public const int MAX_PARAMETERS = 8;

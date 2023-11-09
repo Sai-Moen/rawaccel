@@ -16,13 +16,6 @@ public enum CharBufferState
 /// </summary>
 public class Tokenizer
 {
-    #region Constants
-
-    public const char NEWLINE = '\n';
-    public const string TAB = "\t";
-
-    #endregion Constants
-
     #region Fields
 
     private readonly StringBuilder CharBuffer = new();
@@ -49,11 +42,7 @@ public class Tokenizer
     /// <param name="script">The input script.</param>
     public Tokenizer(string script)
     {
-        Characters = script
-            .ReplaceLineEndings(NEWLINE.ToString())
-            .Replace(Tokens.SPACE, null)
-            .Replace(TAB, null)
-            .ToCharArray();
+        Characters = script.ToCharArray();
         MaxIndex = Characters.Length - 1;
         CheckCharacters();
         Tokenize();
@@ -96,6 +85,17 @@ public class Tokenizer
             CmpCharStr(c, Tokens.FPOINT);
     }
 
+    private static bool IsWhiteSpace(char c)
+    {
+        return char.IsWhiteSpace(c);
+    }
+
+    private static bool IsNewline(char c)
+    {
+        // Good thing we don't support MacOS
+        return c == '\n';
+    }
+
     #endregion Static Methods
 
     #region Methods
@@ -111,24 +111,28 @@ public class Tokenizer
             TokenizerError("Please don't type anything after the body.");
         }
 
-        int startingIndex = 0;
+        int startingIndex = -1;
         uint startingLine = 1;
         bool isComments = true;
         foreach (char c in Characters)
         {
             if (isComments)
             {
+                startingIndex++;
+                if (IsNewline(c)) startingLine++;
                 isComments ^= CmpCharStr(c, Tokens.PARAMS_START);
-                startingLine += (uint)(c == NEWLINE ? 1 : 0);
-                startingIndex = isComments ? ++startingIndex : --startingIndex;
                 continue;
             }
-            else if (c == NEWLINE)
+            else if (IsNewline(c))
             {
                 CurrentLine++;
                 continue;
             }
-            else if (IsAlphabeticCharacter(c) || IsNumericCharacter(c) || IsReserved(c))
+            else if (
+                IsAlphabeticCharacter(c) ||
+                IsNumericCharacter(c) ||
+                IsWhiteSpace(c) ||
+                IsReserved(c))
             {
                 continue;
             }
@@ -136,7 +140,7 @@ public class Tokenizer
             TokenizerError($"Unsupported character detected, char: {c}, u16: {(ushort)c}");
         }
 
-        CurrentIndex = startingIndex;
+        CurrentIndex = startingIndex - 1;
         CurrentLine = startingLine;
     }
 
@@ -148,7 +152,7 @@ public class Tokenizer
         while (++CurrentIndex <= MaxIndex)
         {
             CurrentChar = Characters[CurrentIndex];
-            if (CurrentChar == NEWLINE)
+            if (IsNewline(CurrentChar))
             {
                 CurrentLine++;
                 continue;
@@ -160,6 +164,10 @@ public class Tokenizer
             else if (IsNumericCharacter(CurrentChar))
             {
                 if (OnNumerical()) continue;
+            }
+            else if (IsWhiteSpace(CurrentChar))
+            {
+                if (OnWhiteSpace()) continue;
             }
             else // Must be a reserved token, or error.
             {
@@ -208,35 +216,39 @@ public class Tokenizer
         }
     }
 
+    private bool OnWhiteSpace()
+    {
+        switch (BufferState)
+        {
+            case CharBufferState.Idle:
+                return true;
+            case CharBufferState.Identifier:
+                AddBufferedToken();
+                BufferState = CharBufferState.Idle;
+                return true;
+            case CharBufferState.Number:
+                AddNumber();
+                BufferState = CharBufferState.Idle;
+                return true;
+            default:
+                return false;
+        }
+    }
+
     private bool OnSpecial()
     {
         switch (BufferState)
         {
-            case CharBufferState.Idle: // No buffer, so one character?
-                if (PeekNext(out char c1))
-                {
-                    Debug.Assert(!CmpCharStr(c1, Tokens.SECOND));
-                }
-
-                BufferCurrentChar();
-                AddBufferedToken();
+            case CharBufferState.Idle:
+                SpecialCheck();
                 return true;
             case CharBufferState.Identifier:
                 AddBufferedToken();
-                goto SpecialCheck;
+                SpecialCheck();
+                return true;
             case CharBufferState.Number:
                 AddNumber();
-                goto SpecialCheck;
-            SpecialCheck:
-                BufferCurrentChar();
-                if (PeekNext(out char c2) && CmpCharStr(c2, Tokens.SECOND))
-                {
-                    BufferState = CharBufferState.Special;
-                }
-                else
-                {
-                    AddBufferedToken();
-                }
+                SpecialCheck();
                 return true;
             case CharBufferState.Special:
                 Debug.Assert(CmpCharStr(CurrentChar, Tokens.SECOND));
@@ -246,6 +258,19 @@ public class Tokenizer
                 return true;
             default:
                 return false;
+        }
+    }
+
+    private void SpecialCheck()
+    {
+        BufferCurrentChar();
+        if (PeekNext(out char c2) && CmpCharStr(c2, Tokens.SECOND))
+        {
+            BufferState = CharBufferState.Special;
+        }
+        else
+        {
+            AddBufferedToken();
         }
     }
 
@@ -309,17 +334,17 @@ public class Tokenizer
 
     private void CapIdentifierLength()
     {
-        if (CharBuffer.Length > Constants.MaxIdentifierLength)
+        if (CharBuffer.Length > Constants.MAX_IDENTIFIER_LEN)
         {
-            TokenizerError($"Identifier name too long! (max {Constants.MaxIdentifierLength} characters)");
+            TokenizerError($"Identifier name too long! (max {Constants.MAX_IDENTIFIER_LEN} characters)");
         }
     }
 
     private void CapNumberLength()
     {
-        if (CharBuffer.Length > Constants.MaxNumberLength)
+        if (CharBuffer.Length > Constants.MAX_NUMBER_LEN)
         {
-            TokenizerError($"Number too long! (max {Constants.MaxNumberLength} characters)");
+            TokenizerError($"Number too long! (max {Constants.MAX_NUMBER_LEN} characters)");
         }
     }
 
