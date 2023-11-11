@@ -34,8 +34,8 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Update="Views\ProfilesView.axaml.cs">
-      <DependentUpon>ProfilesView.axaml</DependentUpon>
+    <Compile Update="Views\ChartsView.axaml.cs">
+      <DependentUpon>ChartsView.axaml</DependentUpon>
     </Compile>
   </ItemGroup>
 </Project>

@@ -7,12 +7,12 @@ namespace userinterface.ViewModels
     {
         public MainWindowViewModel()
         {
-            Profiles = new ProfilesViewModel();
+            Profiles = new ChartsViewModel();
             MouseListen = new MouseListenViewModel();
             MouseWindow = new MouseWindow(this);
         }
 
-        public ProfilesViewModel Profiles { get; }
+        public ChartsViewModel Profiles { get; }
 
         public MouseListenViewModel MouseListen { get; }
 
