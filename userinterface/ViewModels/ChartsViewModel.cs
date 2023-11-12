@@ -1,8 +1,8 @@
-﻿using Avalonia;
+﻿using Avalonia.Controls;
+using Avalonia.Controls.Shapes;
 using Avalonia.Data;
+using Avalonia.Media;
 using ReactiveUI;
-using System;
-using System.Collections.Generic;
 using userinterface.Models.Charts;
 
 namespace userinterface.ViewModels;
@@ -26,15 +26,15 @@ public sealed class ChartsViewModel : ViewModelBase
         set => this.RaiseAndSetIfChanged(ref lmmy, value);
     }
 
-    public Chart[] Charts { get; } =
+    public static readonly Ellipse LastMouseMove = new()
     {
-        new("XSensitivity"),
-        new("XGain"),
-        new("XVelocity"),
+        [!Canvas.LeftProperty] = new Binding(nameof(LMMX)),
+        [!Canvas.BottomProperty] = new Binding(nameof(LMMY)),
 
-        new("YSensitivity"),
-        new("YGain"),
-        new("YVelocity"),
+        Width = 8,
+        Height = 8,
+
+        Fill = Brushes.Red,
     };
 
     public void SetLastMouseMove(float x, float y)
