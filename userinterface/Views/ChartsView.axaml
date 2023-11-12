@@ -3,43 +3,16 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
-             xmlns:charts="using:userinterface.Models.Charts"
+             xmlns:Models="using:userinterface.Models.Charts"
+			 xmlns:DataTemplates="using:userinterface.DataTemplates"
              x:Class="userinterface.Views.ChartsView">
 
-	<StackPanel Orientation="Horizontal" Width="800" Height="600">
-		<StackPanel Width="400" Height="600">
-			<Canvas Width="400" Height="200">
-				<Ellipse Canvas.Left="{Binding LMMX}" Canvas.Bottom="{Binding LMMY}" Width="8" Height="8" Fill="Green"/>
-				<Polyline Canvas.Left="0" Canvas.Bottom="0" Points="{Binding PointsXSens}" Stroke="Red"/>
-			</Canvas>
-		
-			<Canvas Width="400" Height="200">
-				<Ellipse Canvas.Left="{Binding LMMX}" Canvas.Bottom="{Binding LMMY}" Width="8" Height="8" Fill="Green"/>
-				<Polyline Canvas.Left="0" Canvas.Bottom="0" Points="{Binding PointsXGain}" Stroke="Red"/>
-			</Canvas>
-		
-			<Canvas Width="400" Height="200">
-				<Ellipse Canvas.Left="{Binding LMMX}" Canvas.Bottom="{Binding LMMY}" Width="8" Height="8" Fill="Green"/>
-				<Polyline Canvas.Left="0" Canvas.Bottom="0" Points="{Binding PointsXVel}" Stroke="Red"/>
-			</Canvas>
-		</StackPanel>
-
-		<StackPanel Width="400" Height="600">
-			<Canvas Width="400" Height="200">
-				<Ellipse Canvas.Left="{Binding LMMX}" Canvas.Bottom="{Binding LMMY}" Width="8" Height="8" Fill="Green"/>
-				<Polyline Canvas.Left="0" Canvas.Bottom="0" Points="{Binding PointsYSens}" Stroke="Red"/>
-			</Canvas>
-		
-			<Canvas Width="400" Height="200">
-				<Ellipse Canvas.Left="{Binding LMMX}" Canvas.Bottom="{Binding LMMY}" Width="8" Height="8" Fill="Green"/>
-				<Polyline Canvas.Left="0" Canvas.Bottom="0" Points="{Binding PointsYGain}" Stroke="Red"/>
-			</Canvas>
-		
-			<Canvas Width="400" Height="200">
-				<Ellipse Canvas.Left="{Binding LMMX}" Canvas.Bottom="{Binding LMMY}" Width="8" Height="8" Fill="Green"/>
-				<Polyline Canvas.Left="0" Canvas.Bottom="0" Points="{Binding PointsYVel}" Stroke="Red"/>
-			</Canvas>
-		</StackPanel>
-	</StackPanel>
+	<ListBox Items="{Binding Charts}">
+		<ListBox.ItemTemplate>
+			<DataTemplate DataType="Models:Chart">
+				<ContentControl Content="{Binding}" ContentTemplate="{x:Static DataTemplates:DataTemplateCharts.ChartDataTemplate}"/>
+			</DataTemplate>
+		</ListBox.ItemTemplate>
+	</ListBox>
 	
 </UserControl>
