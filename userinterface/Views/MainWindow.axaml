@@ -30,7 +30,7 @@
     </ExperimentalAcrylicBorder>
     <DockPanel Margin="40">
       <ContentControl Content="{Binding MouseListen}" DockPanel.Dock="Left" VerticalAlignment="Center"/>
-      <ContentControl Content="{Binding Profiles}"/>
+      <ContentControl Content="{Binding Charts}"/>
     </DockPanel>
   </Panel>
 

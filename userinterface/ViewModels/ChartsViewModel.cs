@@ -26,11 +26,8 @@ public sealed class ChartsViewModel : ViewModelBase
         set => this.RaiseAndSetIfChanged(ref lmmy, value);
     }
 
-    public static readonly Ellipse LastMouseMove = new()
+    public Ellipse LastMouseMove { get; } = new()
     {
-        [!Canvas.LeftProperty] = new Binding(nameof(LMMX)),
-        [!Canvas.BottomProperty] = new Binding(nameof(LMMY)),
-
         Width = 8,
         Height = 8,
 

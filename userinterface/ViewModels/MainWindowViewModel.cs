@@ -7,12 +7,12 @@ namespace userinterface.ViewModels
     {
         public MainWindowViewModel()
         {
-            Profiles = new ChartsViewModel();
+            Charts = new ChartsViewModel();
             MouseListen = new MouseListenViewModel();
             MouseWindow = new MouseWindow(this);
         }
 
-        public ChartsViewModel Profiles { get; }
+        public ChartsViewModel Charts { get; }
 
         public MouseListenViewModel MouseListen { get; }
 
@@ -24,7 +24,7 @@ namespace userinterface.ViewModels
             MouseListen.LastX = (int)x;
 
             var size = MathF.Sqrt(x * x + y * y);
-            Profiles.SetLastMouseMove(size, size);
+            Charts.SetLastMouseMove(size, size);
         }
     }
 }

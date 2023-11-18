@@ -1,20 +1,30 @@
 ﻿using Avalonia;
 
-namespace userinterface.Models.Charts
+namespace userinterface.Models.Charts;
+
+public enum ChartKind
 {
-    public class Chart
-    {
-        public static double OriginX => 0;
-        public static double OriginY => 0;
+    None,
 
-        public string Title { get; }
+    WholeSensitivity,
+    WholeGain,
+    WholeVelocity,
 
-        public Point[] Points { get; }
+    XSensitivity,
+    XGain,
+    XVelocity,
 
-        public Chart(string title)
-        {
-            Title = title;
-            Points = new Point[3] { new(1, 1), new(10, -10), new(200, -100) };
-        }
-    }
+    YSensitivity,
+    YGain,
+    YVelocity,
+}
+
+public class Chart
+{
+    public static double OriginX => 0;
+    public static double OriginY => 0;
+
+    public string? Title { get; init; }
+
+    public Point[]? Points { get; init; }
 }
