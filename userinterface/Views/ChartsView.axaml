@@ -2,14 +2,10 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-			 xmlns:vm="using:userinterface.ViewModels"
+			 xmlns:dataTemplates="using:userinterface.DataTemplates"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-             x:Class="userinterface.Views.ChartsView"
-			 x:DataType="vm:ChartsViewModel"
-			 x:CompileBindings="True">
+             x:Class="userinterface.Views.ChartsView">
 
-	<Canvas Width="400" Height="200">
-		<ContentControl Canvas.Left="{Binding LMMX}" Canvas.Bottom="{Binding LMMY}" Content="{Binding LastMouseMove}"/>
-	</Canvas>
-	
+	<ContentControl Content="{Binding Chart}" ContentTemplate="{x:Static dataTemplates:ChartTemplateProvider.ChartTemplate}"/>
+
 </UserControl>

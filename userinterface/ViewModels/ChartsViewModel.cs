@@ -1,17 +1,14 @@
-﻿using Avalonia.Controls;
-using Avalonia.Controls.Shapes;
-using Avalonia.Data;
-using Avalonia.Media;
+﻿using Avalonia;
 using ReactiveUI;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using userinterface.Models.Charts;
+using userinterface.Models.Mouse;
 
 namespace userinterface.ViewModels;
 
-public sealed class ChartsViewModel : ViewModelBase
+public sealed class ChartsViewModel : ViewModelBase, IMouseMoveDisplayer
 {
-    public static double FromLeft => 0;
-    public static double FromBottom => 0;
-
     private double lmmx = 0;
     public double LMMX
     {
@@ -26,12 +23,43 @@ public sealed class ChartsViewModel : ViewModelBase
         set => this.RaiseAndSetIfChanged(ref lmmy, value);
     }
 
-    public Ellipse LastMouseMove { get; } = new()
+    private Chart chart = new()
     {
-        Width = 8,
-        Height = 8,
+        Title = "First Chart",
 
-        Fill = Brushes.Red,
+        Width = 600,
+        Height = 400,
+
+        Graph = new()
+        {
+            Width = 400,
+            Height = 200,
+
+            Points = chartPoints
+        },
+
+        AxisX = new()
+        {
+            Title = "X Axis",
+        },
+
+        AxisY = new()
+        {
+            Title = "Y Axis",
+        },
+    };
+    public Chart Chart
+    {
+        get => chart;
+        set => this.RaiseAndSetIfChanged(ref chart, value);
+    }
+
+    private static readonly IList<Point> chartPoints = new ObservableCollection<Point>()
+    {
+        new(0, 50),
+        new(25, 25),
+        new(50, 0),
+        new(75, -50),
     };
 
     public void SetLastMouseMove(float x, float y)

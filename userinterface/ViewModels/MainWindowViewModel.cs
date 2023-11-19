@@ -1,4 +1,3 @@
-using System;
 using userinterface.Models.Mouse;
 
 namespace userinterface.ViewModels
@@ -23,8 +22,7 @@ namespace userinterface.ViewModels
             MouseListen.LastY = (int)y;
             MouseListen.LastX = (int)x;
 
-            var size = MathF.Sqrt(x * x + y * y);
-            Charts.SetLastMouseMove(size, size);
+            Charts.SetLastMouseMove(x, y);
         }
     }
 }
