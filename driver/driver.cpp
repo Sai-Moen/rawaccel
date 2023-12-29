@@ -31,6 +31,18 @@ struct {
 
 extern "C" PULONG InitSafeBootMode;
 
+// precise behavior required to handle NaN (UB with /fp:fast)
+#pragma float_control(precise, on, push)
+
+static __forceinline
+bool 
+ValidCarry(double x, double y)
+{
+    return fabs(x) < 1 && fabs(y) < 1;
+}
+
+#pragma float_control(pop)
+
 __declspec(guard(ignore))
 VOID
 RawaccelCallback(
@@ -98,7 +110,7 @@ Arguments:
                     static_cast<double>(it->LastY)
                 };
 
-                devExt->mod.modify(input, devExt->mod_settings, devExt->dpi_factor, time);
+                devExt->mod.modify(input, devExt->speed_processor, devExt->mod_settings, devExt->dpi_factor, time);
 
                 double carried_result_x = input.x + devExt->carry.x;
                 double carried_result_y = input.y + devExt->carry.y;
@@ -109,7 +121,7 @@ Arguments:
                 double carry_x = carried_result_x - out_x;
                 double carry_y = carried_result_y - out_y;
 
-                if (!ra::infnan(carry_x + carry_y)) {
+                if (ValidCarry(carry_x, carry_y)) {
                     devExt->carry.x = carry_x;
                     devExt->carry.y = carry_y;
                     it->LastX = out_x;
@@ -380,6 +392,7 @@ DeviceSetup(WDFOBJECT hDevice)
             if (wcsncmp(prof_name, profile.name, ra::MAX_NAME_LEN) == 0) {
                 devExt->mod_settings = global.modifier_data[i];
                 devExt->mod = { devExt->mod_settings };
+                devExt->speed_processor.init(devExt->mod_settings.prof.speed_processor_args);
                 return;
             }
         }
@@ -394,6 +407,7 @@ DeviceSetup(WDFOBJECT hDevice)
     set_ext_from_cfg(global.base_data.default_dev_cfg);
     devExt->mod_settings = *global.modifier_data;
     devExt->mod = { devExt->mod_settings };
+    devExt->speed_processor.init(devExt->mod_settings.prof.speed_processor_args);
     
     for (auto i = 0u; i < global.base_data.device_data_size; i++) {
         auto& dev_settings = global.device_data[i];
