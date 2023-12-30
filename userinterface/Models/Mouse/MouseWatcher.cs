@@ -749,7 +749,7 @@ namespace userinterface.Models.Mouse
 
         private void OnLastMouseMoveTimerTick(object sender, EventArgs e)
         {
-            MouseMoveDisplayer.ShowLastMouseMove();
+            //MouseMoveDisplayer.ShowLastMouseMove();
         }
 
         #endregion Methods

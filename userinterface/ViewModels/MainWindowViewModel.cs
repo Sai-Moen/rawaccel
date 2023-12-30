@@ -7,33 +7,32 @@ namespace userinterface.ViewModels
     {
         public MainWindowViewModel()
         {
-            Profiles = new ProfilesViewModel();
-            MouseListen = new MouseListenViewModel();
             MouseWindow = new MouseWindow(this);
+            ViewSelector = new ViewSelectorViewModel();
         }
 
         public ProfilesViewModel Profiles { get; }
 
-        public MouseListenViewModel MouseListen { get; }
-
         public MouseWindow MouseWindow { get; }
+
+        public ViewSelectorViewModel ViewSelector { get; }
 
         public string Test => "Is this working?";
 
         public void SetLastMouseMove(float x, float y)
         {
-            MouseListen.LastY = (int)y;
-            MouseListen.LastX = (int)x;
+            ViewSelector.Profiles.MouseListen.LastY = (int)y;
+            ViewSelector.Profiles.MouseListen.LastX = (int)x;
         }
 
         public void ShowLastMouseMove()
         {
             System.Diagnostics.Debug.WriteLine($"Updating last mouse move at time {DateTime.Now.Millisecond}");
-            if (!MouseListen.DisplayUpdated)
+            if (!ViewSelector.Profiles.MouseListen.DisplayUpdated)
             {
-                MouseListen.UpdateDisplay();
+                ViewSelector.Profiles.MouseListen.UpdateDisplay();
 
-                var size = MathF.Sqrt(MouseListen.LastX * MouseListen.LastX + MouseListen.LastY * MouseListen.LastY);
+                var size = MathF.Sqrt(ViewSelector.Profiles.MouseListen.LastX * ViewSelector.Profiles.MouseListen.LastX + ViewSelector.Profiles.MouseListen.LastY * ViewSelector.Profiles.MouseListen.LastY);
                 Profiles.SetLastMouseMove(size, 1);
             }
         }

@@ -7,6 +7,7 @@
              xmlns:lvcore="using:LiveChartsCore"
              x:Class="userinterface.Views.ProfilesView">
 
+  <!--<ContentControl Content="{Binding MouseListen}" DockPanel.Dock="Left" VerticalAlignment="Center"/>-->
   <TabControl>
     <TabItem Header="{Binding ProfileOneTitle}">
       <lvc:CartesianChart

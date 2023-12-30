@@ -1,0 +1,34 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="userinterface.Views.DevicesView">
+
+  <ListBox Items="{Binding Devices}"
+    x:Name="DeviceItems">
+    <ItemsControl.ItemTemplate>
+      <DataTemplate>
+        <Border Margin="0,10,0,0"
+          CornerRadius="5"
+          BorderBrush="Gray" BorderThickness="1"
+          Padding="5">
+        <DockPanel HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+          <TextBlock Margin="5 0" 
+                      Text="Name:"/>
+          <TextBlock Text="{Binding Name}"/>
+          <TextBlock Margin="5 0"
+                      Text="HWID:"/>
+          <TextBlock Text="{Binding HWID}"/>
+          <TextBlock Margin="5 0"
+                      Text="DPI:"/>
+          <TextBlock Text="{Binding DPI}"/>
+          <TextBlock Margin="5 0"
+                      Text="PollRate:"/>
+          <TextBlock Text="{Binding PollRate}"/>
+        </DockPanel>
+        </Border>
+      </DataTemplate>
+    </ItemsControl.ItemTemplate>
+  </ListBox>
+</UserControl>

@@ -13,6 +13,8 @@ namespace userinterface.ViewModels
     {
         public ProfilesViewModel()
         {
+            MouseListen = new MouseListenViewModel();
+
             LastMouseMoveList = new ObservableCollection<ObservablePoint>();
 
             LastMouseMoveSeries =
@@ -61,6 +63,8 @@ namespace userinterface.ViewModels
                 }
             };
         }
+
+        public MouseListenViewModel MouseListen { get; }
 
         public string ProfileOneTitle { get; set; } = "Profile1";
 

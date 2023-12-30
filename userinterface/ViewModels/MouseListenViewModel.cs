@@ -56,7 +56,6 @@ namespace userinterface.ViewModels
 
         public void UpdateDisplay()
         {
-            System.Diagnostics.Debug.WriteLine($"Setting DisplayedLastX and Y to {LastX} and {LastY}");
             DisplayedLastX = LastX;
             DisplayedLastY = LastY;
             DisplayUpdated = true;
