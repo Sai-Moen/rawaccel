@@ -1,0 +1,15 @@
+{
+  "ProfilesToGroups": {
+    "Default": {
+      "Groups": [
+        "Default",
+        "Logitech Mice"
+      ]
+    },
+    "Test": {
+      "Groups": [
+        "Test Mice"
+      ]
+    }
+  }
+}
