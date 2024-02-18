@@ -128,7 +128,7 @@ namespace userspace_backend_tests.IOTests
         }
 
         [TestMethod]
-        public void GivenValidInput_OverWritesExistingFile()
+        public void GivenValidInput_OverwritesExistingFile()
         {
             var device1 = new Device()
             {

@@ -40,5 +40,88 @@ namespace userspace_backend_tests.IOTests
             string expectedOutput = File.ReadAllText(expectedWriteOutputFile);
             Assert.AreEqual(expectedOutput, actualOutput);
         }
+
+        [TestMethod]
+        public void GivenValidInput_OverwritesExistingFile()
+        {
+            var mapping = new Mapping()
+            {
+                ProfilesToGroups = new Dictionary<string, MappingGroups>()
+                {
+                    { "Default", new MappingGroups() { Groups = new List<string>() { "Default", "Logitech Mice", } } },
+                    { "Test", new MappingGroups() { Groups = new List<string>() { "Test Mice", } } },
+                },
+            };
+
+            var writer = new MappingReaderWriter();
+            var writePath = Path.Combine(TestDirectory, "testMapping.json");
+            writer.Write(writePath, mapping);
+            Assert.IsTrue(File.Exists(writePath));
+
+            // Change mapping:
+            mapping.ProfilesToGroups["Test"] = new MappingGroups() { Groups = new List<string>() { "User has changed this group", } };
+
+            writer.Write(writePath, mapping);
+            string actualOutput = File.ReadAllText(writePath);
+
+            string expectedWriteOutputFile = Path.Combine(ExpectedOutputs, "expectedOverwriteOutput.json");
+            string expectedOutput = File.ReadAllText(expectedWriteOutputFile);
+            Assert.AreEqual(expectedOutput, actualOutput);
+        }
+
+        [TestMethod]
+        public void GivenValidInput_Reads()
+        {
+            var expectedMapping = new Mapping()
+            {
+                ProfilesToGroups = new Dictionary<string, MappingGroups>()
+                {
+                    { "Default", new MappingGroups() { Groups = new List<string>() { "Default", "Logitech Mice", } } },
+                    { "Test", new MappingGroups() { Groups = new List<string>() { "Test Mice", } } },
+                },
+            };
+
+            var reader = new MappingReaderWriter();
+
+            string readInputPath = Path.Combine(TestInputs, "readWellFormedInput.json");
+            var actualReadMapping = reader.Read(readInputPath);
+            Assert.AreEqual(expectedMapping, actualReadMapping);
+        }
+
+        [TestMethod]
+        public void GivenInvalidInput_FailsToRead()
+        {
+            var reader = new MappingReaderWriter();
+            string readInputPath = Path.Combine(TestInputs, "readInvalidInput.json");
+            Exception foundException = null;
+            try
+            {
+                var actualReadMapping = reader.Read(readInputPath);
+            }
+            catch (Exception ex)
+            {
+                foundException = ex;
+            }
+
+            Assert.IsNotNull(foundException);
+        }
+
+        [TestMethod]
+        public void GivenEmptyInput_FailsToRead()
+        {
+            var reader = new MappingReaderWriter();
+            string readInputPath = Path.Combine(TestInputs, "readEmptyInput.json");
+            Exception foundException = null;
+            try
+            {
+                var actualReadMapping = reader.Read(readInputPath);
+            }
+            catch (Exception ex)
+            {
+                foundException = ex;
+            }
+
+            Assert.IsNotNull(foundException);
+        }
     }
 }

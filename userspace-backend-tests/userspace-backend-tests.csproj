@@ -37,7 +37,19 @@
     <None Update="TestFiles\DevicesReaderWriter\ExpectedOutputs\expectedWriteOutput.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="TestFiles\MappingReaderWriter\ExpectedOutputs\expectedOverwriteOutput.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="TestFiles\MappingReaderWriter\ExpectedOutputs\expectedWriteOutput.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="TestFiles\MappingReaderWriter\Inputs\readEmptyInput.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="TestFiles\MappingReaderWriter\Inputs\readInvalidInput.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="TestFiles\MappingReaderWriter\Inputs\readWellFormedInput.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
