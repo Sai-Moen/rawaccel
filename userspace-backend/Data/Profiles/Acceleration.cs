@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using userspace_backend.Data.Profiles.Accel;
 
 namespace userspace_backend.Data.Profiles
 {
@@ -16,8 +15,6 @@ namespace userspace_backend.Data.Profiles
             LookupTable,
         }
 
-        public AccelerationDefinitionType Type { get; set; }
-
-        public AccelerationDefinition Definition { get; set; }
+        public virtual AccelerationDefinitionType Type { get; init; }
     }
 }

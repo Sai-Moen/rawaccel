@@ -52,14 +52,11 @@ namespace userspace_backend_tests.IOTests
             writer.Write(writePath, profile);
 
             Assert.IsTrue(File.Exists(writePath));
-            /*
             string actualOutput = File.ReadAllText(writePath);
 
             string expectedWriteOutputFile = Path.Combine(ExpectedOutputs, "expectedWriteOutput.json");
             string expectedOutput = File.ReadAllText(expectedWriteOutputFile);
             Assert.AreEqual(expectedOutput, actualOutput);
-            */
         }
-
     }
 }

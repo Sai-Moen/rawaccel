@@ -52,10 +52,13 @@
     <None Update="TestFiles\MappingReaderWriter\Inputs\readWellFormedInput.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="TestFiles\ProfileReaderWriter\ExpectedOutputs\expectedWriteOutput.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="TestFiles\ProfileReaderWriter\" />
+    <Folder Include="TestFiles\ProfileReaderWriter\Inputs\" />
   </ItemGroup>
 
 </Project>

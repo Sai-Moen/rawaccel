@@ -6,7 +6,8 @@ using System.Threading.Tasks;
 
 namespace userspace_backend.Data.Profiles.Accel
 {
-    public class AccelerationDefinition
+    public class NoAcceleration : Acceleration
     {
+        public override AccelerationDefinitionType Type { get => AccelerationDefinitionType.None; }
     }
 }
