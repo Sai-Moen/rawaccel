@@ -10,5 +10,14 @@ namespace userspace_backend
     public class BackEnd
     {
         public IList<Device> Devices { get; set; }
+
+        public IList<Mapping> Mappings { get; set; }
+
+        public IList<Profile> Profiles { get; set; }
+
+        public void Load(string path)
+        {
+
+        }
     }
 }

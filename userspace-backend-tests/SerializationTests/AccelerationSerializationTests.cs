@@ -43,6 +43,7 @@ namespace userspace_backend_tests.SerializationTests
                 {
                     "Acceleration": {
                         "Type": "Formula/Classic",
+                        "Gain": true,
                         "Acceleration": 0.001,
                         "Exponent": 2
                     }
@@ -64,6 +65,7 @@ namespace userspace_backend_tests.SerializationTests
                 {
                     "Acceleration": {
                         "Type": "Formula/Linear",
+                        "Gain": true,
                         "Acceleration": 0.001
                     }
                 }

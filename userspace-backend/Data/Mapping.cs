@@ -16,8 +16,6 @@ namespace userspace_backend.Data
             bool isEqual = obj is Mapping mapping &&
                 mapping.ProfilesToGroups.Count == ProfilesToGroups.Count && !mapping.ProfilesToGroups.Except(ProfilesToGroups).Any();
 
-            var excepted = ((Mapping)obj).ProfilesToGroups.Except(ProfilesToGroups).ToList();
-
             return isEqual;
         }
 

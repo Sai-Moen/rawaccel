@@ -12,10 +12,15 @@ namespace userspace_backend.Data.Profiles.Accel
         {
             Linear,
             Classic,
+            Power,
+            Natural,
+            Jump,
         }
 
         public override AccelerationDefinitionType Type { get => AccelerationDefinitionType.Formula; }
 
         public virtual AccelFormulaType FormulaType { get; }
+
+        public bool Gain { get; set; }
     }
 }
