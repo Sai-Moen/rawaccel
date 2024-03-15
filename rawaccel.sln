@@ -29,6 +29,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "converter", "converter\conv
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "userinterface", "userinterface\userinterface.csproj", "{D3A887BA-4A44-4FDB-BF59-49CA9C47C1CD}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "scripting", "scripting\scripting.csproj", "{C2D233E9-C48F-41BE-9855-C2311CFF2634}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -109,6 +111,14 @@ Global
 		{D3A887BA-4A44-4FDB-BF59-49CA9C47C1CD}.Release|Any CPU.Build.0 = Release|Any CPU
 		{D3A887BA-4A44-4FDB-BF59-49CA9C47C1CD}.Release|x64.ActiveCfg = Release|Any CPU
 		{D3A887BA-4A44-4FDB-BF59-49CA9C47C1CD}.Release|x64.Build.0 = Release|Any CPU
+		{C2D233E9-C48F-41BE-9855-C2311CFF2634}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C2D233E9-C48F-41BE-9855-C2311CFF2634}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C2D233E9-C48F-41BE-9855-C2311CFF2634}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{C2D233E9-C48F-41BE-9855-C2311CFF2634}.Debug|x64.Build.0 = Debug|Any CPU
+		{C2D233E9-C48F-41BE-9855-C2311CFF2634}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C2D233E9-C48F-41BE-9855-C2311CFF2634}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C2D233E9-C48F-41BE-9855-C2311CFF2634}.Release|x64.ActiveCfg = Release|Any CPU
+		{C2D233E9-C48F-41BE-9855-C2311CFF2634}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
