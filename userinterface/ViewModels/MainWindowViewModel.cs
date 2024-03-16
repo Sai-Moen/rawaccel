@@ -1,5 +1,6 @@
 using System;
 using userinterface.Models.Mouse;
+using userspace_backend;
 
 namespace userinterface.ViewModels
 {
@@ -7,6 +8,7 @@ namespace userinterface.ViewModels
     {
         public MainWindowViewModel()
         {
+            BackEnd = new BackEnd();
             MouseWindow = new MouseWindow(this);
             ViewSelector = new ViewSelectorViewModel();
         }
@@ -16,6 +18,8 @@ namespace userinterface.ViewModels
         public MouseWindow MouseWindow { get; }
 
         public ViewSelectorViewModel ViewSelector { get; }
+
+        public BackEnd BackEnd { get; }
 
         public string Test => "Is this working?";
 

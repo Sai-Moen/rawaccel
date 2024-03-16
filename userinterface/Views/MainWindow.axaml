@@ -11,7 +11,8 @@
         TransparencyLevelHint="AcrylicBlur"
         Background="Transparent"
         ExtendClientAreaToDecorationsHint="True"
-        WindowStartupLocation="CenterScreen">
+        WindowStartupLocation="CenterScreen"
+        Focusable="True">
 
     <Design.DataContext>
         <vm:MainWindowViewModel/>
@@ -30,7 +31,8 @@
     </ExperimentalAcrylicBorder>
     <DockPanel Margin="40">
       <!-- <ContentControl Content="{Binding MouseListen}" DockPanel.Dock="Left" VerticalAlignment="Center"/> -->
-      <ContentControl Content="{Binding ViewSelector}"/>
+      <Button Content="Apply" DockPanel.Dock="Bottom" Margin="10" HorizontalAlignment="Right"/>
+      <ContentControl Content="{Binding ViewSelector}" DockPanel.Dock="Top"/>
     </DockPanel>
   </Panel>
 

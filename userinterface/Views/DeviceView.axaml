@@ -6,7 +6,8 @@
              x:Class="userinterface.Views.DeviceView">
 
   <StackPanel Orientation="Horizontal" Spacing="10">
-    <TextBlock>Name: {Binding Name}</TextBlock>
+    <TextBlock>Name: </TextBlock>
+    <TextBox>{Binding Name}</TextBox>
     <TextBlock>HWID: {Binding HWID}</TextBlock>
     <TextBlock>DPI: {Binding DPI}</TextBlock>
     <TextBlock>PollRate: {Binding PollRate}</TextBlock>
