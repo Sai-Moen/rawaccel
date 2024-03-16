@@ -43,7 +43,7 @@ public abstract class ScriptException : Exception
 /// </summary>
 public static class ScriptLoader
 {
-    public const long MaxScriptFileLength = 0xFFFF;
+    public const int MaxScriptFileLength = 0xFFFF;
 
     public static string LoadScript(string scriptPath)
     {

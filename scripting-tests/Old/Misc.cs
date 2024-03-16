@@ -1,11 +1,15 @@
 ﻿using scripting.Generation;
 
-namespace scripting.Test;
+namespace scripting_tests.Old;
 
+[TestClass]
 public class Misc
 {
-    public static void Perf(Interpreter interpreter)
+    [TestMethod]
+    public static void Perf()
     {
+        Interpreter interpreter = Test.CreateInterpreter();
+
         const int cap = 0x1000;
         double[] ys = new double[cap];
 
