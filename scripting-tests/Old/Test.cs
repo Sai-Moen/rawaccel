@@ -6,7 +6,7 @@ namespace scripting_tests.Old;
 
 public static class Test
 {
-    public const string DebugPath = @"../../scripting/Spec/arc.ras";
+    public const string DebugPath = @"../../../../scripting/Spec/arc.ras";
 
     private static readonly Script script = new();
 

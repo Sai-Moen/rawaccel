@@ -6,7 +6,7 @@ namespace scripting_tests.Old;
 public class Misc
 {
     [TestMethod]
-    public static void Perf()
+    public void Perf()
     {
         Interpreter interpreter = Test.CreateInterpreter();
 
