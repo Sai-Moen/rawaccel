@@ -1,37 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
+﻿using scripting.Common;
+using scripting.Lexical;
 
-namespace scripting.Generation;
-
-/// <summary>
-/// Represents a parsed list of tokens.
-/// </summary>
-/// <param name="Tokens"></param>
-public record TokenCode(Token[] Tokens)
-{
-    public TokenCode(TokenList tokens) : this(tokens.ToArray()) { }
-
-    public TokenCode(Expression expr) : this(expr.Tokens) { }
-
-    public int Length { get { return Tokens.Length; } }
-
-    public Token this[int index]
-    {
-        get { return Tokens[index]; }
-        set { Tokens[index] = value; }
-    }
-
-    public static implicit operator TokenCode(TokenList list)
-    {
-        return new(list);
-    }
-
-    public static implicit operator TokenCode(Expression expr)
-    {
-        return new(expr);
-    }
-}
+namespace scripting.Syntactical;
 
 /// <summary>
 /// The operation to validate a Number against a certain value with.
@@ -68,37 +38,44 @@ public record ParameterValidation(Guard GuardType, Number GuardValue = default)
 /// </summary>
 public class ParameterAssignment
 {
+    #region Constructors
+
     public ParameterAssignment(
-        Token token, Token value,
+        Token name, Token value,
         Token? minGuard, Token? min,
         Token? maxGuard, Token? max)
     {
-        Debug.Assert(token.Base.Type == TokenType.Parameter);
-        Name = token.Base.Symbol;
+        Debug.Assert(name.Base.Type == TokenType.Parameter);
+        Name = name.Base.Symbol;
 
-        Debug.Assert(value.Base.Type == TokenType.Number);
-        Value = (Number)value;
+        IsNumber = value.Base.Type == TokenType.Number;
+        if (IsNumber)
+        {
+            Value = (Number)value;
+        }
+        else
+        {
+            Debug.Assert(value.Base.Type == TokenType.Boolean);
+            Value = value.FromBoolean();
+        }
 
         Min = GuardHelper(minGuard, min, OnMinGuard);
         Max = GuardHelper(maxGuard, max, OnMaxGuard);
     }
 
-    public string Name { get; }
+    #endregion
 
-    public Number Value { get; }
-
-    public ParameterValidation Min { get; }
-
-    public ParameterValidation Max { get; }
+    #region Static Methods
 
     private static ParameterValidation GuardHelper(Token? token, Token? value, Func<string, Guard> func)
     {
-        if (token is not null && value is not null)
+        if (token is null || value is null)
         {
-            Guard guard = func(token.Base.Symbol);
-            return new ParameterValidation(guard, (Number)value);
+            return new ParameterValidation(Guard.None);
         }
-        return new ParameterValidation(Guard.None);
+
+        Guard guard = func(token.Base.Symbol);
+        return new ParameterValidation(guard, (Number)value);
     }
 
     private static Guard OnMinGuard(string symbol) => symbol switch
@@ -116,12 +93,26 @@ public class ParameterAssignment
 
         _ => throw new ParserException("Incorrect guard! (maximum)")
     };
+
+    #endregion
+
+    #region Properties
+
+    public string Name { get; }
+
+    public bool IsNumber { get; }
+    public Number Value { get; }
+
+    public ParameterValidation Min { get; }
+    public ParameterValidation Max { get; }
+
+    #endregion
 }
 
 /// <summary>
 /// Collection of Parameter assignments.
 /// </summary>
-public class Parameters : List<ParameterAssignment>
+public class Parameters : List<ParameterAssignment>, IList<ParameterAssignment>
 {
     public Parameters() : base(Constants.MAX_PARAMETERS) { }
 }
@@ -129,28 +120,7 @@ public class Parameters : List<ParameterAssignment>
 /// <summary>
 /// Saves the Token of a Variable and its Expression.
 /// </summary>
-public record VariableAssignment(string Name, Expression Expr)
-{
-    public VariableAssignment(Token token, TokenList expr)
-        : this(token.Base.Symbol, expr)
-    {
-        Debug.Assert(token.Base.Type == TokenType.Variable);
-    }
-}
-
-/// <summary>
-/// Represents a parsed expression.
-/// </summary>
-/// <param name="Tokens"></param>
-public record Expression(Token[] Tokens)
-{
-    public Expression(TokenList tokens) : this(tokens.ToArray()) { }
-
-    public static implicit operator Expression(TokenList list)
-    {
-        return new(list);
-    }
-}
+public record VariableAssignment(string Name, IList<Token> Expr);
 
 /// <summary>
 /// Collection of Variable assignments.

@@ -3,10 +3,12 @@
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
     <RootNamespace>scripting_tests</RootNamespace>
-    <ImplicitUsings>disable</ImplicitUsings>
+    <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
 
     <IsPackable>false</IsPackable>
+
+    <StartupObject>scripting_tests.Main.ManualTest</StartupObject>
   </PropertyGroup>
 
   <ItemGroup>
@@ -18,6 +20,10 @@
 
   <ItemGroup>
     <ProjectReference Include="..\scripting\scripting.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="System.Diagnostics" />
   </ItemGroup>
 
 </Project>

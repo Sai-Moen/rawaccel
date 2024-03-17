@@ -1,8 +1,6 @@
-﻿using System;
-using System.Diagnostics;
-using System.Text;
+﻿using scripting.Common;
 
-namespace scripting.Generation;
+namespace scripting.Lexical;
 
 public enum CharBufferState
 {
@@ -15,20 +13,23 @@ public enum CharBufferState
 /// <summary>
 /// Automatically attempts to Tokenize when given an input script.
 /// </summary>
-public class Lexer
+public class Lexer : ILexer
 {
     #region Fields
 
-    private CharBufferState BufferState = CharBufferState.Idle;
-    private readonly StringBuilder CharBuffer = new();
+    private CharBufferState bufferState = CharBufferState.Idle;
+    private readonly StringBuilder charBuffer = new();
 
-    private int CurrentIndex = -1;
-    private readonly int MaxIndex;
+    private int currentIndex = -1;
+    private readonly int maxIndex;
 
-    private uint CurrentLine = 1;
+    private uint currentLine = 1;
 
-    private char CurrentChar;
-    private readonly char[] Characters;
+    private char currentChar;
+    private readonly char[] characters;
+
+    private string comments = string.Empty;
+    private readonly IList<Token> lexicalTokens = new List<Token>();
 
     #endregion Fields
 
@@ -40,21 +41,11 @@ public class Lexer
     /// <param name="script">The input script.</param>
     public Lexer(string script)
     {
-        Characters = script.ToCharArray();
-        MaxIndex = Characters.Length - 1;
-        CheckCharacters();
-        Tokenize();
+        characters = script.ToCharArray();
+        maxIndex = characters.Length - 1;
     }
 
     #endregion Constructors
-
-    #region Properties
-
-    public string Comments { get; private set; } = string.Empty;
-
-    public TokenList TokenList { get; } = new();
-
-    #endregion Properties
 
     #region Static Methods
 
@@ -64,10 +55,10 @@ public class Lexer
     private static bool IsReserved(string s) => Tokens.ReservedMap.ContainsKey(s);
 
     private static bool IsAlphabeticCharacter(char c)
-        => (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || CmpCharStr(c, Tokens.UNDER);
+        => c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z' || CmpCharStr(c, Tokens.UNDER);
 
     private static bool IsNumericCharacter(char c)
-        => (c >= '0' && c <= '9') || CmpCharStr(c, Tokens.FPOINT);
+        => c >= '0' && c <= '9' || CmpCharStr(c, Tokens.FPOINT);
 
     private static bool IsNewline(char c) => c == Environment.NewLine[^1];
 
@@ -75,23 +66,30 @@ public class Lexer
 
     #region Methods
 
+    public LexingResult Tokenize()
+    {
+        CheckCharacters();
+        TokenizeScript();
+        return new(comments, lexicalTokens);
+    }
+
     private void CheckCharacters()
     {
-        Debug.Assert(MaxIndex > 0, "MaxIdx not set correctly!");
+        Debug.Assert(maxIndex > 0, "MaxIdx not set correctly!");
 
         // not a problem in terms of parsing, but for consistency among (us) script writers
-        if (!CmpCharStr(Characters[MaxIndex], Tokens.CALC_END))
+        if (!CmpCharStr(characters[maxIndex], Tokens.CALC_END))
         {
-            CurrentLine = 0; // the location is in the error
+            currentLine = 0; // the location is in the error
             TokenizerError("Please don't type anything after the body.");
         }
 
         int startingIndex = -1;
         uint startingLine = 1;
-        StringBuilder builder = new(Characters.Length);
+        StringBuilder builder = new(characters.Length);
 
         bool isComments = true;
-        foreach (char c in Characters)
+        foreach (char c in characters)
         {
             if (isComments)
             {
@@ -104,7 +102,7 @@ public class Lexer
             }
             else if (IsNewline(c))
             {
-                CurrentLine++;
+                currentLine++;
                 continue;
             }
             else if (
@@ -119,33 +117,33 @@ public class Lexer
             TokenizerError($"Unsupported character detected, char: {c}, u16: {(ushort)c}");
         }
 
-        CurrentIndex = startingIndex - 1;
-        CurrentLine = startingLine;
-        Comments = builder.ToString();
+        currentIndex = startingIndex - 1;
+        currentLine = startingLine;
+        comments = builder.Remove(builder.Length - 1, 1).ToString();
     }
 
-    private void Tokenize()
+    private void TokenizeScript()
     {
-        Debug.Assert(CmpCharStr(Characters[CurrentIndex + 1], Tokens.PARAMS_START),
+        Debug.Assert(CmpCharStr(characters[currentIndex + 1], Tokens.PARAMS_START),
             "Current Char should start at the parameter opening!");
 
-        while (++CurrentIndex <= MaxIndex)
+        while (++currentIndex <= maxIndex)
         {
-            CurrentChar = Characters[CurrentIndex];
-            if (IsNewline(CurrentChar))
+            currentChar = characters[currentIndex];
+            if (IsNewline(currentChar))
             {
-                CurrentLine++;
+                currentLine++;
                 continue;
             }
-            else if (IsAlphabeticCharacter(CurrentChar))
+            else if (IsAlphabeticCharacter(currentChar))
             {
                 if (OnAlphabetical()) continue;
             }
-            else if (IsNumericCharacter(CurrentChar))
+            else if (IsNumericCharacter(currentChar))
             {
                 if (OnNumerical()) continue;
             }
-            else if (char.IsWhiteSpace(CurrentChar))
+            else if (char.IsWhiteSpace(currentChar))
             {
                 if (OnWhiteSpace()) continue;
             }
@@ -161,10 +159,10 @@ public class Lexer
     private bool OnAlphabetical()
     {
         BufferCurrentChar();
-        switch (BufferState)
+        switch (bufferState)
         {
             case CharBufferState.Idle:
-                BufferState = CharBufferState.Identifier;
+                bufferState = CharBufferState.Identifier;
                 return true;
             case CharBufferState.Identifier:
                 CapIdentifierLength();
@@ -180,10 +178,10 @@ public class Lexer
     private bool OnNumerical()
     {
         BufferCurrentChar();
-        switch (BufferState)
+        switch (bufferState)
         {
             case CharBufferState.Idle:
-                BufferState = CharBufferState.Number;
+                bufferState = CharBufferState.Number;
                 return true;
             case CharBufferState.Identifier:
                 CapIdentifierLength();
@@ -198,17 +196,17 @@ public class Lexer
 
     private bool OnWhiteSpace()
     {
-        switch (BufferState)
+        switch (bufferState)
         {
             case CharBufferState.Idle:
                 return true;
             case CharBufferState.Identifier:
                 AddBufferedToken();
-                BufferState = CharBufferState.Idle;
+                bufferState = CharBufferState.Idle;
                 return true;
             case CharBufferState.Number:
                 AddNumber();
-                BufferState = CharBufferState.Idle;
+                bufferState = CharBufferState.Idle;
                 return true;
             default:
                 return false;
@@ -217,7 +215,7 @@ public class Lexer
 
     private bool OnSpecial()
     {
-        switch (BufferState)
+        switch (bufferState)
         {
             case CharBufferState.Idle:
                 SpecialCheck();
@@ -231,7 +229,7 @@ public class Lexer
                 SpecialCheck();
                 return true;
             case CharBufferState.Special:
-                Debug.Assert(CmpCharStr(CurrentChar, Tokens.SECOND));
+                Debug.Assert(CmpCharStr(currentChar, Tokens.SECOND));
 
                 BufferCurrentChar();
                 AddBufferedToken();
@@ -246,7 +244,7 @@ public class Lexer
         BufferCurrentChar();
         if (PeekNext(out char c2) && CmpCharStr(c2, Tokens.SECOND))
         {
-            BufferState = CharBufferState.Special;
+            bufferState = CharBufferState.Special;
         }
         else
         {
@@ -260,8 +258,8 @@ public class Lexer
 
     private void AddToken(Token token)
     {
-        TokenList.Add(token);
-        BufferState = CharBufferState.Idle;
+        lexicalTokens.Add(token);
+        bufferState = CharBufferState.Idle;
     }
 
     private void AddBufferedToken()
@@ -271,38 +269,38 @@ public class Lexer
         Token token;
         if (Tokens.ReservedMap.TryGetValue(s, out Token? value))
         {
-            token = value with { Line = CurrentLine };
+            token = value with { Line = currentLine };
         }
         else
         {
-            token = new(new(TokenType.Identifier, Tokens.Normalize(s)), CurrentLine);
+            token = new(new(TokenType.Identifier, Tokens.Normalize(s)), currentLine);
         }
         AddToken(token);
     }
 
     private void AddNumber()
     {
-        AddToken(new(new(TokenType.Number, ConsumeBuffer()), CurrentLine));
+        AddToken(new(new(TokenType.Number, ConsumeBuffer()), currentLine));
     }
 
     private void BufferCurrentChar()
     {
-        CharBuffer.Append(CurrentChar);
+        charBuffer.Append(currentChar);
     }
 
     private string ConsumeBuffer()
     {
-        string s = CharBuffer.ToString();
-        CharBuffer.Clear();
+        string s = charBuffer.ToString();
+        charBuffer.Clear();
         return s;
     }
 
     private bool PeekNext(out char c)
     {
         c = char.MinValue;
-        if (CurrentIndex < MaxIndex)
+        if (currentIndex < maxIndex)
         {
-            c = Characters[CurrentIndex + 1];
+            c = characters[currentIndex + 1];
             return true;
         }
 
@@ -311,7 +309,7 @@ public class Lexer
 
     private void CapIdentifierLength()
     {
-        if (CharBuffer.Length > Constants.MAX_IDENTIFIER_LEN)
+        if (charBuffer.Length > Constants.MAX_IDENTIFIER_LEN)
         {
             TokenizerError($"Identifier name too long! (max {Constants.MAX_IDENTIFIER_LEN} characters)");
         }
@@ -319,7 +317,7 @@ public class Lexer
 
     private void CapNumberLength()
     {
-        if (CharBuffer.Length > Constants.MAX_NUMBER_LEN)
+        if (charBuffer.Length > Constants.MAX_NUMBER_LEN)
         {
             TokenizerError($"Number too long! (max {Constants.MAX_NUMBER_LEN} characters)");
         }
@@ -329,14 +327,6 @@ public class Lexer
 
     private void TokenizerError(string error)
     {
-        throw new LexerException(error, CurrentLine);
+        throw new LexerException(error, currentLine);
     }
-}
-
-/// <summary>
-/// Exception for tokenizing-specific errors.
-/// </summary>
-public sealed class LexerException : GenerationException
-{
-    public LexerException(string message, uint line) : base(message, line) { }
 }

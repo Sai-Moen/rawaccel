@@ -1,4 +1,5 @@
-﻿using scripting.Generation;
+﻿using scripting;
+using scripting.Interpretation;
 
 namespace scripting_tests.Old;
 
@@ -8,7 +9,7 @@ public class Misc
     [TestMethod]
     public void Perf()
     {
-        Interpreter interpreter = Test.CreateInterpreter();
+        IInterpreter interpreter = Wrapper.LoadScript(Builtins.ARC);
 
         const int cap = 0x1000;
         double[] ys = new double[cap];

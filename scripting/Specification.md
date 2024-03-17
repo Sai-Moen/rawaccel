@@ -26,20 +26,42 @@ and allows the grapher to automatically calculate the points based on given para
 
 Proposed file name extension for custom scripts = `.ras` (RawAccelScript)
 
-### Script
+### Common
 
-This is the main object (not god object) that strings everything together.
-The whole program is kind of a restrictive interpreter to C#,
+Contains:
 
-### Generation
+- Helper classes (used throughout the stages of generation)
 
-These are the files that model the actual formula itself.
-They do so by interpreting the script that is loaded in from the frontend via the Script.
-This will only support very simple actions so that you can't delete System32 or anti-cheat from there.
+### Lexical
 
-### Test
+Contains:
 
-These are testing files, either made to perform simple checks, or to do more thorough testing.
+- ILexer, the public API for lexing.
+- Lexer (a.k.a. Tokenizer)
+	- Does lexical analysis on a string (the user-made script).
+	- Produces a LexingResult object that contains the comments as a string and the tokens in lexical order.
+- Helper classes
+
+### Syntactical
+
+Contains:
+
+- IParser, the public API for parsing.
+- Parser
+	- Does syntactic analysis on a list of tokens (produced by the lexer).
+	- Produces a ParsingResult object that contains the script description, parameters, variables, the parsed list of tokens.
+- Helper classes
+
+### Interpretation
+
+Contains:
+
+- IInterpreter, the public API for interpreting parsed scripts and controlling an interpreter.
+- Interpreter
+	- Runs Programs, keeps track of parameters and variables.
+- Program
+	- Effectively just the parsed list of tokens with some thin semantic analysis on top.
+- Helper classes
 
 ## Scripting language specification
 
@@ -95,9 +117,10 @@ After the Calculation block it will be returned to the caller of the aforementio
 ### Keywords
 
 ```
-x y         "Input/Output variables"
-zero        "Used for quick unary minus/booleans (zero - x == -x && zero == false && !zero == true)"
-e pi tau    "Math Constants"
+x y           "Input/Output variables"
+false true    "Boolean values (0 and 1 respectively)"
+zero          "Used for quick unary minus/booleans (zero - x == -x && zero == false && !zero == true)"
+e pi tau      "Math Constants"
 
 if (c): s :       "c means condition, s means statements"
 while (c): s :    "c means condition, s means statements"
@@ -107,8 +130,9 @@ while (c): s :    "c means condition, s means statements"
 
 ```
 .      "Floating Point"
-;      "Line Terminator"
+,      "Function argument separator"
 :      "Control Flow Block"
+;      "Line Terminator"
 ( )    "Precedence"
 [ ]    "Parameters"
 { }    "Calculation"

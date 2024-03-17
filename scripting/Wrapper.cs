@@ -1,41 +1,43 @@
-﻿using System;
-using System.IO;
-using scripting.Generation;
+﻿using scripting.Common;
+using scripting.Interpretation;
+using scripting.Lexical;
+using scripting.Syntactical;
 
 namespace scripting;
 
 /// <summary>
-/// Combines all components of Script.
+/// Wrapper for scripting.
 /// </summary>
-public class Script
+public static class Wrapper
 {
-    private Interpreter? interpreter;
-
     /// <summary>
-    /// Returns Interpreter instance if one is loaded,
-    /// otherwise throws <see cref="LoaderException"/>.
+    /// Attemps to load a RawAccelScript script.
     /// </summary>
-    public Interpreter Interpreter => interpreter ?? throw new LoaderException("No script loaded!");
+    /// <param name="script">script string to load</param>
+    /// <returns>interpreter instance with the loaded script</returns>
+    /// <exception cref="ScriptException"/>
+    public static IInterpreter LoadScript(string script)
+    {
+        ILexer lexer = new Lexer(script);
+        LexingResult lexicalAnalysis = lexer.Tokenize();
+
+        IParser parser = new Parser(lexicalAnalysis);
+        ParsingResult syntacticAnalysis = parser.Parse();
+
+        return new Interpreter(syntacticAnalysis);
+    }
 
     /// <summary>
     /// Attempts to load a RawAccelScript script from <paramref name="scriptPath"/>.
-    /// Throws <see cref="ScriptException"/> on bad script input.
     /// </summary>
-    public void LoadScript(string scriptPath)
+    /// <param name="scriptPath">path to load from</param>
+    /// <returns>interpreter instance with the loaded script</returns>
+    /// <exception cref="ScriptException"/>
+    public static IInterpreter LoadScriptFromFile(string scriptPath)
     {
         string script = ScriptLoader.LoadScript(scriptPath);
-        Lexer tokenizer = new(script);
-        Parser parser = new(tokenizer.TokenList);
-        interpreter = new(parser.Parameters, parser.Variables, parser.TokenCode);
+        return LoadScript(script);
     }
-}
-
-/// <summary>
-/// Exception to derive from when doing anything inside the Script namespace.
-/// </summary>
-public abstract class ScriptException : Exception
-{
-    public ScriptException(string message) : base(message) { }
 }
 
 /// <summary>

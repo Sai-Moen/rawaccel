@@ -1,9 +1,9 @@
-﻿using System.Diagnostics;
+﻿using scripting.Interpretation;
 
-namespace scripting.Generation;
+namespace scripting.Common;
 
 /// <summary>
-/// Constants used for all of Script.
+/// Constants used in the scripting namespace.
 /// </summary>
 public static class Constants
 {
@@ -18,14 +18,4 @@ public static class Constants
     {
         Debug.Assert(CAPACITY == MAX_PARAMETERS + MAX_VARIABLES);
     }
-}
-
-/// <summary>
-/// Exception used for errors in all stages of code generation.
-/// </summary>
-public abstract class GenerationException : ScriptException
-{
-    public GenerationException(string message) : base(message) { }
-
-    public GenerationException(string message, uint line) : base($"Line {line}: {message}") { }
 }
