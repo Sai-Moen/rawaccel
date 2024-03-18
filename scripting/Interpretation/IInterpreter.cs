@@ -1,5 +1,5 @@
 ﻿using scripting.Common;
-using scripting.Syntactical;
+using scripting.Script;
 
 namespace scripting.Interpretation;
 
@@ -19,10 +19,15 @@ public interface IInterpreter
     Parameters Defaults { get; }
 
     /// <summary>
-    /// The current values of all parameters.
-    /// Setting this property will automatically update the values of all variables.
+    /// The current state of all parameters.
     /// </summary>
-    Parameters Settings { get; set; }
+    Parameters Settings { get; }
+
+    /// <summary>
+    /// Sets internal memory so that it accurately reflects the current settings.
+    /// Call this before performing a bunch of calculations.
+    /// </summary>
+    void Init();
 
     /// <summary>
     /// Performs a calculation on the currently loaded script and settings.

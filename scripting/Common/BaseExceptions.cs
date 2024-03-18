@@ -3,7 +3,7 @@
 /// <summary>
 /// Exception to derive from when doing anything inside the scripting namespace.
 /// </summary>
-public abstract class ScriptException : Exception
+public class ScriptException : Exception
 {
     public ScriptException(string message) : base(message) { }
 }

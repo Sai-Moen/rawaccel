@@ -1,4 +1,4 @@
-﻿using scripting.Common;
+﻿using scripting.Script;
 
 namespace scripting.Interpretation;
 
@@ -326,6 +326,7 @@ public readonly record struct MemoryAddress(byte Address)
     #region Constants
 
     public const int SIZE = sizeof (byte);
+
     public const byte MAX_VALUE = byte.MaxValue;
     public const int CAPACITY = MAX_VALUE + 1;
 
@@ -370,6 +371,7 @@ public readonly record struct DataAddress(ushort Address)
     #region Constants
 
     public const int SIZE = sizeof (ushort);
+
     public const ushort MAX_VALUE = ushort.MaxValue;
     public const int CAPACITY = MAX_VALUE + 1;
 
@@ -413,7 +415,8 @@ public readonly record struct CodeAddress(ushort Address)
 {
     #region Constants
 
-    public const int SIZE = sizeof(ushort);
+    public const int SIZE = sizeof (ushort);
+
     public const ushort MAX_VALUE = ushort.MaxValue;
     public const int CAPACITY = MAX_VALUE + 1;
 
@@ -469,7 +472,7 @@ public class MemoryHeap
         {
             throw new InterpreterException("MemoryHeap capacity overflow!");
         }
-
+        
         Memory = new Number[capacity];
     }
 
@@ -487,7 +490,7 @@ public class MemoryHeap
 }
 
 /// <summary>
-/// Represents the data segment, used for storing numbers from the code.
+/// Represents the data cache, used for storing number literals from the code.
 /// </summary>
 public class StaticData
 {

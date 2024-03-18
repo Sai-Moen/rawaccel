@@ -1,5 +1,6 @@
 ﻿using scripting.Common;
 using scripting.Lexical;
+using scripting.Script;
 
 namespace scripting.Syntactical;
 
@@ -10,8 +11,8 @@ public class Parser : IParser
 {
     #region Fields
 
-    private readonly Identifiers parameterNames = new(Constants.MAX_PARAMETERS);
-    private readonly Identifiers variableNames = new(Constants.MAX_VARIABLES);
+    private readonly ISet<string> parameterNames = new HashSet<string>(Constants.MAX_PARAMETERS);
+    private readonly ISet<string> variableNames = new HashSet<string>(Constants.MAX_VARIABLES);
 
     private readonly Queue<Token> tokenBuffer = new();
     private readonly Stack<Token> operatorStack = new();
@@ -98,7 +99,7 @@ public class Parser : IParser
 
     #region Helpers
 
-    private void CoerceAll(Identifiers identifiers, TokenType type)
+    private void CoerceAll(ISet<string> identifiers, TokenType type)
     {
         for (int i = 0; i <= maxIndex; i++)
         {

@@ -167,6 +167,7 @@ public static class Tokens
 
     // Premade Tokens
     public static readonly Token DUMMY = new(new(TokenType.Undefined, NONE));
+    public static readonly Token DEFAULT_NUMBER = new(new(TokenType.Number, "0"));
 
     #endregion Constants
 

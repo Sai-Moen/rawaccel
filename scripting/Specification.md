@@ -28,12 +28,23 @@ Proposed file name extension for custom scripts = `.ras` (RawAccelScript)
 
 ### Common
 
+Utils-esque namespace.
 Contains:
 
 - Helper classes (used throughout the stages of generation)
 
+### Script
+
+Models elements of .ras source code.
+Contains:
+
+- Number, the number/boolean literals
+- Parameter, the user-controlled variables
+- Variable, the temporary variables declared after the parameters
+
 ### Lexical
 
+Lexical Analysis namespace.
 Contains:
 
 - ILexer, the public API for lexing.
@@ -44,6 +55,7 @@ Contains:
 
 ### Syntactical
 
+Syntactic Analysis namespace.
 Contains:
 
 - IParser, the public API for parsing.
@@ -54,6 +66,7 @@ Contains:
 
 ### Interpretation
 
+Interpreter namespace.
 Contains:
 
 - IInterpreter, the public API for interpreting parsed scripts and controlling an interpreter.
@@ -65,7 +78,7 @@ Contains:
 
 ## Scripting language specification
 
-The input variable will be x, and the output variable will be whatever is in y (1 by default).
+The input variable will be `x`, and the output variable will be whatever is in `y` (1 by default).
 Using control flow cleverly should make it so that multiple return, or even return at all, is not necessary,
 so there is not a return keyword.
 

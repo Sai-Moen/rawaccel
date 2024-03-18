@@ -1,5 +1,5 @@
-﻿using scripting.Common;
-using scripting.Lexical;
+﻿using scripting.Lexical;
+using scripting.Script;
 
 namespace scripting.Interpretation;
 

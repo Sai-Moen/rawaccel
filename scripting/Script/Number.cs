@@ -1,6 +1,7 @@
-﻿using scripting.Lexical;
+﻿using scripting.Common;
+using scripting.Lexical;
 
-namespace scripting.Common;
+namespace scripting.Script;
 
 /// <summary>
 /// Represents a number or boolean in the script.
@@ -10,7 +11,7 @@ public readonly record struct Number(double Value)
 {
     #region Constants
 
-    public const int SIZE = sizeof (double);
+    public const int SIZE = sizeof(double);
 
     public const double FALSE = 0.0;
     public const double TRUE = 1.0;

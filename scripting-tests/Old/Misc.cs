@@ -10,11 +10,12 @@ public class Misc
     public void Perf()
     {
         IInterpreter interpreter = Wrapper.LoadScript(Builtins.ARC);
+        interpreter.Init();
 
         const int cap = 0x1000;
         double[] ys = new double[cap];
 
-        System.Diagnostics.Stopwatch sw = System.Diagnostics.Stopwatch.StartNew();
+        Stopwatch sw = Stopwatch.StartNew();
         for (int i = 0; i < cap; i++)
         {
             ys[i] = interpreter.Calculate(i);
