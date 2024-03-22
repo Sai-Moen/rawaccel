@@ -6,6 +6,7 @@ public enum InstructionType : byte
 {
     NoOp,
     Start, End, // Helps with jumps not going out of bounds
+    Return, // Early return 
 
     // TOS = Top Of Stack
     Load, Store,       // Gets or Sets an Address in the 'heap', to/from TOS.

@@ -32,5 +32,6 @@ public static class Builtins
 				y += (pLimit / x) * (x - Midpoint * atan(x / Midpoint));
 			:
 
-		}";
+		}
+	";
 }

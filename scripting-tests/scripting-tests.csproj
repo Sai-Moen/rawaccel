@@ -8,7 +8,7 @@
 
     <IsPackable>false</IsPackable>
 
-    <StartupObject>scripting_tests.Main.ManualTest</StartupObject>
+    <StartupObject>scripting_tests.Old.Test</StartupObject>
   </PropertyGroup>
 
   <ItemGroup>

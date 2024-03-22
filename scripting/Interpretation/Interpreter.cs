@@ -138,7 +138,11 @@ public class Interpreter : IInterpreter
                 {
                     InterpreterError("Unexpected program end!");
                 }
+
                 Debug.Assert(stack.Count == 0);
+                return;
+            case InstructionType.Return:
+                stack.Clear(); // caller may expect empty stack back
                 return;
             case InstructionType.Load:
                 MemoryAddress loadAddress = (MemoryAddress)program.GetOperandFromNext(ref i);

@@ -3,10 +3,8 @@ using scripting.Interpretation;
 
 namespace scripting_tests.Old;
 
-[TestClass]
 public class Misc
 {
-    [TestMethod]
     public void Perf()
     {
         IInterpreter interpreter = Wrapper.LoadScript(Builtins.ARC);

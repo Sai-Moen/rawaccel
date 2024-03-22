@@ -266,35 +266,40 @@ public class Parser : IParser
             input.Enqueue(currentToken);
             AdvanceToken();
         }
-
         Debug.Assert(operatorStack.Count == 0);
 
         // Shunting Yard Algorithm (RPN)
         IList<Token> output = new List<Token>(input.Count);
+
+        Token? prev = null;
         foreach (Token token in input)
+        {
             switch (token.Base.Type)
             {
                 case TokenType.Number:
                 case TokenType.Parameter:
                 case TokenType.Constant:
                     output.Add(token);
-                    continue;
+                    break;
                 case TokenType.Arithmetic:
+                    CheckUnary(output, prev, token.Line);
                     OnPrecedence(output, token);
-                    continue;
+                    break;
                 case TokenType.ArgumentSeparator:
-                    continue;
+                    break;
                 case TokenType.Function:
                 case TokenType.Open:
                     operatorStack.Push(token);
-                    continue;
+                    break;
                 case TokenType.Close:
                     OnClose(output);
-                    continue;
+                    break;
                 default:
                     ParserError("Unexpected expression token!");
-                    break;
+                    break; // unreachable
             }
+            prev = token;
+        }
         OnEmptyQueue(output);
 
         Debug.Assert(tokenBuffer.Count == 2);
@@ -345,7 +350,8 @@ public class Parser : IParser
 
     private void Statement()
     {
-        if (Accept(TokenType.Variable) ||
+        if (
+            Accept(TokenType.Variable) ||
             Accept(TokenType.Input) ||
             Accept(TokenType.Output))
         {
@@ -357,6 +363,10 @@ public class Parser : IParser
             syntacticTokens.Add(assignment);
             syntacticTokens.Add(target);
         }
+        else if (Accept(TokenType.Return))
+        {
+            Expect(TokenType.Terminator);
+        }
         else if (Expect(TokenType.Branch))
         {
             Token branch = previousToken;
@@ -366,7 +376,7 @@ public class Parser : IParser
 
             do Statement();
             while (!Accept(TokenType.Block));
-            syntacticTokens.Add(Tokens.ReservedMap[Tokens.BRANCH_END] with { Line = previousToken.Line });
+            syntacticTokens.Add(Tokens.GetReserved(Tokens.BRANCH_END, previousToken.Line));
         }
     }
 
@@ -397,18 +407,14 @@ public class Parser : IParser
 
             input.Enqueue(current);
         }
-        return ShuntingYard(input);
-    }
-
-    private IList<Token> ShuntingYard(Queue<Token> input)
-    {
         Debug.Assert(operatorStack.Count == 0);
 
         // Shunting Yard Algorithm (RPN)
         IList<Token> output = new List<Token>(input.Count);
-        while (input.Count != 0)
+
+        Token? prev = null;
+        foreach (Token token in input)
         {
-            Token token = input.Dequeue();
             switch (token.Base.Type)
             {
                 case TokenType.Number:
@@ -418,24 +424,28 @@ public class Parser : IParser
                 case TokenType.Output:
                 case TokenType.Constant:
                     output.Add(token);
-                    continue;
+                    break;
                 case TokenType.Arithmetic:
+                    CheckUnary(output, prev, token.Line);
+                    OnPrecedence(output, token);
+                    break;
                 case TokenType.Comparison:
                     OnPrecedence(output, token);
-                    continue;
+                    break;
                 case TokenType.ArgumentSeparator:
-                    continue;
+                    break;
                 case TokenType.Function:
                 case TokenType.Open:
                     operatorStack.Push(token);
-                    continue;
+                    break;
                 case TokenType.Close:
                     OnClose(output);
-                    continue;
+                    break;
                 default:
                     ParserError("Unexpected expression token!");
                     break; // unreachable
             }
+            prev = token;
         }
         OnEmptyQueue(output);
         return output;
@@ -444,11 +454,7 @@ public class Parser : IParser
     private void OnClose(IList<Token> output)
     {
         Token top;
-        try
-        {
-            top = operatorStack.Peek();
-        }
-        catch (InvalidOperationException)
+        if (!operatorStack.TryPeek(out top!))
         {
             ParserError($"Unexpected: {Tokens.CLOSE}");
             return;
@@ -457,7 +463,6 @@ public class Parser : IParser
         while (top.Base.Type != TokenType.Open)
         {
             output.Add(operatorStack.Pop());
-
             if (operatorStack.Count == 0)
             {
                 ParserError($"No matching: {Tokens.OPEN}");
@@ -466,8 +471,6 @@ public class Parser : IParser
             top = operatorStack.Peek();
         }
 
-        Debug.Assert(top.Base.Type == TokenType.Open);
-
         _ = operatorStack.Pop();
         if (operatorStack.Count != 0 && operatorStack.Peek().Base.Type == TokenType.Function)
         {
@@ -475,28 +478,43 @@ public class Parser : IParser
         }
     }
 
+    private static void CheckUnary(IList<Token> output, Token? prev, uint line)
+    {
+        switch ((prev ?? Tokens.DUMMY).Base.Type)
+        {
+            case TokenType.Identifier:
+            case TokenType.Number:
+            case TokenType.Parameter:
+            case TokenType.Variable:
+            case TokenType.Input:
+            case TokenType.Output:
+            case TokenType.Constant:
+            case TokenType.Close:
+                return;
+        }
+
+        output.Add(Tokens.GetReserved(Tokens.ZERO, line));
+    }
+
     private void OnPrecedence(IList<Token> output, Token token)
     {
-        int pToken = token.Precedence();
+        int precedence = token.Precedence();
         bool left = token.LeftAssociative();
         while (operatorStack.Count != 0)
         {
             Token op = operatorStack.Peek();
-            TokenType optype = op.Base.Type;
-            if (optype != TokenType.Comparison && optype != TokenType.Arithmetic)
+            TokenType opType = op.Base.Type;
+            if (opType != TokenType.Comparison && opType != TokenType.Arithmetic)
             {
                 break;
             }
 
             int pOperator = op.Precedence();
-            if (pToken < pOperator || left && pToken == pOperator)
+            if (precedence < pOperator || left && precedence == pOperator)
             {
                 output.Add(operatorStack.Pop());
             }
-            else
-            {
-                break;
-            }
+            else break;
         }
         operatorStack.Push(token);
     }

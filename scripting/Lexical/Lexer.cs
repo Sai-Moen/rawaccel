@@ -2,7 +2,7 @@
 
 namespace scripting.Lexical;
 
-public enum CharBufferState
+enum CharBufferState
 {
     Idle,
     Identifier,
@@ -41,7 +41,7 @@ public class Lexer : ILexer
     /// <param name="script">The input script.</param>
     public Lexer(string script)
     {
-        characters = script.ToCharArray();
+        characters = script.Trim().ToCharArray();
         maxIndex = characters.Length - 1;
     }
 
@@ -51,16 +51,13 @@ public class Lexer : ILexer
 
     private static bool CmpCharStr(char c, string s) => c == s[0];
 
-    private static bool IsReserved(char c) => IsReserved(c.ToString());
-    private static bool IsReserved(string s) => Tokens.ReservedMap.ContainsKey(s);
-
     private static bool IsAlphabeticCharacter(char c)
         => c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z' || CmpCharStr(c, Tokens.UNDER);
 
     private static bool IsNumericCharacter(char c)
         => c >= '0' && c <= '9' || CmpCharStr(c, Tokens.FPOINT);
 
-    private static bool IsNewline(char c) => c == Environment.NewLine[^1];
+    private static bool IsNewline(char c) => c == '\n';
 
     #endregion Static Methods
 
@@ -80,8 +77,8 @@ public class Lexer : ILexer
         // not a problem in terms of parsing, but for consistency among (us) script writers
         if (!CmpCharStr(characters[maxIndex], Tokens.CALC_END))
         {
-            currentLine = 0; // the location is in the error
-            TokenizerError("Please don't type anything after the body.");
+            currentLine = 0; // the location is in the error (setting this for side-effect (sorry (not sorry)))
+            TokenizerError("Please don't type anything after the calculation section.");
         }
 
         int startingIndex = -1;
@@ -109,7 +106,7 @@ public class Lexer : ILexer
                 IsAlphabeticCharacter(c) ||
                 IsNumericCharacter(c) ||
                 char.IsWhiteSpace(c) ||
-                IsReserved(c))
+                Tokens.IsReserved(c))
             {
                 continue;
             }
@@ -246,10 +243,7 @@ public class Lexer : ILexer
         {
             bufferState = CharBufferState.Special;
         }
-        else
-        {
-            AddBufferedToken();
-        }
+        else AddBufferedToken();
     }
 
     #endregion Methods

@@ -7,7 +7,8 @@ public enum TokenType
 {
     Undefined, // Doesn't mean invalid right away, depends on if you expect a certain symbol
     Identifier, Number, Parameter, Variable,
-    Input, Output, Constant, Boolean, Branch, BranchEnd,
+    Input, Output, Return,
+    Constant, Boolean, Branch, BranchEnd,
     Terminator, Block, Open, Close,
     ParameterStart, ParameterEnd, CalculationStart, CalculationEnd,
     Assignment, Arithmetic, Comparison, GuardMinimum, GuardMaximum,
@@ -42,6 +43,7 @@ public static class Tokens
     // Calculation IO
     public const string INPUT = "x";
     public const string OUTPUT = "y";
+    public const string RETURN = "ret";
 
     // Unary Minus Hack
     public const string ZERO = "zero";
@@ -167,7 +169,6 @@ public static class Tokens
 
     // Premade Tokens
     public static readonly Token DUMMY = new(new(TokenType.Undefined, NONE));
-    public static readonly Token DEFAULT_NUMBER = new(new(TokenType.Number, "0"));
 
     #endregion Constants
 
@@ -181,6 +182,7 @@ public static class Tokens
 
         new(TokenType.Input, INPUT),
         new(TokenType.Output, OUTPUT),
+        new(TokenType.Return, RETURN),
 
         new(TokenType.Constant, ZERO),
         new(TokenType.Constant, CONST_E),
@@ -303,6 +305,12 @@ public static class Tokens
     #endregion Properties
 
     #region Methods
+
+    public static bool IsReserved(char c) => IsReserved(c.ToString());
+    public static bool IsReserved(string symbol) => ReservedMap.ContainsKey(symbol);
+
+    public static Token GetReserved(string symbol) => ReservedMap[symbol];
+    public static Token GetReserved(string symbol, uint line) => ReservedMap[symbol] with { Line = line };
 
     public static string Normalize(string s) => s.Replace(UNDER, SPACE);
 

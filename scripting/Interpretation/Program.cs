@@ -65,6 +65,9 @@ public class Program
                 case TokenType.Output:
                     instructionList.Add(InstructionType.LoadOut);
                     break;
+                case TokenType.Return:
+                    instructionList.Add(InstructionType.Return);
+                    break;
                 case TokenType.Constant:
                     instructionList.Add(OnConstant(symbol, token.Line));
                     break;
@@ -197,7 +200,7 @@ public class Program
         instructionList.Add(store);
     }
 
-    #endregion Properties and Methods
+    #endregion
 
     #region Jump Tables
 
