@@ -9,28 +9,20 @@ namespace userinterface.ViewModels
 {
     public class DeviceViewModel : ViewModelBase
     {
-        private string _name;
-
         public DeviceViewModel(string name, string hwID, int dpi, int pollRate)
         {
-            Name = name;
-            HWID = hwID;
-            DPI = dpi;
-            PollRate = pollRate;
+            NameField = new EditableFieldViewModel("Name", name);
+            HWIDField = new EditableFieldViewModel("HWID", hwID);
+            DPIField = new EditableFieldViewModel("DPI", dpi.ToString());
+            PollRateField = new EditableFieldViewModel("PollRate", pollRate.ToString());
         }
 
-        public string Name
-        { get => _name; set { this.RaiseAndSetIfChanged(ref _name, value); DebugFunction(); } }
+        public EditableFieldViewModel NameField { get; set; }
 
-        public string HWID { get; }
+        public EditableFieldViewModel HWIDField { get; set; }
 
-        public int DPI { get; }
+        public EditableFieldViewModel DPIField { get; set; }
 
-        public int PollRate { get; }
-
-        private void DebugFunction()
-        {
-            Console.WriteLine("Got here");
-        }
+        public EditableFieldViewModel PollRateField { get; set; }
     }
 }

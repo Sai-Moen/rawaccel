@@ -14,22 +14,18 @@
           BorderBrush="Gray" BorderThickness="1"
           Padding="5">
         <DockPanel HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-          <TextBlock Margin="5 0" 
-                     Text="Name:"
-                     VerticalAlignment="Center"/>
-          <TextBox Text="{Binding Name}" KeyDown=""/>
-          <TextBlock Margin="5 0"
-                     Text="HWID:"
-                     VerticalAlignment="Center"/>
-          <TextBox Text="{Binding HWID}"/>
-          <TextBlock Margin="5 0"
-                     Text="DPI:"
-                     VerticalAlignment="Center"/>
-          <TextBox Text="{Binding DPI}"/>
-          <TextBlock Margin="5 0"
-                     Text="PollRate:"
-                     VerticalAlignment="Center"/>
-          <TextBox Text="{Binding PollRate}"/>
+          <ContentControl Margin="5 0"
+                          Content="{Binding NameField}"
+                          VerticalAlignment="Center"/>
+          <ContentControl Margin="5 0"
+                          Content="{Binding HWIDField}"
+                          VerticalAlignment="Center"/>
+          <ContentControl Margin="5 0"
+                          Content="{Binding DPIField}"
+                          VerticalAlignment="Center"/>
+          <ContentControl Margin="5 0"
+                          Content="{Binding PollRateField}"
+                          VerticalAlignment="Center"/>
         </DockPanel>
         </Border>
       </DataTemplate>

@@ -11,10 +11,11 @@ namespace userinterface.Views
             InitializeComponent();
         }
 
-        public void OnKeyDown(KeyEventArgs e)
+        protected override void OnKeyDown(KeyEventArgs e)
         {
             if (e.Key == Key.Return)
             {
+                FocusManager.Instance.Focus(null);
             }
         }
     }
