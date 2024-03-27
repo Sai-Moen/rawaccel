@@ -106,7 +106,7 @@ public class Parser : IParser
             Token token = lexicalTokens[i];
             if (identifiers.Contains(token.Base.Symbol))
             {
-                lexicalTokens[i] = token with { Base = token.Base with { Type = type } };
+                lexicalTokens[i] = Tokens.TokenWithType(token, type);
             }
         }
     }
@@ -136,19 +136,24 @@ public class Parser : IParser
         Token? DequeueMaybeDummy() => tokenBuffer.Dequeue().NullifyUndefined();
 
         int previousIndex = DeclExpect(TokenType.Identifier);
-        Token token = previousToken;
-        token = token with { Base = token.Base with { Type = TokenType.Parameter } };
+        Token token = Tokens.TokenWithType(previousToken, TokenType.Parameter);
         lexicalTokens[previousIndex] = token;
+
+        string symbol = token.Base.Symbol;
 
         Debug.Assert(parameterNames.Count <= Constants.MAX_PARAMETERS);
         if (parameterNames.Count == Constants.MAX_PARAMETERS)
         {
             ParserError($"Too many parameters! (max {Constants.MAX_PARAMETERS})");
         }
+        else if (parameterNames.Contains(symbol))
+        {
+            ParserError("Parameter name already exists!");
+        }
 
-        parameterNames.Add(token.Base.Symbol);
+        parameterNames.Add(symbol);
+
         tokenBuffer.Enqueue(token);
-
         BufferExpectedToken(TokenType.Assignment);
         if (DeclAccept(TokenType.Boolean))
         {
@@ -230,27 +235,31 @@ public class Parser : IParser
     private void DeclVar()
     {
         int previousIndex = DeclExpect(TokenType.Identifier);
-        Token token = previousToken;
-        token = token with { Base = token.Base with { Type = TokenType.Variable } };
+        Token token = Tokens.TokenWithType(previousToken, TokenType.Variable);
         lexicalTokens[previousIndex] = token;
+
+        string symbol = token.Base.Symbol;
 
         Debug.Assert(variableNames.Count <= Constants.MAX_VARIABLES);
         if (variableNames.Count == Constants.MAX_VARIABLES)
         {
             ParserError($"Too many variables! (max {Constants.MAX_VARIABLES})");
         }
-        else if (parameterNames.Contains(token.Base.Symbol))
+        else if (parameterNames.Contains(symbol))
         {
             ParserError("Parameter/Variable name conflict!");
         }
+        else if (variableNames.Contains(symbol))
+        {
+            ParserError("Variable name already exists!");
+        }
 
-        variableNames.Add(token.Base.Symbol);
         tokenBuffer.Enqueue(token);
-
         BufferExpectedToken(TokenType.Assignment);
-
         ExprVar();
-        AdvanceToken();
+        
+        // this must be done after ExprVar, due to name resolution
+        variableNames.Add(symbol);
     }
 
     private void ExprVar()
@@ -266,6 +275,8 @@ public class Parser : IParser
             input.Enqueue(currentToken);
             AdvanceToken();
         }
+        AdvanceToken();
+
         Debug.Assert(operatorStack.Count == 0);
 
         // Shunting Yard Algorithm (RPN)
@@ -276,6 +287,14 @@ public class Parser : IParser
         {
             switch (token.Base.Type)
             {
+                case TokenType.Identifier:
+                    if (!variableNames.Contains(token.Base.Symbol))
+                    {
+                        ParserError("Could not resolve variable name!");
+                    }
+
+                    output.Add(Tokens.TokenWithType(token, TokenType.Variable));
+                    break;
                 case TokenType.Number:
                 case TokenType.Parameter:
                 case TokenType.Constant:

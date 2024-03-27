@@ -13,16 +13,14 @@ public class LinearTest
             Acceleration := 0.005 > 0;
             Output_Cap := 2 >= 1;
             Input_Offset := 0 >= 0;
-            Exponent := 2 > 0;
         ]
 
-            accel_raised := Acceleration ^ (Exponent - 1);
             base := zero;
 
         {
             if (x <= Input_Offset): ret; :
 
-            base := accel_raised * (x - Input_Offset) ^ Exponent / x;
+            base := Acceleration * (x - Input_Offset) ^ 2 / x;
             y += min(base, Output_Cap);
         }
     ";

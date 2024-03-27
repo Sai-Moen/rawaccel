@@ -7,8 +7,8 @@ namespace scripting.Common;
 /// </summary>
 public static class Constants
 {
-    public const int MAX_IDENTIFIER_LEN = 0x10;
-    public const int MAX_NUMBER_LEN = 0x20;
+    public const int MAX_IDENTIFIER_LEN = 0x20;
+    public const int MAX_NUMBER_LEN = 0x40;
 
     public const int CAPACITY = MemoryAddress.CAPACITY;
     public const int MAX_PARAMETERS = 8;

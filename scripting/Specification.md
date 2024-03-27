@@ -105,9 +105,11 @@ When the parameters are changed, the Interpreter can be updated through a proper
 #### Variables (3)
 
 This section holds temporary variables that store expressions.
-The expressions can only contain Parameters, Constants and Numbers.
 The maximum amount of Variables should be at least 256 minus the maximum amount of Parameters,
 because of it enabling 1-byte addressing, but is otherwise left to implementation details.
+
+Variable declarations may also contain other variable declarations,
+but those declarations must come before this one.
 
 #### Calculation (4)
 

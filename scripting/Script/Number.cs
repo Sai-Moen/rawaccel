@@ -11,7 +11,7 @@ public readonly record struct Number(double Value)
 {
     #region Constants
 
-    public const int SIZE = sizeof(double);
+    public const int SIZE = sizeof (double);
 
     public const double FALSE = 0.0;
     public const double TRUE = 1.0;
@@ -36,8 +36,7 @@ public readonly record struct Number(double Value)
 
     private static Number Parse(string s, GenerationException e)
     {
-        if (double.TryParse(s, NumberStyles.Float, NumberFormatInfo.InvariantInfo,
-            out double result))
+        if (double.TryParse(s, NumberStyles.Float, NumberFormatInfo.InvariantInfo, out double result))
         {
             return result;
         }

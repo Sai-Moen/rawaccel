@@ -1,7 +1,6 @@
 ﻿using scripting.Common;
 using scripting.Script;
 using scripting.Syntactical;
-using System.Runtime.CompilerServices;
 
 namespace scripting.Interpretation;
 
@@ -90,7 +89,12 @@ public class Interpreter : IInterpreter
             stable[addresses[parameter.Name]] = parameter.Value;
         }
         unstable.CopyFrom(stable);
-        _ = Parallel.ForEach(startup, p => ExecuteProgram(p, new()));
+
+        Stack<Number> stack = new();
+        foreach (Program program in startup)
+        {
+            ExecuteProgram(program, stack);
+        }
         stable.CopyFrom(unstable);
     }
 
@@ -350,7 +354,7 @@ public class Interpreter : IInterpreter
         }
     }
 
-    #endregion Methods
+#endregion Methods
 
     private static void InterpreterError(string error)
     {
