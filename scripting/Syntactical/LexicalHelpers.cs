@@ -7,10 +7,10 @@ public static class LexicalHelpers
 {
     public static Token? NullifyUndefined(this Token token)
     {
-        return token.Base.Type == TokenType.Undefined ? null : token;
+        return token.Type == TokenType.Undefined ? null : token;
     }
 
-    public static Number FromBoolean(this Token token) => token.Base.Symbol switch
+    public static Number FromBoolean(this Token token) => token.Symbol switch
     {
         Tokens.FALSE => Number.FALSE,
         Tokens.TRUE => Number.TRUE,
@@ -18,13 +18,13 @@ public static class LexicalHelpers
         _ => throw new ParserException("Invalid Boolean Symbol!", token.Line)
     };
 
-    public static bool IsGuardMinimum(this Token token) => token.Base.Symbol switch
+    public static bool IsGuardMinimum(this Token token) => token.Symbol switch
     {
         Tokens.GT or Tokens.GE => true,
         _ => false,
     };
 
-    public static bool IsGuardMaximum(this Token token) => token.Base.Symbol switch
+    public static bool IsGuardMaximum(this Token token) => token.Symbol switch
     {
         Tokens.LT or Tokens.LE => true,
         _ => false,
@@ -33,10 +33,10 @@ public static class LexicalHelpers
     public static bool LeftAssociative(this Token token)
     {
         // only exponentiation is right-associative at the moment
-        return token.Base.Symbol != Tokens.POW;
+        return token.Symbol != Tokens.POW;
     }
 
-    public static int Precedence(this Token token) => token.Base.Symbol switch
+    public static int Precedence(this Token token) => token.Symbol switch
     {
         Tokens.OR => 0,
         Tokens.AND => 1,

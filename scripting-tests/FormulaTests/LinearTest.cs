@@ -11,7 +11,7 @@ public class LinearTest
 
         [
             Acceleration := 0.005 > 0;
-            Output_Cap := 2 >= 1;
+            Output_Cap := 2 >= 0;
             Input_Offset := 0 >= 0;
         ]
 

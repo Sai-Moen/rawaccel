@@ -6,7 +6,7 @@ namespace scripting.Script;
 /// <summary>
 /// Saves the Token of a Variable and its initialization assignment.
 /// </summary>
-public record Variable(string Name, IList<Token> Expr);
+public readonly record struct Variable(string Name, IList<Token> Expr);
 
 /// <summary>
 /// Collection of Variable assignments.

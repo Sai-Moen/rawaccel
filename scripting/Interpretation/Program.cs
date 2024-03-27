@@ -11,10 +11,9 @@ public class Program
     #region Fields
 
     private readonly InstructionUnion[] instructions;
-
     private readonly StaticData data;
 
-    #endregion Fields
+    #endregion
 
     #region Constructors
 
@@ -22,16 +21,15 @@ public class Program
     /// Initializes the InstructionList so that the Interpreter can execute it in order.
     /// </summary>
     /// <param name="code">Contains a parsed TokenList that can be emitted to bytecode.</param>
-    /// <param name="memoryMap">Maps identifiers to memory addresses.</param>
-    /// <exception cref="InterpreterException"/>
-    public Program(IList<Token> code, Dictionary<string, MemoryAddress> memoryMap)
+    /// <param name="addresses">Maps identifiers to memory addresses.</param>
+    /// <exception cref="ProgramException"/>
+    public Program(IList<Token> code, Dictionary<string, MemoryAddress> addresses)
     {
         InstructionList instructionList = new(code.Count)
         {
             InstructionType.Start
         };
 
-        DataAddress dataIndex = 0;
         Dictionary<Number, DataAddress> numberMap = new();
 
         CodeAddress lastExprStart = 0;
@@ -40,23 +38,21 @@ public class Program
         for (int i = 0; i < code.Count; i++)
         {
             Token token = code[i];
-            BaseToken baseToken = token.Base;
-            string symbol = baseToken.Symbol;
-            switch (baseToken.Type)
+            switch (token.Type)
             {
                 case TokenType.Number:
-                    Number number = Number.Parse(symbol, token.Line);
+                    Number number = Number.Parse(token.Symbol, token.Line);
 
                     // See if the number is already present before assigning a new index
                     if (!numberMap.TryGetValue(number, out DataAddress dAddress))
                     {
-                        numberMap.Add(number, dAddress = dataIndex++);
+                        numberMap.Add(number, dAddress = numberMap.Count);
                     }
                     instructionList.Add(InstructionType.LoadNumber, new(dAddress));
                     break;
                 case TokenType.Parameter:
                 case TokenType.Variable:
-                    MemoryAddress mAddress = memoryMap[symbol];
+                    MemoryAddress mAddress = addresses[token.Symbol];
                     instructionList.Add(InstructionType.Load, new(mAddress));
                     break;
                 case TokenType.Input:
@@ -69,7 +65,7 @@ public class Program
                     instructionList.Add(InstructionType.Return);
                     break;
                 case TokenType.Constant:
-                    instructionList.Add(OnConstant(symbol, token.Line));
+                    instructionList.Add(OnConstant(token));
                     break;
                 case TokenType.Branch:
                     InstructionFlags flags = InstructionFlags.Continuation;
@@ -99,9 +95,9 @@ public class Program
                         }
                     }
 
-                    throw new InterpreterException("Unexpected branch end!", token.Line);
+                    throw new ProgramException("Unexpected branch end!", token.Line);
                 case TokenType.Assignment:
-                    InstructionType modify = OnAssignment(symbol, token.Line);
+                    InstructionType modify = OnAssignment(token);
                     bool isInline = modify.IsInline();
 
                     // MUTATES i, because we don't want to add this token again on the next iteration
@@ -120,7 +116,7 @@ public class Program
                     }
                     else
                     {
-                        MemoryAddress address = memoryMap[target.Symbol];
+                        MemoryAddress address = addresses[target.Symbol];
                         if (isInline)
                         {
                             instructionList.Add(InstructionType.Load, new(address));
@@ -133,9 +129,9 @@ public class Program
                     lastExprStart = instructionList.Count - 1;
                     break;
                 case TokenType.Arithmetic:
-                    InstructionType arithmetic = OnArithmetic(symbol, token.Line);
+                    InstructionType arithmetic = OnArithmetic(token);
 
-                    // Attempt to convert [...LoadE, Pow,...] to [...Exp,...]
+                    // attempt to convert [...LoadE, Pow...] to [...Exp...]
                     if (arithmetic == InstructionType.Pow && instructionList.Count > 1)
                     {
                         Index lastIndex;
@@ -150,19 +146,19 @@ public class Program
                     instructionList.Add(arithmetic);
                     break;
                 case TokenType.Comparison:
-                    instructionList.Add(OnComparison(symbol, token.Line));
+                    instructionList.Add(OnComparison(token));
                     break;
                 case TokenType.Function:
-                    instructionList.Add(OnFunction(symbol, token.Line));
+                    instructionList.Add(OnFunction(token));
                     break;
                 default:
-                    throw new InterpreterException("Cannot emit token!", token.Line);
+                    throw new ProgramException("Cannot emit token!", token.Line);
             }
         }
 
         if (depth != 0)
         {
-            throw new InterpreterException("Branch mismatch!");
+            throw new ProgramException("Branch mismatch!");
         }
 
         data = new(numberMap.Count);
@@ -175,17 +171,9 @@ public class Program
         instructions = instructionList.ToArray();
     }
 
-    #endregion Constructors
+    #endregion
 
-    #region Properties and Methods
-
-    public int Length => instructions.Length;
-
-    public InstructionUnion this[CodeAddress index] => instructions[index];
-
-    public InstructionOperand GetOperandFromNext(ref CodeAddress c) => this[++c].operand;
-
-    public Number GetData(DataAddress index) => data[index];
+    #region Static Methods
 
     private static void SpecialAssignment(
         InstructionList instructionList, bool isInline,
@@ -202,19 +190,34 @@ public class Program
 
     #endregion
 
+    #region Properties
+
+    public int Length => instructions.Length;
+
+    public InstructionUnion this[CodeAddress index] => instructions[index];
+    public Number this[DataAddress index] => data[index];
+
+    #endregion
+
+    #region Methods
+
+    public InstructionOperand GetOperandFromNext(ref CodeAddress c) => this[++c].operand;
+
+    #endregion
+
     #region Jump Tables
 
-    private static InstructionType OnConstant(string symbol, uint line) => symbol switch
+    private static InstructionType OnConstant(Token token) => token.Symbol switch
     {
         Tokens.CONST_E => InstructionType.LoadE,
         Tokens.CONST_PI => InstructionType.LoadPi,
         Tokens.CONST_TAU => InstructionType.LoadTau,
         Tokens.ZERO => InstructionType.LoadZero,
 
-        _ => throw new InterpreterException("Cannot emit constant!", line),
+        _ => throw new ProgramException("Cannot emit constant!", token.Line),
     };
 
-    private static InstructionType OnAssignment(string symbol, uint line) => symbol switch
+    private static InstructionType OnAssignment(Token token) => token.Symbol switch
     {
         Tokens.ASSIGN => InstructionType.Store,
         Tokens.IADD => InstructionType.Add,
@@ -224,10 +227,10 @@ public class Program
         Tokens.IMOD => InstructionType.Mod,
         Tokens.IPOW => InstructionType.Pow,
 
-        _ => throw new InterpreterException("Cannot emit assignment!", line),
+        _ => throw new ProgramException("Cannot emit assignment!", token.Line),
     };
 
-    private static InstructionType OnArithmetic(string symbol, uint line) => symbol switch
+    private static InstructionType OnArithmetic(Token token) => token.Symbol switch
     {
         Tokens.ADD => InstructionType.Add,
         Tokens.SUB => InstructionType.Sub,
@@ -236,10 +239,10 @@ public class Program
         Tokens.MOD => InstructionType.Mod,
         Tokens.POW => InstructionType.Pow,
 
-        _ => throw new InterpreterException("Cannot emit arithmetic!", line)
+        _ => throw new ProgramException("Cannot emit arithmetic!", token.Line)
     };
 
-    private static InstructionType OnComparison(string symbol, uint line) => symbol switch
+    private static InstructionType OnComparison(Token token) => token.Symbol switch
     {
         Tokens.OR => InstructionType.Or,
         Tokens.AND => InstructionType.And,
@@ -251,10 +254,10 @@ public class Program
         Tokens.NE => InstructionType.Ne,
         Tokens.NOT => InstructionType.Not,
 
-        _ => throw new InterpreterException("Cannot emit comparison!", line),
+        _ => throw new ProgramException("Cannot emit comparison!", token.Line),
     };
 
-    private static InstructionType OnFunction(string symbol, uint line) => symbol switch
+    private static InstructionType OnFunction(Token token) => token.Symbol switch
     {
         Tokens.ABS => InstructionType.Abs,
         Tokens.SIGN => InstructionType.Sign,
@@ -298,8 +301,8 @@ public class Program
         Tokens.FUSED_MULTIPLY_ADD => InstructionType.FusedMultiplyAdd,
         Tokens.SCALE_B => InstructionType.ScaleB,
 
-        _ => throw new InterpreterException("Cannot emit function!", line),
+        _ => throw new ProgramException("Cannot emit function!", token.Line),
     };
 
-    #endregion Jump Tables
+    #endregion
 }

@@ -31,7 +31,7 @@ public class Lexer : ILexer
     private string comments = string.Empty;
     private readonly IList<Token> lexicalTokens = new List<Token>();
 
-    #endregion Fields
+    #endregion
 
     #region Constructors
 
@@ -45,7 +45,7 @@ public class Lexer : ILexer
         maxIndex = characters.Length - 1;
     }
 
-    #endregion Constructors
+    #endregion
 
     #region Static Methods
 
@@ -59,7 +59,7 @@ public class Lexer : ILexer
 
     private static bool IsNewline(char c) => c == '\n';
 
-    #endregion Static Methods
+    #endregion
 
     #region Methods
 
@@ -246,7 +246,7 @@ public class Lexer : ILexer
         else AddBufferedToken();
     }
 
-    #endregion Methods
+    #endregion
 
     #region Helper Methods
 
@@ -317,7 +317,7 @@ public class Lexer : ILexer
         }
     }
 
-    #endregion Helper Methods
+    #endregion
 
     private void TokenizerError(string error)
     {

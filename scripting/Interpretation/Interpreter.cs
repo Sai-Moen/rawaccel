@@ -23,7 +23,7 @@ public class Interpreter : IInterpreter
     private readonly Program mainProgram;
     private readonly Program[] startup;
 
-    #endregion Fields
+    #endregion
 
     #region Constructors
 
@@ -36,16 +36,18 @@ public class Interpreter : IInterpreter
     {
         Description = syntactic.Description;
 
-        int numParameters = syntactic.Parameters.Count;
+        Parameters parameters = syntactic.Parameters;
+        int numParameters = parameters.Count;
 
         Debug.Assert(numParameters <= Constants.MAX_PARAMETERS);
         for (int i = 0; i < numParameters; i++)
         {
             MemoryAddress address = i;
-            addresses.Add(syntactic.Parameters[i].Name, address);
+            addresses.Add(parameters[i].Name, address);
         }
 
-        int numVariables = syntactic.Variables.Count;
+        Variables variables = syntactic.Variables;
+        int numVariables = variables.Count;
         startup = new Program[numVariables];
 
         int capacity = Constants.MAX_PARAMETERS + numVariables;
@@ -56,7 +58,7 @@ public class Interpreter : IInterpreter
         for (int i = 0; i < numVariables; i++)
         {
             MemoryAddress address = Constants.MAX_PARAMETERS + i;
-            Variable variable = syntactic.Variables[i];
+            Variable variable = variables[i];
             addresses.Add(variable.Name, address);
             startup[i] = new(variable.Expr, addresses);
         }
@@ -64,20 +66,20 @@ public class Interpreter : IInterpreter
         mainProgram = new(syntactic.Tokens, addresses);
 
         // responsibility to change settings from script defaults to saved settings is on the caller
-        Defaults = syntactic.Parameters;
-        Settings = Defaults.Clone();
+        Defaults = new(parameters);
+        Settings = parameters.Clone();
     }
 
-    #endregion Constructors
+    #endregion
 
     #region Properties
 
     public string Description { get; }
 
-    public Parameters Defaults { get; }
+    public ReadOnlyParameters Defaults { get; }
     public Parameters Settings { get; }
 
-    #endregion Properties
+    #endregion
 
     #region Methods
 
@@ -132,13 +134,13 @@ public class Interpreter : IInterpreter
             stack.Push(func(stack.Pop(), stack.Pop(), stack.Pop()));
         }
 
-        for (CodeAddress i = 0; i < program.Length; i++)
-        switch (program[i].instruction.Type)
+        for (CodeAddress c = 0; c < program.Length; c++)
+        switch (program[c].instruction.Type)
         {
             case InstructionType.Start:
                 break;
             case InstructionType.End:
-                if (i != program.Length - 1)
+                if (c != program.Length - 1)
                 {
                     InterpreterError("Unexpected program end!");
                 }
@@ -149,11 +151,11 @@ public class Interpreter : IInterpreter
                 stack.Clear(); // caller may expect empty stack back
                 return;
             case InstructionType.Load:
-                MemoryAddress loadAddress = (MemoryAddress)program.GetOperandFromNext(ref i);
+                MemoryAddress loadAddress = (MemoryAddress)program.GetOperandFromNext(ref c);
                 stack.Push(unstable[loadAddress]);
                 break;
             case InstructionType.Store:
-                MemoryAddress storeAddress = (MemoryAddress)program.GetOperandFromNext(ref i);
+                MemoryAddress storeAddress = (MemoryAddress)program.GetOperandFromNext(ref c);
                 unstable[storeAddress] = stack.Pop();
                 break;
             case InstructionType.LoadIn:
@@ -169,8 +171,8 @@ public class Interpreter : IInterpreter
                 y = stack.Pop();
                 break;
             case InstructionType.LoadNumber:
-                DataAddress dAddress = (DataAddress)program.GetOperandFromNext(ref i);
-                stack.Push(program.GetData(dAddress));
+                DataAddress dAddress = (DataAddress)program.GetOperandFromNext(ref c);
+                stack.Push(program[dAddress]);
                 break;
             case InstructionType.Swap:
                 Number swap1 = stack.Pop();
@@ -179,14 +181,14 @@ public class Interpreter : IInterpreter
                 stack.Push(swap2);
                 break;
             case InstructionType.Jmp:
-                CodeAddress jmpAddress = (CodeAddress)program.GetOperandFromNext(ref i);
-                i = jmpAddress;
+                CodeAddress jmpAddress = (CodeAddress)program.GetOperandFromNext(ref c);
+                c = jmpAddress;
                 break;
             case InstructionType.Jz:
-                CodeAddress jzAddress = (CodeAddress)program.GetOperandFromNext(ref i);
+                CodeAddress jzAddress = (CodeAddress)program.GetOperandFromNext(ref c);
                 if (!stack.Pop())
                 {
-                    i = jzAddress;
+                    c = jzAddress;
                 }
                 break;
             case InstructionType.LoadE:
@@ -354,7 +356,7 @@ public class Interpreter : IInterpreter
         }
     }
 
-#endregion Methods
+#endregion
 
     private static void InterpreterError(string error)
     {

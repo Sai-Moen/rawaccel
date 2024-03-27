@@ -131,13 +131,13 @@ public readonly struct InstructionOperand
         Operand = address;
     }
 
-    #endregion Constructors
+    #endregion
 
     #region Properties
 
     public readonly ushort Operand { get; }
 
-    #endregion Properties
+    #endregion
 }
 
 /// <summary>
@@ -163,7 +163,7 @@ public class InstructionList : List<InstructionUnion>
 
     public InstructionList(int capacity) : base(capacity) { }
 
-    #endregion Constructors
+    #endregion
 
     #region Add
 
@@ -203,7 +203,7 @@ public class InstructionList : List<InstructionUnion>
         Add(new Instruction(type, InstructionFlags.Continuation), operand);
     }
 
-    #endregion Add
+    #endregion
 
     #region Insert
 
@@ -243,17 +243,17 @@ public class InstructionList : List<InstructionUnion>
         Insert(address, new Instruction(type, InstructionFlags.Continuation), operand);
     }
 
-    #endregion Insert
+    #endregion
 
     #region Find
 
     public bool TryFind(Instruction instruction, out CodeAddress index)
     {
-        for (CodeAddress i = 0; i < Count; i += this[i].instruction.Type.Size())
+        for (CodeAddress c = 0; c < Count; c += GetOffset(c))
         {
-            if (this[i].instruction == instruction)
+            if (this[c].instruction == instruction)
             {
-                index = i;
+                index = c;
                 return true;
             }
         }
@@ -264,11 +264,11 @@ public class InstructionList : List<InstructionUnion>
 
     public bool TryFind(Instruction instruction, int depth, out CodeAddress index)
     {
-        for (CodeAddress i = 0; i < Count; i += this[i].instruction.Type.Size())
+        for (CodeAddress c = 0; c < Count; c += GetOffset(c))
         {
-            if (this[i].instruction.Type == instruction.Type && depth-- == 0)
+            if (this[c].instruction.Type == instruction.Type && depth-- == 0)
             {
-                index = i;
+                index = c;
                 return true;
             }
         }
@@ -277,7 +277,7 @@ public class InstructionList : List<InstructionUnion>
         return false;
     }
 
-    #endregion Find
+    #endregion
 
     #region Replace
 
@@ -301,7 +301,7 @@ public class InstructionList : List<InstructionUnion>
         Replace(instructionIndex, new Instruction(type), operand);
     }
 
-    #endregion Replace
+    #endregion
 
     #region Remove
 
@@ -315,7 +315,13 @@ public class InstructionList : List<InstructionUnion>
         base.RemoveRange(index, count);
     }
 
-    #endregion Remove
+    #endregion
+
+    #region Helpers
+
+    private CodeAddress GetOffset(CodeAddress c) => this[c].instruction.Type.Size();
+
+    #endregion
 }
 
 /// <summary>
@@ -331,7 +337,7 @@ public readonly record struct MemoryAddress(byte Address)
     public const byte MAX_VALUE = byte.MaxValue;
     public const int CAPACITY = MAX_VALUE + 1;
 
-    #endregion Constants
+    #endregion
 
     #region Operators
 
@@ -360,7 +366,7 @@ public readonly record struct MemoryAddress(byte Address)
         return address.Address;
     }
 
-    #endregion Operators
+    #endregion
 }
 
 /// <summary>
@@ -376,7 +382,7 @@ public readonly record struct DataAddress(ushort Address)
     public const ushort MAX_VALUE = ushort.MaxValue;
     public const int CAPACITY = MAX_VALUE + 1;
 
-    #endregion Constants
+    #endregion
 
     #region Operators
 
@@ -405,7 +411,7 @@ public readonly record struct DataAddress(ushort Address)
         return address.Address;
     }
 
-    #endregion Operators
+    #endregion
 }
 
 /// <summary>
@@ -421,7 +427,7 @@ public readonly record struct CodeAddress(ushort Address)
     public const ushort MAX_VALUE = ushort.MaxValue;
     public const int CAPACITY = MAX_VALUE + 1;
 
-    #endregion Constants
+    #endregion
 
     #region Operators
 
@@ -455,7 +461,7 @@ public readonly record struct CodeAddress(ushort Address)
         return BitConverter.GetBytes(address.Address);
     }
 
-    #endregion Operators
+    #endregion
 }
 
 /// <summary>

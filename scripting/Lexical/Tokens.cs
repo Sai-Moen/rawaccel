@@ -8,7 +8,7 @@ public enum TokenType
     Undefined, // Doesn't mean invalid right away, depends on if you expect a certain symbol
     Identifier, Number, Parameter, Variable,
     Input, Output, Return,
-    Constant, Boolean, Branch, BranchEnd,
+    Constant, Bool, Branch, BranchEnd,
     Terminator, Block, Open, Close,
     ParameterStart, ParameterEnd, CalculationStart, CalculationEnd,
     Assignment, Arithmetic, Comparison, GuardMinimum, GuardMaximum,
@@ -27,7 +27,11 @@ public record BaseToken(TokenType Type, string Symbol);
 /// </summary>
 /// <param name="Base">The BaseToken.</param>
 /// <param name="Line">The line in the file where this came from.</param>
-public record Token(BaseToken Base, uint Line = 0);
+public record Token(BaseToken Base, uint Line = 0)
+{
+    public TokenType Type => Base.Type;
+    public string Symbol => Base.Symbol;
+}
 
 /// <summary>
 /// Defines all reserved kinds of Tokens.
@@ -170,7 +174,7 @@ public static class Tokens
     // Premade Tokens
     public static readonly Token DUMMY = new(new(TokenType.Undefined, NONE));
 
-    #endregion Constants
+    #endregion
 
     #region Fields
 
@@ -189,8 +193,8 @@ public static class Tokens
         new(TokenType.Constant, CONST_PI),
         new(TokenType.Constant, CONST_TAU),
 
-        new(TokenType.Boolean, FALSE),
-        new(TokenType.Boolean, TRUE),
+        new(TokenType.Bool, FALSE),
+        new(TokenType.Bool, TRUE),
 
         new(TokenType.Branch, BRANCH_IF),
         new(TokenType.Branch, BRANCH_WHILE),
@@ -278,7 +282,7 @@ public static class Tokens
         new(TokenType.Function, SCALE_B),
     };
 
-    #endregion Fields
+    #endregion
 
     #region Constructors
 
@@ -293,7 +297,7 @@ public static class Tokens
         Debug.Assert(ReservedMap.Count == ReservedArray.Length);
     }
 
-    #endregion Constructors
+    #endregion
 
     #region Properties
 
@@ -302,9 +306,11 @@ public static class Tokens
     /// </summary>
     public static Dictionary<string, Token> ReservedMap { get; }
 
-    #endregion Properties
+    #endregion
 
-    #region Methods
+    #region Static Methods
+
+    public static string Normalize(string s) => s.Replace(UNDER, SPACE);
 
     public static bool IsReserved(char c) => IsReserved(c.ToString());
     public static bool IsReserved(string symbol) => ReservedMap.ContainsKey(symbol);
@@ -314,13 +320,5 @@ public static class Tokens
 
     public static Token TokenWithType(Token token, TokenType type) => token with { Base = token.Base with { Type = type } };
 
-    public static string Normalize(string s) => s.Replace(UNDER, SPACE);
-
-    public static bool IsLoop(this Token token)
-    {
-        // only while is a loop at the moment
-        return token.Base.Symbol == BRANCH_WHILE;
-    }
-
-    #endregion Methods
+    #endregion
 }

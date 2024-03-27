@@ -34,30 +34,45 @@ record ParameterValidation(Guard GuardType, Number GuardValue = default)
 }
 
 /// <summary>
-/// Saves the name of a Parameter and its value.
+/// Defines the types a parameter can have.
+/// </summary>
+public enum ParameterType
+{
+    Real,
+    Logical,
+}
+
+/// <summary>
+/// Saves the name of a <see cref="Parameter"/> and its value.
 /// Additionally, information about the bounds (Guard) of the parameter is saved.
 /// </summary>
 public class Parameter
 {
+    #region Fields
+
     private readonly ParameterValidation min;
     private readonly ParameterValidation max;
+
+    #endregion
+
+    #region Constructors
 
     internal Parameter(
         Token name, Token value,
         Token? minGuard, Token? minValue,
         Token? maxGuard, Token? maxValue)
     {
-        Debug.Assert(name.Base.Type == TokenType.Parameter);
-        Name = name.Base.Symbol;
+        Debug.Assert(name.Type == TokenType.Parameter);
+        Name = name.Symbol;
 
-        switch (value.Base.Type)
+        switch (value.Type)
         {
             case TokenType.Number:
-                IsNumber = true;
+                Type = ParameterType.Real;
                 Value = (Number)value;
                 break;
-            case TokenType.Boolean:
-                IsNumber = false;
+            case TokenType.Bool:
+                Type = ParameterType.Logical;
                 Value = value.FromBoolean();
                 break;
             default:
@@ -77,24 +92,32 @@ public class Parameter
         Debug.Assert(minGuard is not null && minValue is not null && maxGuard is not null && maxValue is not null);
         if (min.Validate(max.GuardValue) == 0 || max.Validate(min.GuardValue) == 0)
         {
-            throw new ParserException("Contradicting parameter bounds!", minGuard.Line);
+            throw new GenerationException("Contradicting parameter bounds!", minGuard.Line);
         }
     }
 
-    /// <summary>
-    /// Name of this Parameter (\w+ with underscores normalized to spaces).
-    /// </summary>
-    public string Name { get; }
+    #endregion
+
+    #region Properties
 
     /// <summary>
-    /// Whether this Parameter should be interpreted as a normal number, or as a boolean.
+    /// Name of this Parameter (/\w+/ with underscores normalized to spaces).
     /// </summary>
-    public bool IsNumber { get; }
+    public string Name { get; }
 
     /// <summary>
     /// The current value of this Parameter.
     /// </summary>
     public Number Value { get; set; }
+
+    /// <summary>
+    /// The type of the parameter.
+    /// </summary>
+    public ParameterType Type { get; }
+
+    #endregion
+
+    #region Static Methods
 
     private static ParameterValidation GuardHelper(Token? token, Token? value, Func<Token, Guard> func)
     {
@@ -107,21 +130,25 @@ public class Parameter
         return new ParameterValidation(guard, (Number)value);
     }
 
-    private static Guard OnMinGuard(Token token) => token.Base.Symbol switch
+    private static Guard OnMinGuard(Token token) => token.Symbol switch
     {
         Tokens.GT => Guard.Greater,
         Tokens.GE => Guard.GreaterEq,
 
-        _ => throw new ParserException("Incorrect guard! (minimum)", token.Line)
+        _ => throw new GenerationException("Incorrect guard! (minimum)", token.Line)
     };
 
-    private static Guard OnMaxGuard(Token token) => token.Base.Symbol switch
+    private static Guard OnMaxGuard(Token token) => token.Symbol switch
     {
         Tokens.LT => Guard.Less,
         Tokens.LE => Guard.LessEq,
 
-        _ => throw new ParserException("Incorrect guard! (maximum)", token.Line)
+        _ => throw new GenerationException("Incorrect guard! (maximum)", token.Line)
     };
+
+    #endregion
+
+    #region Methods
 
     /// <summary>
     /// Validates the given value according to the Parameter's indicated bounds.
@@ -141,10 +168,12 @@ public class Parameter
     {
         return (Parameter)MemberwiseClone();
     }
+
+    #endregion
 }
 
 /// <summary>
-/// Collection of Parameter assignments.
+/// Collection of <see cref="Parameter"/> declarations.
 /// </summary>
 public class Parameters : List<Parameter>, IList<Parameter>
 {
@@ -160,5 +189,34 @@ public class Parameters : List<Parameter>, IList<Parameter>
             clone[i] = clone[i].Clone();
         }
         return clone;
+    }
+}
+
+/// <summary>
+/// Read-Only representation of a <see cref="Parameter"/>.
+/// </summary>
+/// <param name="Name">the name</param>
+/// <param name="Value">the value</param>
+/// <param name="Type">the type</param>
+public readonly record struct ReadOnlyParameter(string Name, Number Value, ParameterType Type)
+{
+    internal ReadOnlyParameter(Parameter parameter) : this(parameter.Name, parameter.Value, parameter.Type) { }
+}
+
+/// <summary>
+/// Read-Only collection of <see cref="ReadOnlyParameter"/>.
+/// </summary>
+public class ReadOnlyParameters : ReadOnlyCollection<ReadOnlyParameter>, IList<ReadOnlyParameter>
+{
+    internal ReadOnlyParameters(IList<Parameter> parameters) : base(Wrap(parameters)) { }
+
+    private static IList<ReadOnlyParameter> Wrap(IList<Parameter> parameters)
+    {
+        IList<ReadOnlyParameter> ro = new List<ReadOnlyParameter>(parameters.Count);
+        foreach (Parameter parameter in parameters)
+        {
+            ro.Add(new(parameter));
+        }
+        return ro;
     }
 }

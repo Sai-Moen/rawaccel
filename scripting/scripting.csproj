@@ -7,6 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Using Include="System.Collections.ObjectModel" />
     <Using Include="System.Diagnostics" />
     <Using Include="System.Globalization" />
     <Using Include="System.Runtime.CompilerServices" />

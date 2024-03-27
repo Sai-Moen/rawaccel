@@ -16,7 +16,7 @@ public interface IInterpreter
     /// <summary>
     /// The parameters and their default values, according to the script.
     /// </summary>
-    Parameters Defaults { get; }
+    ReadOnlyParameters Defaults { get; }
 
     /// <summary>
     /// The current state of all parameters.
@@ -30,9 +30,9 @@ public interface IInterpreter
     void Init();
 
     /// <summary>
-    /// Performs a calculation on the currently loaded script and settings.
+    /// Runs a calculation with the current state.
     /// </summary>
-    /// <param name="x">The input value to inject into the loaded script and settings.</param>
+    /// <param name="x">the input value to inject</param>
     /// <returns>The resulting output value.</returns>
     double Calculate(double x);
 }
@@ -40,9 +40,17 @@ public interface IInterpreter
 /// <summary>
 /// Exception for interpretation-related errors.
 /// </summary>
-public sealed class InterpreterException : GenerationException
+public sealed class InterpreterException : ScriptException
 {
     public InterpreterException(string message) : base(message) { }
+}
 
-    public InterpreterException(string message, uint line) : base(message, line) { }
+/// <summary>
+/// Exception for errors relating to generating a program.
+/// </summary>
+public sealed class ProgramException : GenerationException
+{
+    public ProgramException(string message) : base(message) { }
+
+    public ProgramException(string message, uint line) : base(message, line) { }
 }

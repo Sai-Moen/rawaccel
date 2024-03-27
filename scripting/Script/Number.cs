@@ -20,7 +20,7 @@ public readonly record struct Number(double Value)
     public const double DEFAULT_X = ZERO;
     public const double DEFAULT_Y = 1.0;
 
-    #endregion Constants
+    #endregion
 
     #region Static Methods
 
@@ -44,50 +44,29 @@ public readonly record struct Number(double Value)
         throw e;
     }
 
-    #endregion Static Methods
+    #endregion
 
     #region Operators
 
-    public static implicit operator Number(bool value)
-    {
-        return Convert.ToDouble(value);
-    }
-
-    public static implicit operator Number(double value)
-    {
-        return new(value);
-    }
+    public static implicit operator Number(bool value) => Convert.ToDouble(value);
+    public static implicit operator Number(double value) => new(value);
 
     public static explicit operator Number(Token token)
     {
-        Debug.Assert(token.Base.Type == TokenType.Number);
-        return Parse(token.Base.Symbol, token.Line);
+        Debug.Assert(token.Type == TokenType.Number);
+        return Parse(token.Symbol, token.Line);
     }
 
-    public static implicit operator bool(Number number)
-    {
-        return number.Value != ZERO;
-    }
+    public static bool operator false(Number number) => number == ZERO;
+    public static bool operator true(Number number) => number != ZERO;
 
-    public static implicit operator double(Number number)
-    {
-        return number.Value;
-    }
+    public static implicit operator bool(Number number) => number != ZERO;
+    public static implicit operator double(Number number) => number.Value;
 
-    public static Number operator |(Number left, Number right)
-    {
-        return left != ZERO | right != ZERO;
-    }
+    public static Number operator !(Number number) => number == ZERO;
 
-    public static Number operator &(Number left, Number right)
-    {
-        return left != ZERO & right != ZERO;
-    }
+    public static Number operator |(Number left, Number right) => left != ZERO | right != ZERO;
+    public static Number operator &(Number left, Number right) => left != ZERO & right != ZERO;
 
-    public static Number operator !(Number number)
-    {
-        return number == ZERO;
-    }
-
-    #endregion Operators
+    #endregion
 }

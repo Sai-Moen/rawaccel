@@ -29,7 +29,7 @@ public class Parser : IParser
     private readonly Variables variables = new();
     private readonly List<Token> syntacticTokens = new();
 
-    #endregion Fields
+    #endregion
 
     #region Constructors
 
@@ -44,7 +44,7 @@ public class Parser : IParser
         Debug.Assert(lexicalTokens.Count >= 4, "Tokenizer did not prevent empty script!");
 
         currentToken = lexicalTokens[0];
-        Debug.Assert(CmpCurrentTokenType(TokenType.ParameterStart));
+        Debug.Assert(currentToken.Type == TokenType.ParameterStart);
 
         maxIndex = lexicalTokens.Count - 1;
         Debug.Assert(maxIndex > 0);
@@ -55,7 +55,7 @@ public class Parser : IParser
         previousToken = currentToken;
     }
 
-    #endregion Constructors
+    #endregion
 
     #region Methods
 
@@ -67,79 +67,56 @@ public class Parser : IParser
 
     private void ParseTokens()
     {
-        while (!CmpCurrentTokenType(TokenType.ParameterEnd))
+        // Parameters
+        while (currentToken.Type != TokenType.ParameterEnd)
         {
-            DeclParam();
+            DeclareParameter();
         }
-
-        AdvanceToken();
-        Debug.Assert(!CmpCurrentTokenType(TokenType.ParameterEnd));
-
         CoerceAll(parameterNames, TokenType.Parameter);
 
-        // Parameters MUST be coerced before this!
-        while (!CmpCurrentTokenType(TokenType.CalculationStart))
-        {
-            DeclVar();
-        }
-
         AdvanceToken();
-        Debug.Assert(!CmpCurrentTokenType(TokenType.CalculationStart));
+        Debug.Assert(currentToken.Type != TokenType.ParameterEnd);
 
+        // Variables
+        while (currentToken.Type != TokenType.CalculationStart)
+        {
+            DeclareVariable();
+        }
         CoerceAll(variableNames, TokenType.Variable);
 
+        AdvanceToken();
+        Debug.Assert(currentToken.Type != TokenType.CalculationStart);
+
         // Calculation
-        while (!CmpCurrentTokenType(TokenType.CalculationEnd))
+        while (currentToken.Type != TokenType.CalculationEnd)
         {
             Statement();
         }
     }
-
-    #endregion Methods
-
-    #region Helpers
 
     private void CoerceAll(ISet<string> identifiers, TokenType type)
     {
         for (int i = 0; i <= maxIndex; i++)
         {
             Token token = lexicalTokens[i];
-            if (identifiers.Contains(token.Base.Symbol))
+            if (identifiers.Contains(token.Symbol))
             {
                 lexicalTokens[i] = Tokens.TokenWithType(token, type);
             }
         }
     }
 
-    private bool CmpCurrentTokenType(TokenType type)
+    #endregion
+
+    #region Parameter Declarations
+
+    private void DeclareParameter()
     {
-        return currentToken.Base.Type == type;
-    }
-
-    private void AdvanceToken()
-    {
-        if (currentIndex == maxIndex)
-        {
-            ParserError("End reached unexpectedly!");
-        }
-
-        previousToken = currentToken;
-        currentToken = lexicalTokens[++currentIndex];
-    }
-
-    #endregion Helpers
-
-    #region Declarations
-
-    private void DeclParam()
-    {
-        Token? DequeueMaybeDummy() => tokenBuffer.Dequeue().NullifyUndefined();
-
         int previousIndex = DeclExpect(TokenType.Identifier);
         Token token = Tokens.TokenWithType(previousToken, TokenType.Parameter);
         lexicalTokens[previousIndex] = token;
 
-        string symbol = token.Base.Symbol;
+        string symbol = token.Symbol;
 
         Debug.Assert(parameterNames.Count <= Constants.MAX_PARAMETERS);
         if (parameterNames.Count == Constants.MAX_PARAMETERS)
@@ -155,17 +132,19 @@ public class Parser : IParser
 
         tokenBuffer.Enqueue(token);
         BufferExpectedToken(TokenType.Assignment);
-        if (DeclAccept(TokenType.Boolean))
+        if (DeclAccept(TokenType.Bool))
         {
-            TerminateParam(out Token nameB, out Token valueB);
+            TerminateParameter(out Token nameB, out Token valueB);
             parameters.Add(new(nameB, valueB, null, null, null, null));
             return;
         }
 
         BufferExpectedToken(TokenType.Number);
         ParseGuards();
-        TerminateParam(out Token name, out Token value);
+        TerminateParameter(out Token name, out Token value);
         
+        Token? DequeueMaybeDummy() => tokenBuffer.Dequeue().NullifyUndefined();
+
         Token? minGuard = DequeueMaybeDummy();
         Token? min      = DequeueMaybeDummy();
         Token? maxGuard = DequeueMaybeDummy();
@@ -174,7 +153,7 @@ public class Parser : IParser
         parameters.Add(new(name, value, minGuard, min, maxGuard, max));
     }
 
-    private void TerminateParam(out Token name, out Token value)
+    private void TerminateParameter(out Token name, out Token value)
     {
         _ = DeclExpect(TokenType.Terminator);
 
@@ -182,7 +161,7 @@ public class Parser : IParser
         Token eq = tokenBuffer.Dequeue();
         value = tokenBuffer.Dequeue();
 
-        if (eq.Base.Symbol != Tokens.ASSIGN)
+        if (eq.Symbol != Tokens.ASSIGN)
         {
             ParserError($"Expected {Tokens.ASSIGN}");
         }
@@ -232,13 +211,17 @@ public class Parser : IParser
         }
     }
 
-    private void DeclVar()
+    #endregion
+
+    #region Variable Declarations
+
+    private void DeclareVariable()
     {
         int previousIndex = DeclExpect(TokenType.Identifier);
         Token token = Tokens.TokenWithType(previousToken, TokenType.Variable);
         lexicalTokens[previousIndex] = token;
 
-        string symbol = token.Base.Symbol;
+        string symbol = token.Symbol;
 
         Debug.Assert(variableNames.Count <= Constants.MAX_VARIABLES);
         if (variableNames.Count == Constants.MAX_VARIABLES)
@@ -265,9 +248,9 @@ public class Parser : IParser
     private void ExprVar()
     {
         Queue<Token> input = new();
-        while (currentToken.Base.Type != TokenType.Terminator)
+        while (currentToken.Type != TokenType.Terminator)
         {
-            if (currentToken.Base.Type == TokenType.CalculationStart)
+            if (currentToken.Type == TokenType.CalculationStart)
             {
                 ParserError("Calculation block reached unexpectedly!");
             }
@@ -285,10 +268,10 @@ public class Parser : IParser
         Token? prev = null;
         foreach (Token token in input)
         {
-            switch (token.Base.Type)
+            switch (token.Type)
             {
                 case TokenType.Identifier:
-                    if (!variableNames.Contains(token.Base.Symbol))
+                    if (!variableNames.Contains(token.Symbol))
                     {
                         ParserError("Could not resolve variable name!");
                     }
@@ -326,15 +309,19 @@ public class Parser : IParser
         Token t = tokenBuffer.Dequeue();
         Token eq = tokenBuffer.Dequeue();
 
-        if (eq.Base.Symbol != Tokens.ASSIGN)
+        if (eq.Symbol != Tokens.ASSIGN)
         {
             ParserError($"Expected {Tokens.ASSIGN}");
         }
 
         output.Add(eq);
         output.Add(t);
-        variables.Add(new(t.Base.Symbol, output));
+        variables.Add(new(t.Symbol, output));
     }
+
+    #endregion
+
+    #region Declaration Helpers
 
     private void BufferExpectedToken(TokenType type)
     {
@@ -355,15 +342,12 @@ public class Parser : IParser
 
     private bool DeclAccept(TokenType type)
     {
-        bool success = CmpCurrentTokenType(type);
-        if (success)
-        {
-            AdvanceToken();
-        }
+        bool success = currentToken.Type == type;
+        if (success) AdvanceToken();
         return success;
     }
 
-    #endregion Declarations
+    #endregion
 
     #region Calculation
 
@@ -405,7 +389,7 @@ public class Parser : IParser
         while (true)
         {
             Token current = currentToken;
-            TokenType currentType = current.Base.Type;
+            TokenType currentType = current.Type;
 
             if (currentType == TokenType.CalculationEnd)
             {
@@ -413,7 +397,7 @@ public class Parser : IParser
             }
 
             AdvanceToken();
-            TokenType nextType = currentToken.Base.Type;
+            TokenType nextType = currentToken.Type;
             bool afterIsNext = after == nextType;
             if (currentType == end && (after == TokenType.Undefined || afterIsNext))
             {
@@ -434,7 +418,7 @@ public class Parser : IParser
         Token? prev = null;
         foreach (Token token in input)
         {
-            switch (token.Base.Type)
+            switch (token.Type)
             {
                 case TokenType.Number:
                 case TokenType.Parameter:
@@ -479,7 +463,7 @@ public class Parser : IParser
             return;
         }
 
-        while (top.Base.Type != TokenType.Open)
+        while (top.Type != TokenType.Open)
         {
             output.Add(operatorStack.Pop());
             if (operatorStack.Count == 0)
@@ -491,7 +475,7 @@ public class Parser : IParser
         }
 
         _ = operatorStack.Pop();
-        if (operatorStack.Count != 0 && operatorStack.Peek().Base.Type == TokenType.Function)
+        if (operatorStack.Count != 0 && operatorStack.Peek().Type == TokenType.Function)
         {
             output.Add(operatorStack.Pop());
         }
@@ -499,7 +483,7 @@ public class Parser : IParser
 
     private static void CheckUnary(IList<Token> output, Token? prev, uint line)
     {
-        switch ((prev ?? Tokens.DUMMY).Base.Type)
+        switch ((prev ?? Tokens.DUMMY).Type)
         {
             case TokenType.Identifier:
             case TokenType.Number:
@@ -522,7 +506,7 @@ public class Parser : IParser
         while (operatorStack.Count != 0)
         {
             Token op = operatorStack.Peek();
-            TokenType opType = op.Base.Type;
+            TokenType opType = op.Type;
             if (opType != TokenType.Comparison && opType != TokenType.Arithmetic)
             {
                 break;
@@ -543,7 +527,7 @@ public class Parser : IParser
         while (operatorStack.Count != 0)
         {
             Token token = operatorStack.Pop();
-            if (token.Base.Type == TokenType.Open)
+            if (token.Type == TokenType.Open)
             {
                 ParserError($"No matching: {Tokens.CLOSE}");
             }
@@ -570,7 +554,7 @@ public class Parser : IParser
 
     private bool Accept(TokenType type)
     {
-        bool success = type == currentToken.Base.Type;
+        bool success = type == currentToken.Type;
         if (success)
         {
             AdvanceToken();
@@ -578,7 +562,22 @@ public class Parser : IParser
         return success;
     }
 
-    #endregion Calculation
+    #endregion
+
+    #region Helpers
+
+    private void AdvanceToken()
+    {
+        if (currentIndex == maxIndex)
+        {
+            ParserError("End reached unexpectedly!");
+        }
+
+        previousToken = currentToken;
+        currentToken = lexicalTokens[++currentIndex];
+    }
+
+    #endregion
 
     private void ParserError(string error)
     {

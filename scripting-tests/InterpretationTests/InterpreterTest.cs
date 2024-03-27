@@ -34,6 +34,6 @@ public class InterpreterTest
         parameters[0].Value = value;
 
         interpreter.Init();
-        Debug.Assert(interpreter.Calculate(0) == value * 4 + 6);
+        Assert.AreEqual(value * 4 + 6, interpreter.Calculate(0));
     }
 }
