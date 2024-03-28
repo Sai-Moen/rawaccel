@@ -1,4 +1,6 @@
-﻿namespace scripting_tests.Old;
+﻿using System.Diagnostics;
+
+namespace scripting_tests.Old;
 
 public static class Test
 {

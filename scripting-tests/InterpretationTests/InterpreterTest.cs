@@ -14,7 +14,8 @@ public class InterpreterTest
     [DataRow(4)]
     public void TestVariableResolution(double value)
     {
-        const string script = @"
+        const string script =
+            """
             [
                 a := 1;
             ]
@@ -26,7 +27,7 @@ public class InterpreterTest
             {
                 y := a + b + c + d;
             }
-        ";
+            """;
 
         IInterpreter interpreter = Wrapper.LoadScript(script);
 

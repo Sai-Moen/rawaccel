@@ -40,9 +40,8 @@ public interface IInterpreter
 /// <summary>
 /// Exception for interpretation-related errors.
 /// </summary>
-public sealed class InterpreterException : ScriptException
+public sealed class InterpreterException(string message) : ScriptException(message)
 {
-    public InterpreterException(string message) : base(message) { }
 }
 
 /// <summary>

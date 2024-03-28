@@ -1,4 +1,6 @@
 ﻿using scripting.Common;
+using System.Diagnostics;
+using System.Text;
 
 namespace scripting.Lexical;
 
@@ -29,7 +31,7 @@ public class Lexer : ILexer
     private readonly char[] characters;
 
     private string comments = string.Empty;
-    private readonly IList<Token> lexicalTokens = new List<Token>();
+    private readonly ITokenList lexicalTokens = [];
 
     #endregion
 
@@ -258,16 +260,16 @@ public class Lexer : ILexer
 
     private void AddBufferedToken()
     {
-        string s = ConsumeBuffer();
+        string symbol = ConsumeBuffer();
 
         Token token;
-        if (Tokens.ReservedMap.TryGetValue(s, out Token? value))
+        if (Tokens.IsReserved(symbol))
         {
-            token = value with { Line = currentLine };
+            token = Tokens.GetReserved(symbol, currentLine);
         }
         else
         {
-            token = new(new(TokenType.Identifier, Tokens.Normalize(s)), currentLine);
+            token = new(new(TokenType.Identifier, Tokens.Normalize(symbol)), currentLine);
         }
         AddToken(token);
     }
@@ -291,13 +293,13 @@ public class Lexer : ILexer
 
     private bool PeekNext(out char c)
     {
-        c = char.MinValue;
         if (currentIndex < maxIndex)
         {
             c = characters[currentIndex + 1];
             return true;
         }
 
+        c = char.MinValue;
         return false;
     }
 

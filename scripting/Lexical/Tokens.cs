@@ -1,4 +1,8 @@
-﻿namespace scripting.Lexical;
+﻿using System.Collections.Generic;
+using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
+
+namespace scripting.Lexical;
 
 /// <summary>
 /// Enumerates all possible Token types.
@@ -26,7 +30,7 @@ public record BaseToken(TokenType Type, string Symbol);
 /// Holds a BaseToken including some extra information.
 /// </summary>
 /// <param name="Base">The BaseToken.</param>
-/// <param name="Line">The line in the file where this came from.</param>
+/// <param name="Line">The line in the file where this came from. 0 means unknown.</param>
 public record Token(BaseToken Base, uint Line = 0)
 {
     public TokenType Type => Base.Type;
@@ -282,6 +286,8 @@ public static class Tokens
         new(TokenType.Function, SCALE_B),
     };
 
+    private static Dictionary<string, Token> ReservedMap { get; }
+
     #endregion
 
     #region Constructors
@@ -296,15 +302,6 @@ public static class Tokens
 
         Debug.Assert(ReservedMap.Count == ReservedArray.Length);
     }
-
-    #endregion
-
-    #region Properties
-
-    /// <summary>
-    /// Maps all of the reserved Tokens to a string representation.
-    /// </summary>
-    public static Dictionary<string, Token> ReservedMap { get; }
 
     #endregion
 

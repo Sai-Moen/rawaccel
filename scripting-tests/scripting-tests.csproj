@@ -1,9 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <RootNamespace>scripting_tests</RootNamespace>
-    <ImplicitUsings>enable</ImplicitUsings>
+    <ImplicitUsings>disable</ImplicitUsings>
     <Nullable>enable</Nullable>
 
     <IsPackable>false</IsPackable>
@@ -20,10 +20,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\scripting\scripting.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Using Include="System.Diagnostics" />
   </ItemGroup>
 
 </Project>

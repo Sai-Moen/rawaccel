@@ -1,12 +1,14 @@
 ﻿using scripting;
 using scripting.Interpretation;
+using System;
 
 namespace scripting_tests.FormulaTests;
 
 [TestClass]
 public class LinearTest
 {
-    public const string LINEAR = @"
+    public const string LINEAR =
+        """
         Legacy output cap Linear mode as a RawAccelScript.
 
         [
@@ -23,7 +25,7 @@ public class LinearTest
             base := Acceleration * (x - Input_Offset) ^ 2 / x;
             y += min(base, Output_Cap);
         }
-    ";
+        """;
 
     private readonly IInterpreter interpreter = Wrapper.LoadScript(LINEAR);
 

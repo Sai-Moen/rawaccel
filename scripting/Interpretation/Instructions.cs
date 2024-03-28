@@ -1,4 +1,8 @@
 ﻿using scripting.Script;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Runtime.InteropServices;
 
 namespace scripting.Interpretation;
 
@@ -114,8 +118,6 @@ public readonly record struct Instruction(InstructionType Type, InstructionFlags
 /// </summary>
 public readonly struct InstructionOperand
 {
-    #region Constructors
-
     public InstructionOperand(MemoryAddress address)
     {
         Operand = address;
@@ -131,13 +133,7 @@ public readonly struct InstructionOperand
         Operand = address;
     }
 
-    #endregion
-
-    #region Properties
-
     public readonly ushort Operand { get; }
-
-    #endregion
 }
 
 /// <summary>
@@ -155,7 +151,7 @@ public struct InstructionUnion
 /// <summary>
 /// Represents a list of instructions.
 /// </summary>
-public class InstructionList : List<InstructionUnion>
+public class InstructionList : List<InstructionUnion>, IList<InstructionUnion>
 {
     #region Constructors
 
@@ -195,7 +191,7 @@ public class InstructionList : List<InstructionUnion>
         {
             operand = operand
         };
-        AddRange(new InstructionUnion[2] { unionI, unionO });
+        AddRange([unionI, unionO]);
     }
 
     public void Add(InstructionType type, InstructionOperand operand)
@@ -235,7 +231,7 @@ public class InstructionList : List<InstructionUnion>
         {
             operand = operand
         };
-        InsertRange(address, new InstructionUnion[2] { unionI, unionO });
+        InsertRange(address, [unionI, unionO]);
     }
 
     public void Insert(CodeAddress address, InstructionType type, InstructionOperand operand)
@@ -348,12 +344,11 @@ public readonly record struct MemoryAddress(byte Address)
 
     public static implicit operator MemoryAddress(int pointer)
     {
-        byte address = (byte)pointer;
-        if (address > MAX_VALUE)
+        if (pointer > MAX_VALUE)
         {
             throw new InterpreterException("Memory address overflow!");
         }
-        return address;
+        return (byte)pointer;
     }
 
     public static explicit operator MemoryAddress(InstructionOperand pointer)
@@ -393,12 +388,11 @@ public readonly record struct DataAddress(ushort Address)
 
     public static implicit operator DataAddress(int pointer)
     {
-        ushort address = (ushort)pointer;
-        if (address > MAX_VALUE)
+        if (pointer > MAX_VALUE)
         {
             throw new InterpreterException("Data address overflow!");
         }
-        return address;
+        return (ushort)pointer;
     }
 
     public static explicit operator DataAddress(InstructionOperand pointer)
@@ -438,12 +432,11 @@ public readonly record struct CodeAddress(ushort Address)
 
     public static implicit operator CodeAddress(int pointer)
     {
-        ushort address = (ushort)pointer;
-        if (address > MAX_VALUE)
+        if (pointer > MAX_VALUE)
         {
             throw new InterpreterException("Code address overflow!");
         }
-        return address;
+        return (ushort)pointer;
     }
 
     public static explicit operator CodeAddress(InstructionOperand pointer)
@@ -454,11 +447,6 @@ public readonly record struct CodeAddress(ushort Address)
     public static implicit operator ushort(CodeAddress address)
     {
         return address.Address;
-    }
-
-    public static explicit operator byte[](CodeAddress address)
-    {
-        return BitConverter.GetBytes(address.Address);
     }
 
     #endregion

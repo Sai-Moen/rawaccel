@@ -1,11 +1,12 @@
-﻿namespace scripting.Common;
+﻿using System;
+
+namespace scripting.Common;
 
 /// <summary>
 /// Exception to derive from when doing anything inside the scripting namespace.
 /// </summary>
-public class ScriptException : Exception
+public class ScriptException(string message) : Exception(message)
 {
-    public ScriptException(string message) : base(message) { }
 }
 
 /// <summary>

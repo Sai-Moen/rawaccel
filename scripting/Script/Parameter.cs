@@ -1,6 +1,10 @@
 ﻿using scripting.Common;
 using scripting.Lexical;
 using scripting.Syntactical;
+using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Diagnostics;
 
 namespace scripting.Script;
 
@@ -177,8 +181,6 @@ public class Parameter
 /// </summary>
 public class Parameters : List<Parameter>, IList<Parameter>
 {
-    internal Parameters() : base(Constants.MAX_PARAMETERS) { }
-
     private Parameters(Parameters parameters) : base(parameters) { }
 
     internal Parameters Clone()
@@ -210,9 +212,9 @@ public class ReadOnlyParameters : ReadOnlyCollection<ReadOnlyParameter>, IList<R
 {
     internal ReadOnlyParameters(IList<Parameter> parameters) : base(Wrap(parameters)) { }
 
-    private static IList<ReadOnlyParameter> Wrap(IList<Parameter> parameters)
+    private static List<ReadOnlyParameter> Wrap(IList<Parameter> parameters)
     {
-        IList<ReadOnlyParameter> ro = new List<ReadOnlyParameter>(parameters.Count);
+        List<ReadOnlyParameter> ro = new(parameters.Count);
         foreach (Parameter parameter in parameters)
         {
             ro.Add(new(parameter));

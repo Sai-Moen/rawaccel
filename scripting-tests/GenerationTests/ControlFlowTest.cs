@@ -1,6 +1,7 @@
 ﻿using scripting;
 using scripting.Interpretation;
 using scripting.Script;
+using System;
 
 namespace scripting_tests.GenerationTests;
 
@@ -14,7 +15,8 @@ public class ControlFlowTest
     [DataRow(4)]
     public void TestNestedIfs(int value)
     {
-        const string script = @"
+        const string script =
+            """
             Nested if statements test.
 
             [
@@ -39,7 +41,7 @@ public class ControlFlowTest
                     :
                 :
             }
-        ";
+            """;
 
         double a = value;
         double b = a + 2;

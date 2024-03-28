@@ -1,5 +1,8 @@
 ﻿using scripting.Common;
 using scripting.Lexical;
+using System;
+using System.Diagnostics;
+using System.Globalization;
 
 namespace scripting.Script;
 
@@ -57,11 +60,11 @@ public readonly record struct Number(double Value)
         return Parse(token.Symbol, token.Line);
     }
 
-    public static bool operator false(Number number) => number == ZERO;
-    public static bool operator true(Number number) => number != ZERO;
-
     public static implicit operator bool(Number number) => number != ZERO;
     public static implicit operator double(Number number) => number.Value;
+
+    public static bool operator false(Number number) => number == ZERO;
+    public static bool operator true(Number number) => number != ZERO;
 
     public static Number operator !(Number number) => number == ZERO;
 

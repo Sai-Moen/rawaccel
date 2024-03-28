@@ -2,6 +2,7 @@
 using scripting.Interpretation;
 using scripting.Lexical;
 using scripting.Syntactical;
+using System.IO;
 
 namespace scripting;
 
@@ -18,10 +19,10 @@ public static class Wrapper
     /// <exception cref="ScriptException"/>
     public static IInterpreter LoadScript(string script)
     {
-        ILexer lexer = new Lexer(script);
+        Lexer lexer = new(script);
         LexingResult lexicalAnalysis = lexer.Tokenize();
 
-        IParser parser = new Parser(lexicalAnalysis);
+        Parser parser = new(lexicalAnalysis);
         ParsingResult syntacticAnalysis = parser.Parse();
 
         return new Interpreter(syntacticAnalysis);
@@ -74,7 +75,6 @@ public static class ScriptLoader
 /// <summary>
 /// Exception for errors with loading scripts.
 /// </summary>
-public sealed class LoaderException : ScriptException
+public sealed class LoaderException(string message) : ScriptException(message)
 {
-    public LoaderException(string message) : base(message) { }
 }

@@ -1,6 +1,10 @@
 ﻿using scripting.Common;
 using scripting.Script;
 using scripting.Syntactical;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 
 namespace scripting.Interpretation;
 
@@ -14,7 +18,7 @@ public class Interpreter : IInterpreter
     private Number x = Number.DEFAULT_X;
     private Number y = Number.DEFAULT_Y;
 
-    private readonly Dictionary<string, MemoryAddress> addresses = new();
+    private readonly Dictionary<string, MemoryAddress> addresses = [];
 
     private readonly MemoryHeap stable;
     private readonly MemoryHeap unstable;

@@ -8,11 +8,11 @@ public static class Builtins
 	// for reference, could be used in a regression test idk
     public const string STATIC = "[]{}";
 
-    // change to c#11+ multiline string literals if we update to .NET8
 	/// <summary>
 	/// Arc mode by SaiMoen.
 	/// </summary>
-    public const string ARC = @"
+    public const string ARC =
+		"""
 		Arc mode by SaiMoen
 
 		[
@@ -33,5 +33,5 @@ public static class Builtins
 			:
 
 		}
-	";
+		""";
 }

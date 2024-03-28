@@ -1,12 +1,14 @@
 ﻿using scripting;
 using scripting.Interpretation;
+using System;
 
 namespace scripting_tests.FormulaTests;
 
 [TestClass]
 public class PowerTest
 {
-    public const string POWER = @"
+    public const string POWER =
+        """
         Legacy output cap Power mode as a RawAccelScript.
 
         [
@@ -31,7 +33,7 @@ public class PowerTest
                 y := min(y, Cap);
             :
         }
-    ";
+        """;
 
     private readonly IInterpreter interpreter = Wrapper.LoadScript(POWER);
 

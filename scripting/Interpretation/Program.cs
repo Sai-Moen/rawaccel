@@ -1,5 +1,7 @@
 ﻿using scripting.Lexical;
 using scripting.Script;
+using System;
+using System.Collections.Generic;
 
 namespace scripting.Interpretation;
 
@@ -23,14 +25,14 @@ public class Program
     /// <param name="code">Contains a parsed TokenList that can be emitted to bytecode.</param>
     /// <param name="addresses">Maps identifiers to memory addresses.</param>
     /// <exception cref="ProgramException"/>
-    public Program(IList<Token> code, Dictionary<string, MemoryAddress> addresses)
+    public Program(ITokenList code, IDictionary<string, MemoryAddress> addresses)
     {
         InstructionList instructionList = new(code.Count)
         {
             InstructionType.Start
         };
 
-        Dictionary<Number, DataAddress> numberMap = new();
+        Dictionary<Number, DataAddress> numberMap = [];
 
         CodeAddress lastExprStart = 0;
         int depth = 0;

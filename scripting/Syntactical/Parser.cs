@@ -1,6 +1,8 @@
 ﻿using scripting.Common;
 using scripting.Lexical;
 using scripting.Script;
+using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace scripting.Syntactical;
 
@@ -11,8 +13,8 @@ public class Parser : IParser
 {
     #region Fields
 
-    private readonly ISet<string> parameterNames = new HashSet<string>(Constants.MAX_PARAMETERS);
-    private readonly ISet<string> variableNames = new HashSet<string>(Constants.MAX_VARIABLES);
+    private readonly HashSet<string> parameterNames = new(Constants.MAX_PARAMETERS);
+    private readonly HashSet<string> variableNames = new(Constants.MAX_VARIABLES);
 
     private readonly Queue<Token> tokenBuffer = new();
     private readonly Stack<Token> operatorStack = new();
@@ -22,12 +24,12 @@ public class Parser : IParser
 
     private Token previousToken;
     private Token currentToken;
-    private readonly IList<Token> lexicalTokens;
+    private readonly ITokenList lexicalTokens;
 
     private readonly string description;
-    private readonly Parameters parameters = new();
-    private readonly Variables variables = new();
-    private readonly List<Token> syntacticTokens = new();
+    private readonly Parameters parameters = [];
+    private readonly Variables variables = [];
+    private readonly TokenList syntacticTokens = [];
 
     #endregion
 
@@ -94,7 +96,7 @@ public class Parser : IParser
         }
     }
 
-    private void CoerceAll(ISet<string> identifiers, TokenType type)
+    private void CoerceAll(HashSet<string> identifiers, TokenType type)
     {
         for (int i = 0; i <= maxIndex; i++)
         {
@@ -263,7 +265,7 @@ public class Parser : IParser
         Debug.Assert(operatorStack.Count == 0);
 
         // Shunting Yard Algorithm (RPN)
-        IList<Token> output = new List<Token>(input.Count);
+        TokenList output = new(input.Count);
 
         Token? prev = null;
         foreach (Token token in input)
@@ -379,11 +381,12 @@ public class Parser : IParser
 
             do Statement();
             while (!Accept(TokenType.Block));
+
             syntacticTokens.Add(Tokens.GetReserved(Tokens.BRANCH_END, previousToken.Line));
         }
     }
 
-    private IList<Token> Expression(TokenType end, TokenType after = TokenType.Undefined)
+    private ITokenList Expression(TokenType end, TokenType after = TokenType.Undefined)
     {
         Queue<Token> input = new();
         while (true)
@@ -413,7 +416,7 @@ public class Parser : IParser
         Debug.Assert(operatorStack.Count == 0);
 
         // Shunting Yard Algorithm (RPN)
-        IList<Token> output = new List<Token>(input.Count);
+        ITokenList output = new TokenList(input.Count);
 
         Token? prev = null;
         foreach (Token token in input)
@@ -454,7 +457,7 @@ public class Parser : IParser
         return output;
     }
 
-    private void OnClose(IList<Token> output)
+    private void OnClose(ITokenList output)
     {
         Token top;
         if (!operatorStack.TryPeek(out top!))
@@ -481,7 +484,7 @@ public class Parser : IParser
         }
     }
 
-    private static void CheckUnary(IList<Token> output, Token? prev, uint line)
+    private static void CheckUnary(ITokenList output, Token? prev, uint line)
     {
         switch ((prev ?? Tokens.DUMMY).Type)
         {
@@ -499,7 +502,7 @@ public class Parser : IParser
         output.Add(Tokens.GetReserved(Tokens.ZERO, line));
     }
 
-    private void OnPrecedence(IList<Token> output, Token token)
+    private void OnPrecedence(ITokenList output, Token token)
     {
         int precedence = token.Precedence();
         bool left = token.LeftAssociative();
@@ -522,7 +525,7 @@ public class Parser : IParser
         operatorStack.Push(token);
     }
 
-    private void OnEmptyQueue(IList<Token> output)
+    private void OnEmptyQueue(ITokenList output)
     {
         while (operatorStack.Count != 0)
         {
@@ -568,6 +571,7 @@ public class Parser : IParser
 
     private void AdvanceToken()
     {
+        Debug.Assert(currentIndex <= maxIndex);
         if (currentIndex == maxIndex)
         {
             ParserError("End reached unexpectedly!");

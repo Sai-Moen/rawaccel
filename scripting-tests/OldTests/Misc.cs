@@ -1,5 +1,6 @@
 ﻿using scripting;
 using scripting.Interpretation;
+using System.Diagnostics;
 
 namespace scripting_tests.Old;
 

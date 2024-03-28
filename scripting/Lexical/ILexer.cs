@@ -20,12 +20,11 @@ public interface ILexer
 /// </summary>
 /// <param name="Comments">the comments of the script</param>
 /// <param name="Tokens">the tokens after the comments</param>
-public record LexingResult(string Comments, IList<Token> Tokens);
+public record LexingResult(string Comments, ITokenList Tokens);
 
 /// <summary>
 /// Exception for tokenizing-specific errors.
 /// </summary>
-public sealed class LexerException : GenerationException
+public sealed class LexerException(string message, uint line) : GenerationException(message, line)
 {
-    public LexerException(string message, uint line) : base(message, line) { }
 }

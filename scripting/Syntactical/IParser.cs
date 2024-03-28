@@ -1,5 +1,4 @@
 ﻿using scripting.Common;
-using scripting.Lexical;
 using scripting.Script;
 
 namespace scripting.Syntactical;
@@ -24,14 +23,11 @@ public interface IParser
 /// <param name="Parameters">the user-controlled parameters</param>
 /// <param name="Variables">the variables used by the script</param>
 /// <param name="Tokens">the parsed list of tokens</param>
-public record ParsingResult(string Description, Parameters Parameters, Variables Variables, IList<Token> Tokens);
+public record ParsingResult(string Description, Parameters Parameters, Variables Variables, ITokenList Tokens);
 
 /// <summary>
 /// Exception for parsing-related errors.
 /// </summary>
-public sealed class ParserException : GenerationException
+public sealed class ParserException(string message, uint line) : GenerationException(message, line)
 {
-    public ParserException(string message) : base(message) { }
-
-    public ParserException(string message, uint line) : base(message, line) { }
 }
