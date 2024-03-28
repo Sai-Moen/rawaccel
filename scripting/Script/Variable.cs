@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using scripting.Common;
+using System.Collections.Generic;
 
 namespace scripting.Script;
 
@@ -12,4 +13,5 @@ public readonly record struct Variable(string Name, ITokenList Expr);
 /// </summary>
 public class Variables : List<Variable>, IList<Variable>
 {
+    internal Variables() : base(Constants.MAX_VARIABLES) { }
 }

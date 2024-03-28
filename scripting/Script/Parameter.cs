@@ -181,6 +181,8 @@ public class Parameter
 /// </summary>
 public class Parameters : List<Parameter>, IList<Parameter>
 {
+    internal Parameters() : base(Constants.MAX_PARAMETERS) { }
+
     private Parameters(Parameters parameters) : base(parameters) { }
 
     internal Parameters Clone()
