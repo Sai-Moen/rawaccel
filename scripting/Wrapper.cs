@@ -2,6 +2,8 @@
 using scripting.Interpretation;
 using scripting.Lexical;
 using scripting.Syntactical;
+using System;
+using System.Diagnostics;
 using System.IO;
 
 namespace scripting;
@@ -36,8 +38,21 @@ public static class Wrapper
     /// <exception cref="ScriptException"/>
     public static IInterpreter LoadScriptFromFile(string scriptPath)
     {
-        string script = ScriptLoader.LoadScript(scriptPath);
+        string script = ScriptLoader.ReadScript(scriptPath);
         return LoadScript(script);
+    }
+
+    /// <summary>
+    /// Utility method to generate an error message for script writers,
+    /// e.g. "[Emit] Branch mismatch!" for some EmitException.
+    /// </summary>
+    /// <param name="e">the error</param>
+    /// <returns>exception message with type prepended</returns>
+    public static string GenerateErrorMessage(ScriptException e)
+    {
+        string name = e.GetType().Name;
+        int startIndex = name.IndexOf(nameof (Exception));
+        return startIndex == -1 ? e.Message : $"[{name.Remove(startIndex)}] {e.Message}";
     }
 }
 
@@ -46,17 +61,24 @@ public static class Wrapper
 /// </summary>
 public static class ScriptLoader
 {
-    public const int MaxScriptFileLength = 0xFFFF;
+    public const int MAX_SCRIPT_LEN = 0xFFFF;
 
-    public static string LoadScript(string scriptPath)
+    /// <summary>
+    /// Reads a script from the given path.
+    /// </summary>
+    /// <param name="scriptPath">the path</param>
+    /// <returns>all text from the path</returns>
+    /// <exception cref="LoaderException"/>
+    public static string ReadScript(string scriptPath)
     {
-        if (!File.Exists(scriptPath))
+        FileInfo info = new(scriptPath);
+        if (!info.Exists)
         {
             throw new LoaderException("File not found!");
         }
-        else if (new FileInfo(scriptPath).Length > MaxScriptFileLength)
+        else if (info.Length > MAX_SCRIPT_LEN)
         {
-            throw new LoaderException("File too big!");
+            throw new LoaderException("File too long!");
         }
 
         try
@@ -67,7 +89,7 @@ public static class ScriptLoader
         {
             // Could differentiate between certain exceptions,
             // keep in mind that File.Exists already catches a decent amount.
-            throw new LoaderException("File not readable!");
+            throw new LoaderException("Cannot read script!");
         }
     }
 }

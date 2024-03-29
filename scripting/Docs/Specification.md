@@ -26,6 +26,10 @@ and allows the grapher to automatically calculate the points based on given para
 
 Proposed file name extension for custom scripts = `.ras` (RawAccelScript)
 
+### Docs
+
+Documentation (like this document).
+
 ### Common
 
 Utils-esque namespace.
@@ -134,7 +138,7 @@ After the Calculation block it will be returned to the caller of the aforementio
 ```
 x y           "Input/Output variables"
 false true    "Boolean values (0 and 1 respectively)"
-zero          "Used for quick unary minus/booleans (zero - x == -x && zero == false && !zero == true)"
+zero          "Another way of getting 0, usually for denoting variables with no meaningful initial value"
 e pi tau      "Math Constants"
 
 if (c): s :       "c means condition, s means statements"

@@ -24,7 +24,7 @@ public class Program
     /// </summary>
     /// <param name="code">Contains a parsed TokenList that can be emitted to bytecode.</param>
     /// <param name="addresses">Maps identifiers to memory addresses.</param>
-    /// <exception cref="ProgramException"/>
+    /// <exception cref="EmitException"/>
     public Program(ITokenList code, IDictionary<string, MemoryAddress> addresses)
     {
         InstructionList instructionList = new(code.Count)
@@ -97,7 +97,7 @@ public class Program
                         }
                     }
 
-                    throw new ProgramException("Unexpected branch end!", token.Line);
+                    throw new EmitException("Unexpected branch end!", token.Line);
                 case TokenType.Assignment:
                     InstructionType modify = OnAssignment(token);
                     bool isInline = modify.IsInline();
@@ -154,13 +154,13 @@ public class Program
                     instructionList.Add(OnFunction(token));
                     break;
                 default:
-                    throw new ProgramException("Cannot emit token!", token.Line);
+                    throw new EmitException("Cannot emit token!", token.Line);
             }
         }
 
         if (depth != 0)
         {
-            throw new ProgramException("Branch mismatch!");
+            throw new EmitException("Branch mismatch!");
         }
 
         data = new(numberMap.Count);
@@ -216,7 +216,7 @@ public class Program
         Tokens.CONST_TAU => InstructionType.LoadTau,
         Tokens.ZERO => InstructionType.LoadZero,
 
-        _ => throw new ProgramException("Cannot emit constant!", token.Line),
+        _ => throw new EmitException("Cannot emit constant!", token.Line),
     };
 
     private static InstructionType OnAssignment(Token token) => token.Symbol switch
@@ -229,7 +229,7 @@ public class Program
         Tokens.IMOD => InstructionType.Mod,
         Tokens.IPOW => InstructionType.Pow,
 
-        _ => throw new ProgramException("Cannot emit assignment!", token.Line),
+        _ => throw new EmitException("Cannot emit assignment!", token.Line),
     };
 
     private static InstructionType OnArithmetic(Token token) => token.Symbol switch
@@ -241,7 +241,7 @@ public class Program
         Tokens.MOD => InstructionType.Mod,
         Tokens.POW => InstructionType.Pow,
 
-        _ => throw new ProgramException("Cannot emit arithmetic!", token.Line)
+        _ => throw new EmitException("Cannot emit arithmetic!", token.Line)
     };
 
     private static InstructionType OnComparison(Token token) => token.Symbol switch
@@ -256,7 +256,7 @@ public class Program
         Tokens.NE => InstructionType.Ne,
         Tokens.NOT => InstructionType.Not,
 
-        _ => throw new ProgramException("Cannot emit comparison!", token.Line),
+        _ => throw new EmitException("Cannot emit comparison!", token.Line),
     };
 
     private static InstructionType OnFunction(Token token) => token.Symbol switch
@@ -303,7 +303,7 @@ public class Program
         Tokens.FUSED_MULTIPLY_ADD => InstructionType.FusedMultiplyAdd,
         Tokens.SCALE_B => InstructionType.ScaleB,
 
-        _ => throw new ProgramException("Cannot emit function!", token.Line),
+        _ => throw new EmitException("Cannot emit function!", token.Line),
     };
 
     #endregion

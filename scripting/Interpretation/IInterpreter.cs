@@ -45,11 +45,11 @@ public sealed class InterpreterException(string message) : ScriptException(messa
 }
 
 /// <summary>
-/// Exception for errors relating to generating a program.
+/// Exception for errors relating to emitting bytecode into a program.
 /// </summary>
-public sealed class ProgramException : GenerationException
+public sealed class EmitException : GenerationException
 {
-    public ProgramException(string message) : base(message) { }
+    public EmitException(string message) : base(message) { }
 
-    public ProgramException(string message, uint line) : base(message, line) { }
+    public EmitException(string message, uint line) : base(message, line) { }
 }

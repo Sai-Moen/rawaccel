@@ -13,7 +13,7 @@ public static class Builtins
 	/// </summary>
     public const string ARC =
 		"""
-		Arc mode by SaiMoen
+		Arc mode by SaiMoen.
 
 		[
 
@@ -27,10 +27,12 @@ public static class Builtins
 
 		{
 
-			if (x > Input_Offset):
-				x -= Input_Offset;
-				y += (pLimit / x) * (x - Midpoint * atan(x / Midpoint));
+			if (x <= Input_Offset):
+				ret;
 			:
+
+			x -= Input_Offset;
+			y += (pLimit / x) * (x - Midpoint * atan(x / Midpoint));
 
 		}
 		""";
