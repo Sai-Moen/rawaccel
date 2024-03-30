@@ -132,8 +132,8 @@ public static class Tokens
     // Rounding
     public const string ROUND = "round"; // Round to nearest
     public const string TRUNC = "trunc"; // Round to 0
-    public const string CEIL = "ceil";  // Round to infinity
     public const string FLOOR = "floor"; // Round to -infinity
+    public const string CEIL = "ceil";  // Round to infinity
     public const string CLAMP = "clamp"; // Clamps second argument between the first and third
 
     // MinMax
@@ -148,9 +148,9 @@ public static class Tokens
 
     // Logarithm
     public const string LOG = "log";   // Natural Logarithm (loge x)
-    public const string LOG2 = "log2";  // Binary Logarithm (log2 x)
-    public const string LOG10 = "log10"; // Decimal Logarithm (log10 x)
-    public const string LOGN = "logn";  // N-th Logarithm (logn x)
+    public const string LOG_2 = "log2";  // Binary Logarithm (log2 x)
+    public const string LOG_10 = "log10"; // Decimal Logarithm (log10 x)
+    public const string LOG_B = "logb";  // Logarithm with base b (logb x)
 
     // Sine
     public const string SIN = "sin";   // Normal
@@ -249,8 +249,8 @@ public static class Tokens
 
         new(TokenType.Function, ROUND),
         new(TokenType.Function, TRUNC),
-        new(TokenType.Function, CEIL),
         new(TokenType.Function, FLOOR),
+        new(TokenType.Function, CEIL),
         new(TokenType.Function, CLAMP),
 
         new(TokenType.Function, MIN),
@@ -262,9 +262,9 @@ public static class Tokens
         new(TokenType.Function, CBRT),
 
         new(TokenType.Function, LOG),
-        new(TokenType.Function, LOG2),
-        new(TokenType.Function, LOG10),
-        new(TokenType.Function, LOGN),
+        new(TokenType.Function, LOG_2),
+        new(TokenType.Function, LOG_10),
+        new(TokenType.Function, LOG_B),
 
         new(TokenType.Function, SIN),
         new(TokenType.Function, SINH),

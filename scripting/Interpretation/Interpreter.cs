@@ -270,11 +270,11 @@ public class Interpreter : IInterpreter
             case InstructionType.Trunc:
                 Fn1(a => Math.Truncate(a));
                 break;
-            case InstructionType.Ceil:
-                Fn1(a => Math.Ceiling(a));
-                break;
             case InstructionType.Floor:
                 Fn1(a => Math.Floor(a));
+                break;
+            case InstructionType.Ceil:
+                Fn1(a => Math.Ceiling(a));
                 break;
             case InstructionType.Clamp:
                 Fn3((c, b, a) => Math.Clamp(a, b, c));
@@ -306,7 +306,7 @@ public class Interpreter : IInterpreter
             case InstructionType.Log10:
                 Fn1(a => Math.Log10(a));
                 break;
-            case InstructionType.LogN:
+            case InstructionType.LogB:
                 Fn2((b, a) => Math.Log(a, b));
                 break;
             case InstructionType.Sin:

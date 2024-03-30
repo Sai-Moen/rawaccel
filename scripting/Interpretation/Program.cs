@@ -170,7 +170,7 @@ public class Program
         }
 
         instructionList.Add(InstructionType.End);
-        instructions = instructionList.ToArray();
+        instructions = [.. instructionList];
     }
 
     #endregion
@@ -267,8 +267,8 @@ public class Program
 
         Tokens.ROUND => InstructionType.Round,
         Tokens.TRUNC => InstructionType.Trunc,
-        Tokens.CEIL => InstructionType.Ceil,
         Tokens.FLOOR => InstructionType.Floor,
+        Tokens.CEIL => InstructionType.Ceil,
         Tokens.CLAMP => InstructionType.Clamp,
 
         Tokens.MIN => InstructionType.Min,
@@ -280,9 +280,9 @@ public class Program
         Tokens.CBRT => InstructionType.Cbrt,
 
         Tokens.LOG => InstructionType.Log,
-        Tokens.LOG2 => InstructionType.Log2,
-        Tokens.LOG10 => InstructionType.Log10,
-        Tokens.LOGN => InstructionType.LogN,
+        Tokens.LOG_2 => InstructionType.Log2,
+        Tokens.LOG_10 => InstructionType.Log10,
+        Tokens.LOG_B => InstructionType.LogB,
 
         Tokens.SIN => InstructionType.Sin,
         Tokens.SINH => InstructionType.Sinh,

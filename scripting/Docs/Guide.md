@@ -137,29 +137,56 @@ By combining these elements, you can represent many formulas.
 (e.g.)
 
 ```
-	{
+{
 
-		if (x > Input_Offset):
-			x -= Input_Offset;
-			y += (pLimit / x) * (x - Midpoint * atan(x / Midpoint));
-		:
-
-	}
-```
-
-(with an early return)
-
-```
-	{
-
-		if (x <= Input_Offset):
-			ret;
-		:
-
+	if (x > Input_Offset):
 		x -= Input_Offset;
 		y += (pLimit / x) * (x - Midpoint * atan(x / Midpoint));
+	:
 
-	}
+}
+```
+
+(alternatively, with an early return)
+
+```
+{
+
+	if (x <= Input_Offset):
+		ret;
+	:
+
+	x -= Input_Offset;
+	y += (pLimit / x) * (x - Midpoint * atan(x / Midpoint));
+
+}
+```
+
+## Complete Example
+
+```
+Arc mode by SaiMoen.
+
+[
+
+	Input_Offset := 0 >= 0;
+	Limit := 4;
+	Midpoint := 16 > 0;
+
+]
+
+	pLimit := Limit - 1;
+
+{
+
+	if (x <= Input_Offset):
+		ret;
+	:
+
+	x -= Input_Offset;
+	y += (pLimit / x) * (x - Midpoint * atan(x / Midpoint));
+
+}
 ```
 
 ## Mathematical Expressions
@@ -168,7 +195,7 @@ Alright, now the math part...
 Note that the C# Double type is used for calculations,
 therefore numbers do not have infinite precision and can accrue an error over the course of a calculation,
 but this should not be a problem in the vast majority of cases,
-as long as you are wary of strict equality comparison with numbers that have changed.
+as long as you are wary of strict equality comparison with numbers that have been used in calculation.
 
 ### Arithmetic
 
@@ -237,11 +264,30 @@ e pi tau
 Functions:
 
 ```
-abs sqrt cbrt
-round trunc ceil floor
-log log2 log10
+abs sign copysign
+round trunc floor ceil clamp
+min max minm maxm
+
+sqrt cbrt
+log log2 log10 logb
+
 sin sinh asin asinh
 cos cosh acos acosh
-tan tanh atan atanh
+tan tanh atan atanh atan2
+
 fma scaleb
 ```
+
+## Extra Advice
+
+The file extension for these scripts should preferably be `.ras`.
+Although just like most source codes it is just text,
+it makes it clearer that it is in fact intended to be used as an RAS script.
+
+Speaking of the scripts themselves,
+I've been ignoring formatting entirely, and that's because it's just not that big of a deal.
+It would be nice for any readers of the script (if applicable) to be able to read it easier,
+but these scripts tend to be fairly short, and the language is not whitespace-sensitive, so format as you wish.
+
+An example of how to format can be seen at [Complete Example](#complete-example),
+where all nested statements are indented.

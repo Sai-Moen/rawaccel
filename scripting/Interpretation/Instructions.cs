@@ -45,10 +45,10 @@ public enum InstructionType : byte
     // Function,
     // Take arguments from the stack and give a transformed version back.
     Abs, Sign, CopySign,
-    Round, Trunc, Ceil, Floor, Clamp,
+    Round, Trunc, Floor, Ceil, Clamp,
     Min, Max, MinM, MaxM,
     Sqrt, Cbrt,
-    Log, Log2, Log10, LogN,
+    Log, Log2, Log10, LogB,
     Sin, Sinh, Asin, Asinh,
     Cos, Cosh, Acos, Acosh,
     Tan, Tanh, Atan, Atanh, Atan2,

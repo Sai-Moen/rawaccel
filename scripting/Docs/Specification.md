@@ -83,8 +83,6 @@ Contains:
 ## Scripting language specification
 
 The input variable will be `x`, and the output variable will be whatever is in `y` (1 by default).
-Using control flow cleverly should make it so that multiple return, or even return at all, is not necessary,
-so there is not a return keyword.
 
 ### Sections
 
@@ -173,12 +171,17 @@ but can optionally 'append' `=`, which changes their meaning (usually to compari
 ### Functions
 
 ```
-abs sqrt cbrt
-round trunc ceil floor
-log log2 log10
+abs sign copysign
+round trunc floor ceil clamp
+min max minm maxm
+
+sqrt cbrt
+log log2 log10 logb
+
 sin sinh asin asinh
 cos cosh acos acosh
-tan tanh atan atanh
+tan tanh atan atanh atan2
+
 fma scaleb
 
 pow, exp    "indirectly, with the ^ operator"
