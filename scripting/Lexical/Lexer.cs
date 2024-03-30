@@ -77,10 +77,10 @@ public class Lexer : ILexer
         Debug.Assert(maxIndex > 0, "MaxIdx not set correctly!");
 
         // not a problem in terms of parsing, but for consistency among (us) script writers
-        if (!CmpCharStr(characters[maxIndex], Tokens.CALC_END))
+        if (!CmpCharStr(characters[maxIndex], Tokens.CURLY_CLOSE))
         {
             currentLine = 0; // the location is in the error (setting this for side-effect (sorry (not sorry)))
-            TokenizerError("Please don't type anything after the calculation section.");
+            throw LexerError("Please don't type anything after the calculation section.");
         }
 
         int startingIndex = -1;
@@ -96,7 +96,7 @@ public class Lexer : ILexer
                 if (IsNewline(c)) startingLine++;
                 builder.Append(c);
 
-                isComments ^= CmpCharStr(c, Tokens.PARAMS_START);
+                isComments ^= CmpCharStr(c, Tokens.SQUARE_OPEN);
                 continue;
             }
             else if (IsNewline(c))
@@ -113,7 +113,7 @@ public class Lexer : ILexer
                 continue;
             }
 
-            TokenizerError($"Unsupported character detected, char: {c}, u16: {(ushort)c}");
+            throw LexerError($"Unsupported character detected, char: {c}, u16: {(ushort)c}");
         }
 
         currentIndex = startingIndex - 1;
@@ -123,7 +123,7 @@ public class Lexer : ILexer
 
     private void TokenizeScript()
     {
-        Debug.Assert(CmpCharStr(characters[currentIndex + 1], Tokens.PARAMS_START),
+        Debug.Assert(CmpCharStr(characters[currentIndex + 1], Tokens.SQUARE_OPEN),
             "Current Char should start at the parameter opening!");
 
         while (++currentIndex <= maxIndex)
@@ -151,7 +151,7 @@ public class Lexer : ILexer
                 if (OnSpecial()) continue;
             }
 
-            TokenizerError("Undefined state!");
+            throw LexerError("Undefined state!");
         }
     }
 
@@ -167,8 +167,7 @@ public class Lexer : ILexer
                 CapIdentifierLength();
                 return true;
             case CharBufferState.Number:
-                TokenizerError("Letter detected inside number!");
-                return false;
+                throw LexerError("Letter detected inside number!");
             default:
                 return false;
         }
@@ -307,7 +306,7 @@ public class Lexer : ILexer
     {
         if (charBuffer.Length > Constants.MAX_IDENTIFIER_LEN)
         {
-            TokenizerError($"Identifier name too long! (max {Constants.MAX_IDENTIFIER_LEN} characters)");
+            throw LexerError($"Identifier name too long! (max {Constants.MAX_IDENTIFIER_LEN} characters)");
         }
     }
 
@@ -315,14 +314,14 @@ public class Lexer : ILexer
     {
         if (charBuffer.Length > Constants.MAX_NUMBER_LEN)
         {
-            TokenizerError($"Number too long! (max {Constants.MAX_NUMBER_LEN} characters)");
+            throw LexerError($"Number too long! (max {Constants.MAX_NUMBER_LEN} characters)");
         }
     }
 
     #endregion
 
-    private void TokenizerError(string error)
+    private LexerException LexerError(string error)
     {
-        throw new LexerException(error, currentLine);
+        return new LexerException(error, currentLine);
     }
 }

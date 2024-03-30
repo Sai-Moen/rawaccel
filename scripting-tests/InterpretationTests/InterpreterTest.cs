@@ -17,7 +17,9 @@ public class InterpreterTest
         const string script =
             """
             [
+
                 a := 1;
+
             ]
 
                 b := a + 1;
@@ -25,7 +27,9 @@ public class InterpreterTest
                 d := c + 1;
 
             {
+
                 y := a + b + c + d;
+
             }
             """;
 

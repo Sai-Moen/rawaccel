@@ -10,10 +10,10 @@ public class ParserTest
 {
     private static IList<Token> GenerateParsingResultTokens(string script)
     {
-        ILexer lexer = new Lexer(script);
+        Lexer lexer = new(script);
         LexingResult input = lexer.Tokenize();
 
-        IParser parser = new Parser(input);
+        Parser parser = new(input);
         return parser.Parse().Tokens;
     }
 

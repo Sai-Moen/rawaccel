@@ -18,13 +18,13 @@ public static class LexicalHelpers
         _ => throw new ParserException("Invalid Boolean Symbol!", token.Line)
     };
 
-    public static bool IsGuardMinimum(this Token token) => token.Symbol switch
+    public static bool IsBoundMinimum(this Token token) => token.Symbol switch
     {
         Tokens.GT or Tokens.GE => true,
         _ => false,
     };
 
-    public static bool IsGuardMaximum(this Token token) => token.Symbol switch
+    public static bool IsBoundMaximum(this Token token) => token.Symbol switch
     {
         Tokens.LT or Tokens.LE => true,
         _ => false,

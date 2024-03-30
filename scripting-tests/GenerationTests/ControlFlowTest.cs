@@ -20,7 +20,9 @@ public class ControlFlowTest
             Nested if statements test.
 
             [
+
                 a := 1;
+
             ]
 
                 b := a + 2;
@@ -28,18 +30,24 @@ public class ControlFlowTest
                 d := c ^ 2;
 
             {
-                if (a > 1):
+
+                if (a > 1)
+                {
                     y += 1;
-                    if (b > 4):
+                    if (b > 4)
+                    {
                         y += 2;
-                        if (c > 8):
+                        if (c > 8)
+                        {
                             y += 4;
-                            if (d > 64):
+                            if (d > 64)
+                            {
                                 y += 8;
-                            :
-                        :
-                    :
-                :
+                            }
+                        }
+                    }
+                }
+
             }
             """;
 

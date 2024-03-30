@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 
 namespace scripting.Lexical;
 
@@ -13,9 +12,9 @@ public enum TokenType
     Identifier, Number, Parameter, Variable,
     Input, Output, Return,
     Constant, Bool, Branch, BranchEnd,
-    Terminator, Block, Open, Close,
-    ParameterStart, ParameterEnd, CalculationStart, CalculationEnd,
-    Assignment, Arithmetic, Comparison, GuardMinimum, GuardMaximum,
+    Terminator, ParenOpen, ParenClose,
+    SquareOpen, SquareClose, CurlyOpen, CurlyClose,
+    Assignment, Arithmetic, Comparison,
     ArgumentSeparator, Function,
 }
 
@@ -77,19 +76,19 @@ public static class Tokens
     public const string ARG_SEP = ","; // For: multiple function arguments
     public const string FPOINT = ".";
     public const string TERMINATOR = ";";
-    public const string BLOCK = ":";
+    public const string COLON = ":";
 
     // Precendence
-    public const string OPEN = "(";
-    public const string CLOSE = ")";
+    public const string PAREN_OPEN = "(";
+    public const string PAREN_CLOSE = ")";
 
     // Header (Parameters)
-    public const string PARAMS_START = "[";
-    public const string PARAMS_END = "]";
+    public const string SQUARE_OPEN = "[";
+    public const string SQUARE_CLOSE = "]";
 
     // Calculation
-    public const string CALC_START = "{";
-    public const string CALC_END = "}";
+    public const string CURLY_OPEN = "{";
+    public const string CURLY_CLOSE = "}";
 
     // Operators
     // Assignment
@@ -188,6 +187,9 @@ public static class Tokens
         new(TokenType.Undefined, UNDER),
         new(TokenType.Undefined, SECOND),
 
+        // need to allow colon for assignment, if another case then redo that part of the lexer
+        new(TokenType.Undefined, COLON),
+
         new(TokenType.Input, INPUT),
         new(TokenType.Output, OUTPUT),
         new(TokenType.Return, RETURN),
@@ -207,16 +209,15 @@ public static class Tokens
         new(TokenType.ArgumentSeparator, ARG_SEP),
         new(TokenType.Number, FPOINT),
         new(TokenType.Terminator, TERMINATOR),
-        new(TokenType.Block, BLOCK),
 
-        new(TokenType.Open, OPEN),
-        new(TokenType.Close, CLOSE),
+        new(TokenType.ParenOpen, PAREN_OPEN),
+        new(TokenType.ParenClose, PAREN_CLOSE),
 
-        new(TokenType.ParameterStart, PARAMS_START),
-        new(TokenType.ParameterEnd, PARAMS_END),
+        new(TokenType.SquareOpen, SQUARE_OPEN),
+        new(TokenType.SquareClose, SQUARE_CLOSE),
 
-        new(TokenType.CalculationStart, CALC_START),
-        new(TokenType.CalculationEnd, CALC_END),
+        new(TokenType.CurlyOpen, CURLY_OPEN),
+        new(TokenType.CurlyClose, CURLY_CLOSE),
 
         new(TokenType.Assignment, ASSIGN),
         new(TokenType.Assignment, IADD),

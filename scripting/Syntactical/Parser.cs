@@ -46,7 +46,7 @@ public class Parser : IParser
         Debug.Assert(lexicalTokens.Count >= 4, "Tokenizer did not prevent empty script!");
 
         currentToken = lexicalTokens[0];
-        Debug.Assert(currentToken.Type == TokenType.ParameterStart);
+        Debug.Assert(currentToken.Type == TokenType.SquareOpen);
 
         maxIndex = lexicalTokens.Count - 1;
         Debug.Assert(maxIndex > 0);
@@ -70,27 +70,27 @@ public class Parser : IParser
     private void ParseTokens()
     {
         // Parameters
-        while (currentToken.Type != TokenType.ParameterEnd)
+        while (currentToken.Type != TokenType.SquareClose)
         {
             DeclareParameter();
         }
         CoerceAll(parameterNames, TokenType.Parameter);
 
         AdvanceToken();
-        Debug.Assert(currentToken.Type != TokenType.ParameterEnd);
+        Debug.Assert(currentToken.Type != TokenType.SquareClose);
 
         // Variables
-        while (currentToken.Type != TokenType.CalculationStart)
+        while (currentToken.Type != TokenType.CurlyOpen)
         {
             DeclareVariable();
         }
         CoerceAll(variableNames, TokenType.Variable);
 
         AdvanceToken();
-        Debug.Assert(currentToken.Type != TokenType.CalculationStart);
+        Debug.Assert(currentToken.Type != TokenType.CurlyOpen);
 
         // Calculation
-        while (currentToken.Type != TokenType.CalculationEnd)
+        while (currentToken.Type != TokenType.CurlyClose)
         {
             Statement();
         }
@@ -123,11 +123,11 @@ public class Parser : IParser
         Debug.Assert(parameterNames.Count <= Constants.MAX_PARAMETERS);
         if (parameterNames.Count == Constants.MAX_PARAMETERS)
         {
-            ParserError($"Too many parameters! (max {Constants.MAX_PARAMETERS})");
+            throw ParserError($"Too many parameters! (max {Constants.MAX_PARAMETERS})");
         }
         else if (parameterNames.Contains(symbol))
         {
-            ParserError("Parameter name already exists!");
+            throw ParserError("Parameter name already exists!");
         }
 
         parameterNames.Add(symbol);
@@ -137,22 +137,15 @@ public class Parser : IParser
         if (DeclAccept(TokenType.Bool))
         {
             TerminateParameter(out Token nameB, out Token valueB);
-            parameters.Add(new(nameB, valueB, null, null, null, null));
+            parameters.Add(new(nameB, valueB, new(), new()));
             return;
         }
 
         BufferExpectedToken(TokenType.Number);
-        ParseGuards();
+        ParseBounds(out ParameterValidation minval, out ParameterValidation maxval);
         TerminateParameter(out Token name, out Token value);
         
-        Token? DequeueMaybeDummy() => tokenBuffer.Dequeue().NullifyUndefined();
-
-        Token? minGuard = DequeueMaybeDummy();
-        Token? min      = DequeueMaybeDummy();
-        Token? maxGuard = DequeueMaybeDummy();
-        Token? max      = DequeueMaybeDummy();
-
-        parameters.Add(new(name, value, minGuard, min, maxGuard, max));
+        parameters.Add(new(name, value, minval, maxval));
     }
 
     private void TerminateParameter(out Token name, out Token value)
@@ -165,51 +158,79 @@ public class Parser : IParser
 
         if (eq.Symbol != Tokens.ASSIGN)
         {
-            ParserError($"Expected {Tokens.ASSIGN}");
+            throw ParserError($"Expected {Tokens.ASSIGN}");
         }
     }
 
-    private void ParseGuards(bool firstguard = true)
+    private void ParseBounds(out ParameterValidation minval, out ParameterValidation maxval)
     {
-        void AddDummy(uint amount)
+        if (!(Accept(TokenType.SquareOpen) || Accept(TokenType.ParenOpen) || Accept(TokenType.CurlyOpen)))
         {
-            for (uint i = 0; i < amount; i++)
-            {
-                tokenBuffer.Enqueue(Tokens.DUMMY);
-            }
+            minval = new();
+            maxval = new();
+            return;
         }
 
-        if (DeclAccept(TokenType.Comparison))
+        TokenType open = previousToken.Type;
+        switch (open)
         {
-            if (previousToken.IsGuardMinimum())
-            {
-                tokenBuffer.Enqueue(previousToken);
-                BufferExpectedToken(TokenType.Number);
-
-                ParseGuards(false);
-            }
-            else if (previousToken.IsGuardMaximum())
-            {
-                if (firstguard)
-                {
-                    AddDummy(2);
-                }
-
-                tokenBuffer.Enqueue(previousToken);
-                BufferExpectedToken(TokenType.Number);
-            }
-            else
-            {
-                ParserError("Incorrect comparison for Guard!");
-            }
+            case TokenType.SquareOpen:
+                Expect(TokenType.Number);
+                minval = new(Bound.LowerIncl, (Number)previousToken);
+                break;
+            case TokenType.ParenOpen:
+                Expect(TokenType.Number);
+                minval = new(Bound.LowerExcl, (Number)previousToken);
+                break;
+            case TokenType.CurlyOpen:
+                minval = new();
+                break;
+            default:
+                // this is unreachable as long as one of the cases is accepted at the top of the method
+                Debug.Fail($"Unreachable: unknown guard open {open}");
+                minval = new();
+                maxval = new();
+                return;
         }
-        else if (firstguard)
+
+        if (Accept(TokenType.CurlyClose))
         {
-            AddDummy(4);
+            maxval = new();
+            return;
+        }
+
+        bool noLowerBound = minval.Type == Bound.None;
+        if (Accept(TokenType.ArgumentSeparator))
+        {
+            if (noLowerBound)
+            {
+                throw ParserError($"Number between '{Tokens.CURLY_OPEN}' and '{Tokens.ARG_SEP}'!");
+            }
+
+            Expect(TokenType.Number);
+        }
+        else if (!noLowerBound)
+        {
+            throw ParserError("Expected a separator and number for upper bound!");
+        }
+        else Expect(TokenType.Number);
+        
+        Number upper = (Number)previousToken;
+        if (Accept(TokenType.SquareClose))
+        {
+            maxval = new(Bound.UpperIncl, upper);
+        }
+        else if (Accept(TokenType.ParenClose))
+        {
+            maxval = new(Bound.UpperExcl, upper);
+        }
+        else if (Accept(TokenType.CurlyClose))
+        {
+            throw ParserError($"Unexpected number attached to infinite upper bound!");
         }
         else
         {
-            AddDummy(2);
+            throw ParserError($"Unknown upper bound symbol: '{currentToken.Symbol}'!");
         }
     }
 
@@ -228,15 +249,15 @@ public class Parser : IParser
         Debug.Assert(variableNames.Count <= Constants.MAX_VARIABLES);
         if (variableNames.Count == Constants.MAX_VARIABLES)
         {
-            ParserError($"Too many variables! (max {Constants.MAX_VARIABLES})");
+            throw ParserError($"Too many variables! (max {Constants.MAX_VARIABLES})");
         }
         else if (parameterNames.Contains(symbol))
         {
-            ParserError("Parameter/Variable name conflict!");
+            throw ParserError("Parameter/Variable name conflict!");
         }
         else if (variableNames.Contains(symbol))
         {
-            ParserError("Variable name already exists!");
+            throw ParserError("Variable name already exists!");
         }
 
         tokenBuffer.Enqueue(token);
@@ -252,9 +273,9 @@ public class Parser : IParser
         Queue<Token> input = new();
         while (currentToken.Type != TokenType.Terminator)
         {
-            if (currentToken.Type == TokenType.CalculationStart)
+            if (currentToken.Type == TokenType.CurlyOpen)
             {
-                ParserError("Calculation block reached unexpectedly!");
+                throw ParserError("Calculation block reached unexpectedly!");
             }
 
             input.Enqueue(currentToken);
@@ -275,7 +296,7 @@ public class Parser : IParser
                 case TokenType.Identifier:
                     if (!variableNames.Contains(token.Symbol))
                     {
-                        ParserError("Could not resolve variable name!");
+                        throw ParserError("Could not resolve variable name!");
                     }
 
                     output.Add(Tokens.TokenWithType(token, TokenType.Variable));
@@ -292,15 +313,14 @@ public class Parser : IParser
                 case TokenType.ArgumentSeparator:
                     break;
                 case TokenType.Function:
-                case TokenType.Open:
+                case TokenType.ParenOpen:
                     operatorStack.Push(token);
                     break;
-                case TokenType.Close:
+                case TokenType.ParenClose:
                     OnClose(output);
                     break;
                 default:
-                    ParserError("Unexpected expression token!");
-                    break; // unreachable
+                    throw ParserError("Unexpected expression token!");
             }
             prev = token;
         }
@@ -313,7 +333,7 @@ public class Parser : IParser
 
         if (eq.Symbol != Tokens.ASSIGN)
         {
-            ParserError($"Expected {Tokens.ASSIGN}");
+            throw ParserError($"Expected {Tokens.ASSIGN}");
         }
 
         output.Add(eq);
@@ -338,8 +358,7 @@ public class Parser : IParser
             return currentIndex - 1;
         }
 
-        ParserError("Unexpected declaration!");
-        return -1; // unreachable
+        throw ParserError("Unexpected declaration!");
     }
 
     private bool DeclAccept(TokenType type)
@@ -375,34 +394,35 @@ public class Parser : IParser
         else if (Expect(TokenType.Branch))
         {
             Token branch = previousToken;
-            Expect(TokenType.Open);
-            syntacticTokens.AddRange(Expression(TokenType.Close, TokenType.Block));
+            Expect(TokenType.ParenOpen);
+            syntacticTokens.AddRange(Expression(TokenType.ParenClose, TokenType.CurlyOpen));
             syntacticTokens.Add(branch);
 
             do Statement();
-            while (!Accept(TokenType.Block));
+            while (!Accept(TokenType.CurlyClose));
 
             syntacticTokens.Add(Tokens.GetReserved(Tokens.BRANCH_END, previousToken.Line));
         }
     }
 
-    private ITokenList Expression(TokenType end, TokenType after = TokenType.Undefined)
+    private TokenList Expression(TokenType end, TokenType after = TokenType.Undefined)
     {
+        bool noAfter = after == TokenType.Undefined;
+
         Queue<Token> input = new();
         while (true)
         {
             Token current = currentToken;
             TokenType currentType = current.Type;
-
-            if (currentType == TokenType.CalculationEnd)
+            if (currentType == TokenType.CurlyClose)
             {
-                ParserError("Calculation block end reached unexpectedly!");
+                throw ParserError("Block end reached unexpectedly!");
             }
 
             AdvanceToken();
             TokenType nextType = currentToken.Type;
             bool afterIsNext = after == nextType;
-            if (currentType == end && (after == TokenType.Undefined || afterIsNext))
+            if (currentType == end && (noAfter || afterIsNext))
             {
                 if (afterIsNext)
                 {
@@ -416,7 +436,7 @@ public class Parser : IParser
         Debug.Assert(operatorStack.Count == 0);
 
         // Shunting Yard Algorithm (RPN)
-        ITokenList output = new TokenList(input.Count);
+        TokenList output = new(input.Count);
 
         Token? prev = null;
         foreach (Token token in input)
@@ -441,15 +461,14 @@ public class Parser : IParser
                 case TokenType.ArgumentSeparator:
                     break;
                 case TokenType.Function:
-                case TokenType.Open:
+                case TokenType.ParenOpen:
                     operatorStack.Push(token);
                     break;
-                case TokenType.Close:
+                case TokenType.ParenClose:
                     OnClose(output);
                     break;
                 default:
-                    ParserError("Unexpected expression token!");
-                    break; // unreachable
+                    throw ParserError("Unexpected expression token!");
             }
             prev = token;
         }
@@ -457,21 +476,20 @@ public class Parser : IParser
         return output;
     }
 
-    private void OnClose(ITokenList output)
+    private void OnClose(TokenList output)
     {
         Token top;
         if (!operatorStack.TryPeek(out top!))
         {
-            ParserError($"Unexpected: {Tokens.CLOSE}");
-            return;
+            throw ParserError($"Unexpected: {Tokens.PAREN_CLOSE}");
         }
 
-        while (top.Type != TokenType.Open)
+        while (top.Type != TokenType.ParenOpen)
         {
             output.Add(operatorStack.Pop());
             if (operatorStack.Count == 0)
             {
-                ParserError($"No matching: {Tokens.OPEN}");
+                throw ParserError($"No matching: {Tokens.PAREN_OPEN}");
             }
 
             top = operatorStack.Peek();
@@ -484,7 +502,7 @@ public class Parser : IParser
         }
     }
 
-    private static void CheckUnary(ITokenList output, Token? prev, uint line)
+    private static void CheckUnary(TokenList output, Token? prev, uint line)
     {
         switch ((prev ?? Tokens.DUMMY).Type)
         {
@@ -495,14 +513,14 @@ public class Parser : IParser
             case TokenType.Input:
             case TokenType.Output:
             case TokenType.Constant:
-            case TokenType.Close:
+            case TokenType.ParenClose:
                 return;
         }
 
         output.Add(Tokens.GetReserved(Tokens.ZERO, line));
     }
 
-    private void OnPrecedence(ITokenList output, Token token)
+    private void OnPrecedence(TokenList output, Token token)
     {
         int precedence = token.Precedence();
         bool left = token.LeftAssociative();
@@ -525,14 +543,14 @@ public class Parser : IParser
         operatorStack.Push(token);
     }
 
-    private void OnEmptyQueue(ITokenList output)
+    private void OnEmptyQueue(TokenList output)
     {
         while (operatorStack.Count != 0)
         {
             Token token = operatorStack.Pop();
-            if (token.Type == TokenType.Open)
+            if (token.Type == TokenType.ParenOpen)
             {
-                ParserError($"No matching: {Tokens.CLOSE}");
+                throw ParserError($"No matching: {Tokens.PAREN_CLOSE}");
             }
 
             output.Add(token);
@@ -540,7 +558,7 @@ public class Parser : IParser
 
         if (output.Count == 0)
         {
-            ParserError("Empty expression!");
+            throw ParserError("Empty expression!");
         }
     }
 
@@ -551,8 +569,7 @@ public class Parser : IParser
             return true;
         }
 
-        ParserError("Unexpected token!");
-        return false; // unreachable
+        throw ParserError("Unexpected token!");
     }
 
     private bool Accept(TokenType type)
@@ -574,7 +591,7 @@ public class Parser : IParser
         Debug.Assert(currentIndex <= maxIndex);
         if (currentIndex == maxIndex)
         {
-            ParserError("End reached unexpectedly!");
+            throw ParserError("End reached unexpectedly!");
         }
 
         previousToken = currentToken;
@@ -583,8 +600,8 @@ public class Parser : IParser
 
     #endregion
 
-    private void ParserError(string error)
+    private ParserException ParserError(string error)
     {
-        throw new ParserException(error, currentToken.Line);
+        return new ParserException(error, currentToken.Line);
     }
 }

@@ -17,9 +17,9 @@ public static class Builtins
 
 		[
 
-			Input_Offset := 0 >= 0;
-			Limit := 4;
-			Midpoint := 16 > 0;
+			Input_Offset := 0  [0};
+			Limit        := 4  [0};
+			Midpoint     := 16 (0};
 
 		]
 
@@ -27,9 +27,7 @@ public static class Builtins
 
 		{
 
-			if (x <= Input_Offset):
-				ret;
-			:
+			if (x <= Input_Offset) { ret; }
 
 			x -= Input_Offset;
 			y += (pLimit / x) * (x - Midpoint * atan(x / Midpoint));

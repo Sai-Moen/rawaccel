@@ -146,7 +146,7 @@ public class Interpreter : IInterpreter
             case InstructionType.End:
                 if (c != program.Length - 1)
                 {
-                    InterpreterError("Unexpected program end!");
+                    throw InterpreterError("Unexpected program end!");
                 }
 
                 Debug.Assert(stack.Count == 0);
@@ -355,15 +355,14 @@ public class Interpreter : IInterpreter
                 Fn2((b, a) => Math.ScaleB(a, (int)b)); // lol
                 break;
             default:
-                InterpreterError("Not an instruction!");
-                break;
+                throw InterpreterError("Not an instruction!");
         }
     }
 
 #endregion
 
-    private static void InterpreterError(string error)
+    private static InterpreterException InterpreterError(string error)
     {
-        throw new InterpreterException(error);
+        return new InterpreterException(error);
     }
 }

@@ -37,12 +37,27 @@ The syntax for parameter assignments is `name := default`, where default is the 
 The name can only be sequences of letters, separated by underscores.
 For parameter names, underscores are replaced by spaces, so they look better in the UI.
 
-Optionally, the script can also specify 'Guards' that cause the user to get an error,
+Optionally, the script can also specify 'Bounds' that cause the user to get an error,
 if the value they entered is outside the allowed range.
-They resemble the following form (represented in EBNF): `[ ( ">" | ">=" ) , number ] , [ ( "<" | "<=" ) , number ]`.
+The syntax is as follows:
 
-Alternatively, the value of a parameter can also be a boolean (`true` or `false`).
-In this case, the Guards functionality is not available.
+* `{` or `}` means no bound. If you want to only give a bound to one side, then you can use this for the other side.
+* `[` or `]` means inclusive bound.
+* `(` or `)` means exclusive bound.
+
+Unless there is no bound on a certain side, then that bound requires a value.
+If both bounds have a value, the values have to be separated by a comma.
+
+(e.g.)
+`[0}`     means `0 <= value`
+`(0}`     means `0 < value`
+`[4, 16]` means `4 <= value <= 16`
+`{1]`     means `value <= 1`
+
+Usually the difference between exclusive and inclusive bounds is not significant, but it can save you from dividing by zero.
+
+Alternatively, the (default) value of a parameter can also be a boolean (`true` or `false`).
+In this case, the Bounds functionality is not available.
 When used in expressions, the value 0 is used if the parameter is `false`, and the value 1 is used if the parameter is `true`.
 
 Finally, the line is ended with `;`.
@@ -53,9 +68,9 @@ The section is ended with `]`.
 ```
 [
 
-	Input_Offset := 0 >= 0;
-	Limit := 4;
-	Midpoint := 16 > 0;
+	Input_Offset := 0  [0};
+	Limit        := 4  [0};
+	Midpoint     := 16 (0};
 
 ]
 ```
@@ -104,24 +119,24 @@ The control flow is as basic as it gets (without a `goto` statement), with only 
 These work as you most likely already expect, and this is their syntax:
 
 ```
-if (condition):
-	statement;
-	statement;
-:
+if (condition) {
+	statement
+	statement
+}
 ```
 
-^^ Only execute the statements if `condition` is true (i.e. nonzero).
+\^\^ Only execute the statements if `condition` is true (i.e. nonzero).
 
 ```
-while (condition):
-	statement;
-	statement;
-:
+while (condition) {
+	statement
+	statement
+}
 ```
 
-^^ Execute the statements as long as `condition` is true (i.e. nonzero), 0 to many times.
+\^\^ Execute the statements as long as `condition` is true (i.e. nonzero), 0 to many times.
 
-The blocks of control flow are delimited by `:`, and not ended by `;`.
+The blocks of control flow are delimited by `{}`, and ***not*** ended by `;`.
 A statement can be one of the following:
 
 1. Assignment
@@ -139,10 +154,10 @@ By combining these elements, you can represent many formulas.
 ```
 {
 
-	if (x > Input_Offset):
+	if (x > Input_Offset) {
 		x -= Input_Offset;
 		y += (pLimit / x) * (x - Midpoint * atan(x / Midpoint));
-	:
+	}
 
 }
 ```
@@ -152,9 +167,7 @@ By combining these elements, you can represent many formulas.
 ```
 {
 
-	if (x <= Input_Offset):
-		ret;
-	:
+	if (x <= Input_Offset) { ret; }
 
 	x -= Input_Offset;
 	y += (pLimit / x) * (x - Midpoint * atan(x / Midpoint));
@@ -164,14 +177,18 @@ By combining these elements, you can represent many formulas.
 
 ## Complete Example
 
+As seen here, the `Midpoint` parameter cannot be equal to 0 due to the lower bound.
+Otherwise, it would divide by zero in the last statement.
+Likewise, x is also checked, but that can only be done in the calculation block.
+
 ```
 Arc mode by SaiMoen.
 
 [
 
-	Input_Offset := 0 >= 0;
-	Limit := 4;
-	Midpoint := 16 > 0;
+	Input_Offset := 0  [0};
+	Limit        := 4  [0};
+	Midpoint     := 16 (0};
 
 ]
 
@@ -179,9 +196,7 @@ Arc mode by SaiMoen.
 
 {
 
-	if (x <= Input_Offset):
-		ret;
-	:
+	if (x <= Input_Offset) { ret; }
 
 	x -= Input_Offset;
 	y += (pLimit / x) * (x - Midpoint * atan(x / Midpoint));
@@ -227,8 +242,8 @@ The remaining operators perform a similar task, but modify the existing value of
 ```
 
 (e.g.)
-`x += 2;` is equivalent to `x := x + 2;`.
-`y *= 4;` is equivalent to `y := y * 4;`.
+`x += 2;`     is equivalent to `x := x + 2;`.
+`y *= 4;`     is equivalent to `y := y * 4;`.
 `z ^= 1 + 2;` is equivalent to `z := z ^ (1 + 2);`.
 
 ### Logic
@@ -238,13 +253,13 @@ In this part, whether a number is true is determined by whether it is non-zero.
 The first three operators are 'and', 'or', and 'not', respectively.
 The 'and' operation will result in 1 when both numbers are non-zero, otherwise 0.
 The 'or' operation will result in 1 when at least one number is non-zero, otherwise 0.
-The 'not' operation will be 1 when the number is zero, and vice versa.
+The 'not' operation will be 1 when the number is zero, otherwise 0.
 
 The other operators are for comparison.
-Firstly, there is equality, which results in 1 when both numbers are equal.
+Firstly, there is the equals sign, which results in 1 when both numbers are equal.
 Then, there is the opposite of that, which results in 1 when both numbers are not equal.
-Then, there is (strictly) less than and greater than, respectively.
-Lastly, there is less than or equal and greater than or equal, respectively.
+Then, there is (strictly) 'less than' and 'greater than', respectively.
+Lastly, there is 'less than or equal' and 'greater than or equal', respectively.
 
 ```
 & | !
@@ -278,6 +293,8 @@ tan tanh atan atanh atan2
 fma scaleb
 ```
 
+If a function has multiple arguments, they have to be separated by a comma.
+
 ## Extra Advice
 
 The file extension for these scripts should preferably be `.ras`.
@@ -289,5 +306,4 @@ I've been ignoring formatting entirely, and that's because it's just not that bi
 It would be nice for any readers of the script (if applicable) to be able to read it easier,
 but these scripts tend to be fairly short, and the language is not whitespace-sensitive, so format as you wish.
 
-An example of how to format can be seen at [Complete Example](#complete-example),
-where all nested statements are indented.
+An example of how to format can be seen at [Complete Example](#complete-example).

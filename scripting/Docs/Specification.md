@@ -32,7 +32,7 @@ Documentation (like this document).
 
 ### Common
 
-Utils-esque namespace.
+Common elements.
 Contains:
 
 - Helper classes (used throughout the stages of generation)
@@ -77,7 +77,7 @@ Contains:
 - Interpreter
 	- Runs Programs, keeps track of parameters and variables.
 - Program
-	- Effectively just the parsed list of tokens with some thin semantic analysis on top.
+	- Transforms a list of tokens to an array of instructions that the Interpreter can then execute.
 - Helper classes
 
 ## Scripting language specification
@@ -102,13 +102,13 @@ The assignment format is fixed, and only allows the script writer to assign a nu
 optionally a minimum and maximum value as well, either exclusive or inclusive.
 These numbers are parsed immediately upon going through the Parser,
 and can be queried through the Interpreter as soon as the constructor is done.
-When the parameters are changed, the Interpreter can be updated through a property.
+When the parameters are changed, the Interpreter can be updated through a method.
 
 #### Variables (3)
 
 This section holds temporary variables that store expressions.
 The maximum amount of Variables should be at least 256 minus the maximum amount of Parameters,
-because of it enabling 1-byte addressing, but is otherwise left to implementation details.
+because of it enabling 8-bit addresses, but is otherwise left to implementation details.
 
 Variable declarations may also contain other variable declarations,
 but those declarations must come before this one.
@@ -124,7 +124,6 @@ It starts with a condition, that makes it jump past the block if the input is eq
 Inline assignment performs a calculation with the expression after it and the old value of the variable,
 and assigns it to that variable.
 Parameters cannot be assigned to, only Input, Output and Variables.
-Expressions however, can contain all of those, but numbers will have to appear in the variable declarations.
 
 Input variable 'x' will be selected externally, and then given to the Interpreter through a public method.
 At the same time, Output variable 'y' will be accumulating until the end of the Calculation block,
@@ -139,8 +138,8 @@ false true    "Boolean values (0 and 1 respectively)"
 zero          "Another way of getting 0, usually for denoting variables with no meaningful initial value"
 e pi tau      "Math Constants"
 
-if (c): s :       "c means condition, s means statements"
-while (c): s :    "c means condition, s means statements"
+if (c) { s }       "c means condition, s means statements"
+while (c) { s }    "c means condition, s means statements"
 ```
 
 ### Separators/Delimiters
@@ -151,8 +150,8 @@ while (c): s :    "c means condition, s means statements"
 :      "Control Flow Block"
 ;      "Line Terminator"
 ( )    "Precedence"
-[ ]    "Parameters"
-{ }    "Calculation"
+[ ]    "Parameters/Bounds"
+{ }    "Calculation/Blocks/Bounds"
 ```
 
 ### Operators

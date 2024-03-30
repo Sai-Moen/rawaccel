@@ -3,7 +3,6 @@ using scripting.Interpretation;
 using scripting.Lexical;
 using scripting.Syntactical;
 using System;
-using System.Diagnostics;
 using System.IO;
 
 namespace scripting;

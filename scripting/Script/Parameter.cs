@@ -1,40 +1,37 @@
 ﻿using scripting.Common;
 using scripting.Lexical;
 using scripting.Syntactical;
-using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 
 namespace scripting.Script;
 
-/// <summary>
-/// The operation to validate a Number against a certain value with.
-/// </summary>
-enum Guard
+enum Bound
 {
     None,
-    Less,
-    LessEq,
-    Greater,
-    GreaterEq,
+    LowerExcl,
+    LowerIncl,
+    UpperExcl,
+    UpperIncl,
 }
 
-/// <summary>
-/// Determines how to validate a parameter.
-/// </summary>
-record ParameterValidation(Guard GuardType, Number GuardValue = default)
+record ParameterValidation(Bound Type = Bound.None, Number Value = default)
 {
-    internal int Validate(Number value) => GuardType switch
-    {
-        Guard.None => true,
-        Guard.Less => value < GuardValue,
-        Guard.LessEq => value <= GuardValue,
-        Guard.Greater => value > GuardValue,
-        Guard.GreaterEq => value >= GuardValue,
+    internal int Validate(Number number) => IsValid(number) ? 1 : 0;
 
-        _ => throw new ScriptException("Invalid Guard value!")
-    } ? 1 : 0;
+    internal bool Contradicts(ParameterValidation other) => other.Type != Bound.None && !IsValid(other.Value);
+
+    internal bool IsValid(Number number) => Type switch
+    {
+        Bound.None => true,
+        Bound.LowerExcl => Value  <  number,
+        Bound.LowerIncl => Value  <= number,
+        Bound.UpperExcl => number <  Value,
+        Bound.UpperIncl => number <= Value,
+
+        _ => throw new ScriptException("Invalid Bound value!")
+    };
 }
 
 /// <summary>
@@ -48,11 +45,13 @@ public enum ParameterType
 
 /// <summary>
 /// Saves the name of a <see cref="Parameter"/> and its value.
-/// Additionally, information about the bounds (Guard) of the parameter is saved.
+/// Additionally, information about the bounds of the parameter is saved.
 /// </summary>
 public class Parameter
 {
     #region Fields
+
+    private Number _value;
 
     private readonly ParameterValidation min;
     private readonly ParameterValidation max;
@@ -61,14 +60,11 @@ public class Parameter
 
     #region Constructors
 
-    internal Parameter(
-        Token name, Token value,
-        Token? minGuard, Token? minValue,
-        Token? maxGuard, Token? maxValue)
+    internal Parameter(Token name, Token value, ParameterValidation minval, ParameterValidation maxval)
     {
         Debug.Assert(name.Type == TokenType.Parameter);
-        Name = name.Symbol;
 
+        Name = name.Symbol;
         switch (value.Type)
         {
             case TokenType.Number:
@@ -84,19 +80,15 @@ public class Parameter
                 return; // unreachable
         }
 
-        min = GuardHelper(minGuard, minValue, OnMinGuard);
-        max = GuardHelper(maxGuard, maxValue, OnMaxGuard);
-
-        if (min.GuardType == Guard.None || max.GuardType == Guard.None)
+        min = minval;
+        max = maxval;
+        if (Validate(Value) != 0)
         {
-            // guards can't contradict, get out the way
-            return;
+            throw new GenerationException("Default value does not comply with guards!", value.Line);
         }
-
-        Debug.Assert(minGuard is not null && minValue is not null && maxGuard is not null && maxValue is not null);
-        if (min.Validate(max.GuardValue) == 0 || max.Validate(min.GuardValue) == 0)
+        else if (min.Contradicts(max) || max.Contradicts(min))
         {
-            throw new GenerationException("Contradicting parameter bounds!", minGuard.Line);
+            throw new GenerationException("Contradicting parameter bounds!", name.Line);
         }
     }
 
@@ -112,43 +104,27 @@ public class Parameter
     /// <summary>
     /// The current value of this Parameter.
     /// </summary>
-    public Number Value { get; set; }
+    public Number Value
+    {
+        get => _value;
+        set
+        {
+            switch (Type)
+            {
+                case ParameterType.Real:
+                    _value = value;
+                    break;
+                case ParameterType.Logical:
+                    _value = (bool)value;
+                    break;
+            }
+        }
+    }
 
     /// <summary>
     /// The type of the parameter.
     /// </summary>
     public ParameterType Type { get; }
-
-    #endregion
-
-    #region Static Methods
-
-    private static ParameterValidation GuardHelper(Token? token, Token? value, Func<Token, Guard> func)
-    {
-        if (token is null || value is null)
-        {
-            return new ParameterValidation(Guard.None);
-        }
-
-        Guard guard = func(token);
-        return new ParameterValidation(guard, (Number)value);
-    }
-
-    private static Guard OnMinGuard(Token token) => token.Symbol switch
-    {
-        Tokens.GT => Guard.Greater,
-        Tokens.GE => Guard.GreaterEq,
-
-        _ => throw new GenerationException("Incorrect guard! (minimum)", token.Line)
-    };
-
-    private static Guard OnMaxGuard(Token token) => token.Symbol switch
-    {
-        Tokens.LT => Guard.Less,
-        Tokens.LE => Guard.LessEq,
-
-        _ => throw new GenerationException("Incorrect guard! (maximum)", token.Line)
-    };
 
     #endregion
 

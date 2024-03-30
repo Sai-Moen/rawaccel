@@ -12,26 +12,30 @@ public class PowerTest
         Legacy output cap Power mode as a RawAccelScript.
 
         [
-            Scale := 1 > 0;
-            Cap := 0 >= 0;
-            Exponent := 0.05 > 0;
-            Offset := 0 >= 0;
+
+            Scale    := 1    (0};
+            Cap      := 0    [0};
+            Exponent := 0.05 (0};
+            Offset   := 0    [0};
+
         ]
 
             offset_x := (Offset / (Exponent + 1)) ^ (1 / Exponent) / Scale;
             constant := offset_x * Offset * Exponent / (Exponent + 1);
 
         {
-            if (x <= offset_x):
-                y := Offset;
-            :
-            if (x > offset_x):
-                y := (Scale * x) ^ Exponent + constant / x;
-            :
 
-            if (Cap):
+            if (x <= offset_x) {
+                y := Offset;
+            }
+            if (x > offset_x) {
+                y := (Scale * x) ^ Exponent + constant / x;
+            }
+
+            if (Cap) {
                 y := min(y, Cap);
-            :
+            }
+
         }
         """;
 
