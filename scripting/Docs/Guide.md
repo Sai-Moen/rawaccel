@@ -49,10 +49,11 @@ Unless there is no bound on a certain side, then that bound requires a value.
 If both bounds have a value, the values have to be separated by a comma.
 
 (e.g.)
-`[0}`     means `0 <= value`
-`(0}`     means `0 < value`
-`[4, 16]` means `4 <= value <= 16`
-`{1]`     means `value <= 1`
+
+* `[0}`     means `0 <= value`
+* `(0}`     means `0 < value`
+* `[4, 16]` means `4 <= value <= 16`
+* `{1]`     means `value <= 1`
 
 Usually the difference between exclusive and inclusive bounds is not significant, but it can save you from dividing by zero.
 
@@ -221,7 +222,7 @@ The `/` operator divides two numbers.
 The `%` operator does modular arithmetic (remainder after division).
 The `^` operator raises the left number to the right (exponentiation).
 
-(e.g)
+(e.g.)
 
 ```
 2 + 2 == 4
@@ -242,9 +243,10 @@ The remaining operators perform a similar task, but modify the existing value of
 ```
 
 (e.g.)
-`x += 2;`     is equivalent to `x := x + 2;`.
-`y *= 4;`     is equivalent to `y := y * 4;`.
-`z ^= 1 + 2;` is equivalent to `z := z ^ (1 + 2);`.
+
+* `x += 2;`     is equivalent to `x := x + 2;`
+* `y *= 4;`     is equivalent to `y := y * 4;`
+* `z ^= 1 + 2;` is equivalent to `z := z ^ (1 + 2);`
 
 ### Logic
 
