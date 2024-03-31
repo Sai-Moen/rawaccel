@@ -316,7 +316,5 @@ public static class Tokens
     public static Token GetReserved(string symbol) => ReservedMap[symbol];
     public static Token GetReserved(string symbol, uint line) => ReservedMap[symbol] with { Line = line };
 
-    public static Token TokenWithType(Token token, TokenType type) => token with { Base = token.Base with { Type = type } };
-
     #endregion
 }

@@ -73,3 +73,14 @@ public readonly record struct Number(double Value)
 
     #endregion
 }
+
+public static class NumberHelpers
+{
+    public static Number FromBoolean(this Token token) => token.Symbol switch
+    {
+        Tokens.FALSE => Number.FALSE,
+        Tokens.TRUE => Number.TRUE,
+
+        _ => throw new GenerationException("Invalid Boolean Symbol!", token.Line)
+    };
+}

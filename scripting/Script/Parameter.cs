@@ -1,6 +1,5 @@
 ﻿using scripting.Common;
 using scripting.Lexical;
-using scripting.Syntactical;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;

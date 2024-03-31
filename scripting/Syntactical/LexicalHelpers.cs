@@ -5,30 +5,7 @@ namespace scripting.Syntactical;
 
 public static class LexicalHelpers
 {
-    public static Token? NullifyUndefined(this Token token)
-    {
-        return token.Type == TokenType.Undefined ? null : token;
-    }
-
-    public static Number FromBoolean(this Token token) => token.Symbol switch
-    {
-        Tokens.FALSE => Number.FALSE,
-        Tokens.TRUE => Number.TRUE,
-
-        _ => throw new ParserException("Invalid Boolean Symbol!", token.Line)
-    };
-
-    public static bool IsBoundMinimum(this Token token) => token.Symbol switch
-    {
-        Tokens.GT or Tokens.GE => true,
-        _ => false,
-    };
-
-    public static bool IsBoundMaximum(this Token token) => token.Symbol switch
-    {
-        Tokens.LT or Tokens.LE => true,
-        _ => false,
-    };
+    public static Token WithType(this Token token, TokenType type) => token with { Base = token.Base with { Type = type } };
 
     public static bool LeftAssociative(this Token token)
     {

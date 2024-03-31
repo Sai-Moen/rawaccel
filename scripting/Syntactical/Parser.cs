@@ -103,7 +103,7 @@ public class Parser : IParser
             Token token = lexicalTokens[i];
             if (identifiers.Contains(token.Symbol))
             {
-                lexicalTokens[i] = Tokens.TokenWithType(token, type);
+                lexicalTokens[i] = token.WithType(type);
             }
         }
     }
@@ -114,10 +114,7 @@ public class Parser : IParser
 
     private void DeclareParameter()
     {
-        int previousIndex = DeclExpect(TokenType.Identifier);
-        Token token = Tokens.TokenWithType(previousToken, TokenType.Parameter);
-        lexicalTokens[previousIndex] = token;
-
+        Token token = CoerceIdentifier(TokenType.Parameter);
         string symbol = token.Symbol;
 
         Debug.Assert(parameterNames.Count <= Constants.MAX_PARAMETERS);
@@ -136,14 +133,14 @@ public class Parser : IParser
         BufferExpectedToken(TokenType.Assignment);
         if (DeclAccept(TokenType.Bool))
         {
-            TerminateParameter(out Token nameB, out Token valueB);
+            TerminateParameter(out var nameB, out var valueB);
             parameters.Add(new(nameB, valueB, new(), new()));
             return;
         }
 
         BufferExpectedToken(TokenType.Number);
-        ParseBounds(out ParameterValidation minval, out ParameterValidation maxval);
-        TerminateParameter(out Token name, out Token value);
+        ParseBounds(out var minval, out var maxval);
+        TerminateParameter(out var name, out var value);
         
         parameters.Add(new(name, value, minval, maxval));
     }
@@ -164,7 +161,11 @@ public class Parser : IParser
 
     private void ParseBounds(out ParameterValidation minval, out ParameterValidation maxval)
     {
-        if (!(Accept(TokenType.SquareOpen) || Accept(TokenType.ParenOpen) || Accept(TokenType.CurlyOpen)))
+        bool hasBounds =
+            Accept(TokenType.SquareOpen) ||
+            Accept(TokenType.ParenOpen) ||
+            Accept(TokenType.CurlyOpen);
+        if (!hasBounds)
         {
             minval = new();
             maxval = new();
@@ -193,6 +194,8 @@ public class Parser : IParser
                 return;
         }
 
+        // the edge case {} is technically not considered here
+        // if someone wants to explicitly denote 'no bounds' we let them
         if (Accept(TokenType.CurlyClose))
         {
             maxval = new();
@@ -240,10 +243,7 @@ public class Parser : IParser
 
     private void DeclareVariable()
     {
-        int previousIndex = DeclExpect(TokenType.Identifier);
-        Token token = Tokens.TokenWithType(previousToken, TokenType.Variable);
-        lexicalTokens[previousIndex] = token;
-
+        Token token = CoerceIdentifier(TokenType.Variable);
         string symbol = token.Symbol;
 
         Debug.Assert(variableNames.Count <= Constants.MAX_VARIABLES);
@@ -299,7 +299,7 @@ public class Parser : IParser
                         throw ParserError("Could not resolve variable name!");
                     }
 
-                    output.Add(Tokens.TokenWithType(token, TokenType.Variable));
+                    output.Add(token.WithType(TokenType.Variable));
                     break;
                 case TokenType.Number:
                 case TokenType.Parameter:
@@ -349,6 +349,14 @@ public class Parser : IParser
     {
         _ = DeclExpect(type);
         tokenBuffer.Enqueue(previousToken);
+    }
+
+    private Token CoerceIdentifier(TokenType type)
+    {
+        int previousIndex = DeclExpect(TokenType.Identifier);
+        Token token = previousToken.WithType(type);
+        lexicalTokens[previousIndex] = token;
+        return token;
     }
 
     private int DeclExpect(TokenType type)
