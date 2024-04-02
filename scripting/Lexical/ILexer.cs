@@ -18,9 +18,9 @@ public interface ILexer
 /// <summary>
 /// The result of succesfully performing lexical analysis on an RAS script.
 /// </summary>
-/// <param name="Comments">the comments of the script</param>
-/// <param name="Tokens">the tokens after the comments</param>
-public record LexingResult(string Comments, ITokenList Tokens);
+/// <param name="Description">the description of the script</param>
+/// <param name="Tokens">the tokens after the description</param>
+public record LexingResult(string Description, ITokenList Tokens);
 
 /// <summary>
 /// Exception for tokenizing-specific errors.

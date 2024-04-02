@@ -7,6 +7,7 @@ namespace scripting.Lexical;
 enum CharBufferState
 {
     Idle,
+    CommentLine,
     Identifier,
     Number,
     Special,
@@ -30,7 +31,7 @@ public class Lexer : ILexer
     private char currentChar;
     private readonly char[] characters;
 
-    private string comments = string.Empty;
+    private string description = string.Empty;
     private readonly ITokenList lexicalTokens = [];
 
     #endregion
@@ -43,7 +44,7 @@ public class Lexer : ILexer
     /// <param name="script">The input script.</param>
     public Lexer(string script)
     {
-        characters = script.Trim().ToCharArray();
+        characters = script.ToCharArray();
         maxIndex = characters.Length - 1;
     }
 
@@ -67,64 +68,36 @@ public class Lexer : ILexer
 
     public LexingResult Tokenize()
     {
-        CheckCharacters();
+        TokenizeDescription();
         TokenizeScript();
-        return new(comments, lexicalTokens);
+        return new(description, lexicalTokens);
     }
 
-    private void CheckCharacters()
+    private void TokenizeDescription()
     {
-        Debug.Assert(maxIndex > 0, "MaxIdx not set correctly!");
-
-        // not a problem in terms of parsing, but for consistency among (us) script writers
-        if (!CmpCharStr(characters[maxIndex], Tokens.CURLY_CLOSE))
-        {
-            currentLine = 0; // the location is in the error (setting this for side-effect (sorry (not sorry)))
-            throw LexerError("Please don't type anything after the calculation section.");
-        }
-
-        int startingIndex = -1;
-        uint startingLine = 1;
         StringBuilder builder = new(characters.Length);
-
-        bool isComments = true;
         foreach (char c in characters)
         {
-            if (isComments)
+            if (CmpCharStr(c, Tokens.SQUARE_OPEN))
             {
-                startingIndex++;
-                if (IsNewline(c)) startingLine++;
-                builder.Append(c);
-
-                isComments ^= CmpCharStr(c, Tokens.SQUARE_OPEN);
-                continue;
+                break;
             }
             else if (IsNewline(c))
             {
                 currentLine++;
-                continue;
             }
-            else if (
-                IsAlphabeticCharacter(c) ||
-                IsNumericCharacter(c) ||
-                char.IsWhiteSpace(c) ||
-                Tokens.IsReserved(c))
-            {
-                continue;
-            }
-
-            throw LexerError($"Unsupported character detected, char: {c}, u16: {(ushort)c}");
+            currentIndex++;
+            builder.Append(c);
         }
-
-        currentIndex = startingIndex - 1;
-        currentLine = startingLine;
-        comments = builder.Remove(builder.Length - 1, 1).ToString();
+        description = builder.ToString().Trim();
     }
 
     private void TokenizeScript()
     {
-        Debug.Assert(CmpCharStr(characters[currentIndex + 1], Tokens.SQUARE_OPEN),
-            "Current Char should start at the parameter opening!");
+        if (!CmpCharStr(characters[currentIndex + 1], Tokens.SQUARE_OPEN))
+        {
+            throw LexerError("Parameters not found!");
+        }
 
         while (++currentIndex <= maxIndex)
         {
@@ -132,6 +105,14 @@ public class Lexer : ILexer
             if (IsNewline(currentChar))
             {
                 currentLine++;
+                if (bufferState == CharBufferState.CommentLine)
+                {
+                    bufferState = CharBufferState.Idle;
+                }
+                continue;
+            }
+            else if (CommentCheck())
+            {
                 continue;
             }
             else if (IsAlphabeticCharacter(currentChar))
@@ -146,13 +127,32 @@ public class Lexer : ILexer
             {
                 if (OnWhiteSpace()) continue;
             }
-            else // Must be a reserved token, or error.
+            else if (OnSpecial())
             {
-                if (OnSpecial()) continue;
+                continue;
             }
-
+            
             throw LexerError("Undefined state!");
         }
+    }
+
+    private bool CommentCheck()
+    {
+        bool isInComment;
+        if (bufferState == CharBufferState.CommentLine)
+        {
+            isInComment = true;
+        }
+        else if (CmpCharStr(currentChar, Tokens.COMMENT_LINE))
+        {
+            bufferState = CharBufferState.CommentLine;
+            isInComment = true;
+        }
+        else
+        {
+            isInComment = false;
+        }
+        return isInComment;
     }
 
     private bool OnAlphabetical()

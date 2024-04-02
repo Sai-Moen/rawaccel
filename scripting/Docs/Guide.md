@@ -297,14 +297,18 @@ fma scaleb
 
 If a function has multiple arguments, they have to be separated by a comma.
 
-## Extra Advice
+## Other Features
+
+Comments: with a `#`, the remaining part of the line becomes a comment.
+
+## Concluding Remarks
 
 The file extension for these scripts should preferably be `.ras`.
 Although just like most source codes it is just text,
 it makes it clearer that it is in fact intended to be used as an RAS script.
 
 Speaking of the scripts themselves,
-I've been ignoring formatting entirely, and that's because it's just not that big of a deal.
+Formatting has been ignored entirely, and that's because it's just not that big of a deal.
 It would be nice for any readers of the script (if applicable) to be able to read it easier,
 but these scripts tend to be fairly short, and the language is not whitespace-sensitive, so format as you wish.
 

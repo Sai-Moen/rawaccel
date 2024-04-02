@@ -41,15 +41,18 @@ public class Parser : IParser
     /// <param name="tokens">List of tokens from the script.</param>
     public Parser(LexingResult tokens)
     {
-        description = tokens.Comments.Trim();
+        description = tokens.Description;
         lexicalTokens = tokens.Tokens;
-        Debug.Assert(lexicalTokens.Count >= 4, "Tokenizer did not prevent empty script!");
+        Debug.Assert(lexicalTokens.Count >= 1, "Tokenizer did not prevent empty script!");
 
         currentToken = lexicalTokens[0];
         Debug.Assert(currentToken.Type == TokenType.SquareOpen);
 
         maxIndex = lexicalTokens.Count - 1;
-        Debug.Assert(maxIndex > 0);
+        if (maxIndex <= 1)
+        {
+            throw ParserError("Nearly empty script!");
+        }
 
         AdvanceToken();
         Debug.Assert(currentIndex == 1, "We don't need to check for PARAMS_START at runtime.");

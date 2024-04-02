@@ -46,6 +46,9 @@ public static class Tokens
     // For tokens that are required for context, but are not tokenized otherwise.
     public const string NONE = "";
 
+    // Single line comments
+    public const string COMMENT_LINE = "#";
+
     // Keywords
     // Calculation IO
     public const string INPUT = "x";
@@ -76,7 +79,6 @@ public static class Tokens
     public const string ARG_SEP = ","; // For: multiple function arguments
     public const string FPOINT = ".";
     public const string TERMINATOR = ";";
-    public const string COLON = ":";
 
     // Precendence
     public const string PAREN_OPEN = "(";
@@ -182,13 +184,10 @@ public static class Tokens
     #region Fields
 
     private static readonly BaseToken[] ReservedArray =
-    {
+    [
         // Special untyped 'characters' that show up sometimes
         new(TokenType.Undefined, UNDER),
         new(TokenType.Undefined, SECOND),
-
-        // need to allow colon for assignment, if another case then redo that part of the lexer
-        new(TokenType.Undefined, COLON),
 
         new(TokenType.Input, INPUT),
         new(TokenType.Output, OUTPUT),
@@ -285,7 +284,7 @@ public static class Tokens
 
         new(TokenType.Function, FUSED_MULTIPLY_ADD),
         new(TokenType.Function, SCALE_B),
-    };
+    ];
 
     private static Dictionary<string, Token> ReservedMap { get; }
 
