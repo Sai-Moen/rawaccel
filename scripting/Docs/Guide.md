@@ -272,13 +272,19 @@ Lastly, there is 'less than or equal' and 'greater than or equal', respectively.
 
 [From the C# Math library](https://learn.microsoft.com/en-us/dotnet/api/system.math)
 
-Constants:
+#### Constants
+
+The `capacity` constant holds the `LUT_POINTS_CAPACITY` constant from the driver.
+This constant is the maximum amount of points that can be allocated in the LookUpTable.
 
 ```
 e pi tau
+capacity
 ```
 
-Functions:
+#### Functions
+
+If a function has multiple arguments, they have to be separated by a comma.
 
 ```
 abs sign copysign
@@ -294,8 +300,6 @@ tan tanh atan atanh atan2
 
 fma scaleb
 ```
-
-If a function has multiple arguments, they have to be separated by a comma.
 
 ## Other Features
 

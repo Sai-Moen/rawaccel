@@ -145,6 +145,7 @@ public class Lexer : ILexer
         }
         else if (CmpCharStr(currentChar, Tokens.COMMENT_LINE))
         {
+            _ = OnWhiteSpace();
             bufferState = CharBufferState.CommentLine;
             isInComment = true;
         }

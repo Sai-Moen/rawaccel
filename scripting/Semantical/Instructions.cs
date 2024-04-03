@@ -1,10 +1,11 @@
-﻿using scripting.Script;
+﻿using scripting.Interpretation;
+using scripting.Script;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 
-namespace scripting.Interpretation;
+namespace scripting.Semantical;
 
 public enum InstructionType : byte
 {
@@ -27,7 +28,9 @@ public enum InstructionType : byte
 
     // Constant,
     // Pushes a constant to the stack.
-    LoadE, LoadPi, LoadTau, LoadZero,
+    LoadZero,
+    LoadE, LoadPi, LoadTau,
+    LoadCapacity,
 
     // Operator,
     // Does an operation on the second and first Stack item respectively,
@@ -328,7 +331,7 @@ public readonly record struct MemoryAddress(byte Address)
 {
     #region Constants
 
-    public const int SIZE = sizeof (byte);
+    public const int SIZE = sizeof(byte);
 
     public const byte MAX_VALUE = byte.MaxValue;
     public const int CAPACITY = MAX_VALUE + 1;
@@ -372,7 +375,7 @@ public readonly record struct DataAddress(ushort Address)
 {
     #region Constants
 
-    public const int SIZE = sizeof (ushort);
+    public const int SIZE = sizeof(ushort);
 
     public const ushort MAX_VALUE = ushort.MaxValue;
     public const int CAPACITY = MAX_VALUE + 1;
@@ -416,7 +419,7 @@ public readonly record struct CodeAddress(ushort Address)
 {
     #region Constants
 
-    public const int SIZE = sizeof (ushort);
+    public const int SIZE = sizeof(ushort);
 
     public const ushort MAX_VALUE = ushort.MaxValue;
     public const int CAPACITY = MAX_VALUE + 1;
@@ -467,7 +470,7 @@ public class MemoryHeap
         {
             throw new InterpreterException("MemoryHeap capacity overflow!");
         }
-        
+
         Memory = new Number[capacity];
     }
 

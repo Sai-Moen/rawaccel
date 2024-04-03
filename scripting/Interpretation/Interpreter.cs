@@ -1,5 +1,6 @@
 ﻿using scripting.Common;
 using scripting.Script;
+using scripting.Semantical;
 using scripting.Syntactical;
 using System;
 using System.Collections.Generic;
@@ -66,8 +67,13 @@ public class Interpreter : IInterpreter
             addresses.Add(variable.Name, address);
             startup[i] = new(variable.Expr, addresses);
         }
+        mainProgram = new(syntactic.Code, addresses);
 
-        mainProgram = new(syntactic.Tokens, addresses);
+        Options = new();
+        foreach (ParsedOption parsed in syntactic.Options)
+        {
+            Options.Add(parsed, addresses);
+        }
 
         // responsibility to change settings from script defaults to saved settings is on the caller
         Defaults = new(parameters);
@@ -82,6 +88,8 @@ public class Interpreter : IInterpreter
 
     public ReadOnlyParameters Defaults { get; }
     public Parameters Settings { get; }
+
+    public Options Options { get; }
 
     #endregion
 
@@ -99,7 +107,8 @@ public class Interpreter : IInterpreter
         Stack<Number> stack = new();
         foreach (Program program in startup)
         {
-            ExecuteProgram(program, stack);
+            ExecuteProgramClear(program, stack);
+            Debug.Assert(stack.Count == 0);
         }
         stable.CopyFrom(unstable);
     }
@@ -107,12 +116,18 @@ public class Interpreter : IInterpreter
     public double Calculate(double x)
     {
         this.x = x;
-        ExecuteProgram(mainProgram, mainStack);
+        ExecuteProgramClear(mainProgram, mainStack);
         double y = this.y;
 
         unstable.CopyFrom(stable);
         this.y = Number.DEFAULT_Y;
         return y;
+    }
+
+    private void ExecuteProgramClear(Program program, Stack<Number> stack)
+    {
+        ExecuteProgram(program, stack);
+        stack.Clear();
     }
 
     private void ExecuteProgram(Program program, Stack<Number> stack)
@@ -149,10 +164,8 @@ public class Interpreter : IInterpreter
                     throw InterpreterError("Unexpected program end!");
                 }
 
-                Debug.Assert(stack.Count == 0);
                 return;
             case InstructionType.Return:
-                stack.Clear(); // caller may expect empty stack back
                 return;
             case InstructionType.Load:
                 MemoryAddress loadAddress = (MemoryAddress)program.GetOperandFromNext(ref c);
@@ -195,6 +208,9 @@ public class Interpreter : IInterpreter
                     c = jzAddress;
                 }
                 break;
+            case InstructionType.LoadZero:
+                stack.Push(Number.ZERO);
+                break;
             case InstructionType.LoadE:
                 stack.Push(Math.E);
                 break;
@@ -204,8 +220,8 @@ public class Interpreter : IInterpreter
             case InstructionType.LoadTau:
                 stack.Push(Math.Tau);
                 break;
-            case InstructionType.LoadZero:
-                stack.Push(Number.ZERO);
+            case InstructionType.LoadCapacity:
+                stack.Push(Constants.LUT_POINTS_CAPACITY);
                 break;
             case InstructionType.Add:
                 Fn2((y, x) => x + y);

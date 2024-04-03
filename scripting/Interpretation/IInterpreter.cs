@@ -24,6 +24,11 @@ public interface IInterpreter
     Parameters Settings { get; }
 
     /// <summary>
+    /// An object to access any options defined by the script.
+    /// </summary>
+    Options Options { get; }
+
+    /// <summary>
     /// Sets internal memory so that it accurately reflects the current settings.
     /// Call this before performing a bunch of calculations.
     /// </summary>

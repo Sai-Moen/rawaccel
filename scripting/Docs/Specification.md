@@ -45,6 +45,7 @@ Contains:
 - Number, the number/boolean literals
 - Parameter, the user-controlled variables
 - Variable, the temporary variables declared after the parameters
+- Options, the extra blocks a script can define to augment its behavior.
 
 ### Lexical
 
@@ -68,6 +69,16 @@ Contains:
 	- Produces a ParsingResult object that contains the script description, parameters, variables, the parsed list of tokens.
 - Helper classes
 
+### Semantical
+
+Semantic Analysis namespace.
+Contains:
+
+- Instructions, contains instruction and memory data structures.
+- Program
+	- Transforms a list of tokens to an array of instructions that the Interpreter can then execute.
+- Helper classes
+
 ### Interpretation
 
 Interpreter namespace.
@@ -76,9 +87,6 @@ Contains:
 - IInterpreter, the public API for interpreting parsed scripts and controlling an interpreter.
 - Interpreter
 	- Runs Programs, keeps track of parameters and variables.
-- Program
-	- Transforms a list of tokens to an array of instructions that the Interpreter can then execute.
-- Helper classes
 
 ## Scripting language specification
 
@@ -137,6 +145,7 @@ x y           "Input/Output variables"
 false true    "Boolean values (0 and 1 respectively)"
 zero          "Another way of getting 0, usually for denoting variables with no meaningful initial value"
 e pi tau      "Math Constants"
+capacity	  "LUT_POINTS_CAPACITY"
 
 if (c) { s }       "c means condition, s means statements"
 while (c) { s }    "c means condition, s means statements"

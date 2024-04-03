@@ -1,4 +1,4 @@
-﻿using scripting.Interpretation;
+﻿using scripting.Semantical;
 using System.Diagnostics;
 
 namespace scripting.Common;
@@ -6,14 +6,16 @@ namespace scripting.Common;
 /// <summary>
 /// Constants used in the scripting namespace.
 /// </summary>
-internal static class Constants
+public static class Constants
 {
-    internal const int MAX_IDENTIFIER_LEN = 0x20;
-    internal const int MAX_NUMBER_LEN = 0x40;
+    public const int LUT_POINTS_CAPACITY = 256;
 
-    internal const int CAPACITY = MemoryAddress.CAPACITY;
-    internal const int MAX_PARAMETERS = 8;
-    internal const int MAX_VARIABLES = CAPACITY - MAX_PARAMETERS;
+    public const int MAX_IDENTIFIER_LEN = 0x20;
+    public const int MAX_NUMBER_LEN = 0x40;
+
+    public const int CAPACITY = MemoryAddress.CAPACITY;
+    public const int MAX_PARAMETERS = 8;
+    public const int MAX_VARIABLES = CAPACITY - MAX_PARAMETERS;
 
     static Constants()
     {

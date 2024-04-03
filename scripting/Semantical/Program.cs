@@ -1,9 +1,10 @@
-﻿using scripting.Lexical;
+﻿using scripting.Interpretation;
+using scripting.Lexical;
 using scripting.Script;
 using System;
 using System.Collections.Generic;
 
-namespace scripting.Interpretation;
+namespace scripting.Semantical;
 
 /// <summary>
 /// Represents a program consisting of executable Instructions.
@@ -44,11 +45,10 @@ public class Program
             {
                 case TokenType.Number:
                     Number number = Number.Parse(token.Symbol, token.Line);
-
-                    // See if the number is already present before assigning a new index
                     if (!numberMap.TryGetValue(number, out DataAddress dAddress))
                     {
-                        numberMap.Add(number, dAddress = numberMap.Count);
+                        dAddress = numberMap.Count;
+                        numberMap.Add(number, dAddress);
                     }
                     instructionList.Add(InstructionType.LoadNumber, new(dAddress));
                     break;
@@ -211,10 +211,11 @@ public class Program
 
     private static InstructionType OnConstant(Token token) => token.Symbol switch
     {
+        Tokens.ZERO => InstructionType.LoadZero,
         Tokens.CONST_E => InstructionType.LoadE,
         Tokens.CONST_PI => InstructionType.LoadPi,
         Tokens.CONST_TAU => InstructionType.LoadTau,
-        Tokens.ZERO => InstructionType.LoadZero,
+        Tokens.CONST_CAPACITY => InstructionType.LoadCapacity,
 
         _ => throw ProgramError("Cannot emit constant!", token.Line),
     };

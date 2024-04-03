@@ -30,6 +30,7 @@ public class Parser : IParser
     private readonly Parameters parameters = [];
     private readonly Variables variables = [];
     private readonly TokenList syntacticTokens = [];
+    private readonly Dictionary<string, ParsedOption> options = [];
 
     #endregion
 
@@ -67,7 +68,7 @@ public class Parser : IParser
     public ParsingResult Parse()
     {
         ParseTokens();
-        return new(description, parameters, variables, syntacticTokens);
+        return new(description, parameters, variables, syntacticTokens, options.Values);
     }
 
     private void ParseTokens()
@@ -95,7 +96,24 @@ public class Parser : IParser
         // Calculation
         while (currentToken.Type != TokenType.CurlyClose)
         {
-            Statement();
+            syntacticTokens.AddRange(Statement());
+        }
+
+        if (currentIndex == maxIndex) return;
+
+        AdvanceToken();
+        Debug.Assert(currentToken.Type != TokenType.CurlyClose);
+
+        // Options
+        while (Accept(TokenType.Identifier))
+        {
+            ParsedOption option = ParseOption();
+            if (options.ContainsKey(option.Name))
+            {
+                throw ParserError("Duplicate options detected!");
+            }
+
+            options[option.Name] = option;
         }
     }
 
@@ -383,8 +401,9 @@ public class Parser : IParser
 
     #region Calculation
 
-    private void Statement()
+    private TokenList Statement()
     {
+        TokenList tokens = [];
         if (
             Accept(TokenType.Variable) ||
             Accept(TokenType.Input) ||
@@ -394,9 +413,9 @@ public class Parser : IParser
             Expect(TokenType.Assignment);
 
             Token assignment = previousToken;
-            syntacticTokens.AddRange(Expression(TokenType.Terminator));
-            syntacticTokens.Add(assignment);
-            syntacticTokens.Add(target);
+            tokens.AddRange(Expression(TokenType.Terminator));
+            tokens.Add(assignment);
+            tokens.Add(target);
         }
         else if (Accept(TokenType.Return))
         {
@@ -406,14 +425,15 @@ public class Parser : IParser
         {
             Token branch = previousToken;
             Expect(TokenType.ParenOpen);
-            syntacticTokens.AddRange(Expression(TokenType.ParenClose, TokenType.CurlyOpen));
-            syntacticTokens.Add(branch);
+            tokens.AddRange(Expression(TokenType.ParenClose, TokenType.CurlyOpen));
+            tokens.Add(branch);
 
-            do Statement();
+            do tokens.AddRange(Statement());
             while (!Accept(TokenType.CurlyClose));
 
-            syntacticTokens.Add(Tokens.GetReserved(Tokens.BRANCH_END, previousToken.Line));
+            tokens.Add(Tokens.GetReserved(Tokens.BRANCH_END, previousToken.Line));
         }
+        return tokens;
     }
 
     private TokenList Expression(TokenType end, TokenType after = TokenType.Undefined)
@@ -591,6 +611,33 @@ public class Parser : IParser
             AdvanceToken();
         }
         return success;
+    }
+
+    #endregion
+
+    #region Options
+
+    private ParsedOption ParseOption()
+    {
+        string name = previousToken.Symbol;
+
+        TokenList args = [];
+        if (Accept(TokenType.ParenOpen))
+        {
+            do args.Add(currentToken);
+            while (Accept(TokenType.ArgumentSeparator));
+            Expect(TokenType.ParenClose);
+        }
+
+        TokenList code = [];
+        Expect(TokenType.CurlyOpen);
+        while (currentToken.Type != TokenType.CurlyClose)
+        {
+            code.AddRange(Statement());
+        }
+        Expect(TokenType.CurlyClose);
+
+        return new(name, args, code);
     }
 
     #endregion

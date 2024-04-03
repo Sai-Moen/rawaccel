@@ -62,6 +62,7 @@ public static class Tokens
     public const string CONST_E = "e";
     public const string CONST_PI = "pi";
     public const string CONST_TAU = "tau";
+    public const string CONST_CAPACITY = "capacity";
 
     // Booleans
     public const string FALSE = "false";
@@ -197,6 +198,7 @@ public static class Tokens
         new(TokenType.Constant, CONST_E),
         new(TokenType.Constant, CONST_PI),
         new(TokenType.Constant, CONST_TAU),
+        new(TokenType.Constant, CONST_CAPACITY),
 
         new(TokenType.Bool, FALSE),
         new(TokenType.Bool, TRUE),
