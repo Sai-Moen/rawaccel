@@ -1,5 +1,4 @@
-﻿using scripting.Interpretation;
-using scripting.Lexical;
+﻿using scripting.Lexical;
 using scripting.Script;
 using System;
 using System.Collections.Generic;
@@ -26,7 +25,7 @@ public class Program
     /// <param name="code">Contains a parsed TokenList that can be emitted to bytecode.</param>
     /// <param name="addresses">Maps identifiers to memory addresses.</param>
     /// <exception cref="EmitException"/>
-    public Program(ITokenList code, IDictionary<string, MemoryAddress> addresses)
+    public Program(ITokenList code, IMemoryMap addresses)
     {
         InstructionList instructionList = new(code.Count)
         {

@@ -45,7 +45,7 @@ Contains:
 - Number, the number/boolean literals
 - Parameter, the user-controlled variables
 - Variable, the temporary variables declared after the parameters
-- Options, the extra blocks a script can define to augment its behavior.
+- Callbacks, the callbacks a script can define to augment its behavior.
 
 ### Lexical
 

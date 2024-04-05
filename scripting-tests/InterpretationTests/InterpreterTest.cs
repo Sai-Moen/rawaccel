@@ -39,6 +39,7 @@ public class InterpreterTest
         parameters[0].Value = value;
 
         interpreter.Init();
-        Assert.AreEqual(value * 4 + 6, interpreter.Calculate(0));
+        Callbacks callbacks = interpreter.Callbacks;
+        Assert.AreEqual(value * 4 + 6, callbacks.Calculate(interpreter, 0));
     }
 }

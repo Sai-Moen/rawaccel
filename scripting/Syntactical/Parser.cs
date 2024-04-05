@@ -29,8 +29,7 @@ public class Parser : IParser
     private readonly string description;
     private readonly Parameters parameters = [];
     private readonly Variables variables = [];
-    private readonly TokenList syntacticTokens = [];
-    private readonly Dictionary<string, ParsedOption> options = [];
+    private readonly Dictionary<string, ParsedCallback> callbacks = [];
 
     #endregion
 
@@ -68,7 +67,7 @@ public class Parser : IParser
     public ParsingResult Parse()
     {
         ParseTokens();
-        return new(description, parameters, variables, syntacticTokens, options.Values);
+        return new(description, parameters, variables, [.. callbacks.Values]);
     }
 
     private void ParseTokens()
@@ -94,26 +93,29 @@ public class Parser : IParser
         Debug.Assert(currentToken.Type != TokenType.CurlyOpen);
 
         // Calculation
+        TokenList syntacticTokens = [];
         while (currentToken.Type != TokenType.CurlyClose)
         {
             syntacticTokens.AddRange(Statement());
         }
+        callbacks.Add(Calculation.NAME, new(Calculation.NAME, [], syntacticTokens));
 
-        if (currentIndex == maxIndex) return;
+        if (currentIndex == maxIndex)
+            return;
 
         AdvanceToken();
         Debug.Assert(currentToken.Type != TokenType.CurlyClose);
 
-        // Options
+        // Optional Callbacks
         while (Accept(TokenType.Identifier))
         {
-            ParsedOption option = ParseOption();
-            if (options.ContainsKey(option.Name))
+            ParsedCallback callback = ParseOptionalCallback();
+            if (callbacks.ContainsKey(callback.Name))
             {
-                throw ParserError("Duplicate options detected!");
+                throw ParserError("Duplicate callbacks detected!");
             }
 
-            options[option.Name] = option;
+            callbacks[callback.Name] = callback;
         }
     }
 
@@ -615,9 +617,9 @@ public class Parser : IParser
 
     #endregion
 
-    #region Options
+    #region Optional Callbacks
 
-    private ParsedOption ParseOption()
+    private ParsedCallback ParseOptionalCallback()
     {
         string name = previousToken.Symbol;
 

@@ -1,5 +1,6 @@
 ﻿using scripting;
 using scripting.Interpretation;
+using scripting.Script;
 using System;
 
 namespace scripting_tests.FormulaTests;
@@ -82,9 +83,10 @@ public class PowerTest
         const double n = 0x1000;
 
         interpreter.Init();
+        Callbacks callbacks = interpreter.Callbacks;
         for (int x = 1; x <= n; x++)
         {
-            Assert.AreEqual(Power(x), interpreter.Calculate(x));
+            Assert.AreEqual(Power(x), callbacks.Calculate(interpreter, x));
         }
     }
 }

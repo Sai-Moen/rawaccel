@@ -16,16 +16,12 @@ public class Interpreter : IInterpreter
 {
     #region Fields
 
-    private Number x = Number.DEFAULT_X;
-    private Number y = Number.DEFAULT_Y;
-
-    private readonly Dictionary<string, MemoryAddress> addresses = [];
+    private readonly MemoryMap addresses = [];
 
     private readonly MemoryHeap stable;
     private readonly MemoryHeap unstable;
-    private readonly Stack<Number> mainStack = new();
+    private readonly Stack<Number> stack = new();
 
-    private readonly Program mainProgram;
     private readonly Program[] startup;
 
     #endregion
@@ -67,12 +63,14 @@ public class Interpreter : IInterpreter
             addresses.Add(variable.Name, address);
             startup[i] = new(variable.Expr, addresses);
         }
-        mainProgram = new(syntactic.Code, addresses);
 
-        Options = new();
-        foreach (ParsedOption parsed in syntactic.Options)
+        IList<ParsedCallback> callbacks = syntactic.Callbacks;
+        Debug.Assert(callbacks.Count > 0);
+
+        Callbacks = new(callbacks[0], addresses);
+        foreach (ParsedCallback parsed in callbacks)
         {
-            Options.Add(parsed, addresses);
+            Callbacks.Add(parsed, addresses);
         }
 
         // responsibility to change settings from script defaults to saved settings is on the caller
@@ -89,7 +87,10 @@ public class Interpreter : IInterpreter
     public ReadOnlyParameters Defaults { get; }
     public Parameters Settings { get; }
 
-    public Options Options { get; }
+    public Callbacks Callbacks { get; }
+
+    public Number X { get; set; } = Number.DEFAULT_X;
+    public Number Y { get; set; } = Number.DEFAULT_Y;
 
     #endregion
 
@@ -102,35 +103,28 @@ public class Interpreter : IInterpreter
             // most cache-friendly operation
             stable[addresses[parameter.Name]] = parameter.Value;
         }
-        unstable.CopyFrom(stable);
+        Stabilize(true);
 
-        Stack<Number> stack = new();
         foreach (Program program in startup)
         {
-            ExecuteProgramClear(program, stack);
-            Debug.Assert(stack.Count == 0);
+            Number[] remainder = ExecuteProgram(program);
+            Debug.Assert(remainder.Length == 0, "Startup stack was not empty?");
         }
         stable.CopyFrom(unstable);
     }
 
-    public double Calculate(double x)
+    public void Stabilize(bool resetY = false)
     {
-        this.x = x;
-        ExecuteProgramClear(mainProgram, mainStack);
-        double y = this.y;
-
         unstable.CopyFrom(stable);
-        this.y = Number.DEFAULT_Y;
-        return y;
+        if (resetY) Y = Number.DEFAULT_Y;
     }
 
-    private void ExecuteProgramClear(Program program, Stack<Number> stack)
+    public Number[] ExecuteProgram(Program program)
     {
-        ExecuteProgram(program, stack);
-        stack.Clear();
+        return ExecuteProgram(program, stack);
     }
 
-    private void ExecuteProgram(Program program, Stack<Number> stack)
+    public Number[] ExecuteProgram(Program program, Stack<Number> stack)
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void Fn1(Func<Number, Number> func)
@@ -164,9 +158,11 @@ public class Interpreter : IInterpreter
                     throw InterpreterError("Unexpected program end!");
                 }
 
-                return;
+                goto case InstructionType.Return;
             case InstructionType.Return:
-                return;
+                Number[] rem = [.. stack];
+                stack.Clear();
+                return rem;
             case InstructionType.Load:
                 MemoryAddress loadAddress = (MemoryAddress)program.GetOperandFromNext(ref c);
                 stack.Push(unstable[loadAddress]);
@@ -176,16 +172,16 @@ public class Interpreter : IInterpreter
                 unstable[storeAddress] = stack.Pop();
                 break;
             case InstructionType.LoadIn:
-                stack.Push(x);
+                stack.Push(X);
                 break;
             case InstructionType.StoreIn:
-                x = stack.Pop();
+                X = stack.Pop();
                 break;
             case InstructionType.LoadOut:
-                stack.Push(y);
+                stack.Push(Y);
                 break;
             case InstructionType.StoreOut:
-                y = stack.Pop();
+                Y = stack.Pop();
                 break;
             case InstructionType.LoadNumber:
                 DataAddress dAddress = (DataAddress)program.GetOperandFromNext(ref c);
@@ -373,6 +369,8 @@ public class Interpreter : IInterpreter
             default:
                 throw InterpreterError("Not an instruction!");
         }
+
+        throw InterpreterError("Unreachable: program loop exited without returning!");
     }
 
 #endregion

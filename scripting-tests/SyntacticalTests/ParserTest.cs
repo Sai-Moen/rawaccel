@@ -14,7 +14,7 @@ public class ParserTest
         LexingResult input = lexer.Tokenize();
 
         Parser parser = new(input);
-        return parser.Parse().Code;
+        return parser.Parse().Callbacks[0].Code;
     }
 
     [TestMethod]

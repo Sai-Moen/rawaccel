@@ -81,6 +81,7 @@ public class ControlFlowTest
         parameters[0].Value = value;
 
         interpreter.Init();
-        Assert.AreEqual(y, interpreter.Calculate(0));
+        Callbacks callbacks = interpreter.Callbacks;
+        Assert.AreEqual(y, callbacks.Calculate(interpreter, 0));
     }
 }

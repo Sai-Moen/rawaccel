@@ -39,6 +39,7 @@ record ParameterValidation(Bound Type = Bound.None, Number Value = default)
 public enum ParameterType
 {
     Real,
+    Integer, // unused
     Logical,
 }
 
@@ -112,6 +113,9 @@ public class Parameter
             {
                 case ParameterType.Real:
                     _value = value;
+                    break;
+                case ParameterType.Integer:
+                    _value = (int)value;
                     break;
                 case ParameterType.Logical:
                     _value = (bool)value;

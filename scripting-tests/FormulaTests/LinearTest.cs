@@ -1,5 +1,6 @@
 ﻿using scripting;
 using scripting.Interpretation;
+using scripting.Script;
 using System;
 
 namespace scripting_tests.FormulaTests;
@@ -59,9 +60,10 @@ public class LinearTest
         const double n = 0x1000;
 
         interpreter.Init();
+        Callbacks callbacks = interpreter.Callbacks;
         for (int x = 1; x <= n; x++)
         {
-            Assert.AreEqual(Linear(x), interpreter.Calculate(x));
+            Assert.AreEqual(Linear(x), callbacks.Calculate(interpreter, x));
         }
     }
 }

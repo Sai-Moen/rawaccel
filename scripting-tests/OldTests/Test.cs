@@ -6,7 +6,7 @@ public static class Test
 {
     public static void Main()
     {
-        new Misc().Perf();
+        Misc.Perf();
     }
 
     public static void Log(string message)

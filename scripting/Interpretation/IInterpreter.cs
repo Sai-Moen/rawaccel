@@ -1,5 +1,7 @@
 ﻿using scripting.Common;
 using scripting.Script;
+using scripting.Semantical;
+using System.Collections.Generic;
 
 namespace scripting.Interpretation;
 
@@ -24,22 +26,46 @@ public interface IInterpreter
     Parameters Settings { get; }
 
     /// <summary>
-    /// An object to access any options defined by the script.
+    /// An object to access any callbacks defined by the script.
     /// </summary>
-    Options Options { get; }
+    Callbacks Callbacks { get; }
+
+    /// <summary>
+    /// The input variable.
+    /// </summary>
+    Number X { get; set; }
+
+    /// <summary>
+    /// The output variable.
+    /// </summary>
+    Number Y { get; set; }
 
     /// <summary>
     /// Sets internal memory so that it accurately reflects the current settings.
-    /// Call this before performing a bunch of calculations.
+    /// Call this before performing a bunch of calculations (upon callback request).
     /// </summary>
     void Init();
 
     /// <summary>
-    /// Runs a calculation with the current state.
+    /// Stabilizes after running a program s.t. it returns to the state after Init was called most recently.
     /// </summary>
-    /// <param name="x">the input value to inject</param>
-    /// <returns>The resulting output value.</returns>
-    double Calculate(double x);
+    /// <param name="resetY">whether to reset Y to 1</param>
+    void Stabilize(bool resetY = false);
+
+    /// <summary>
+    /// Executes a program with the interpreter's own stack. Clears stack after use.
+    /// </summary>
+    /// <param name="program">the program</param>
+    /// <returns>the remainder of the stack as an array</returns>
+    Number[] ExecuteProgram(Program program);
+
+    /// <summary>
+    /// Executes a program with the given stack. Clears stack after use.
+    /// </summary>
+    /// <param name="program">the program</param>
+    /// <param name="stack">the stack</param>
+    /// <returns>the remainder of the stack as an array</returns>
+    Number[] ExecuteProgram(Program program, Stack<Number> stack);
 }
 
 /// <summary>
@@ -47,14 +73,4 @@ public interface IInterpreter
 /// </summary>
 public sealed class InterpreterException(string message) : ScriptException(message)
 {
-}
-
-/// <summary>
-/// Exception for errors relating to emitting bytecode into a program.
-/// </summary>
-public sealed class EmitException : GenerationException
-{
-    public EmitException(string message) : base(message) { }
-
-    public EmitException(string message, uint line) : base(message, line) { }
 }
