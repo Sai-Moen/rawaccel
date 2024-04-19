@@ -1,7 +1,5 @@
 ﻿using scripting.Common;
 using scripting.Lexical;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Diagnostics;
 
 namespace scripting.Script;
@@ -84,12 +82,23 @@ public class Parameter
         max = maxval;
         if (Validate(Value) != 0)
         {
-            throw new GenerationException("Default value does not comply with guards!", value.Line);
+            throw new GenerationException("Default value does not comply with bounds!", value.Line);
         }
         else if (min.Contradicts(max) || max.Contradicts(min))
         {
             throw new GenerationException("Contradicting parameter bounds!", name.Line);
         }
+    }
+
+    internal Parameter(Parameter old, Number value, ParameterType type)
+    {
+        Name = old.Name;
+
+        Type = type; // gotta do this before to avoid a bad number for the type
+        Value = value;
+
+        min = old.min;
+        max = old.max;
     }
 
     #endregion
@@ -156,26 +165,6 @@ public class Parameter
 }
 
 /// <summary>
-/// Collection of <see cref="Parameter"/> declarations.
-/// </summary>
-public class Parameters : List<Parameter>, IList<Parameter>
-{
-    internal Parameters() : base(Constants.MAX_PARAMETERS) { }
-
-    private Parameters(Parameters parameters) : base(parameters) { }
-
-    internal Parameters Clone()
-    {
-        Parameters clone = new(this);
-        for (int i = 0; i < clone.Count; i++)
-        {
-            clone[i] = clone[i].Clone();
-        }
-        return clone;
-    }
-}
-
-/// <summary>
 /// Read-Only representation of a <see cref="Parameter"/>.
 /// </summary>
 /// <param name="Name">the name</param>
@@ -184,22 +173,4 @@ public class Parameters : List<Parameter>, IList<Parameter>
 public readonly record struct ReadOnlyParameter(string Name, Number Value, ParameterType Type)
 {
     internal ReadOnlyParameter(Parameter parameter) : this(parameter.Name, parameter.Value, parameter.Type) { }
-}
-
-/// <summary>
-/// Read-Only collection of <see cref="ReadOnlyParameter"/>.
-/// </summary>
-public class ReadOnlyParameters : ReadOnlyCollection<ReadOnlyParameter>, IList<ReadOnlyParameter>
-{
-    internal ReadOnlyParameters(IList<Parameter> parameters) : base(Wrap(parameters)) { }
-
-    private static List<ReadOnlyParameter> Wrap(IList<Parameter> parameters)
-    {
-        List<ReadOnlyParameter> ro = new(parameters.Count);
-        foreach (Parameter parameter in parameters)
-        {
-            ro.Add(new(parameter));
-        }
-        return ro;
-    }
 }

@@ -47,7 +47,7 @@ public class Interpreter : IInterpreter
             addresses.Add(parameters[i].Name, address);
         }
 
-        Variables variables = syntactic.Variables;
+        IList<Variable> variables = syntactic.Variables;
         int numVariables = variables.Count;
         startup = new Program[numVariables];
 

@@ -46,6 +46,11 @@ Contains:
 - Parameter, the user-controlled variables
 - Variable, the temporary variables declared after the parameters
 - Callbacks, the callbacks a script can define to augment its behavior.
+- Helper classes (collections of the above etc.)
+
+### Serialization
+
+Contains classes to Serialize/Deserialize with.
 
 ### Lexical
 

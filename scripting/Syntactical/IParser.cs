@@ -24,7 +24,11 @@ public interface IParser
 /// <param name="Parameters">the user-controlled parameters</param>
 /// <param name="Variables">the variables used by the script</param>
 /// <param name="Callbacks">the callbacks parsed from the script</param>
-public record ParsingResult(string Description, Parameters Parameters, Variables Variables, IList<ParsedCallback> Callbacks);
+public record ParsingResult(
+    string Description,
+    Parameters Parameters,
+    IList<Variable> Variables,
+    IList<ParsedCallback> Callbacks);
 
 /// <summary>
 /// Represents a callback that has been parsed but not yet validated and emitted.

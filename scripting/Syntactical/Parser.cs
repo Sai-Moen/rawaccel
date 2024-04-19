@@ -28,7 +28,7 @@ public class Parser : IParser
 
     private readonly string description;
     private readonly Parameters parameters = [];
-    private readonly Variables variables = [];
+    private readonly List<Variable> variables = [];
     private readonly Dictionary<string, ParsedCallback> callbacks = [];
 
     #endregion
@@ -211,7 +211,7 @@ public class Parser : IParser
                 break;
             default:
                 // this is unreachable as long as one of the cases is accepted at the top of the method
-                Debug.Fail($"Unreachable: unknown guard open {open}");
+                Debug.Fail($"Unreachable: unknown bound open {open}");
                 minval = new();
                 maxval = new();
                 return;
