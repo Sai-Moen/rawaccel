@@ -70,6 +70,7 @@ public static class Tokens
 
     // Branching
     public const string BRANCH_IF = "if";
+    public const string BRANCH_ELSE = "else";
     public const string BRANCH_WHILE = "while";
     public const string BRANCH_END = NONE;
 
@@ -204,6 +205,7 @@ public static class Tokens
         new(TokenType.Bool, TRUE),
 
         new(TokenType.Branch, BRANCH_IF),
+        new(TokenType.Branch, BRANCH_ELSE),
         new(TokenType.Branch, BRANCH_WHILE),
         new(TokenType.BranchEnd, BRANCH_END),
 
@@ -316,6 +318,24 @@ public static class Tokens
 
     public static Token GetReserved(string symbol) => ReservedMap[symbol];
     public static Token GetReserved(string symbol, uint line) => ReservedMap[symbol] with { Line = line };
+
+    #endregion
+
+    #region Extension Methods
+
+    // only 'else' is not conditional at the moment
+    public static bool IsConditional(this Token token)
+    {
+        Debug.Assert(token.Type == TokenType.Branch);
+        return token.Symbol != BRANCH_ELSE;
+    }
+
+    // only 'while' is a loop at the moment
+    public static bool IsLoop(this Token token)
+    {
+        Debug.Assert(token.Type == TokenType.Branch);
+        return token.Symbol == BRANCH_WHILE;
+    }
 
     #endregion
 }

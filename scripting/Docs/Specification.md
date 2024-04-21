@@ -153,6 +153,8 @@ e pi tau      "Math Constants"
 capacity	  "LUT_POINTS_CAPACITY"
 
 if (c) { s }       "c means condition, s means statements"
+else { s }         "s means statements"
+
 while (c) { s }    "c means condition, s means statements"
 ```
 

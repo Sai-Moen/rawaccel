@@ -406,10 +406,12 @@ public class Parser : IParser
     private TokenList Statement()
     {
         TokenList tokens = [];
-        if (
+
+        bool isAssignment =
             Accept(TokenType.Variable) ||
             Accept(TokenType.Input) ||
-            Accept(TokenType.Output))
+            Accept(TokenType.Output);
+        if (isAssignment)
         {
             Token target = previousToken;
             Expect(TokenType.Assignment);
@@ -426,16 +428,32 @@ public class Parser : IParser
         else if (Expect(TokenType.Branch))
         {
             Token branch = previousToken;
+
             Expect(TokenType.ParenOpen);
             tokens.AddRange(Expression(TokenType.ParenClose, TokenType.CurlyOpen));
-            tokens.Add(branch);
 
-            do tokens.AddRange(Statement());
-            while (!Accept(TokenType.CurlyClose));
+            AddStatements(tokens, branch);
 
-            tokens.Add(Tokens.GetReserved(Tokens.BRANCH_END, previousToken.Line));
+            Token maybeElse = currentToken;
+            if (branch.Symbol == Tokens.BRANCH_IF && maybeElse.Symbol == Tokens.BRANCH_ELSE)
+            {
+                Expect(TokenType.Branch);
+                Expect(TokenType.CurlyOpen);
+                AddStatements(tokens, maybeElse);
+            }
         }
+
         return tokens;
+    }
+
+    private void AddStatements(TokenList tokens, Token token)
+    {
+        tokens.Add(token);
+
+        do tokens.AddRange(Statement());
+        while (!Accept(TokenType.CurlyClose));
+
+        tokens.Add(Tokens.GetReserved(Tokens.BRANCH_END, previousToken.Line));
     }
 
     private TokenList Expression(TokenType end, TokenType after = TokenType.Undefined)

@@ -13,17 +13,17 @@ public class ParametersJsonConverter(Parameters old) : JsonConverter<Parameters>
 
     public override Parameters? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
+        int startDepth = reader.CurrentDepth;
+
         switch (reader.TokenType)
         {
-            case JsonTokenType.Null:
-                return null;
             case JsonTokenType.StartObject:
                 break;
+            case JsonTokenType.Null:
+                return null;
             default:
                 throw new JsonException($"Invalid start for a Parameters object: {reader.TokenType}");
         }
-
-        int startDepth = reader.CurrentDepth;
 
         Parameters parameters = [];
         while (reader.Read())

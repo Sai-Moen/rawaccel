@@ -115,27 +115,34 @@ The output speed is given by the built-in variable `y`, which is set to 1 upon e
 
 The goal of a script is modify `y` depending on the value of `x` and the parameters.
 This can be done using control flow and maths (covered in the next part).
-The control flow is as basic as it gets (without a `goto` statement), with only `if` and `while`.
+The control flow is as basic as it gets (without a `goto` statement), with only `if`, `else` and `while`.
 
 These work as you most likely already expect, and this is their syntax:
 
 ```
 if (condition) {
 	statement
+	...
+	statement
+} else {
+	statement
+	...
 	statement
 }
 ```
 
-\^\^ Only execute the statements if `condition` is true (i.e. nonzero).
+\^\^ Only execute the statements if `condition` is true (i.e. non-zero).
+The `else` block is optional, and will execute its statements if `condition` is false instead.
 
 ```
 while (condition) {
 	statement
+	...
 	statement
 }
 ```
 
-\^\^ Execute the statements as long as `condition` is true (i.e. nonzero), 0 to many times.
+\^\^ Execute the statements as long as `condition` is true (i.e. non-zero), 0 to many times.
 
 The blocks of control flow are delimited by `{}`, and ***not*** ended by `;`.
 A statement can be one of the following:

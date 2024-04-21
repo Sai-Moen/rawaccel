@@ -31,12 +31,10 @@ public class Program
         {
             InstructionType.Start
         };
-
         Dictionary<Number, DataAddress> numberMap = [];
 
-        CodeAddress lastExprStart = 0;
         int depth = 0;
-
+        CodeAddress lastExprStart = 0;
         for (int i = 0; i < code.Count; i++)
         {
             Token token = code[i];
@@ -70,7 +68,8 @@ public class Program
                     break;
                 case TokenType.Branch:
                     InstructionFlags flags = InstructionFlags.Continuation;
-                    if (token.IsLoop()) flags |= InstructionFlags.IsLoop;
+                    if (token.IsConditional()) flags |= InstructionFlags.IsConditional;
+                    if (token.IsLoop())        flags |= InstructionFlags.IsLoop;
 
                     instructionList.Add(new Instruction(InstructionType.BranchMarker, flags), new(lastExprStart));
                     lastExprStart = instructionList.Count - 1;
@@ -78,25 +77,33 @@ public class Program
                     depth++;
                     break;
                 case TokenType.BranchEnd:
-                    if (depth-- != 0)
+                    if (depth-- == 0)
                     {
-                        Instruction marker = new(InstructionType.BranchMarker);
-                        if (instructionList.TryFind(marker, depth, out CodeAddress index))
-                        {
-                            marker = instructionList[index].instruction;
-                            if (marker.AllFlags(InstructionFlags.IsLoop))
-                            {
-                                InstructionOperand markerCondition = instructionList[index + 1].operand;
-                                instructionList.Add(InstructionType.Jmp, markerCondition);
-                            }
-
-                            CodeAddress condition = instructionList.Count - 1;
-                            instructionList.Replace(index, InstructionType.Jz, new(condition));
-                            break;
-                        }
+                        throw ProgramError("Unexpectedly encountered end of branch with no depth!", token.Line);
                     }
 
-                    throw ProgramError("Unexpected branch end!", token.Line);
+                    if (!instructionList.TryFind(InstructionType.BranchMarker, depth, out CodeAddress index))
+                    {
+                        throw ProgramError("Unexpected end of branch with no matching branch!", token.Line);
+                    }
+
+                    Instruction marker = instructionList[index].instruction;
+                    if (marker.AnyFlags(InstructionFlags.IsLoop))
+                    {
+                        InstructionOperand conditionAddress = instructionList[index + 1].operand;
+                        instructionList.Add(InstructionType.Jmp, conditionAddress);
+                    }
+
+                    bool isElse = !marker.AnyFlags(InstructionFlags.IsConditional);
+                    if (isElse)
+                    {
+                        // a bit hacky, if we get new control flow, then this would (most likely) need a rewrite
+                        instructionList.Add(InstructionType.Not);
+                    }
+
+                    CodeAddress jumpAddress = instructionList.Count - 1;
+                    instructionList.Replace(index, InstructionType.Jz, new(jumpAddress));
+                    break;
                 case TokenType.Assignment:
                     InstructionType modify = OnAssignment(token);
                     bool isInline = modify.IsInline();

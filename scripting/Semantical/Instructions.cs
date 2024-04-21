@@ -99,9 +99,14 @@ public enum InstructionFlags : byte
     Continuation = 1 << 0,
 
     /// <summary>
+    /// Whether this instruction should only be executed when the top of the stack is non-zero.
+    /// </summary>
+    IsConditional = 1 << 1,
+
+    /// <summary>
     /// Whether this instruction is expecting to be replaced by a looping body.
     /// </summary>
-    IsLoop = 1 << 1,
+    IsLoop = 1 << 2,
 }
 
 /// <summary>
@@ -110,7 +115,6 @@ public enum InstructionFlags : byte
 public readonly record struct Instruction(InstructionType Type, InstructionFlags Flags = InstructionFlags.None)
 {
     public bool AnyFlags(InstructionFlags flags) => (Flags & flags) != InstructionFlags.None;
-
     public bool AllFlags(InstructionFlags flags) => (Flags & flags) == flags;
 }
 
@@ -244,26 +248,11 @@ public class InstructionList : List<InstructionUnion>, IList<InstructionUnion>
 
     #region Find
 
-    public bool TryFind(Instruction instruction, out CodeAddress index)
+    public bool TryFind(InstructionType type, int depth, out CodeAddress index)
     {
         for (CodeAddress c = 0; c < Count; c += GetOffset(c))
         {
-            if (this[c].instruction == instruction)
-            {
-                index = c;
-                return true;
-            }
-        }
-
-        index = default;
-        return false;
-    }
-
-    public bool TryFind(Instruction instruction, int depth, out CodeAddress index)
-    {
-        for (CodeAddress c = 0; c < Count; c += GetOffset(c))
-        {
-            if (this[c].instruction.Type == instruction.Type && depth-- == 0)
+            if (this[c].instruction.Type == type && depth-- == 0)
             {
                 index = c;
                 return true;
