@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using static System.Math;
 
 namespace scripting.Interpretation;
 
@@ -67,7 +68,7 @@ public class Interpreter : IInterpreter
         IList<ParsedCallback> callbacks = syntactic.Callbacks;
         Debug.Assert(callbacks.Count > 0);
 
-        Callbacks = new(callbacks[0], addresses);
+        Callbacks = new(this, callbacks[0], addresses);
         foreach (ParsedCallback parsed in callbacks)
         {
             Callbacks.Add(parsed, addresses);
@@ -208,13 +209,13 @@ public class Interpreter : IInterpreter
                 stack.Push(Number.ZERO);
                 break;
             case InstructionType.LoadE:
-                stack.Push(Math.E);
+                stack.Push(E);
                 break;
             case InstructionType.LoadPi:
-                stack.Push(Math.PI);
+                stack.Push(PI);
                 break;
             case InstructionType.LoadTau:
-                stack.Push(Math.Tau);
+                stack.Push(Tau);
                 break;
             case InstructionType.LoadCapacity:
                 stack.Push(Constants.LUT_POINTS_CAPACITY);
@@ -235,10 +236,10 @@ public class Interpreter : IInterpreter
                 Fn2((y, x) => x % y);
                 break;
             case InstructionType.Pow:
-                Fn2((y, x) => Math.Pow(x, y));
+                Fn2((y, x) => Pow(x, y));
                 break;
             case InstructionType.Exp: // implicit first argument
-                Fn1(a => Math.Exp(a));
+                Fn1(a => Exp(a));
                 break;
             case InstructionType.Or:
                 Fn2((y, x) => x | y);
@@ -268,103 +269,103 @@ public class Interpreter : IInterpreter
                 stack.Push(!stack.Pop());
                 break;
             case InstructionType.Abs:
-                Fn1(a => Math.Abs(a));
+                Fn1(a => Abs(a));
                 break;
             case InstructionType.Sign:
-                Fn1(a => Math.Sign(a));
+                Fn1(a => Sign(a));
                 break;
             case InstructionType.CopySign:
-                Fn2((b, a) => Math.CopySign(a, b));
+                Fn2((b, a) => CopySign(a, b));
                 break;
             case InstructionType.Round:
-                Fn1(a => Math.Round(a));
+                Fn1(a => Round(a));
                 break;
             case InstructionType.Trunc:
-                Fn1(a => Math.Truncate(a));
+                Fn1(a => Truncate(a));
                 break;
             case InstructionType.Floor:
-                Fn1(a => Math.Floor(a));
+                Fn1(a => Floor(a));
                 break;
             case InstructionType.Ceil:
-                Fn1(a => Math.Ceiling(a));
+                Fn1(a => Ceiling(a));
                 break;
             case InstructionType.Clamp:
-                Fn3((c, b, a) => Math.Clamp(a, b, c));
+                Fn3((c, b, a) => Clamp(a, b, c));
                 break;
             case InstructionType.Min:
-                Fn2((b, a) => Math.Min(a, b));
+                Fn2((b, a) => Min(a, b));
                 break;
             case InstructionType.Max:
-                Fn2((b, a) => Math.Max(a, b));
+                Fn2((b, a) => Max(a, b));
                 break;
             case InstructionType.MinM:
-                Fn2((b, a) => Math.MinMagnitude(a, b));
+                Fn2((b, a) => MinMagnitude(a, b));
                 break;
             case InstructionType.MaxM:
-                Fn2((b, a) => Math.MaxMagnitude(a, b));
+                Fn2((b, a) => MaxMagnitude(a, b));
                 break;
             case InstructionType.Sqrt:
-                Fn1(a => Math.Sqrt(a));
+                Fn1(a => Sqrt(a));
                 break;
             case InstructionType.Cbrt:
-                Fn1(a => Math.Cbrt(a));
+                Fn1(a => Cbrt(a));
                 break;
             case InstructionType.Log:
-                Fn1(a => Math.Log(a));
+                Fn1(a => Log(a));
                 break;
             case InstructionType.Log2:
-                Fn1(a => Math.Log2(a));
+                Fn1(a => Log2(a));
                 break;
             case InstructionType.Log10:
-                Fn1(a => Math.Log10(a));
+                Fn1(a => Log10(a));
                 break;
             case InstructionType.LogB:
-                Fn2((b, a) => Math.Log(a, b));
+                Fn2((b, a) => Log(a, b));
                 break;
             case InstructionType.Sin:
-                Fn1(a => Math.Sin(a));
+                Fn1(a => Sin(a));
                 break;
             case InstructionType.Sinh:
-                Fn1(a => Math.Sinh(a));
+                Fn1(a => Sinh(a));
                 break;
             case InstructionType.Asin:
-                Fn1(a => Math.Asin(a));
+                Fn1(a => Asin(a));
                 break;
             case InstructionType.Asinh:
-                Fn1(a => Math.Asinh(a));
+                Fn1(a => Asinh(a));
                 break;
             case InstructionType.Cos:
-                Fn1(a => Math.Cos(a));
+                Fn1(a => Cos(a));
                 break;
             case InstructionType.Cosh:
-                Fn1(a => Math.Cosh(a));
+                Fn1(a => Cosh(a));
                 break;
             case InstructionType.Acos:
-                Fn1(a => Math.Acos(a));
+                Fn1(a => Acos(a));
                 break;
             case InstructionType.Acosh:
-                Fn1(a => Math.Acosh(a));
+                Fn1(a => Acosh(a));
                 break;
             case InstructionType.Tan:
-                Fn1(a => Math.Tan(a));
+                Fn1(a => Tan(a));
                 break;
             case InstructionType.Tanh:
-                Fn1(a => Math.Tanh(a));
+                Fn1(a => Tanh(a));
                 break;
             case InstructionType.Atan:
-                Fn1(a => Math.Atan(a));
+                Fn1(a => Atan(a));
                 break;
             case InstructionType.Atanh:
-                Fn1(a => Math.Atanh(a));
+                Fn1(a => Atanh(a));
                 break;
             case InstructionType.Atan2:
-                Fn2((b, a) => Math.Atan2(a, b));
+                Fn2((b, a) => Atan2(a, b));
                 break;
             case InstructionType.FusedMultiplyAdd:
-                Fn3((c, b, a) => Math.FusedMultiplyAdd(a, b, c));
+                Fn3((c, b, a) => FusedMultiplyAdd(a, b, c));
                 break;
             case InstructionType.ScaleB:
-                Fn2((b, a) => Math.ScaleB(a, (int)b)); // lol
+                Fn2((b, a) => ScaleB(a, (int)b)); // lol
                 break;
             default:
                 throw InterpreterError("Not an instruction!");

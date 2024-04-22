@@ -38,21 +38,23 @@ public class Calculation
 
 public partial class Callbacks
 {
+    private readonly IInterpreter interpreter;
     private readonly Dictionary<string, object> callbacks = [];
 
-    internal Callbacks(ParsedCallback calculation, IMemoryMap addresses)
+    internal Callbacks(IInterpreter interpreter, ParsedCallback calculation, IMemoryMap addresses)
     {
+        this.interpreter = interpreter;
         Calculation = new(new(calculation.Code, addresses));
     }
 
     public Calculation Calculation { get; }
 
-    public double Calculate(IInterpreter interpreter, double x)
+    public double Calculate(double x)
     {
         return Calculation.Calculate(interpreter, [x])[0];
     }
 
-    public double[] Calculate(IInterpreter interpreter, double[] xs)
+    public double[] Calculate(double[] xs)
     {
         return Calculation.Calculate(interpreter, xs);
     }
@@ -61,7 +63,9 @@ public partial class Callbacks
     {
         string name = parsed.Name;
         if (name == Calculation.NAME)
+        {
             return;
+        }
 
         callbacks.Add(name, CallbackFactory.CreateCallback(parsed, addresses));
     }

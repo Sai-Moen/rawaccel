@@ -86,7 +86,7 @@ public class PowerTest
         Callbacks callbacks = interpreter.Callbacks;
         for (int x = 1; x <= n; x++)
         {
-            Assert.AreEqual(Power(x), callbacks.Calculate(interpreter, x));
+            Assert.AreEqual(Power(x), callbacks.Calculate(x));
         }
     }
 }

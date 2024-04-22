@@ -63,7 +63,7 @@ public class LinearTest
         Callbacks callbacks = interpreter.Callbacks;
         for (int x = 1; x <= n; x++)
         {
-            Assert.AreEqual(Linear(x), callbacks.Calculate(interpreter, x));
+            Assert.AreEqual(Linear(x), callbacks.Calculate(x));
         }
     }
 }

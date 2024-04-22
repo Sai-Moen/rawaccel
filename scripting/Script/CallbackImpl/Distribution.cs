@@ -63,5 +63,17 @@ namespace scripting.Script
     public partial class Callbacks
     {
         Distribution? Distribution => Get(Distribution.NAME) as Distribution;
+
+        public double[] Distribute()
+        {
+            Distribution? distribution = Distribution;
+            if (distribution == null)
+            {
+                // could maybe throw here
+                return [];
+            }
+
+            return distribution.Distribute(interpreter);
+        }
     }
 }

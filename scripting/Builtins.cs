@@ -5,33 +5,33 @@
 /// </summary>
 public static class Builtins
 {
-	// for reference, could be used in a regression test idk
+    // for reference, could be used in a regression test idk
     public const string STATIC = "[]{}";
 
-	/// <summary>
-	/// Arc mode by SaiMoen.
-	/// </summary>
+    /// <summary>
+    /// Arc mode by SaiMoen.
+    /// </summary>
     public const string ARC =
-		"""
-		Arc mode by SaiMoen.
+        """
+        Arc mode by SaiMoen.
 
-		[
+        [
 
-			Input_Offset := 0  [0};
-			Limit        := 4  [0};
-			Midpoint     := 16 (0};
+            Input_Offset := 0  [0};
+            Limit        := 4  [0};
+            Midpoint     := 16 (0};
 
-		]
+        ]
 
-			pLimit := Limit - 1;
+            pLimit := Limit - 1;
 
-		{
+        {
 
-			if (x <= Input_Offset) { ret; }
+            if (x <= Input_Offset) { ret; }
 
-			x -= Input_Offset;
-			y += (pLimit / x) * (x - Midpoint * atan(x / Midpoint));
+            x -= Input_Offset;
+            y += (pLimit / x) * (x - Midpoint * atan(x / Midpoint));
 
-		}
-		""";
+        }
+        """;
 }

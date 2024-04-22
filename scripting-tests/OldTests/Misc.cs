@@ -19,7 +19,7 @@ public class Misc
         Stopwatch sw = Stopwatch.StartNew();
         for (int i = 0; i < cap; i++)
         {
-            ys[i] = callbacks.Calculate(interpreter, i);
+            ys[i] = callbacks.Calculate(i);
         }
         sw.Stop();
 

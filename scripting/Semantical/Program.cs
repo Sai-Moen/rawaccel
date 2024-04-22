@@ -94,15 +94,14 @@ public class Program
                         instructionList.Add(InstructionType.Jmp, conditionAddress);
                     }
 
-                    bool isElse = !marker.AnyFlags(InstructionFlags.IsConditional);
-                    if (isElse)
-                    {
-                        // a bit hacky, if we get new control flow, then this would (most likely) need a rewrite
-                        instructionList.Add(InstructionType.Not);
-                    }
+                    InstructionType jump =
+                        marker.AnyFlags(InstructionFlags.IsConditional) ? InstructionType.Jz : InstructionType.Jmp;
 
-                    CodeAddress jumpAddress = instructionList.Count - 1;
-                    instructionList.Replace(index, InstructionType.Jz, new(jumpAddress));
+                    int next = i + 1;
+                    bool elseIsNext = next < code.Count && code[next].Symbol == Tokens.BRANCH_ELSE;
+                    CodeAddress jumpAddress = instructionList.Count - 1 + (elseIsNext ? InstructionType.Jmp.Size() : 0);
+
+                    instructionList.Replace(index, jump, new(jumpAddress));
                     break;
                 case TokenType.Assignment:
                     InstructionType modify = OnAssignment(token);
