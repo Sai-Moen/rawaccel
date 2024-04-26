@@ -8,6 +8,10 @@ namespace userspace_backend.Model.EditableSettings
 {
     public interface IEditableSetting
     {
-        public bool HasChanged();
+        string EditedValueForDiplay { get; }
+
+        bool HasChanged();
+
+        bool TryParseAndSet(string input);
     }
 }

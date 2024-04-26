@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using userinterface.Models.Mouse;
 using userspace_backend;
+using userspace_backend.Model;
 
 namespace userinterface.ViewModels
 {
@@ -8,7 +10,8 @@ namespace userinterface.ViewModels
     {
         public MainWindowViewModel()
         {
-            BackEnd = new BackEnd();
+            // TODO: remove before release
+            BackEnd = Bootstrapper.CreateBootstrappingBackend();
             MouseWindow = new MouseWindow(this);
             ViewSelector = new ViewSelectorViewModel(BackEnd.Devices);
         }

@@ -12,18 +12,18 @@ namespace userinterface.ViewModels
     {
         public DeviceViewModel(DeviceModel deviceModel)
         {
-            NameField = new EditableFieldViewModel<string>("Name", deviceModel.Name);
-            HWIDField = new EditableFieldViewModel<string>("HWID", deviceModel.HardwareID);
-            DPIField = new EditableFieldViewModel<int>("DPI", deviceModel.DPI);
-            PollRateField = new EditableFieldViewModel<int>("PollRate", deviceModel.PollRate);
+            NameField = new EditableFieldViewModel("Name", deviceModel.Name);
+            HWIDField = new EditableFieldViewModel("HWID", deviceModel.HardwareID);
+            DPIField = new EditableFieldViewModel("DPI", deviceModel.DPI);
+            PollRateField = new EditableFieldViewModel("PollRate", deviceModel.PollRate);
         }
 
-        public EditableFieldViewModel<string> NameField { get; set; }
+        public EditableFieldViewModel NameField { get; set; }
 
-        public EditableFieldViewModel<string> HWIDField { get; set; }
+        public EditableFieldViewModel HWIDField { get; set; }
 
-        public EditableFieldViewModel<int> DPIField { get; set; }
+        public EditableFieldViewModel DPIField { get; set; }
 
-        public EditableFieldViewModel<int> PollRateField { get; set; }
+        public EditableFieldViewModel PollRateField { get; set; }
     }
 }

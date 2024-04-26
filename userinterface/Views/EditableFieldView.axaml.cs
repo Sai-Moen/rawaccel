@@ -1,4 +1,5 @@
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using System;
@@ -24,7 +25,7 @@ namespace userinterface.Views
         public void LostFocusHandler(object sender, RoutedEventArgs args)
         {
             var viewModel = (EditableFieldViewModel)this.DataContext;
-            viewModel.TakeValueTextAsNewValue();
+            viewModel?.TakeValueTextAsNewValue();
         }
 
         private void Binding(object? sender, Avalonia.Interactivity.RoutedEventArgs e)

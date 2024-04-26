@@ -6,7 +6,7 @@
              x:Class="userinterface.Views.EditableFieldView">
 
   <DockPanel HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-    <TextBlock Margin="5 0" 
+    <TextBlock Margin="5 0"
                Text="{Binding Name}"
                VerticalAlignment="Center"/>
     <TextBox Text="{Binding ValueText}" KeyDown="TextBox_KeyDown" LostFocus="LostFocusHandler"/>

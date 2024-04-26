@@ -11,11 +11,11 @@ using userspace_backend.Model.EditableSettings;
 
 namespace userinterface.ViewModels
 {
-    public class EditableFieldViewModel<T> : ViewModelBase where T : IEquatable<T>
+    public class EditableFieldViewModel : ViewModelBase
     {
         private string _name;
 
-        public EditableFieldViewModel(string name, EditableSetting<T> editableSetting)
+        public EditableFieldViewModel(string name, IEditableSetting editableSetting)
         {
             _name = name;
             EditableSetting = editableSetting;
@@ -26,7 +26,7 @@ namespace userinterface.ViewModels
 
         public string ValueText { get; set; }
 
-        public EditableSetting<T> EditableSetting { get; }
+        public IEditableSetting EditableSetting { get; }
  
         public void TakeValueTextAsNewValue()
         {
@@ -40,7 +40,7 @@ namespace userinterface.ViewModels
 
         protected void SetValueTextFromEditableSetting()
         {
-            ValueText = EditableSetting.EditableValue?.ToString() ?? string.Empty;
+            ValueText = EditableSetting.EditedValueForDiplay;
         }
     }
 }
