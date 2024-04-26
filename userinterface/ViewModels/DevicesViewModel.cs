@@ -4,19 +4,15 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using userspace_backend.Model;
 
 namespace userinterface.ViewModels
 {
     public class DevicesViewModel : ViewModelBase
     {
-        public DevicesViewModel()
+        public DevicesViewModel(IEnumerable<DeviceModel> deviceModels)
         {
-            Devices = new ObservableCollection<DeviceViewModel>
-            {
-                new DeviceViewModel("mouse1", "hwID1", 12000, 2000),
-                new DeviceViewModel("mouse2", "hwID2", 12000, 2000),
-                new DeviceViewModel("mouse3", "hwID3", 1600, 500),
-            };
+            Devices = new ObservableCollection<DeviceViewModel>(deviceModels.Select(deviceModel => new DeviceViewModel(deviceModel)));
         }
 
         public ObservableCollection<DeviceViewModel> Devices { get; }

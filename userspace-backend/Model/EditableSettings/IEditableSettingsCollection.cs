@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace userspace_backend.Model
+namespace userspace_backend.Model.EditableSettings
 {
     public interface IEditableSettingsCollection
     {

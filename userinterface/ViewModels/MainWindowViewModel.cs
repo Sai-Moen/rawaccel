@@ -10,7 +10,7 @@ namespace userinterface.ViewModels
         {
             BackEnd = new BackEnd();
             MouseWindow = new MouseWindow(this);
-            ViewSelector = new ViewSelectorViewModel();
+            ViewSelector = new ViewSelectorViewModel(BackEnd.Devices);
         }
 
         public ProfilesViewModel Profiles { get; }

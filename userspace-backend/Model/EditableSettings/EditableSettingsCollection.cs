@@ -1,12 +1,13 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 
-namespace userspace_backend.Model
+namespace userspace_backend.Model.EditableSettings
 {
     public abstract class EditableSettingsCollection<T> : IEditableSettingsCollection
     {
-        public EditableSettingsCollection()
+        public EditableSettingsCollection(T dataObject)
         {
+            InitEditableSettingsAndCollections(dataObject);
             EditableSettings = GetEditableSettings();
             EditableSettingsCollections = GetEditableSettingsCollections();
         }

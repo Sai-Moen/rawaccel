@@ -4,12 +4,13 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using userspace_backend.Data;
+using userspace_backend.Model.EditableSettings;
 
 namespace userspace_backend.Model
 {
     public class DeviceModel : EditableSettingsCollection<Device>
     {
-        public DeviceModel(Device device) : base()
+        public DeviceModel(Device device) : base(device)
         { }
 
         public EditableSetting<string> Name { get; protected set; }
@@ -32,10 +33,10 @@ namespace userspace_backend.Model
 
         protected override void InitEditableSettingsAndCollections(Device device)
         {
-            Name = new EditableSetting<string>(device.Name);
-            HardwareID = new EditableSetting<string>(device.HWID);
-            DPI = new EditableSetting<int>(device.DPI);
-            PollRate = new EditableSetting<int>(device.PollingRate);
+            Name = new EditableSetting<string>(device.Name, Parsers.StringParser);
+            HardwareID = new EditableSetting<string>(device.HWID, Parsers.StringParser);
+            DPI = new EditableSetting<int>(device.DPI, Parsers.IntParser);
+            PollRate = new EditableSetting<int>(device.PollingRate, Parsers.IntParser);
         }
 
         public override Device MapToData()
