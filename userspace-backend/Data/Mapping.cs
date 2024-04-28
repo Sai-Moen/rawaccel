@@ -1,14 +1,13 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Text.Json.Serialization;
 
 namespace userspace_backend.Data
 {
     public class Mapping
     {
+        [JsonRequired]
         public Dictionary<string, MappingGroups> ProfilesToGroups { get; set; }
 
         public override bool Equals(object? obj)

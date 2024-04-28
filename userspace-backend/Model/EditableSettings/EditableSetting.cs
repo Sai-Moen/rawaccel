@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace userspace_backend.Model.EditableSettings
 {
-    public class EditableSetting<T> : IEditableSetting where T : IEquatable<T>
+    public class EditableSetting<T> : IEditableSetting where T : IComparable
     {
         public EditableSetting(T initialValue, IParser<T> parser, Action setCallback = null)
         {
@@ -26,7 +26,7 @@ namespace userspace_backend.Model.EditableSettings
 
         private IParser<T> Parser { get; }
 
-        public bool HasChanged() => !EditableValue.Equals(LastKnownValue);
+        public bool HasChanged() => EditableValue.CompareTo(LastKnownValue) == 0;
 
         public bool TryParseAndSet(string input)
         {

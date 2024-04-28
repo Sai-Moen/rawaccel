@@ -136,6 +136,5 @@ namespace userspace_backend.IO.Serialization
         public override void Write(Utf8JsonWriter writer, Acceleration value, JsonSerializerOptions options)
         {
         }
-
     }
 }

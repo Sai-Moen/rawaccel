@@ -15,6 +15,8 @@ namespace userspace_backend.Model
         {
         }
 
+        public EditableSetting<AccelerationDefinitionType> DefinitionType { get; set; }
+
         protected Dictionary<AccelerationDefinitionType, EditableSettingsCollection<Acceleration>> Definitions { get; set; }
 
         protected AccelerationDefinitionType CurrentlyActiveDefinitionType { get; set; }
