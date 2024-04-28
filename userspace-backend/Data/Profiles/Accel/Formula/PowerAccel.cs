@@ -8,7 +8,7 @@ namespace userspace_backend.Data.Profiles.Accel.Formula
 {
     public class PowerAccel : FormulaAccel
     {
-        public override AccelFormulaType FormulaType => AccelFormulaType.Power;
+        public override AccelerationFormulaType FormulaType => AccelerationFormulaType.Power;
 
         public double Scale { get; set; }
 

@@ -8,7 +8,7 @@ namespace userspace_backend.Model.EditableSettings
 {
     public class EditableSetting<T> : IEditableSetting where T : IComparable
     {
-        public EditableSetting(T initialValue, IParser<T> parser, Action setCallback = null)
+        public EditableSetting(T initialValue, IUserInputParser<T> parser, Action setCallback = null)
         {
             EditableValue = initialValue;
             LastKnownValue = initialValue;
@@ -24,7 +24,7 @@ namespace userspace_backend.Model.EditableSettings
 
         protected Action SetCallback { get; }
 
-        private IParser<T> Parser { get; }
+        private IUserInputParser<T> Parser { get; }
 
         public bool HasChanged() => EditableValue.CompareTo(LastKnownValue) == 0;
 

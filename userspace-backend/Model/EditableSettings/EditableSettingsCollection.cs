@@ -8,20 +8,20 @@ namespace userspace_backend.Model.EditableSettings
         public EditableSettingsCollection(T dataObject)
         {
             InitEditableSettingsAndCollections(dataObject);
-            EditableSettings = GetEditableSettings();
-            EditableSettingsCollections = GetEditableSettingsCollections();
+            GatherEditableSettings();
+            GatherEditableSettingsCollections();
         }
 
-        public IEnumerable<IEditableSetting> EditableSettings { get; set; }
+        public IEnumerable<IEditableSetting> AllContainedEditableSettings { get; set; }
 
-        public IEnumerable<IEditableSettingsCollection> EditableSettingsCollections { get; set; }
+        public IEnumerable<IEditableSettingsCollection> AllContainedEditableSettingsCollections { get; set; }
 
         public bool HasChanged { get; protected set; }
 
         public void EvaluateWhetherHasChanged()
         {
-            if (EditableSettings.Any(s => s.HasChanged()) ||
-                EditableSettingsCollections.Any(c => c.HasChanged))
+            if (AllContainedEditableSettings.Any(s => s.HasChanged()) ||
+                AllContainedEditableSettingsCollections.Any(c => c.HasChanged))
             {
                 HasChanged = true;
             }
@@ -31,11 +31,20 @@ namespace userspace_backend.Model.EditableSettings
             }
         }
 
+        public void GatherEditableSettings()
+        {
+            AllContainedEditableSettings = EnumerateEditableSettings();
+        }
+        public void GatherEditableSettingsCollections()
+        {
+            AllContainedEditableSettingsCollections = EnumerateEditableSettingsCollections();
+        }
+
         protected abstract void InitEditableSettingsAndCollections(T dataObject);
 
-        protected abstract IEnumerable<IEditableSetting> GetEditableSettings();
+        protected abstract IEnumerable<IEditableSetting> EnumerateEditableSettings();
 
-        protected abstract IEnumerable<IEditableSettingsCollection> GetEditableSettingsCollections();
+        protected abstract IEnumerable<IEditableSettingsCollection> EnumerateEditableSettingsCollections();
 
         public abstract T MapToData();
     }

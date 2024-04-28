@@ -1,9 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using userspace_backend.Data.Profiles;
+using userspace_backend.Data.Profiles.Accel;
+using userspace_backend.Model.AccelDefinitions;
 using userspace_backend.Model.EditableSettings;
 using static userspace_backend.Data.Profiles.Acceleration;
 
@@ -17,28 +16,49 @@ namespace userspace_backend.Model
 
         public EditableSetting<AccelerationDefinitionType> DefinitionType { get; set; }
 
-        protected Dictionary<AccelerationDefinitionType, EditableSettingsCollection<Acceleration>> Definitions { get; set; }
-
-        protected AccelerationDefinitionType CurrentlyActiveDefinitionType { get; set; }
+        protected Dictionary<AccelerationDefinitionType, IAccelDefinitionModel> DefinitionModels { get; set; }
 
         public override Acceleration MapToData()
         {
-            throw new NotImplementedException();
+            return DefinitionModels[DefinitionType.EditableValue].MapToData();
         }
 
-        protected override IEnumerable<IEditableSetting> GetEditableSettings()
+        protected override IEnumerable<IEditableSetting> EnumerateEditableSettings()
         {
-            throw new NotImplementedException();
+            return [ DefinitionType ];
         }
 
-        protected override IEnumerable<IEditableSettingsCollection> GetEditableSettingsCollections()
+        protected override IEnumerable<IEditableSettingsCollection> EnumerateEditableSettingsCollections()
         {
-            throw new NotImplementedException();
+            return [ DefinitionModels[DefinitionType.EditableValue] ];
         }
 
         protected override void InitEditableSettingsAndCollections(Acceleration dataObject)
         {
-            Definitions = new Dictionary<AccelerationDefinitionType, EditableSettingsCollection<Acceleration>>();
+            DefinitionType = new EditableSetting<AccelerationDefinitionType>(
+                dataObject.Type,
+                UserInputParsers.AccelerationDefinitionTypeParser,
+                // When the definition type changes, contained editable settings collections need to correspond to new type
+                GatherEditableSettingsCollections);
+
+            DefinitionModels = new Dictionary<AccelerationDefinitionType, IAccelDefinitionModel>();
+            foreach (AccelerationDefinitionType defnType in Enum.GetValues(typeof(AccelerationDefinitionType)))
+            {
+                DefinitionModels.Add(defnType, CreateAccelerationDefinitionModelOfType(defnType, dataObject));
+            }
+        }
+
+        protected IAccelDefinitionModel CreateAccelerationDefinitionModelOfType(AccelerationDefinitionType definitionType, Acceleration dataObject)
+        {
+            switch (definitionType)
+            {
+                case AccelerationDefinitionType.Formula:
+                case AccelerationDefinitionType.LookupTable:
+                    return new LookupTableDefinitionModel(dataObject);
+                case AccelerationDefinitionType.None:
+                default:
+                    return new NoAccelDefinitionModel(dataObject);
+            }
         }
     }
 }

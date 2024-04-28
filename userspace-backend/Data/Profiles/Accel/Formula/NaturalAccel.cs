@@ -8,7 +8,7 @@ namespace userspace_backend.Data.Profiles.Accel.Formula
 {
     public class NaturalAccel : FormulaAccel
     {
-        public override AccelFormulaType FormulaType => AccelFormulaType.Natural;
+        public override AccelerationFormulaType FormulaType => AccelerationFormulaType.Natural;
 
         public double DecayRate { get; set; }
 

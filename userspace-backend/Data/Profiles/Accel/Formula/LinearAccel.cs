@@ -8,7 +8,7 @@ namespace userspace_backend.Data.Profiles.Accel.Formula
 {
     public class LinearAccel : FormulaAccel
     {
-        public override AccelFormulaType FormulaType => AccelFormulaType.Linear;
+        public override AccelerationFormulaType FormulaType => AccelerationFormulaType.Linear;
 
         public double Acceleration { get; set; }
     }

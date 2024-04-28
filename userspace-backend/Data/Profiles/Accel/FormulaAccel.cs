@@ -8,7 +8,7 @@ namespace userspace_backend.Data.Profiles.Accel
 {
     public class FormulaAccel : Acceleration
     {
-        public enum AccelFormulaType
+        public enum AccelerationFormulaType
         {
             Linear,
             Classic,
@@ -19,7 +19,7 @@ namespace userspace_backend.Data.Profiles.Accel
 
         public override AccelerationDefinitionType Type { get => AccelerationDefinitionType.Formula; }
 
-        public virtual AccelFormulaType FormulaType { get; }
+        public virtual AccelerationFormulaType FormulaType { get; }
 
         public bool Gain { get; set; }
     }

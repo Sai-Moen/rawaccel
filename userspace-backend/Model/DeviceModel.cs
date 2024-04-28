@@ -21,22 +21,22 @@ namespace userspace_backend.Model
 
         public EditableSetting<int> PollRate { get; protected set; }
 
-        protected override IEnumerable<IEditableSetting> GetEditableSettings()
+        protected override IEnumerable<IEditableSetting> EnumerateEditableSettings()
         {
             return [Name, HardwareID, DPI, PollRate];
         }
 
-        protected override IEnumerable<IEditableSettingsCollection> GetEditableSettingsCollections()
+        protected override IEnumerable<IEditableSettingsCollection> EnumerateEditableSettingsCollections()
         {
             return Enumerable.Empty<IEditableSettingsCollection>();
         }
 
         protected override void InitEditableSettingsAndCollections(Device device)
         {
-            Name = new EditableSetting<string>(device.Name, Parsers.StringParser);
-            HardwareID = new EditableSetting<string>(device.HWID, Parsers.StringParser);
-            DPI = new EditableSetting<int>(device.DPI, Parsers.IntParser);
-            PollRate = new EditableSetting<int>(device.PollingRate, Parsers.IntParser);
+            Name = new EditableSetting<string>(device.Name, UserInputParsers.StringParser);
+            HardwareID = new EditableSetting<string>(device.HWID, UserInputParsers.StringParser);
+            DPI = new EditableSetting<int>(device.DPI, UserInputParsers.IntParser);
+            PollRate = new EditableSetting<int>(device.PollingRate, UserInputParsers.IntParser);
         }
 
         public override Device MapToData()

@@ -111,25 +111,25 @@ namespace userspace_backend.IO.Serialization
                 throw new JsonException("Formula/[Type] must have a non-empty and non-null value.");
             }
 
-            AccelFormulaType formulaType = DetermineFormulaType(formulaTypeString);
+            AccelerationFormulaType formulaType = DetermineFormulaType(formulaTypeString);
 
             switch (formulaType)
             {
-                case AccelFormulaType.Linear:
+                case AccelerationFormulaType.Linear:
                     return JsonSerializer.Deserialize<LinearAccel>(ref readerFromStart);
-                case AccelFormulaType.Classic:
+                case AccelerationFormulaType.Classic:
                     return JsonSerializer.Deserialize<ClassicAccel>(ref readerFromStart);
                 default:
                     throw new JsonException($"Unknown formula type {formulaTypeString}");
             }
         }
 
-        private static AccelFormulaType DetermineFormulaType(string formulaTypeFromJson)
+        private static AccelerationFormulaType DetermineFormulaType(string formulaTypeFromJson)
         {
-            if (!Enum.TryParse(formulaTypeFromJson, ignoreCase: true, out AccelFormulaType result))
+            if (!Enum.TryParse(formulaTypeFromJson, ignoreCase: true, out AccelerationFormulaType result))
             {
                 throw new JsonException($"Acceleration formula type [\"{formulaTypeFromJson}\"] not valid." +
-                    $"Valid values: [{string.Join(", ", Enum.GetNames(typeof(AccelFormulaType)))}");
+                    $"Valid values: [{string.Join(", ", Enum.GetNames(typeof(AccelerationFormulaType)))}");
             }
 
             return result;
