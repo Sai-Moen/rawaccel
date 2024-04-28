@@ -8,6 +8,16 @@ namespace userspace_backend.Data.Profiles.Accel
 {
     public class LookupTableAccel : Acceleration
     {
-        public override AccelerationDefinitionType Type { get => AccelerationDefinitionType.None; }
+        public enum LookupTableType
+        {
+            Velocity = 0,
+            Sensitivity = 1,
+        }
+
+        public override AccelerationDefinitionType Type { get => AccelerationDefinitionType.LookupTable; }
+
+        public LookupTableType ApplyAs { get; set; }
+
+        public double[] Data { get; set; }
     }
 }

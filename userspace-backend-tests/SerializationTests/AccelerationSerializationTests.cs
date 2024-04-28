@@ -1,5 +1,6 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -7,8 +8,10 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using userspace_backend.Data.Profiles;
+using userspace_backend.Data.Profiles.Accel;
 using userspace_backend.Data.Profiles.Accel.Formula;
 using userspace_backend.IO.Serialization;
+using static userspace_backend.Data.Profiles.Accel.LookupTableAccel;
 
 namespace userspace_backend_tests.SerializationTests
 {
@@ -76,6 +79,47 @@ namespace userspace_backend_tests.SerializationTests
             var actualLinearAccel = deserializedText.Acceleration as LinearAccel;
             Assert.IsNotNull(actualLinearAccel);
             Assert.AreEqual(0.001, actualLinearAccel.Acceleration);
+        }
+
+        [TestMethod]
+        public void DeserializeLookupTableVelocity()
+        {
+            string textToDeserialize = """
+                {
+                    "Acceleration": {
+                        "Type": "LookupTable",
+                        "ApplyAs": 0,
+                        "Data": [
+                            1.505035,
+                            0.85549892,
+                            4.375,
+                            3.30972978,
+                            13.51,
+                            15.17478447,
+                            140,
+                            354.7026875
+                        ]
+                    }
+                }
+                """;
+
+            double[] expectedData = [
+                1.505035,
+                0.85549892,
+                4.375,
+                3.30972978,
+                13.51,
+                15.17478447,
+                140,
+                354.7026875,
+            ];
+
+            var deserializedText = JsonSerializer.Deserialize<AccelerationOnlyObject>(textToDeserialize);
+            Assert.AreEqual(Acceleration.AccelerationDefinitionType.LookupTable, deserializedText.Acceleration.Type);
+            var actualLookupTableAccel = deserializedText.Acceleration as LookupTableAccel;
+            Assert.IsNotNull(actualLookupTableAccel);
+            Assert.AreEqual(LookupTableType.Velocity, actualLookupTableAccel.ApplyAs);
+            CollectionAssert.AreEqual(expectedData, actualLookupTableAccel.Data, StructuralComparisons.StructuralComparer);
         }
     }
 }

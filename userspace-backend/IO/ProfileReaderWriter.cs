@@ -1,9 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Text.Json;
-using System.Threading.Tasks;
+﻿using System.Text.Json;
+using System.Text.Json.Serialization;
 using userspace_backend.Data;
 
 namespace userspace_backend.IO
@@ -13,6 +9,7 @@ namespace userspace_backend.IO
         public static JsonSerializerOptions JsonOptions = new JsonSerializerOptions
         {
             WriteIndented = true,
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
         };
 
         protected override string FileType => "Profile";

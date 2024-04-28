@@ -89,6 +89,8 @@ namespace userspace_backend.IO.Serialization
             {
                 case AccelerationDefinitionType.Formula:
                     return CreateFormulaAccel(defnSplit, ref readerFromStart);
+                case AccelerationDefinitionType.LookupTable:
+                    return CreateLookupTableAccel(ref readerFromStart);
                 case AccelerationDefinitionType.None:
                 default:
                     return new NoAcceleration();
@@ -131,6 +133,11 @@ namespace userspace_backend.IO.Serialization
             }
 
             return result;
+        }
+
+        private static LookupTableAccel CreateLookupTableAccel(ref Utf8JsonReader readerFromStart)
+        {
+            return JsonSerializer.Deserialize<LookupTableAccel>(ref readerFromStart);
         }
 
         public override void Write(Utf8JsonWriter writer, Acceleration value, JsonSerializerOptions options)
