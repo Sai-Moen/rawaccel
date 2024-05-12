@@ -53,6 +53,7 @@ namespace userspace_backend.Model
             switch (definitionType)
             {
                 case AccelerationDefinitionType.Formula:
+                    return new FormulaAccelModel(dataObject);
                 case AccelerationDefinitionType.LookupTable:
                     return new LookupTableDefinitionModel(dataObject);
                 case AccelerationDefinitionType.None:

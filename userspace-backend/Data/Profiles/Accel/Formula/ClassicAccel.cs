@@ -13,5 +13,9 @@ namespace userspace_backend.Data.Profiles.Accel.Formula
         public double Acceleration { get; set; }
 
         public double Exponent { get; set; }
+
+        public double Offset { get; set; }
+
+        public double Cap { get; set; }
     }
 }

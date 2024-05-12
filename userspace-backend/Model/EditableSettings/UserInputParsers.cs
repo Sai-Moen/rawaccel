@@ -17,6 +17,7 @@ namespace userspace_backend.Model.EditableSettings
         public static AccelerationDefinitionTypeParser AccelerationDefinitionTypeParser = new AccelerationDefinitionTypeParser();
         public static LookupTableTypeParser LookupTableTypeParser = new LookupTableTypeParser();
         public static LookupTableDataParser LookupTableDataParser = new LookupTableDataParser();
+        public static AccelerationFormulaTypeParser AccelerationFormulaTypeParser = new AccelerationFormulaTypeParser();
     }
 
     public interface IUserInputParser<T>
@@ -123,6 +124,20 @@ namespace userspace_backend.Model.EditableSettings
             }
 
             parsedValue = new LookupTableData();
+            return false;
+        }
+    }
+
+    public class AccelerationFormulaTypeParser : IUserInputParser<FormulaAccel.AccelerationFormulaType>
+    {
+        public bool TryParse(string input, out FormulaAccel.AccelerationFormulaType parsedValue)
+        {
+            if (Enum.TryParse(input, ignoreCase: true, out parsedValue))
+            {
+                return true;
+            }
+
+            parsedValue = default;
             return false;
         }
     }

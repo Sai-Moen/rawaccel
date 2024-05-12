@@ -14,6 +14,8 @@ namespace userspace_backend.Data.Profiles.Accel.Formula
 
         public double Exponent { get; set; }
 
-        public double InputOffset { get; set; }
+        public double OutputOffset { get; set; }
+
+        public double Cap { get; set; }
     }
 }
