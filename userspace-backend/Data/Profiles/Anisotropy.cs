@@ -12,6 +12,6 @@ namespace userspace_backend.Data.Profiles
 
         public Vector2 Range { get; set; }
 
-        public float LPNorm { get; set; }
+        public double LPNorm { get; set; }
     }
 }

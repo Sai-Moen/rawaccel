@@ -2,11 +2,10 @@
 using System.Collections.Generic;
 using userspace_backend.Data.Profiles;
 using userspace_backend.Data.Profiles.Accel;
-using userspace_backend.Model.AccelDefinitions;
 using userspace_backend.Model.EditableSettings;
 using static userspace_backend.Data.Profiles.Acceleration;
 
-namespace userspace_backend.Model
+namespace userspace_backend.Model.AccelDefinitions
 {
     public class AccelerationModel : EditableSettingsCollection<Acceleration>
     {
@@ -25,12 +24,12 @@ namespace userspace_backend.Model
 
         protected override IEnumerable<IEditableSetting> EnumerateEditableSettings()
         {
-            return [ DefinitionType ];
+            return [DefinitionType];
         }
 
         protected override IEnumerable<IEditableSettingsCollection> EnumerateEditableSettingsCollections()
         {
-            return [ DefinitionModels[DefinitionType.EditableValue] ];
+            return [DefinitionModels[DefinitionType.EditableValue]];
         }
 
         protected override void InitEditableSettingsAndCollections(Acceleration dataObject)
