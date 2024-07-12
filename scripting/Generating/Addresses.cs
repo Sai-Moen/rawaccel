@@ -1,8 +1,8 @@
-﻿using scripting.Interpretation;
+﻿using scripting.Interpreting;
 using scripting.Script;
 using System.Diagnostics;
 
-namespace scripting.Semantical;
+namespace scripting.Generating;
 
 /// <summary>
 /// Represents an address in the Interpreter's Heap Memory.

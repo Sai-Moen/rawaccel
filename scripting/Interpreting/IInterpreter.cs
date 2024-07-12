@@ -1,9 +1,9 @@
 ﻿using scripting.Common;
 using scripting.Script;
-using scripting.Semantical;
+using scripting.Generating;
 using System.Collections.Generic;
 
-namespace scripting.Interpretation;
+namespace scripting.Interpreting;
 
 /// <summary>
 /// Defines the API of a RawAccelScript interpreter.

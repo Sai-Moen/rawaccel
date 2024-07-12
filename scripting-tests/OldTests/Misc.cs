@@ -1,5 +1,5 @@
 ﻿using scripting;
-using scripting.Interpretation;
+using scripting.Interpreting;
 using scripting.Script;
 using System.Diagnostics;
 

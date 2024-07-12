@@ -1,14 +1,14 @@
 ﻿using scripting.Common;
 using scripting.Script;
-using scripting.Semantical;
-using scripting.Syntactical;
+using scripting.Generating;
+using scripting.Parsing;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using static System.Math;
 
-namespace scripting.Interpretation;
+namespace scripting.Interpreting;
 
 /// <summary>
 /// Executes Programs.
@@ -32,11 +32,13 @@ public class Interpreter : IInterpreter
     /// <summary>
     /// Initializes the script and its default settings.
     /// </summary>
-    /// <param name="syntactic">result of syntactic analysis</param>
+    /// <param name="syntactic">Result of syntactic analysis</param>
     /// <exception cref="InterpreterException"/>
     public Interpreter(ParsingResult syntactic)
     {
         Description = syntactic.Description;
+
+        Emitter emitter = new(addresses);
 
         Parameters parameters = syntactic.Parameters;
         int numParameters = parameters.Count;
@@ -44,11 +46,13 @@ public class Interpreter : IInterpreter
         Debug.Assert(numParameters <= Constants.MAX_PARAMETERS);
         for (int i = 0; i < numParameters; i++)
         {
+            Parameter parameter = parameters[i];
+
             MemoryAddress address = i;
-            addresses.Add(parameters[i].Name, address);
+            addresses.Add(parameter.Name, address);
         }
 
-        IList<Variable> variables = syntactic.Variables;
+        IList<ASTAssign> variables = syntactic.Variables;
         int numVariables = variables.Count;
         startup = new Program[numVariables];
 
@@ -59,10 +63,13 @@ public class Interpreter : IInterpreter
         Debug.Assert(numVariables <= Constants.MAX_VARIABLES);
         for (int i = 0; i < numVariables; i++)
         {
+            ASTAssign variable = variables[i];
+
             MemoryAddress address = Constants.MAX_PARAMETERS + i;
-            Variable variable = variables[i];
-            addresses.Add(variable.Name, address);
-            startup[i] = new(variable.Expr, addresses);
+            addresses.Add(variable.Identifier.Symbol, address);
+
+            ASTNode stmnt = new(ASTTag.Assign, new() { astAssign = variable });
+            startup[i] = emitter.Emit([stmnt]);
         }
 
         IList<ParsedCallback> callbacks = syntactic.Callbacks;
@@ -374,7 +381,7 @@ public class Interpreter : IInterpreter
         throw InterpreterError("Unreachable: program loop exited without returning!");
     }
 
-#endregion
+    #endregion
 
     private static InterpreterException InterpreterError(string error)
     {

@@ -1,5 +1,5 @@
-﻿using scripting.Lexical;
-using scripting.Syntactical;
+﻿using scripting.Lexing;
+using scripting.Parsing;
 using System.Collections.Generic;
 using System.Text;
 
@@ -14,7 +14,7 @@ public class ParserTest
         LexingResult input = lexer.Tokenize();
 
         Parser parser = new(input);
-        return parser.Parse().Callbacks[0].Code;
+        return parser.Parse().Callbacks[0].Code[0].Union.astAssign.Initializer;
     }
 
     [TestMethod]

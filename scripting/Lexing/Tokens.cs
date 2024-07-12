@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Diagnostics;
 
-namespace scripting.Lexical;
+namespace scripting.Lexing;
 
 /// <summary>
 /// Enumerates all possible Token types.
@@ -11,7 +11,8 @@ public enum TokenType
     Undefined, // Doesn't mean invalid right away, depends on if you expect a certain symbol
     Identifier, Number, Parameter, Variable,
     Input, Output, Return,
-    Constant, Bool, Branch, BranchEnd,
+    Constant, Bool,
+    If, Else, While,
     Terminator, ParenOpen, ParenClose,
     SquareOpen, SquareClose, CurlyOpen, CurlyClose,
     Assignment, Arithmetic, Comparison,
@@ -204,10 +205,9 @@ public static class Tokens
         new(TokenType.Bool, FALSE),
         new(TokenType.Bool, TRUE),
 
-        new(TokenType.Branch, BRANCH_IF),
-        new(TokenType.Branch, BRANCH_ELSE),
-        new(TokenType.Branch, BRANCH_WHILE),
-        new(TokenType.BranchEnd, BRANCH_END),
+        new(TokenType.If, BRANCH_IF),
+        new(TokenType.Else, BRANCH_ELSE),
+        new(TokenType.While, BRANCH_WHILE),
 
         new(TokenType.ArgumentSeparator, ARG_SEP),
         new(TokenType.Number, FPOINT),
@@ -324,18 +324,10 @@ public static class Tokens
     #region Extension Methods
 
     // only 'else' is not conditional at the moment
-    public static bool IsConditional(this Token token)
-    {
-        Debug.Assert(token.Type == TokenType.Branch);
-        return token.Symbol != BRANCH_ELSE;
-    }
+    public static bool IsConditional(this Token token) => token.Type == TokenType.If || token.Type == TokenType.While;
 
     // only 'while' is a loop at the moment
-    public static bool IsLoop(this Token token)
-    {
-        Debug.Assert(token.Type == TokenType.Branch);
-        return token.Symbol == BRANCH_WHILE;
-    }
+    public static bool IsLoop(this Token token) => token.Type == TokenType.While;
 
     #endregion
 }

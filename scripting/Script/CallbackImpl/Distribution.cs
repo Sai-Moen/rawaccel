@@ -1,8 +1,8 @@
 ﻿using scripting.Common;
-using scripting.Interpretation;
+using scripting.Interpreting;
 using scripting.Script.CallbackImpl;
-using scripting.Semantical;
-using scripting.Syntactical;
+using scripting.Generating;
+using scripting.Parsing;
 using System.Diagnostics;
 
 namespace scripting.Script.CallbackImpl
@@ -36,7 +36,8 @@ namespace scripting.Script.CallbackImpl
                         $"Distribution Callback only has an optional 'amount' argument, but {args.Count} were given.");
             }
 
-            program = new(parsed.Code, addresses);
+            Emitter emitter = new(addresses);
+            program = emitter.Emit(parsed.Code);
         }
 
         public double[] Distribute(IInterpreter interpreter)
@@ -62,12 +63,14 @@ namespace scripting.Script
 {
     public partial class Callbacks
     {
-        Distribution? Distribution => Get(Distribution.NAME) as Distribution;
+        internal Distribution? Distribution => Get(Distribution.NAME) as Distribution;
+
+        public bool HasDistribution => Distribution is not null;
 
         public double[] Distribute()
         {
             Distribution? distribution = Distribution;
-            if (distribution == null)
+            if (distribution is null)
             {
                 // could maybe throw here
                 return [];

@@ -1,5 +1,5 @@
 ﻿using scripting.Common;
-using scripting.Lexical;
+using scripting.Lexing;
 using System;
 using System.Diagnostics;
 using System.Globalization;

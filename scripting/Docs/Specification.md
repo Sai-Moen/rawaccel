@@ -52,7 +52,7 @@ Contains:
 
 Contains classes to Serialize/Deserialize with.
 
-### Lexical
+### Lexing
 
 Lexical Analysis namespace.
 Contains:
@@ -63,30 +63,32 @@ Contains:
 	- Produces a LexingResult object that contains the comments as a string and the tokens in lexical order.
 - Helper classes
 
-### Syntactical
+### Parsing
 
-Syntactic Analysis namespace.
+Syntactic Analysis + Semantic Analysis namespace.
 Contains:
 
 - IParser, the public API for parsing.
 - Parser
 	- Does syntactic analysis on a list of tokens (produced by the lexer).
-	- Produces a ParsingResult object that contains the script description, parameters, variables, the parsed list of tokens.
+	- Produces a ParsingResult object that contains the script description, parameters, variables, callback implementations.
 - Helper classes
 
-### Semantical
+### Generation
 
-Semantic Analysis namespace.
+Code Generation namespace.
 Contains:
 
+- Addresses, contains different types of addresses.
+- Emitter
+	- Generates code based on the AST and the tokens that make up its expressions.
+- IEmitter, the public API for generating/emitting code (including the Program class).
 - Instructions, contains instruction and memory data structures.
-- Program
-	- Transforms a list of tokens to an array of instructions that the Interpreter can then execute.
 - Helper classes
 
 ### Interpretation
 
-Interpreter namespace.
+Code Execution namespace.
 Contains:
 
 - IInterpreter, the public API for interpreting parsed scripts and controlling an interpreter.
@@ -126,14 +128,17 @@ because of it enabling 8-bit addresses, but is otherwise left to implementation 
 Variable declarations may also contain other variable declarations,
 but those declarations must come before this one.
 
-#### Calculation (4)
+#### Callbacks (4)
 
-Delimited by `{}`
+There is a mandatory callback:
+It is referred to as the Calculation callback, and it requires you to simply start a block (matching curly braces),
+without anything else before it.
 
 This section is where the calculation actually happens.
 A statement does not just have to be normal assignment, but can also be inline assignment,
 or a branch statement. A branch statement itself can contain multiple statements.
 It starts with a condition, that makes it jump past the block if the input is equal to 0.
+It can be either If-Else (conditional execution) or While (loop).
 Inline assignment performs a calculation with the expression after it and the old value of the variable,
 and assigns it to that variable.
 Parameters cannot be assigned to, only Input, Output and Variables.
@@ -142,6 +147,14 @@ Input variable 'x' will be selected externally, and then given to the Interprete
 At the same time, Output variable 'y' will be accumulating until the end of the Calculation block,
 It starts at 1, which means by default the smallest possible script "[]{}" will generate a static curve.
 After the Calculation block it will be returned to the caller of the aforementioned public method.
+
+There are also optional callbacks:
+
+Distribution, which controls how the x-values are distributed.
+It has a parameter for the number of points as well.
+Define it by writing `distribution(numpoints)` before a block, where numpoints is the number of LUT points.
+The input variable `x` will behave in a stateful way.
+If this is not implemented, a geometric sequence is used.
 
 ### Keywords
 
@@ -153,7 +166,7 @@ e pi tau      "Math Constants"
 capacity	  "LUT_POINTS_CAPACITY"
 
 if (c) { s }       "c means condition, s means statements"
-else { s }         "s means statements"
+else { s }         "optional, s means statements"
 
 while (c) { s }    "c means condition, s means statements"
 ```

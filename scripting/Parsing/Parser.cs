@@ -1,10 +1,10 @@
 ﻿using scripting.Common;
-using scripting.Lexical;
+using scripting.Lexing;
 using scripting.Script;
 using System.Collections.Generic;
 using System.Diagnostics;
 
-namespace scripting.Syntactical;
+namespace scripting.Parsing;
 
 /// <summary>
 /// Can parse a list of Tokens.
@@ -25,10 +25,13 @@ public class Parser : IParser
     private Token previousToken;
     private Token currentToken;
     private readonly ITokenList lexicalTokens;
+    
+    // keeps track of amount of recursion, could also consider using explicit stack
+    private int depth;
 
     private readonly string description;
     private readonly Parameters parameters = [];
-    private readonly List<Variable> variables = [];
+    private readonly List<ASTAssign> variables = [];
     private readonly Dictionary<string, ParsedCallback> callbacks = [];
 
     #endregion
@@ -93,12 +96,12 @@ public class Parser : IParser
         Debug.Assert(currentToken.Type != TokenType.CurlyOpen);
 
         // Calculation
-        TokenList syntacticTokens = [];
+        List<ASTNode> asts = [];
         while (currentToken.Type != TokenType.CurlyClose)
         {
-            syntacticTokens.AddRange(Statement());
+            asts.Add(Statement());
         }
-        callbacks.Add(Calculation.NAME, new(Calculation.NAME, [], syntacticTokens));
+        callbacks.Add(Calculation.NAME, new(Calculation.NAME, [], asts));
 
         if (currentIndex == maxIndex)
             return;
@@ -359,9 +362,7 @@ public class Parser : IParser
             throw ParserError($"Expected {Tokens.ASSIGN}");
         }
 
-        output.Add(eq);
-        output.Add(t);
-        variables.Add(new(t.Symbol, output));
+        variables.Add(new(t, eq, output));
     }
 
     #endregion
@@ -403,9 +404,10 @@ public class Parser : IParser
 
     #region Calculation
 
-    private TokenList Statement()
+    private ASTNode Statement()
     {
-        TokenList tokens = [];
+        ASTTag tag;
+        ASTUnion union;
 
         bool isAssignment =
             Accept(TokenType.Variable) ||
@@ -417,43 +419,76 @@ public class Parser : IParser
             Expect(TokenType.Assignment);
 
             Token assignment = previousToken;
-            tokens.AddRange(Expression(TokenType.Terminator));
-            tokens.Add(assignment);
-            tokens.Add(target);
+            TokenList initializer = Expression(TokenType.Terminator);
+
+            tag = ASTTag.Assign;
+            union = new ASTUnion()
+            {
+                astAssign = new ASTAssign(target, assignment, initializer)
+            };
         }
         else if (Accept(TokenType.Return))
         {
             Expect(TokenType.Terminator);
-        }
-        else if (Expect(TokenType.Branch))
-        {
-            Token branch = previousToken;
-
-            Expect(TokenType.ParenOpen);
-            tokens.AddRange(Expression(TokenType.ParenClose, TokenType.CurlyOpen));
-
-            AddStatements(tokens, branch);
-
-            Token maybeElse = currentToken;
-            if (branch.Symbol == Tokens.BRANCH_IF && maybeElse.Symbol == Tokens.BRANCH_ELSE)
+            tag = ASTTag.Return;
+            union = new ASTUnion()
             {
-                Expect(TokenType.Branch);
-                Expect(TokenType.CurlyOpen);
-                AddStatements(tokens, maybeElse);
+                astReturn = new ASTReturn()
+            };
+        }
+        else if (Accept(TokenType.If))
+        {
+            Expect(TokenType.ParenOpen);
+            TokenList condition = Expression(TokenType.ParenClose, TokenType.CurlyOpen);
+
+            List<ASTNode> ifBlock = CollectStatements();
+
+            List<ASTNode>? elseBlock = null;
+            if (Accept(TokenType.Else))
+            {
+                elseBlock = CollectStatements();
             }
+
+            tag = ASTTag.If;
+            union = new ASTUnion()
+            {
+                astIf = new ASTIf(condition, ifBlock, elseBlock)
+            };
+        }
+        else if (Accept(TokenType.While))
+        {
+            Expect(TokenType.ParenOpen);
+            TokenList condition = Expression(TokenType.ParenClose, TokenType.CurlyOpen);
+
+            List<ASTNode> whileBlock = CollectStatements();
+
+            tag = ASTTag.While;
+            union = new ASTUnion()
+            {
+                astWhile = new ASTWhile(condition, whileBlock)
+            };
+        }
+        else
+        {
+            throw ParserError("Expected statement, got: " + currentToken.Base);
         }
 
-        return tokens;
+        return new ASTNode(tag, union);
     }
 
-    private void AddStatements(TokenList tokens, Token token)
+    private List<ASTNode> CollectStatements()
     {
-        tokens.Add(token);
+        List<ASTNode> asts = [];
+        if (++depth > Constants.MAX_RECURSION_DEPTH)
+        {
+            throw ParserError("Exceeded Maximum Recursion Depth!");
+        }
 
-        do tokens.AddRange(Statement());
-        while (!Accept(TokenType.CurlyClose));
+        Expect(TokenType.CurlyOpen);
+        while (!Accept(TokenType.CurlyClose)) asts.Add(Statement());
 
-        tokens.Add(Tokens.GetReserved(Tokens.BRANCH_END, previousToken.Line));
+        --depth;
+        return asts;
     }
 
     private TokenList Expression(TokenType end, TokenType after = TokenType.Undefined)
@@ -472,13 +507,9 @@ public class Parser : IParser
 
             AdvanceToken();
             TokenType nextType = currentToken.Type;
-            bool afterIsNext = after == nextType;
-            if (currentType == end && (noAfter || afterIsNext))
+            bool nextIsExpected = noAfter || after == nextType;
+            if (currentType == end && nextIsExpected)
             {
-                if (afterIsNext)
-                {
-                    AdvanceToken();
-                }
                 break;
             }
 
@@ -613,11 +644,11 @@ public class Parser : IParser
         }
     }
 
-    private bool Expect(TokenType type)
+    private void Expect(TokenType type)
     {
         if (Accept(type))
         {
-            return true;
+            return;
         }
 
         throw ParserError("Unexpected token!");
@@ -649,13 +680,7 @@ public class Parser : IParser
             Expect(TokenType.ParenClose);
         }
 
-        TokenList code = [];
-        Expect(TokenType.CurlyOpen);
-        while (currentToken.Type != TokenType.CurlyClose)
-        {
-            code.AddRange(Statement());
-        }
-        Expect(TokenType.CurlyClose);
+        List<ASTNode> code = CollectStatements();
 
         return new(name, args, code);
     }

@@ -1,8 +1,8 @@
 ﻿using scripting.Common;
-using scripting.Interpretation;
+using scripting.Interpreting;
 using scripting.Script.CallbackImpl;
-using scripting.Semantical;
-using scripting.Syntactical;
+using scripting.Generating;
+using scripting.Parsing;
 using System.Collections.Generic;
 
 namespace scripting.Script;
@@ -44,7 +44,8 @@ public partial class Callbacks
     internal Callbacks(IInterpreter interpreter, ParsedCallback calculation, IMemoryMap addresses)
     {
         this.interpreter = interpreter;
-        Calculation = new(new(calculation.Code, addresses));
+        Emitter emitter = new(addresses);
+        Calculation = new(emitter.Emit(calculation.Code));
     }
 
     public Calculation Calculation { get; }
@@ -67,17 +68,14 @@ public partial class Callbacks
             return;
         }
 
-        callbacks.Add(name, CallbackFactory.CreateCallback(parsed, addresses));
+        callbacks.Add(name, CreateCallback(parsed, addresses));
     }
 
     private object? Get(string key)
     {
         return callbacks.TryGetValue(key, out var value) ? value : null;
     }
-}
 
-internal static class CallbackFactory
-{
     internal static object CreateCallback(ParsedCallback parsed, IMemoryMap addresses) => parsed.Name switch
     {
         Distribution.NAME => new Distribution(parsed, addresses),

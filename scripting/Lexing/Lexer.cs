@@ -2,7 +2,7 @@
 using System.Diagnostics;
 using System.Text;
 
-namespace scripting.Lexical;
+namespace scripting.Lexing;
 
 enum CharBufferState
 {

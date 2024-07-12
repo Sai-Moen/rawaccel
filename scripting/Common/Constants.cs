@@ -1,4 +1,4 @@
-﻿using scripting.Semantical;
+﻿using scripting.Generating;
 using System.Diagnostics;
 
 namespace scripting.Common;
@@ -16,6 +16,8 @@ public static class Constants
     public const int CAPACITY = MemoryAddress.CAPACITY;
     public const int MAX_PARAMETERS = 8;
     public const int MAX_VARIABLES = CAPACITY - MAX_PARAMETERS;
+
+    public const int MAX_RECURSION_DEPTH = 0x2000;
 
     static Constants()
     {

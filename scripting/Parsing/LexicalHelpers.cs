@@ -1,6 +1,6 @@
-﻿using scripting.Lexical;
+﻿using scripting.Lexing;
 
-namespace scripting.Syntactical;
+namespace scripting.Parsing;
 
 public static class LexicalHelpers
 {

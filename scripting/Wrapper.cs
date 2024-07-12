@@ -1,7 +1,7 @@
 ﻿using scripting.Common;
-using scripting.Interpretation;
-using scripting.Lexical;
-using scripting.Syntactical;
+using scripting.Interpreting;
+using scripting.Lexing;
+using scripting.Parsing;
 using System;
 using System.IO;
 
@@ -37,7 +37,7 @@ public static class Wrapper
     /// <exception cref="ScriptException"/>
     public static IInterpreter LoadScriptFromFile(string scriptPath)
     {
-        string script = ScriptLoader.ReadScript(scriptPath);
+        string script = File.ReadAllText(scriptPath);
         return LoadScript(script);
     }
 
@@ -53,49 +53,4 @@ public static class Wrapper
         int startIndex = name.IndexOf(nameof (Exception));
         return startIndex == -1 ? e.Message : $"[{name.Remove(startIndex)}] {e.Message}";
     }
-}
-
-/// <summary>
-/// Tries to load all the text in a script.
-/// </summary>
-public static class ScriptLoader
-{
-    public const int MAX_SCRIPT_LEN = 0xFFFF;
-
-    /// <summary>
-    /// Reads a script from the given path.
-    /// </summary>
-    /// <param name="scriptPath">the path</param>
-    /// <returns>all text from the path</returns>
-    /// <exception cref="LoaderException"/>
-    public static string ReadScript(string scriptPath)
-    {
-        FileInfo info = new(scriptPath);
-        if (!info.Exists)
-        {
-            throw new LoaderException("File not found!");
-        }
-        else if (info.Length > MAX_SCRIPT_LEN)
-        {
-            throw new LoaderException("File too long!");
-        }
-
-        try
-        {
-            return File.ReadAllText(scriptPath);
-        }
-        catch
-        {
-            // Could differentiate between certain exceptions,
-            // keep in mind that File.Exists already catches a decent amount.
-            throw new LoaderException("Cannot read script!");
-        }
-    }
-}
-
-/// <summary>
-/// Exception for errors with loading scripts.
-/// </summary>
-public sealed class LoaderException(string message) : ScriptException(message)
-{
 }

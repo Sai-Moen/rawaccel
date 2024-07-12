@@ -78,7 +78,7 @@ The section is ended with `]`.
 
 A maximum of 8 parameters can be declared,
 but it is recommended that you only expose very essential variables to the user.
-This usually results in 2-4 parameters for normal modes.
+This usually results in 2-5 parameters for normal modes.
 
 Important to note is that after the parameters section, when a parameter is used,
 it will be set to the value entered by the user, and the value 'assigned' to a parameter is only the default value.
@@ -108,7 +108,7 @@ If you want to signal that a variable has no meaningful intial value, you could 
 ### Calculation
 
 Finally, the calculation section is where we use these variables to calculate a LUT point.
-It starts with a `{`, and ends with a `}`, after which only whitespace is allowed.
+It starts with a `{`, and ends with a `}`, also known as a 'block'.
 
 The input speed is given by the built-in variable `x`, which is set by the application.
 The output speed is given by the built-in variable `y`, which is set to 1 upon entering the calculation section.
@@ -311,6 +311,18 @@ fma scaleb
 ## Other Features
 
 Comments: with a `#`, the remaining part of the line becomes a comment.
+
+Callbacks:
+After the Calculation section, more 'callbacks' can be defined.
+Although Calculation is a mandatory callback, there also exist optional callbacks.
+
+Distribution:
+A way to customize the distribution of points along the x-axis.
+Defined by writing `distribution(numpoints)` and then a block, where numpoints is the number of points that are defined.
+The number of points must be non-negative, and can be at most `capacity`.
+Inside the block, `x` will start at 0, but it will behave in a stateful manner.
+After each execution of the block, the new value of x will be saved to a list and used as the input value for the next execution.
+When this has been done `numpoints` amount of times, the list is full and will be used to run the Calculation block.
 
 ## Concluding Remarks
 

@@ -3,12 +3,12 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 
-namespace scripting.Semantical;
+namespace scripting.Generating;
 
 public enum InstructionType : byte
 {
     NoOp,
-    Start, End, // Helps with jumps not going out of bounds
+    Start, End, // Helps with jumps not going out of bounds (in an otherwise correct program)
     Return, // Early return 
 
     // TOS = Top Of Stack
@@ -22,7 +22,6 @@ public enum InstructionType : byte
     // Evaluates the TOS and jumps/skips to the next branch end marker if zero (Jz).
     // The jump itself can be unconditional (Jmp) instead, to implement loops (Jmp backwards).
     Jmp, Jz,
-    BranchMarker,
 
     // Constant,
     // Pushes a constant to the stack.
@@ -64,11 +63,6 @@ public enum InstructionType : byte
 /// </summary>
 public static class Instructions
 {
-    static Instructions()
-    {
-        Debug.Assert(InstructionType.Jz.Size() == InstructionType.BranchMarker.Size());
-    }
-
     public static byte Size(this InstructionType type) => type switch
     {
         InstructionType.Load => 2,
@@ -77,7 +71,6 @@ public static class Instructions
 
         InstructionType.Jz => 2,
         InstructionType.Jmp => 2,
-        InstructionType.BranchMarker => 2,
 
         _ => 1,
     };
@@ -206,89 +199,6 @@ public class InstructionList : List<InstructionUnion>, IList<InstructionUnion>
 
     #endregion
 
-    #region Insert
-
-    public void Insert(CodeAddress address, Instruction instruction)
-    {
-        Debug.Assert(instruction.Type.Size() == 1);
-
-        InstructionUnion unionI = new()
-        {
-            instruction = instruction
-        };
-        Insert(address, unionI);
-    }
-
-    public void Insert(CodeAddress address, InstructionType type)
-    {
-        Insert(address, new Instruction(type));
-    }
-
-    public void Insert(CodeAddress address, Instruction instruction, InstructionOperand operand)
-    {
-        Debug.Assert(instruction.Type.Size() == 2);
-
-        InstructionUnion unionI = new()
-        {
-            instruction = instruction
-        };
-        InstructionUnion unionO = new()
-        {
-            operand = operand
-        };
-        InsertRange(address, [unionI, unionO]);
-    }
-
-    public void Insert(CodeAddress address, InstructionType type, InstructionOperand operand)
-    {
-        Insert(address, new Instruction(type, InstructionFlags.Continuation), operand);
-    }
-
-    #endregion
-
-    #region Find
-
-    public bool TryFind(InstructionType type, int depth, out CodeAddress index)
-    {
-        for (CodeAddress c = 0; c < Count; c += GetOffset(c))
-        {
-            if (this[c].instruction.Type == type && depth-- == 0)
-            {
-                index = c;
-                return true;
-            }
-        }
-
-        index = default;
-        return false;
-    }
-
-    #endregion
-
-    #region Replace
-
-    public void Replace(CodeAddress instructionIndex, Instruction instruction, InstructionOperand operand)
-    {
-        CodeAddress operandIndex = instructionIndex + 1;
-        Debug.Assert(operandIndex < Count);
-
-        InstructionUnion instructionUnion = this[instructionIndex];
-        InstructionUnion operandUnion = this[operandIndex];
-
-        instructionUnion.instruction = instruction;
-        operandUnion.operand = operand;
-
-        this[instructionIndex] = instructionUnion;
-        this[operandIndex] = operandUnion;
-    }
-
-    public void Replace(CodeAddress instructionIndex, InstructionType type, InstructionOperand operand)
-    {
-        Replace(instructionIndex, new Instruction(type), operand);
-    }
-
-    #endregion
-
     #region Remove
 
     public void RemoveAt(CodeAddress address)
@@ -296,16 +206,28 @@ public class InstructionList : List<InstructionUnion>, IList<InstructionUnion>
         base.RemoveAt(address);
     }
 
-    public void RemoveRange(CodeAddress index, CodeAddress count)
-    {
-        base.RemoveRange(index, count);
-    }
-
     #endregion
 
     #region Helpers
 
-    private CodeAddress GetOffset(CodeAddress c) => this[c].instruction.Type.Size();
+    public void SetOperand(CodeAddress index, InstructionOperand value)
+    {
+        this[index] = new InstructionUnion()
+        {
+            operand = value
+        };
+    }
+
+    public void SetOperand(CodeAddress index, CodeAddress value)
+    {
+        SetOperand(index, new InstructionOperand(value));
+    }
+
+    public CodeAddress AddDefaultJump(Instruction jump)
+    {
+        Add(jump, new(new CodeAddress()));
+        return Count - 1; // index of jump target address
+    }
 
     #endregion
 }
