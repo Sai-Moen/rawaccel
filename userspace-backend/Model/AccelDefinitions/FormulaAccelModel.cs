@@ -65,8 +65,8 @@ namespace userspace_backend.Model.AccelDefinitions
         {
             switch (formulaType)
             {
-                case FormulaAccel.AccelerationFormulaType.Motivity:
-                    return new MotivityAccelerationDefinitionModel(dataObject);
+                case FormulaAccel.AccelerationFormulaType.Synchronous:
+                    return new SynchronousAccelerationDefinitionModel(dataObject);
                 case FormulaAccel.AccelerationFormulaType.Jump:
                     return new JumpAccelerationDefinitionModel(dataObject);
                 case FormulaAccel.AccelerationFormulaType.Power:

@@ -15,7 +15,7 @@ namespace userspace_backend.Data.Profiles.Accel
             Power,
             Natural,
             Jump,
-            Motivity,
+            Synchronous,
         }
 
         public override AccelerationDefinitionType Type { get => AccelerationDefinitionType.Formula; }
