@@ -96,8 +96,8 @@ namespace rawaccel {
 				error("scale"" must be positive");
 			}
 
-			if (args.growth_rate <= 0) {
-				error("growth rate"" must be positive");
+			if (args.gamma <= 0) {
+				error("gamma"" must be positive");
 			}
 
 			if (args.decay_rate <= 0) {
@@ -120,8 +120,8 @@ namespace rawaccel {
 				error("limit"" must be positive");
 			}
 
-			if (args.midpoint <= 0) {
-				error("midpoint"" must be positive");
+			if (args.sync_speed <= 0) {
+				error("synchronous speed"" must be positive");
 			}
 
 			if (args.smooth < 0 || args.smooth > 1) {
@@ -153,12 +153,12 @@ namespace rawaccel {
 			error("snap angle must be between 0 and 45 degrees");
 		}
 
-		if (args.sensitivity == 0) {
-			error("sens multiplier is 0");
+		if (args.output_dpi == 0) {
+			error("output DPI is 0");
 		}
 	
-		if (args.yx_sens_ratio == 0) {
-			error("Y/X sens ratio is 0");
+		if (args.yx_output_dpi_ratio == 0) {
+			error("Y/X output DPI ratio is 0");
 		}
 
 		if (args.domain_weights.x <= 0 ||
@@ -166,8 +166,8 @@ namespace rawaccel {
 			error("domain weights"" must be positive");
 		}
 
-		if (args.lr_sens_ratio <= 0 || args.ud_sens_ratio <= 0) {
-			error("sens ratio must be positive");
+		if (args.lr_output_dpi_ratio <= 0 || args.ud_output_dpi_ratio <= 0) {
+			error("output DPI ratio must be positive");
 		}
 
 		if (args.speed_processor_args.lp_norm <= 0) {

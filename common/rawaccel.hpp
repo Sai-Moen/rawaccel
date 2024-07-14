@@ -12,6 +12,7 @@ namespace rawaccel {
     struct device_config {
         bool disable = false;
         bool set_extra_info = false;
+        bool poll_time_lock = false;
         int dpi = 0;
         int polling_rate = 0;
         time_clamp clamp;
@@ -48,8 +49,8 @@ namespace rawaccel {
             apply_directional_weight = args.speed_processor_args.whole && 
                 args.range_weights.x != args.range_weights.y;
             compute_ref_angle = apply_snap || apply_directional_weight;
-            apply_dir_mul_x = args.lr_sens_ratio != 1;
-            apply_dir_mul_y = args.ud_sens_ratio != 1;
+            apply_dir_mul_x = args.lr_output_dpi_ratio != 1;
+            apply_dir_mul_y = args.ud_output_dpi_ratio != 1;
         }
 
         modifier_flags() = default;
@@ -83,7 +84,7 @@ namespace rawaccel {
 
             // adjust total based on coefficient and difference between new value and total
             windowTotal += timeAdjustedWindowCoefficient * (speed - windowTotal);
-            cutoffTotal += timeAdjustedWindowCoefficient * (speed - cutoffTotal);
+            cutoffTotal += timeAdjustedCutoffCoefficient * (speed - cutoffTotal);
 
             return min(windowTotal, cutoffTotal);
         }
@@ -408,24 +409,24 @@ namespace rawaccel {
                 }
             }
 
-            double dpi_adjusted_sens = args.sensitivity * dpi_factor;
-            in.x *= dpi_adjusted_sens;
-            in.y *= dpi_adjusted_sens * args.yx_sens_ratio;
+            double dpi_adjustment = output_dpi_adjustment_factor * dpi_factor;
+            in.x *= dpi_adjustment;
+            in.y *= dpi_adjustment * args.yx_output_dpi_ratio;
 
             if (flags.apply_dir_mul_x && in.x < 0) {
-                in.x *= args.lr_sens_ratio;
+                in.x *= args.lr_output_dpi_ratio;
             }
 
             if (flags.apply_dir_mul_y && in.y < 0) {
-                in.y *= args.ud_sens_ratio;
+                in.y *= args.ud_output_dpi_ratio;
             }
-
         }
 
         modifier(modifier_settings& settings)
         {
             set_callback(cb_x, settings.data.accel_x, settings.prof.accel_x);
             set_callback(cb_y, settings.data.accel_y, settings.prof.accel_y);
+            output_dpi_adjustment_factor = settings.prof.output_dpi / NORMALIZED_DPI;
         }
 
         modifier() = default;
@@ -452,6 +453,8 @@ namespace rawaccel {
 
         callback_t cb_x = &callback_template<accel_noaccel>;
         callback_t cb_y = &callback_template<accel_noaccel>;
+
+        double output_dpi_adjustment_factor = 1;
     };
 
 } // rawaccel

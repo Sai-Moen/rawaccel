@@ -37,7 +37,7 @@ public ref struct VersionHelper
 [JsonConverter(Converters::StringEnumConverter::typeid)]
 public enum class AccelMode
 {
-    classic, jump, natural, motivity, power, lut, noaccel
+    classic, jump, natural, synchronous, power, lut, noaccel
 };
 
 [JsonConverter(Converters::StringEnumConverter::typeid)]
@@ -68,13 +68,13 @@ public value struct AccelArgs
     double outputOffset;
     double acceleration;
     double decayRate;
-    double growthRate;
+    double gamma;
     double motivity;
     double exponentClassic;
     double scale;
     double exponentPower;
     double limit;
-    double midpoint;
+    double syncSpeed;
     double smooth;
 
     [JsonProperty("Cap / Jump")]
@@ -136,14 +136,14 @@ public ref struct Profile
     [JsonProperty("Input speed calculation parameters")]
     SpeedArgs inputSpeedArgs;
 
-    [JsonProperty("Sensitivity multiplier")]
-    double sensitivity;
-    [JsonProperty("Y/X sensitivity ratio (vertical sens multiplier)")]
-    double yxSensRatio;
-    [JsonProperty("L/R sensitivity ratio (left sens multiplier)")]
-    double lrSensRatio;
-    [JsonProperty("U/D sensitivity ratio (up sens multiplier)")]
-    double udSensRatio;
+    [JsonProperty("Output DPI")]
+    double outputDPI;
+    [JsonProperty("Y/X output DPI ratio (vertical sens multiplier)")]
+    double yxOutputDPIRatio;
+    [JsonProperty("L/R output DPI ratio (left sens multiplier)")]
+    double lrOutputDPIRatio;
+    [JsonProperty("U/D output DPI ratio (up sens multiplier)")]
+    double udOutputDPIRatio;
 
     [JsonProperty("Degrees of rotation")]
     double rotation;
@@ -175,7 +175,11 @@ public value struct DeviceConfig {
     [JsonProperty(Required = Required::Default)]
     bool setExtraInfo;
 
-    [JsonProperty("DPI (normalizes sens to 1000dpi and converts input speed unit: counts/ms -> in/s)")]
+    [MarshalAs(UnmanagedType::U1)]
+    [JsonProperty("Use constant time interval based on polling rate", Required = Required::Default)]
+    bool pollTimeLock;
+
+    [JsonProperty("DPI (normalizes input speed unit: counts/ms -> in/s)")]
     int dpi;
 
     [JsonProperty("Polling rate Hz (keep at 0 for automatic adjustment)")]
@@ -208,6 +212,7 @@ public value struct DeviceConfig {
     {
         disable = cfg.disable;
         setExtraInfo = cfg.set_extra_info;
+        pollTimeLock = cfg.poll_time_lock;
         dpi = cfg.dpi;
         pollingRate = cfg.polling_rate;
         minimumTime = cfg.clamp.min;
@@ -595,6 +600,7 @@ public:
         auto* base_data = reinterpret_cast<ra::io_base*>(byte_ptr);
         base_data->default_dev_cfg.disable = defaultDeviceConfig.disable;
         base_data->default_dev_cfg.set_extra_info = defaultDeviceConfig.setExtraInfo;
+        base_data->default_dev_cfg.poll_time_lock = defaultDeviceConfig.pollTimeLock;
         base_data->default_dev_cfg.dpi = defaultDeviceConfig.dpi;
         base_data->default_dev_cfg.polling_rate = defaultDeviceConfig.pollingRate;
         base_data->default_dev_cfg.clamp.min = defaultDeviceConfig.minimumTime;

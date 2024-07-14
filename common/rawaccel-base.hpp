@@ -9,7 +9,7 @@ namespace rawaccel {
     inline constexpr int POLL_RATE_MAX = 8000;
 
     inline constexpr milliseconds DEFAULT_TIME_MIN = 1000.0 / POLL_RATE_MAX / 2;
-    inline constexpr milliseconds DEFAULT_TIME_MAX = 1000.0 / POLL_RATE_MIN * 2;
+    inline constexpr milliseconds DEFAULT_TIME_MAX = 100;
 
     inline constexpr milliseconds WRITE_DELAY = 1000;
 
@@ -21,6 +21,9 @@ namespace rawaccel {
 
     inline constexpr double MAX_NORM = 16;
 
+    // At this DPI, one count per ms equals one inch per second.
+    inline constexpr double NORMALIZED_DPI = 1000;
+
     inline constexpr bool LEGACY = 0;
     inline constexpr bool GAIN = 1;
     
@@ -28,7 +31,7 @@ namespace rawaccel {
         classic,
         jump,
         natural,
-        motivity,
+        synchronous,
         power,
         lookup,
         noaccel
@@ -46,13 +49,13 @@ namespace rawaccel {
         double output_offset = 0;
         double acceleration = 0.005;
         double decay_rate = 0.1;
-        double growth_rate = 1;
+        double gamma = 1;
         double motivity = 1.5;
         double exponent_classic = 2;
         double scale = 1;
         double exponent_power = 0.05;
         double limit = 1.5;
-        double midpoint = 5;
+        double sync_speed = 5;
         double smooth = 0.5;
 
         vec2d cap = { 15, 1.5 };
@@ -71,7 +74,6 @@ namespace rawaccel {
         double output_speed_smooth_halflife = 0;
     };
 
-
     struct profile {
         wchar_t name[MAX_NAME_LEN] = L"default";
 
@@ -82,10 +84,10 @@ namespace rawaccel {
         accel_args accel_y;
         speed_args speed_processor_args;
 
-        double sensitivity = 1;
-        double yx_sens_ratio = 1;
-        double lr_sens_ratio = 1;
-        double ud_sens_ratio = 1;
+        double output_dpi = NORMALIZED_DPI;
+        double yx_output_dpi_ratio = 1;
+        double lr_output_dpi_ratio = 1;
+        double ud_output_dpi_ratio = 1;
 
         double degrees_rotation = 0;
 
@@ -94,6 +96,4 @@ namespace rawaccel {
         double speed_min = 0;
         double speed_max = 0;
     };
-
-
 }
