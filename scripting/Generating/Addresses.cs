@@ -7,19 +7,13 @@ namespace scripting.Generating;
 /// <summary>
 /// Represents an address in the Interpreter's Heap Memory.
 /// </summary>
-/// <param name="Address">Heap Memory address.</param>
+/// <param name="Address">Heap Memory address</param>
 public readonly record struct MemoryAddress(byte Address)
 {
-    #region Constants
-
     public const int SIZE = sizeof(byte);
 
     public const byte MAX_VALUE = byte.MaxValue;
     public const int CAPACITY = MAX_VALUE + 1;
-
-    #endregion
-
-    #region Operators
 
     public static implicit operator MemoryAddress(byte pointer)
     {
@@ -44,26 +38,18 @@ public readonly record struct MemoryAddress(byte Address)
     {
         return address.Address;
     }
-
-    #endregion
 }
 
 /// <summary>
 /// Represents an address of static program data.
 /// </summary>
-/// <param name="Address">Data address.</param>
+/// <param name="Address">Data address</param>
 public readonly record struct DataAddress(ushort Address)
 {
-    #region Constants
-
     public const int SIZE = sizeof(ushort);
 
     public const ushort MAX_VALUE = ushort.MaxValue;
     public const int CAPACITY = MAX_VALUE + 1;
-
-    #endregion
-
-    #region Operators
 
     public static implicit operator DataAddress(ushort pointer)
     {
@@ -88,26 +74,18 @@ public readonly record struct DataAddress(ushort Address)
     {
         return address.Address;
     }
-
-    #endregion
 }
 
 /// <summary>
 /// Represents an Instruction address in the Program in which it is present.
 /// </summary>
-/// <param name="Address">Instruction address.</param>
+/// <param name="Address">Instruction address</param>
 public readonly record struct CodeAddress(ushort Address)
 {
-    #region Constants
-
     public const int SIZE = sizeof(ushort);
 
     public const ushort MAX_VALUE = ushort.MaxValue;
     public const int CAPACITY = MAX_VALUE + 1;
-
-    #endregion
-
-    #region Operators
 
     public static implicit operator CodeAddress(ushort pointer)
     {
@@ -132,8 +110,6 @@ public readonly record struct CodeAddress(ushort Address)
     {
         return address.Address;
     }
-
-    #endregion
 }
 
 /// <summary>

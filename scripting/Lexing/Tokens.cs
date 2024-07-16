@@ -9,10 +9,9 @@ namespace scripting.Lexing;
 public enum TokenType
 {
     Undefined, // Doesn't mean invalid right away, depends on if you expect a certain symbol
-    Identifier, Number, Parameter, Variable,
-    Input, Output, Return,
-    Constant, Bool,
-    If, Else, While,
+    Number, Bool, Constant,
+    Identifier, Parameter, Variable, Input, Output,
+    Return, If, Else, While,
     Terminator, ParenOpen, ParenClose,
     SquareOpen, SquareClose, CurlyOpen, CurlyClose,
     Assignment, Arithmetic, Comparison,
@@ -22,15 +21,15 @@ public enum TokenType
 /// <summary>
 /// Holds the basic requirements for a Token.
 /// </summary>
-/// <param name="Type">Type of the Token.</param>
-/// <param name="Symbol">String representation of the Token.</param>
+/// <param name="Type">Type of the Token</param>
+/// <param name="Symbol">String representation of the Token</param>
 public record BaseToken(TokenType Type, string Symbol);
 
 /// <summary>
 /// Holds a BaseToken including some extra information.
 /// </summary>
-/// <param name="Base">The BaseToken.</param>
-/// <param name="Line">The line in the file where this came from. 0 means unknown.</param>
+/// <param name="Base">The BaseToken</param>
+/// <param name="Line">The line in the file where this came from, 0 means unknown</param>
 public record Token(BaseToken Base, uint Line = 0)
 {
     public TokenType Type => Base.Type;
@@ -186,6 +185,8 @@ public static class Tokens
 
     #region Fields
 
+    private static readonly Dictionary<string, Token> reservedMap;
+
     private static readonly BaseToken[] ReservedArray =
     [
         // Special untyped 'characters' that show up sometimes
@@ -290,21 +291,19 @@ public static class Tokens
         new(TokenType.Function, SCALE_B),
     ];
 
-    private static Dictionary<string, Token> ReservedMap { get; }
-
     #endregion
 
     #region Constructors
 
     static Tokens()
     {
-        ReservedMap = new(ReservedArray.Length);
+        reservedMap = new(ReservedArray.Length);
         foreach (BaseToken baseToken in ReservedArray)
         {
-            ReservedMap.Add(baseToken.Symbol, new(baseToken));
+            reservedMap.Add(baseToken.Symbol, new(baseToken));
         }
 
-        Debug.Assert(ReservedMap.Count == ReservedArray.Length);
+        Debug.Assert(reservedMap.Count == ReservedArray.Length);
     }
 
     #endregion
@@ -314,20 +313,10 @@ public static class Tokens
     public static string Normalize(string s) => s.Replace(UNDER, SPACE);
 
     public static bool IsReserved(char c) => IsReserved(c.ToString());
-    public static bool IsReserved(string symbol) => ReservedMap.ContainsKey(symbol);
+    public static bool IsReserved(string symbol) => reservedMap.ContainsKey(symbol);
 
-    public static Token GetReserved(string symbol) => ReservedMap[symbol];
-    public static Token GetReserved(string symbol, uint line) => ReservedMap[symbol] with { Line = line };
-
-    #endregion
-
-    #region Extension Methods
-
-    // only 'else' is not conditional at the moment
-    public static bool IsConditional(this Token token) => token.Type == TokenType.If || token.Type == TokenType.While;
-
-    // only 'while' is a loop at the moment
-    public static bool IsLoop(this Token token) => token.Type == TokenType.While;
+    public static Token GetReserved(string symbol) => reservedMap[symbol];
+    public static Token GetReserved(string symbol, uint line) => reservedMap[symbol] with { Line = line };
 
     #endregion
 }

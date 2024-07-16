@@ -27,6 +27,7 @@ public interface IInterpreter
 
     /// <summary>
     /// An object to access any callbacks defined by the script.
+    /// The methods that it exposes will automatically call Init and Stabilize when needed.
     /// </summary>
     Callbacks Callbacks { get; }
 
@@ -49,22 +50,21 @@ public interface IInterpreter
     /// <summary>
     /// Stabilizes after running a program s.t. it returns to the state after Init was called most recently.
     /// </summary>
-    /// <param name="resetY">whether to reset Y to 1</param>
-    void Stabilize(bool resetY = false);
+    void Stabilize();
 
     /// <summary>
     /// Executes a program with the interpreter's own stack. Clears stack after use.
     /// </summary>
-    /// <param name="program">the program</param>
-    /// <returns>the remainder of the stack as an array</returns>
+    /// <param name="program">The program</param>
+    /// <returns>The remainder of the stack as an array</returns>
     Number[] ExecuteProgram(Program program);
 
     /// <summary>
     /// Executes a program with the given stack. Clears stack after use.
     /// </summary>
-    /// <param name="program">the program</param>
-    /// <param name="stack">the stack</param>
-    /// <returns>the remainder of the stack as an array</returns>
+    /// <param name="program">The program</param>
+    /// <param name="stack">The stack</param>
+    /// <returns>The remainder of the stack as an array</returns>
     Number[] ExecuteProgram(Program program, Stack<Number> stack);
 }
 

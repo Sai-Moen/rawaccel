@@ -111,7 +111,7 @@ public class Interpreter : IInterpreter
             // most cache-friendly operation
             stable[addresses[parameter.Name]] = parameter.Value;
         }
-        Stabilize(true);
+        Stabilize();
 
         foreach (Program program in startup)
         {
@@ -121,10 +121,10 @@ public class Interpreter : IInterpreter
         stable.CopyFrom(unstable);
     }
 
-    public void Stabilize(bool resetY = false)
+    public void Stabilize()
     {
         unstable.CopyFrom(stable);
-        if (resetY) Y = Number.DEFAULT_Y;
+        Y = Number.DEFAULT_Y;
     }
 
     public Number[] ExecuteProgram(Program program)

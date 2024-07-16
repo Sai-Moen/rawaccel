@@ -4,7 +4,10 @@ using System.Text;
 
 namespace scripting.Lexing;
 
-enum CharBufferState
+/// <summary>
+/// State of the character buffer.
+/// </summary>
+internal enum CharBufferState
 {
     Idle,
     CommentLine,
@@ -41,7 +44,7 @@ public class Lexer : ILexer
     /// <summary>
     /// Processes and tokenizes the input script.
     /// </summary>
-    /// <param name="script">The input script.</param>
+    /// <param name="script">The input script</param>
     public Lexer(string script)
     {
         characters = script.ToCharArray();
@@ -94,7 +97,7 @@ public class Lexer : ILexer
 
     private void TokenizeScript()
     {
-        if (!CmpCharStr(characters[currentIndex + 1], Tokens.SQUARE_OPEN))
+        if (currentIndex == maxIndex || !CmpCharStr(characters[currentIndex + 1], Tokens.SQUARE_OPEN))
         {
             throw LexerError("Parameters not found!");
         }

@@ -8,7 +8,7 @@ namespace scripting.Common;
 /// </summary>
 public static class Constants
 {
-    public const int LUT_POINTS_CAPACITY = 256;
+    public const int LUT_POINTS_CAPACITY = 257;
 
     public const int MAX_IDENTIFIER_LEN = 0x20;
     public const int MAX_NUMBER_LEN = 0x40;
@@ -17,7 +17,7 @@ public static class Constants
     public const int MAX_PARAMETERS = 8;
     public const int MAX_VARIABLES = CAPACITY - MAX_PARAMETERS;
 
-    public const int MAX_RECURSION_DEPTH = 0x2000;
+    public const int MAX_RECURSION_DEPTH = 0x1000;
 
     static Constants()
     {

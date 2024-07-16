@@ -5,6 +5,9 @@ using System.Runtime.InteropServices;
 
 namespace scripting.Generating;
 
+/// <summary>
+/// Enumerates all types of instructions (for a stack machine).
+/// </summary>
 public enum InstructionType : byte
 {
     NoOp,
@@ -84,22 +87,15 @@ public static class Instructions
 [Flags]
 public enum InstructionFlags : byte
 {
+    /// <summary>
+    /// This instruction has no flags.
+    /// </summary>
     None = 0,
 
     /// <summary>
     /// Whether this instruction expects operands.
     /// </summary>
-    Continuation = 1 << 0,
-
-    /// <summary>
-    /// Whether this instruction should only be executed when the top of the stack is non-zero.
-    /// </summary>
-    IsConditional = 1 << 1,
-
-    /// <summary>
-    /// Whether this instruction is expecting to be replaced by a looping body.
-    /// </summary>
-    IsLoop = 1 << 2,
+    Continuation = 1,
 }
 
 /// <summary>

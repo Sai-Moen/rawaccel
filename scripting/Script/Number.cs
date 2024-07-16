@@ -9,7 +9,7 @@ namespace scripting.Script;
 /// <summary>
 /// Represents a number or boolean in the script.
 /// </summary>
-/// <param name="Value">Value of the Number.</param>
+/// <param name="Value">Value of the Number</param>
 public readonly record struct Number(double Value)
 {
     #region Constants
@@ -47,6 +47,18 @@ public readonly record struct Number(double Value)
         throw e;
     }
 
+    public static Number FromBooleanLiteral(Token token)
+    {
+        Debug.Assert(token.Type == TokenType.Bool);
+        return token.Symbol switch
+        {
+            Tokens.FALSE => FALSE,
+            Tokens.TRUE => TRUE,
+
+            _ => throw new GenerationException("Invalid Boolean Symbol!", token.Line)
+        };
+    }
+
     #endregion
 
     #region Operators
@@ -72,15 +84,4 @@ public readonly record struct Number(double Value)
     public static Number operator &(Number left, Number right) => left != ZERO & right != ZERO;
 
     #endregion
-}
-
-public static class NumberHelpers
-{
-    public static Number FromBoolean(this Token token) => token.Symbol switch
-    {
-        Tokens.FALSE => Number.FALSE,
-        Tokens.TRUE => Number.TRUE,
-
-        _ => throw new GenerationException("Invalid Boolean Symbol!", token.Line)
-    };
 }

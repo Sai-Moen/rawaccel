@@ -154,7 +154,7 @@ Distribution, which controls how the x-values are distributed.
 It has a parameter for the number of points as well.
 Define it by writing `distribution(numpoints)` before a block, where numpoints is the number of LUT points.
 The input variable `x` will behave in a stateful way.
-If this is not implemented, a geometric sequence is used.
+If this is not implemented, a default distribution is used.
 
 ### Keywords
 

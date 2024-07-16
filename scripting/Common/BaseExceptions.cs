@@ -5,8 +5,15 @@ namespace scripting.Common;
 /// <summary>
 /// Exception to derive from when doing anything inside the scripting namespace.
 /// </summary>
-public class ScriptException(string message) : Exception(message)
+public class ScriptException : Exception
 {
+    public ScriptException(string message) : base(message)
+    {
+    }
+
+    public ScriptException(string message, Exception innerException) : base(message, innerException)
+    {
+    }
 }
 
 /// <summary>

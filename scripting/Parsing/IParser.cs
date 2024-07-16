@@ -1,14 +1,10 @@
 ﻿using scripting.Common;
 using scripting.Lexing;
 using scripting.Script;
-using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
 namespace scripting.Parsing;
-
-using Block = IList<ASTNode>;
-using Expression = ITokenList;
 
 /// <summary>
 /// Defines the API of a RawAccelScript parser.
@@ -24,7 +20,7 @@ public interface IParser
 }
 
 /// <summary>
-/// The result of performing syntactic analysis on a list of lexical tokens.
+/// The result of parsing a list of lexical tokens.
 /// </summary>
 /// <param name="Description">The description of the script (usually derived from the 'comments' section in lexical analysis)</param>
 /// <param name="Parameters">The user-controlled parameters</param>
@@ -49,7 +45,7 @@ public record ParsedCallback(string Name, ITokenList Args, Block Code);
 /// </summary>
 /// <param name="Tag">Tag</param>
 /// <param name="Union">Union</param>
-public record ASTNode(ASTTag Tag, ASTUnion Union);
+public readonly record struct ASTNode(ASTTag Tag, ASTUnion Union);
 
 /// <summary>
 /// Statement tag.
@@ -63,10 +59,10 @@ public enum ASTTag
 }
 
 // using structs here absolutely scares the jeepers out of the CLR at runtime
-public record ASTAssign(Token Identifier, Token Operator, Expression Initializer);
+public record ASTAssign(Token Identifier, Token Operator, ITokenList Initializer);
 public record ASTReturn();
-public record ASTIf(Expression Condition, Block If, Block? Else);
-public record ASTWhile(Expression Condition, Block While);
+public record ASTIf(ITokenList Condition, Block If, Block? Else);
+public record ASTWhile(ITokenList Condition, Block While);
 
 /// <summary>
 /// Union of all possible statements.

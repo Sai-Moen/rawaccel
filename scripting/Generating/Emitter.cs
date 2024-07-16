@@ -6,23 +6,15 @@ using System.Collections.Generic;
 
 namespace scripting.Generating;
 
-public class Emitter : IEmitter
+/// <summary>
+/// Emits AST(s) into programs, which the interpreter can execute.
+/// </summary>
+public class Emitter(IMemoryMap addresses) : IEmitter
 {
     #region Fields
 
-    private readonly IMemoryMap addresses;
-
     private InstructionList instructionList = [];
     private Dictionary<Number, DataAddress> numberMap = [];
-
-    #endregion
-
-    #region Constructors
-
-    public Emitter(IMemoryMap addresses)
-    {
-        this.addresses = addresses;
-    }
 
     #endregion
 
@@ -33,7 +25,7 @@ public class Emitter : IEmitter
         return EmitWithCallback(() => EmitExpression(code), code.Count);
     }
 
-    public Program Emit(IList<ASTNode> code)
+    public Program Emit(Block code)
     {
         return EmitWithCallback(() => EmitBlock(code), code.Count);
     }
@@ -62,7 +54,7 @@ public class Emitter : IEmitter
         return new Program(instructions, data);
     }
 
-    private void EmitBlock(IList<ASTNode> code)
+    private void EmitBlock(Block code)
     {
         foreach (ASTNode node in code)
         {
@@ -76,36 +68,38 @@ public class Emitter : IEmitter
         switch (stmnt.Tag)
         {
             case ASTTag.Assign:
-                ASTAssign astAssign = union.astAssign;
-
-                EmitExpression(astAssign.Initializer);
-
-                InstructionType modify = OnAssignment(astAssign.Operator);
-                bool isInline = modify.IsInline();
-
-                Token identifier = astAssign.Identifier;
-                if (identifier.Type == TokenType.Input)
                 {
-                    OnSpecialAssignment(
-                        instructionList, isInline,
-                        InstructionType.LoadIn, modify, InstructionType.StoreIn);
-                }
-                else if (identifier.Type == TokenType.Output)
-                {
-                    OnSpecialAssignment(
-                        instructionList, isInline,
-                        InstructionType.LoadOut, modify, InstructionType.StoreOut);
-                }
-                else
-                {
-                    MemoryAddress address = addresses[identifier.Symbol];
-                    if (isInline)
+                    ASTAssign ast = union.astAssign;
+
+                    EmitExpression(ast.Initializer);
+
+                    InstructionType modify = OnAssignment(ast.Operator);
+                    bool isInline = modify.IsInline();
+
+                    Token identifier = ast.Identifier;
+                    if (identifier.Type == TokenType.Input)
                     {
-                        instructionList.Add(InstructionType.Load, new(address));
-                        instructionList.Add(InstructionType.Swap);
-                        instructionList.Add(modify);
+                        OnSpecialAssignment(
+                            instructionList, isInline,
+                            InstructionType.LoadIn, modify, InstructionType.StoreIn);
                     }
-                    instructionList.Add(InstructionType.Store, new(address));
+                    else if (identifier.Type == TokenType.Output)
+                    {
+                        OnSpecialAssignment(
+                            instructionList, isInline,
+                            InstructionType.LoadOut, modify, InstructionType.StoreOut);
+                    }
+                    else
+                    {
+                        MemoryAddress address = addresses[identifier.Symbol];
+                        if (isInline)
+                        {
+                            instructionList.Add(InstructionType.Load, new(address));
+                            instructionList.Add(InstructionType.Swap);
+                            instructionList.Add(modify);
+                        }
+                        instructionList.Add(InstructionType.Store, new(address));
+                    }
                 }
                 break;
             case ASTTag.Return:
@@ -117,7 +111,7 @@ public class Emitter : IEmitter
 
                     EmitExpression(ast.Condition);
 
-                    InstructionFlags ifJumpFlags = InstructionFlags.Continuation | InstructionFlags.IsConditional;
+                    InstructionFlags ifJumpFlags = InstructionFlags.Continuation;
                     Instruction ifJump = new(InstructionType.Jz, ifJumpFlags);
                     CodeAddress ifJumpTargetIndex = instructionList.AddDefaultJump(ifJump);
 
@@ -151,7 +145,7 @@ public class Emitter : IEmitter
                     CodeAddress loopJumpTarget = instructionList.Count - 1;
                     EmitExpression(ast.Condition);
                     
-                    InstructionFlags whileJumpFlags = InstructionFlags.Continuation | InstructionFlags.IsConditional | InstructionFlags.IsLoop;
+                    InstructionFlags whileJumpFlags = InstructionFlags.Continuation;
                     Instruction whileJump = new(InstructionType.Jz, whileJumpFlags);
                     CodeAddress whileJumpTargetIndex = instructionList.AddDefaultJump(whileJump);
 
@@ -225,9 +219,13 @@ public class Emitter : IEmitter
                 instructionList.Add(OnFunction(token));
                 break;
             default:
-                throw ProgramError("Cannot emit token!", token.Line);
+                throw EmitError("Cannot emit token!", token.Line);
         }
     }
+
+    #endregion
+
+    #region Helpers
 
     private static void OnSpecialAssignment(
         InstructionList instructionList, bool isInline,
@@ -250,7 +248,7 @@ public class Emitter : IEmitter
         Tokens.CONST_TAU => InstructionType.LoadTau,
         Tokens.CONST_CAPACITY => InstructionType.LoadCapacity,
 
-        _ => throw ProgramError("Cannot emit constant!", token.Line),
+        _ => throw EmitError("Cannot emit constant!", token.Line),
     };
 
     private static InstructionType OnAssignment(Token token) => token.Symbol switch
@@ -263,7 +261,7 @@ public class Emitter : IEmitter
         Tokens.IMOD => InstructionType.Mod,
         Tokens.IPOW => InstructionType.Pow,
 
-        _ => throw ProgramError("Cannot emit assignment!", token.Line),
+        _ => throw EmitError("Cannot emit assignment!", token.Line),
     };
 
     private static InstructionType OnArithmetic(Token token) => token.Symbol switch
@@ -275,7 +273,7 @@ public class Emitter : IEmitter
         Tokens.MOD => InstructionType.Mod,
         Tokens.POW => InstructionType.Pow,
 
-        _ => throw ProgramError("Cannot emit arithmetic!", token.Line)
+        _ => throw EmitError("Cannot emit arithmetic!", token.Line)
     };
 
     private static InstructionType OnComparison(Token token) => token.Symbol switch
@@ -290,7 +288,7 @@ public class Emitter : IEmitter
         Tokens.NE => InstructionType.Ne,
         Tokens.NOT => InstructionType.Not,
 
-        _ => throw ProgramError("Cannot emit comparison!", token.Line),
+        _ => throw EmitError("Cannot emit comparison!", token.Line),
     };
 
     private static InstructionType OnFunction(Token token) => token.Symbol switch
@@ -337,12 +335,12 @@ public class Emitter : IEmitter
         Tokens.FUSED_MULTIPLY_ADD => InstructionType.FusedMultiplyAdd,
         Tokens.SCALE_B => InstructionType.ScaleB,
 
-        _ => throw ProgramError("Cannot emit function!", token.Line),
+        _ => throw EmitError("Cannot emit function!", token.Line),
     };
 
     #endregion
 
-    private static EmitException ProgramError(string error, uint line)
+    private static EmitException EmitError(string error, uint line)
     {
         return new EmitException(error, line);
     }

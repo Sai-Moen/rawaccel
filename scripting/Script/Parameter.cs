@@ -4,7 +4,7 @@ using System.Diagnostics;
 
 namespace scripting.Script;
 
-enum Bound
+internal enum Bound
 {
     None,
     LowerExcl,
@@ -13,17 +13,19 @@ enum Bound
     UpperIncl,
 }
 
-record ParameterValidation(Bound Type = Bound.None, Number Value = default)
+internal record ParameterValidation(Bound Type = Bound.None, Number Value = default)
 {
+    internal bool IsActive => Type != Bound.None;
+
     internal int Validate(Number number) => IsValid(number) ? 1 : 0;
 
-    internal bool Contradicts(ParameterValidation other) => other.Type != Bound.None && !IsValid(other.Value);
+    internal bool Contradicts(ParameterValidation other) => other.IsActive && !IsValid(other.Value);
 
     internal bool IsValid(Number number) => Type switch
     {
         Bound.None => true,
-        Bound.LowerExcl => Value  <  number,
-        Bound.LowerIncl => Value  <= number,
+        Bound.LowerExcl => number >  Value,
+        Bound.LowerIncl => number >= Value,
         Bound.UpperExcl => number <  Value,
         Bound.UpperIncl => number <= Value,
 
@@ -61,8 +63,8 @@ public class Parameter
     internal Parameter(Token name, Token value, ParameterValidation minval, ParameterValidation maxval)
     {
         Debug.Assert(name.Type == TokenType.Parameter);
-
         Name = name.Symbol;
+
         switch (value.Type)
         {
             case TokenType.Number:
@@ -71,7 +73,7 @@ public class Parameter
                 break;
             case TokenType.Bool:
                 Type = ParameterType.Logical;
-                Value = value.FromBoolean();
+                Value = Number.FromBooleanLiteral(value);
                 break;
             default:
                 Debug.Fail("Unreachable: parameter value not a number or boolean!");
@@ -80,17 +82,17 @@ public class Parameter
 
         min = minval;
         max = maxval;
-        if (Validate(Value) != 0)
+        if (min.Contradicts(max) || max.Contradicts(min))
+        {
+            throw new GenerationException("Contradicting parameter bounds!", value.Line);
+        }
+        else if (Validate(Value) != 0)
         {
             throw new GenerationException("Default value does not comply with bounds!", value.Line);
         }
-        else if (min.Contradicts(max) || max.Contradicts(min))
-        {
-            throw new GenerationException("Contradicting parameter bounds!", name.Line);
-        }
     }
 
-    internal Parameter(Parameter old, Number value, ParameterType type)
+    internal Parameter(Parameter old, ParameterType type, Number value)
     {
         Name = old.Name;
 
@@ -109,6 +111,11 @@ public class Parameter
     /// Name of this Parameter (/\w+/ with underscores normalized to spaces).
     /// </summary>
     public string Name { get; }
+
+    /// <summary>
+    /// The type of the parameter.
+    /// </summary>
+    public ParameterType Type { get; }
 
     /// <summary>
     /// The current value of this Parameter.
@@ -133,11 +140,6 @@ public class Parameter
         }
     }
 
-    /// <summary>
-    /// The type of the parameter.
-    /// </summary>
-    public ParameterType Type { get; }
-
     #endregion
 
     #region Methods
@@ -145,11 +147,11 @@ public class Parameter
     /// <summary>
     /// Validates the given value according to the Parameter's indicated bounds.
     /// </summary>
-    /// <param name="value">value to validate</param>
+    /// <param name="value">Value to validate</param>
     /// <returns>
-    /// 0 on success,
-    /// less than 0 for a too low value,
-    /// more than 0 for a too high value.
+    /// equal to 0 -> acceptable value <br/>
+    /// less than 0 -> too low value   <br/>
+    /// more than 0 -> too high value  <br/>
     /// </returns>
     public int Validate(Number value)
     {
@@ -167,10 +169,10 @@ public class Parameter
 /// <summary>
 /// Read-Only representation of a <see cref="Parameter"/>.
 /// </summary>
-/// <param name="Name">the name</param>
-/// <param name="Value">the value</param>
-/// <param name="Type">the type</param>
-public readonly record struct ReadOnlyParameter(string Name, Number Value, ParameterType Type)
+/// <param name="Name">The name</param>
+/// <param name="Type">The type</param>
+/// <param name="Value">The value</param>
+public readonly record struct ReadOnlyParameter(string Name, ParameterType Type, Number Value)
 {
-    internal ReadOnlyParameter(Parameter parameter) : this(parameter.Name, parameter.Value, parameter.Type) { }
+    internal ReadOnlyParameter(Parameter parameter) : this(parameter.Name, parameter.Type, parameter.Value) { }
 }

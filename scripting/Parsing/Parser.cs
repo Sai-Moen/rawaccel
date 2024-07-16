@@ -22,7 +22,7 @@ public class Parser : IParser
     private int currentIndex;
     private readonly int maxIndex;
 
-    private Token previousToken;
+    private Token previousToken = Tokens.DUMMY;
     private Token currentToken;
     private readonly ITokenList lexicalTokens;
     
@@ -41,26 +41,20 @@ public class Parser : IParser
     /// <summary>
     /// Parses the input list of Tokens.
     /// </summary>
-    /// <param name="tokens">List of tokens from the script.</param>
+    /// <param name="tokens">List of tokens from the script</param>
     public Parser(LexingResult tokens)
     {
         description = tokens.Description;
         lexicalTokens = tokens.Tokens;
-        Debug.Assert(lexicalTokens.Count >= 1, "Tokenizer did not prevent empty script!");
-
-        currentToken = lexicalTokens[0];
-        Debug.Assert(currentToken.Type == TokenType.SquareOpen);
 
         maxIndex = lexicalTokens.Count - 1;
-        if (maxIndex <= 1)
+        if (maxIndex < 3)
         {
-            throw ParserError("Nearly empty script!");
+            throw ParserError($"Script is too small (maximum index = {maxIndex}) to have required sections!");
         }
 
-        AdvanceToken();
-        Debug.Assert(currentIndex == 1, "We don't need to check for PARAMS_START at runtime.");
-
-        previousToken = currentToken;
+        currentToken = lexicalTokens[currentIndex];
+        Debug.Assert(currentToken.Type == TokenType.SquareOpen);
     }
 
     #endregion
@@ -76,40 +70,32 @@ public class Parser : IParser
     private void ParseTokens()
     {
         // Parameters
+        AdvanceToken();
         while (currentToken.Type != TokenType.SquareClose)
         {
             DeclareParameter();
         }
-        CoerceAll(parameterNames, TokenType.Parameter);
-
-        AdvanceToken();
-        Debug.Assert(currentToken.Type != TokenType.SquareClose);
 
         // Variables
+        AdvanceToken();
         while (currentToken.Type != TokenType.CurlyOpen)
         {
             DeclareVariable();
         }
-        CoerceAll(variableNames, TokenType.Variable);
-
-        AdvanceToken();
-        Debug.Assert(currentToken.Type != TokenType.CurlyOpen);
 
         // Calculation
         List<ASTNode> asts = [];
+        AdvanceToken();
         while (currentToken.Type != TokenType.CurlyClose)
         {
             asts.Add(Statement());
         }
         callbacks.Add(Calculation.NAME, new(Calculation.NAME, [], asts));
 
-        if (currentIndex == maxIndex)
-            return;
-
-        AdvanceToken();
-        Debug.Assert(currentToken.Type != TokenType.CurlyClose);
+        if (currentIndex == maxIndex) return;
 
         // Optional Callbacks
+        AdvanceToken();
         while (Accept(TokenType.Identifier))
         {
             ParsedCallback callback = ParseOptionalCallback();
@@ -119,18 +105,6 @@ public class Parser : IParser
             }
 
             callbacks[callback.Name] = callback;
-        }
-    }
-
-    private void CoerceAll(HashSet<string> identifiers, TokenType type)
-    {
-        for (int i = 0; i <= maxIndex; i++)
-        {
-            Token token = lexicalTokens[i];
-            if (identifiers.Contains(token.Symbol))
-            {
-                lexicalTokens[i] = token.WithType(type);
-            }
         }
     }
 
@@ -213,11 +187,7 @@ public class Parser : IParser
                 minval = new();
                 break;
             default:
-                // this is unreachable as long as one of the cases is accepted at the top of the method
-                Debug.Fail($"Unreachable: unknown bound open {open}");
-                minval = new();
-                maxval = new();
-                return;
+                throw ParserError("Undefined state reached after attempting to parse bounds!");
         }
 
         // the edge case {} is technically not considered here
@@ -319,18 +289,13 @@ public class Parser : IParser
         {
             switch (token.Type)
             {
-                case TokenType.Identifier:
-                    if (!variableNames.Contains(token.Symbol))
-                    {
-                        throw ParserError("Could not resolve variable name!");
-                    }
-
-                    output.Add(token.WithType(TokenType.Variable));
-                    break;
                 case TokenType.Number:
-                case TokenType.Parameter:
+                case TokenType.Bool:
                 case TokenType.Constant:
                     output.Add(token);
+                    break;
+                case TokenType.Identifier:
+                    output.Add(ResolveIdentifier(token));
                     break;
                 case TokenType.Arithmetic:
                     CheckUnary(output, prev, token.Line);
@@ -410,15 +375,25 @@ public class Parser : IParser
         ASTUnion union;
 
         bool isAssignment =
-            Accept(TokenType.Variable) ||
+            Accept(TokenType.Identifier) ||
             Accept(TokenType.Input) ||
             Accept(TokenType.Output);
         if (isAssignment)
         {
             Token target = previousToken;
-            Expect(TokenType.Assignment);
+            if (target.Type == TokenType.Identifier)
+            {
+                if (!variableNames.Contains(target.Symbol))
+                {
+                    throw ParserError($"Only variables can be assigned to! {target.Symbol} is not a known variable.");
+                }
 
+                target = target.WithType(TokenType.Variable);
+            }
+
+            Expect(TokenType.Assignment);
             Token assignment = previousToken;
+
             TokenList initializer = Expression(TokenType.Terminator);
 
             tag = ASTTag.Assign;
@@ -470,7 +445,7 @@ public class Parser : IParser
         }
         else
         {
-            throw ParserError("Expected statement, got: " + currentToken.Base);
+            throw ParserError($"Expected statement, got: {currentToken.Base}");
         }
 
         return new ASTNode(tag, union);
@@ -526,12 +501,14 @@ public class Parser : IParser
             switch (token.Type)
             {
                 case TokenType.Number:
-                case TokenType.Parameter:
-                case TokenType.Variable:
+                case TokenType.Bool:
+                case TokenType.Constant:
                 case TokenType.Input:
                 case TokenType.Output:
-                case TokenType.Constant:
                     output.Add(token);
+                    break;
+                case TokenType.Identifier:
+                    output.Add(ResolveIdentifier(token));
                     break;
                 case TokenType.Arithmetic:
                     CheckUnary(output, prev, token.Line);
@@ -588,13 +565,14 @@ public class Parser : IParser
     {
         switch ((prev ?? Tokens.DUMMY).Type)
         {
-            case TokenType.Identifier:
             case TokenType.Number:
+            case TokenType.Bool:
+            case TokenType.Constant:
+            case TokenType.Identifier:
             case TokenType.Parameter:
             case TokenType.Variable:
             case TokenType.Input:
             case TokenType.Output:
-            case TokenType.Constant:
             case TokenType.ParenClose:
                 return;
         }
@@ -699,6 +677,24 @@ public class Parser : IParser
 
         previousToken = currentToken;
         currentToken = lexicalTokens[++currentIndex];
+    }
+
+    private Token ResolveIdentifier(Token token)
+    {
+        Token resolved;
+        if (parameterNames.Contains(token.Symbol))
+        {
+            resolved = token.WithType(TokenType.Parameter);
+        }
+        else if (variableNames.Contains(token.Symbol))
+        {
+            resolved = token.WithType(TokenType.Variable);
+        }
+        else
+        {
+            throw ParserError("Could not resolve variable name!");
+        }
+        return resolved;
     }
 
     #endregion

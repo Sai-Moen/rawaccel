@@ -7,7 +7,7 @@ namespace scripting.Serialization.Json;
 
 public class ParametersJsonConverter(Parameters old) : JsonConverter<Parameters>
 {
-    private static readonly JsonEncodedText nameText = JsonEncodedText.Encode("parameters");
+    private const string nameText = "parameters";
 
     private readonly JsonConverter<Parameter> parameterConverter = new ParameterJsonConverter(old);
 
@@ -15,24 +15,14 @@ public class ParametersJsonConverter(Parameters old) : JsonConverter<Parameters>
     {
         int startDepth = reader.CurrentDepth;
 
-        switch (reader.TokenType)
+        if (reader.TokenType != JsonTokenType.StartObject)
         {
-            case JsonTokenType.StartObject:
-                break;
-            case JsonTokenType.Null:
-                return null;
-            default:
-                throw new JsonException($"Invalid start for a Parameters object: {reader.TokenType}");
+            throw new JsonException($"Invalid start for a Parameters object: {reader.TokenType}");
         }
 
         Parameters parameters = [];
-        while (reader.Read())
+        while (reader.Read() && (reader.TokenType != JsonTokenType.EndObject || reader.CurrentDepth != startDepth))
         {
-            if (reader.TokenType == JsonTokenType.EndObject && reader.CurrentDepth == startDepth)
-            {
-                break;
-            }
-
             var p = parameterConverter.Read(ref reader, typeToConvert, options)
                 ?? throw new JsonException("Parameter cannot be null!");
             parameters.Add(p);
@@ -42,12 +32,6 @@ public class ParametersJsonConverter(Parameters old) : JsonConverter<Parameters>
 
     public override void Write(Utf8JsonWriter writer, Parameters value, JsonSerializerOptions options)
     {
-        if (value.Count == 0)
-        {
-            writer.WriteNull(nameText);
-            return;
-        }
-
         writer.WriteStartObject(nameText);
         foreach (Parameter p in value)
         {

@@ -9,7 +9,7 @@ namespace scripting.Script.CallbackImpl
 {
     public class Distribution
     {
-        public const string NAME = "distribution";
+        internal const string NAME = "distribution";
 
         private readonly int amount;
         private readonly Program program;
@@ -28,7 +28,7 @@ namespace scripting.Script.CallbackImpl
                     amount = (int)(Number)args[0];
                     if (amount < 0 || amount > Constants.LUT_POINTS_CAPACITY)
                     {
-                        throw new GenerationException($"Amount argument out of range! max: {Constants.LUT_POINTS_CAPACITY}");
+                        throw new GenerationException($"Amount argument out of range! range: [0, {Constants.LUT_POINTS_CAPACITY}]");
                     }
                     break;
                 default:
@@ -52,7 +52,7 @@ namespace scripting.Script.CallbackImpl
                 interpreter.ExecuteProgram(program);
                 inputs[i] = interpreter.Y;
 
-                interpreter.Stabilize(true);
+                interpreter.Stabilize();
             }
             return inputs;
         }
@@ -63,9 +63,9 @@ namespace scripting.Script
 {
     public partial class Callbacks
     {
-        internal Distribution? Distribution => Get(Distribution.NAME) as Distribution;
-
         public bool HasDistribution => Distribution is not null;
+
+        internal Distribution? Distribution => Get(Distribution.NAME) as Distribution;
 
         public double[] Distribute()
         {
