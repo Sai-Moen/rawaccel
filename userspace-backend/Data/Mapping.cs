@@ -8,7 +8,7 @@ namespace userspace_backend.Data
     public class Mapping
     {
         [JsonRequired]
-        public Dictionary<string, MappingGroups> ProfilesToGroups { get; set; }
+        public Dictionary<string, DeviceGroups> ProfilesToGroups { get; set; }
 
         public override bool Equals(object? obj)
         {

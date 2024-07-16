@@ -22,10 +22,10 @@ namespace userspace_backend_tests.IOTests
         {
             var mapping = new Mapping()
             {
-                ProfilesToGroups = new Dictionary<string, MappingGroups>()
+                ProfilesToGroups = new Dictionary<string, DeviceGroups>()
                 {
-                    { "Default", new MappingGroups() { Groups = new List<string>() { "Default", "Logitech Mice", } } },
-                    { "Test", new MappingGroups() { Groups = new List<string>() { "Test Mice", } } },
+                    { "Default", new DeviceGroups() { Groups = new List<string>() { "Default", "Logitech Mice", } } },
+                    { "Test", new DeviceGroups() { Groups = new List<string>() { "Test Mice", } } },
                 },
             };
 
@@ -46,10 +46,10 @@ namespace userspace_backend_tests.IOTests
         {
             var mapping = new Mapping()
             {
-                ProfilesToGroups = new Dictionary<string, MappingGroups>()
+                ProfilesToGroups = new Dictionary<string, DeviceGroups>()
                 {
-                    { "Default", new MappingGroups() { Groups = new List<string>() { "Default", "Logitech Mice", } } },
-                    { "Test", new MappingGroups() { Groups = new List<string>() { "Test Mice", } } },
+                    { "Default", new DeviceGroups() { Groups = new List<string>() { "Default", "Logitech Mice", } } },
+                    { "Test", new DeviceGroups() { Groups = new List<string>() { "Test Mice", } } },
                 },
             };
 
@@ -59,7 +59,7 @@ namespace userspace_backend_tests.IOTests
             Assert.IsTrue(File.Exists(writePath));
 
             // Change mapping:
-            mapping.ProfilesToGroups["Test"] = new MappingGroups() { Groups = new List<string>() { "User has changed this group", } };
+            mapping.ProfilesToGroups["Test"] = new DeviceGroups() { Groups = new List<string>() { "User has changed this group", } };
 
             writer.Write(writePath, mapping);
             string actualOutput = File.ReadAllText(writePath);
@@ -74,10 +74,10 @@ namespace userspace_backend_tests.IOTests
         {
             var expectedMapping = new Mapping()
             {
-                ProfilesToGroups = new Dictionary<string, MappingGroups>()
+                ProfilesToGroups = new Dictionary<string, DeviceGroups>()
                 {
-                    { "Default", new MappingGroups() { Groups = new List<string>() { "Default", "Logitech Mice", } } },
-                    { "Test", new MappingGroups() { Groups = new List<string>() { "Test Mice", } } },
+                    { "Default", new DeviceGroups() { Groups = new List<string>() { "Default", "Logitech Mice", } } },
+                    { "Test", new DeviceGroups() { Groups = new List<string>() { "Test Mice", } } },
                 },
             };
 

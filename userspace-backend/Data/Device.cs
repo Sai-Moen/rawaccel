@@ -12,7 +12,7 @@ namespace userspace_backend.Data
 
         public int PollingRate { get; set; }
 
-        public string MappingGroup { get; set; }
+        public string DeviceGroup { get; set; }
 
         public override bool Equals(object? obj)
         {
@@ -21,12 +21,12 @@ namespace userspace_backend.Data
                    HWID == device.HWID &&
                    DPI == device.DPI &&
                    PollingRate == device.PollingRate &&
-                   MappingGroup == device.MappingGroup;
+                   DeviceGroup == device.DeviceGroup;
         }
 
         public override int GetHashCode()
         {
-            return HashCode.Combine(Name, HWID, DPI, PollingRate, MappingGroup);
+            return HashCode.Combine(Name, HWID, DPI, PollingRate, DeviceGroup);
         }
     }
 }

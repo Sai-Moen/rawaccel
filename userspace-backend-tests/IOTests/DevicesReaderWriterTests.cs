@@ -50,7 +50,7 @@ namespace userspace_backend_tests.IOTests
             {
                 Name = "Superlight (wireless)",
                 HWID = "blah-blah-blah",
-                MappingGroup = "Logitech Mice",
+                DeviceGroup = "Logitech Mice",
                 DPI = 12000,
                 PollingRate = 2000,
             };
@@ -59,7 +59,7 @@ namespace userspace_backend_tests.IOTests
             {
                 Name = "Superlight (wired)",
                 HWID = "blah-blah-blah-2",
-                MappingGroup = "Logitech Mice",
+                DeviceGroup = "Logitech Mice",
                 DPI = 12000,
                 PollingRate = 2000,
             };
@@ -68,7 +68,7 @@ namespace userspace_backend_tests.IOTests
             {
                 Name = "Vaxee Outset AX",
                 HWID = "this-is-a-fake-hwid",
-                MappingGroup = "Test Mice",
+                DeviceGroup = "Test Mice",
                 DPI = 1600,
                 PollingRate = 1000,
             };
@@ -89,7 +89,7 @@ namespace userspace_backend_tests.IOTests
             {
                 Name = "Superlight (wireless)",
                 HWID = "blah-blah-blah",
-                MappingGroup = "Logitech Mice",
+                DeviceGroup = "Logitech Mice",
                 DPI = 12000,
                 PollingRate = 2000,
             };
@@ -98,7 +98,7 @@ namespace userspace_backend_tests.IOTests
             {
                 Name = "Superlight (wired)",
                 HWID = "blah-blah-blah-2",
-                MappingGroup = "Logitech Mice",
+                DeviceGroup = "Logitech Mice",
                 DPI = 12000,
                 PollingRate = 2000,
             };
@@ -107,7 +107,7 @@ namespace userspace_backend_tests.IOTests
             {
                 Name = "Vaxee Outset AX",
                 HWID = "this-is-a-fake-hwid",
-                MappingGroup = "Test Mice",
+                DeviceGroup = "Test Mice",
                 DPI = 1600,
                 PollingRate = 1000,
             };
@@ -134,7 +134,7 @@ namespace userspace_backend_tests.IOTests
             {
                 Name = "Superlight (wireless)",
                 HWID = "blah-blah-blah",
-                MappingGroup = "Logitech Mice",
+                DeviceGroup = "Logitech Mice",
                 DPI = 12000,
                 PollingRate = 2000,
             };
@@ -143,7 +143,7 @@ namespace userspace_backend_tests.IOTests
             {
                 Name = "Superlight (wired)",
                 HWID = "blah-blah-blah-2",
-                MappingGroup = "Logitech Mice",
+                DeviceGroup = "Logitech Mice",
                 DPI = 12000,
                 PollingRate = 2000,
             };
@@ -152,7 +152,7 @@ namespace userspace_backend_tests.IOTests
             {
                 Name = "Vaxee Outset AX",
                 HWID = "this-is-a-fake-hwid",
-                MappingGroup = "Test Mice",
+                DeviceGroup = "Test Mice",
                 DPI = 1600,
                 PollingRate = 1000,
             };
@@ -170,7 +170,7 @@ namespace userspace_backend_tests.IOTests
             {
                 Name = "The user has changed the name of this device",
                 HWID = "this-is-a-fake-hwid",
-                MappingGroup = "Test Mice",
+                DeviceGroup = "Test Mice",
                 DPI = 1600,
                 PollingRate = 1000,
             };
