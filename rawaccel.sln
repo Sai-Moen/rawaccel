@@ -30,6 +30,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "userspace-backend-tests", "
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{D91279EE-9526-4C5C-B24D-2EED18EBFCEC}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "userinterface", "userinterface\userinterface.csproj", "{4136DB7A-18A3-4263-AC3F-904DE1AE8AAB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -118,6 +120,14 @@ Global
 		{91962C25-64E9-4CA7-9714-82ED0E89894A}.Release|Any CPU.Build.0 = Release|Any CPU
 		{91962C25-64E9-4CA7-9714-82ED0E89894A}.Release|x64.ActiveCfg = Release|Any CPU
 		{91962C25-64E9-4CA7-9714-82ED0E89894A}.Release|x64.Build.0 = Release|Any CPU
+		{4136DB7A-18A3-4263-AC3F-904DE1AE8AAB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4136DB7A-18A3-4263-AC3F-904DE1AE8AAB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4136DB7A-18A3-4263-AC3F-904DE1AE8AAB}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{4136DB7A-18A3-4263-AC3F-904DE1AE8AAB}.Debug|x64.Build.0 = Debug|Any CPU
+		{4136DB7A-18A3-4263-AC3F-904DE1AE8AAB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4136DB7A-18A3-4263-AC3F-904DE1AE8AAB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4136DB7A-18A3-4263-AC3F-904DE1AE8AAB}.Release|x64.ActiveCfg = Release|Any CPU
+		{4136DB7A-18A3-4263-AC3F-904DE1AE8AAB}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
