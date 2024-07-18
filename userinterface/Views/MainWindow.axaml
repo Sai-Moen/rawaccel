@@ -17,13 +17,13 @@
     </Design.DataContext>
   <TabControl TabStripPlacement = "Left">
     <TabItem Header = "Devices">
-      <v:DevicesPageView></v:DevicesPageView>
+      <v:DevicesPageView/>
     </TabItem>
     <TabItem Header = "Mappings">
-      <TextBlock>"Mappings will go here"</TextBlock>
+      <v:MappingsPageView/>
     </TabItem>
     <TabItem Header = "Profiles">
-      <TextBlock>"Profiles will go here"</TextBlock>
+      <v:ProfilesPageView/>
     </TabItem>
   </TabControl>
 
