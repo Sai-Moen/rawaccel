@@ -38,7 +38,7 @@ public record ParsingResult(
 /// <param name="Name">Name</param>
 /// <param name="Args">Arguments</param>
 /// <param name="Code">Code (as an AST)</param>
-public record ParsedCallback(string Name, ITokenList Args, Block Code);
+public record ParsedCallback(string Name, ITokenList Args, IBlock Code);
 
 /// <summary>
 /// Saves a statement as an AST node (tagged union).
@@ -50,7 +50,7 @@ public readonly record struct ASTNode(ASTTag Tag, ASTUnion Union);
 /// <summary>
 /// Statement tag.
 /// </summary>
-public enum ASTTag
+public enum ASTTag : byte
 {
     None,
     Assign,
@@ -61,8 +61,8 @@ public enum ASTTag
 // using structs here absolutely scares the jeepers out of the CLR at runtime
 public record ASTAssign(Token Identifier, Token Operator, ITokenList Initializer);
 public record ASTReturn();
-public record ASTIf(ITokenList Condition, Block If, Block? Else);
-public record ASTWhile(ITokenList Condition, Block While);
+public record ASTIf(ITokenList Condition, IBlock If, IBlock? Else);
+public record ASTWhile(ITokenList Condition, IBlock While);
 
 /// <summary>
 /// Union of all possible statements.

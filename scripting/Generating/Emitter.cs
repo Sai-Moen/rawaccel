@@ -25,7 +25,7 @@ public class Emitter(IMemoryMap addresses) : IEmitter
         return EmitWithCallback(() => EmitExpression(code), code.Count);
     }
 
-    public Program Emit(Block code)
+    public Program Emit(IBlock code)
     {
         return EmitWithCallback(() => EmitBlock(code), code.Count);
     }
@@ -54,7 +54,7 @@ public class Emitter(IMemoryMap addresses) : IEmitter
         return new Program(instructions, data);
     }
 
-    private void EmitBlock(Block code)
+    private void EmitBlock(IBlock code)
     {
         foreach (ASTNode node in code)
         {

@@ -416,9 +416,9 @@ public class Parser : IParser
             Expect(TokenType.ParenOpen);
             TokenList condition = Expression(TokenType.ParenClose, TokenType.CurlyOpen);
 
-            List<ASTNode> ifBlock = CollectStatements();
+            IBlock ifBlock = CollectStatements();
 
-            List<ASTNode>? elseBlock = null;
+            IBlock? elseBlock = null;
             if (Accept(TokenType.Else))
             {
                 elseBlock = CollectStatements();
@@ -435,7 +435,7 @@ public class Parser : IParser
             Expect(TokenType.ParenOpen);
             TokenList condition = Expression(TokenType.ParenClose, TokenType.CurlyOpen);
 
-            List<ASTNode> whileBlock = CollectStatements();
+            IBlock whileBlock = CollectStatements();
 
             tag = ASTTag.While;
             union = new ASTUnion()
@@ -451,14 +451,15 @@ public class Parser : IParser
         return new ASTNode(tag, union);
     }
 
-    private List<ASTNode> CollectStatements()
+    private Block CollectStatements()
     {
-        List<ASTNode> asts = [];
         if (++depth > Constants.MAX_RECURSION_DEPTH)
         {
             throw ParserError("Exceeded Maximum Recursion Depth!");
         }
 
+        // collection expression on Block should work because it's well-behaved
+        Block asts = [];
         Expect(TokenType.CurlyOpen);
         while (!Accept(TokenType.CurlyClose)) asts.Add(Statement());
 
@@ -658,7 +659,7 @@ public class Parser : IParser
             Expect(TokenType.ParenClose);
         }
 
-        List<ASTNode> code = CollectStatements();
+        IBlock code = CollectStatements();
 
         return new(name, args, code);
     }

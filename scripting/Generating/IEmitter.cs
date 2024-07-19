@@ -21,7 +21,7 @@ public interface IEmitter
     /// <param name="code">Code as ASTs</param>
     /// <returns>A Program instance</returns>
     /// <exception cref="EmitException"/>
-    Program Emit(Block code);
+    Program Emit(IBlock code);
 }
 
 /// <summary>
