@@ -48,7 +48,7 @@ public class Interpreter : IInterpreter
         {
             Parameter parameter = parameters[i];
 
-            MemoryAddress address = i;
+            MemoryAddress address = (MemoryAddress)i;
             addresses.Add(parameter.Name, address);
         }
 
@@ -65,7 +65,7 @@ public class Interpreter : IInterpreter
         {
             ASTAssign variable = variables[i];
 
-            MemoryAddress address = Constants.MAX_PARAMETERS + i;
+            MemoryAddress address = (MemoryAddress)(Constants.MAX_PARAMETERS + i);
             addresses.Add(variable.Identifier.Symbol, address);
 
             ASTNode stmnt = new(ASTTag.Assign, new() { astAssign = variable });
@@ -137,34 +137,32 @@ public class Interpreter : IInterpreter
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void Fn1(Func<Number, Number> func)
         {
-            Debug.Assert(stack.Count >= 1);
+            Debug.Assert(stack.Count >= 1, "Stack does not have the required 1 element!");
             stack.Push(func(stack.Pop()));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void Fn2(Func<Number, Number, Number> func)
         {
-            Debug.Assert(stack.Count >= 2);
+            Debug.Assert(stack.Count >= 2, "Stack does not have the required 2 elements!");
             stack.Push(func(stack.Pop(), stack.Pop()));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void Fn3(Func<Number, Number, Number, Number> func)
         {
-            Debug.Assert(stack.Count >= 3);
+            Debug.Assert(stack.Count >= 3, "Stack does not have the required 3 elements!");
             stack.Push(func(stack.Pop(), stack.Pop(), stack.Pop()));
         }
 
         for (CodeAddress c = 0; c < program.Length; c++)
-        switch (program[c].instruction.Type)
+        switch ((InstructionType)program[c])
         {
             case InstructionType.Start:
                 break;
             case InstructionType.End:
                 if (c != program.Length - 1)
-                {
                     throw InterpreterError("Unexpected program end!");
-                }
 
                 goto case InstructionType.Return;
             case InstructionType.Return:
@@ -172,11 +170,11 @@ public class Interpreter : IInterpreter
                 stack.Clear();
                 return rem;
             case InstructionType.Load:
-                MemoryAddress loadAddress = (MemoryAddress)program.GetOperandFromNext(ref c);
+                MemoryAddress loadAddress = (MemoryAddress)program.ExtractAddress(ref c);
                 stack.Push(unstable[loadAddress]);
                 break;
             case InstructionType.Store:
-                MemoryAddress storeAddress = (MemoryAddress)program.GetOperandFromNext(ref c);
+                MemoryAddress storeAddress = (MemoryAddress)program.ExtractAddress(ref c);
                 unstable[storeAddress] = stack.Pop();
                 break;
             case InstructionType.LoadIn:
@@ -192,7 +190,7 @@ public class Interpreter : IInterpreter
                 Y = stack.Pop();
                 break;
             case InstructionType.LoadNumber:
-                DataAddress dAddress = (DataAddress)program.GetOperandFromNext(ref c);
+                DataAddress dAddress = (DataAddress)program.ExtractAddress(ref c);
                 stack.Push(program[dAddress]);
                 break;
             case InstructionType.Swap:
@@ -202,15 +200,12 @@ public class Interpreter : IInterpreter
                 stack.Push(swap2);
                 break;
             case InstructionType.Jmp:
-                CodeAddress jmpAddress = (CodeAddress)program.GetOperandFromNext(ref c);
+                CodeAddress jmpAddress = (CodeAddress)program.ExtractAddress(ref c);
                 c = jmpAddress;
                 break;
             case InstructionType.Jz:
-                CodeAddress jzAddress = (CodeAddress)program.GetOperandFromNext(ref c);
-                if (!stack.Pop())
-                {
-                    c = jzAddress;
-                }
+                CodeAddress jzAddress = (CodeAddress)program.ExtractAddress(ref c);
+                if (!stack.Pop()) c = jzAddress;
                 break;
             case InstructionType.LoadZero:
                 stack.Push(Number.ZERO);

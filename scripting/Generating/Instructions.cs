@@ -62,168 +62,74 @@ public enum InstructionType : byte
 }
 
 /// <summary>
-/// Provides helper methods and static checking.
+/// Provides helper/extension methods.
 /// </summary>
 public static class Instructions
 {
-    public static byte Size(this InstructionType type) => type switch
+    public static int AddressLength(this InstructionType type) => type switch
     {
-        InstructionType.Load => 2,
-        InstructionType.Store => 2,
-        InstructionType.LoadNumber => 2,
+        InstructionType.Load => MemoryAddress.SIZE,
+        InstructionType.Store => MemoryAddress.SIZE,
 
-        InstructionType.Jz => 2,
-        InstructionType.Jmp => 2,
+        InstructionType.LoadNumber => DataAddress.SIZE,
 
-        _ => 1,
+        InstructionType.Jz => CodeAddress.SIZE,
+        InstructionType.Jmp => CodeAddress.SIZE,
+
+        _ => 0,
     };
 
     public static bool IsInline(this InstructionType type) => type != InstructionType.Store;
-}
 
-/// <summary>
-/// Flags for the second part of an Instruction.
-/// </summary>
-[Flags]
-public enum InstructionFlags : byte
-{
-    /// <summary>
-    /// This instruction has no flags.
-    /// </summary>
-    None = 0,
-
-    /// <summary>
-    /// Whether this instruction expects operands.
-    /// </summary>
-    Continuation = 1,
-}
-
-/// <summary>
-/// Represents an Instruction that can be executed by the Interpreter.
-/// </summary>
-public readonly record struct Instruction(InstructionType Type, InstructionFlags Flags = InstructionFlags.None)
-{
-    public bool AnyFlags(InstructionFlags flags) => (Flags & flags) != InstructionFlags.None;
-    public bool AllFlags(InstructionFlags flags) => (Flags & flags) == flags;
-}
-
-/// <summary>
-/// Can represent any address type.
-/// </summary>
-public readonly struct InstructionOperand
-{
-    public InstructionOperand(MemoryAddress address)
+    public static bool IsBranch(this InstructionType type) => type switch
     {
-        Operand = address;
-    }
+        InstructionType.Jz => true,
+        InstructionType.Jmp => true,
 
-    public InstructionOperand(DataAddress address)
-    {
-        Operand = address;
-    }
-
-    public InstructionOperand(CodeAddress address)
-    {
-        Operand = address;
-    }
-
-    public readonly ushort Operand { get; }
+        _ => false,
+    };
 }
 
 /// <summary>
-/// Either an Instruction or InstructionOperand.
-/// It is an untagged union, Instruction can tell if the next union will be operand or not.
-/// So, if the program is laid out correctly, it can be determined what is an instruction vs operand.
+/// Represents bytecode.
 /// </summary>
-[StructLayout(LayoutKind.Explicit)]
-public struct InstructionUnion
+public class ByteCode : List<byte>, IList<byte>
 {
-    [FieldOffset(0)] public Instruction instruction;
-    [FieldOffset(0)] public InstructionOperand operand;
-}
+    public ByteCode() : base() { }
 
-/// <summary>
-/// Represents a list of instructions.
-/// </summary>
-public class InstructionList : List<InstructionUnion>, IList<InstructionUnion>
-{
-    #region Constructors
-
-    public InstructionList() : base() { }
-
-    public InstructionList(int capacity) : base(capacity) { }
-
-    #endregion
-
-    #region Add
-
-    public void Add(Instruction instruction)
-    {
-        Debug.Assert(instruction.Type.Size() == 1);
-
-        InstructionUnion unionI = new()
-        {
-            instruction = instruction
-        };
-        Add(unionI);
-    }
+    public ByteCode(int capacity) : base(capacity) { }
+    
+    public int Last => Count - 1;
 
     public void Add(InstructionType type)
     {
-        Add(new Instruction(type));
+        Debug.Assert(type.AddressLength() == 0);
+
+        Add((byte)type);
     }
 
-    public void Add(Instruction instruction, InstructionOperand operand)
+    public void Add(InstructionType type, ReadOnlySpan<byte> address)
     {
-        Debug.Assert(instruction.Type.Size() == 2);
+        Debug.Assert(type.AddressLength() == address.Length);
 
-        InstructionUnion unionI = new()
+        Add((byte)type);
+        AddRange(address.ToArray());
+    }
+
+    public void SetAddress(CodeAddress offset, ReadOnlySpan<byte> address)
+    {
+        for (int i = 0; i < address.Length; i++)
         {
-            instruction = instruction
-        };
-        InstructionUnion unionO = new()
-        {
-            operand = operand
-        };
-        AddRange([unionI, unionO]);
+            this[i + offset.Address] = address[i];
+        }
     }
 
-    public void Add(InstructionType type, InstructionOperand operand)
+    public CodeAddress AddDefaultJump(InstructionType jump)
     {
-        Add(new Instruction(type, InstructionFlags.Continuation), operand);
+        Debug.Assert(jump.IsBranch());
+
+        ReadOnlySpan<byte> address = (byte[])(new CodeAddress());
+        Add(jump, address);
+        return Count - address.Length; // index of jump target address
     }
-
-    #endregion
-
-    #region Remove
-
-    public void RemoveAt(CodeAddress address)
-    {
-        base.RemoveAt(address);
-    }
-
-    #endregion
-
-    #region Helpers
-
-    public void SetOperand(CodeAddress index, InstructionOperand value)
-    {
-        this[index] = new InstructionUnion()
-        {
-            operand = value
-        };
-    }
-
-    public void SetOperand(CodeAddress index, CodeAddress value)
-    {
-        SetOperand(index, new InstructionOperand(value));
-    }
-
-    public CodeAddress AddDefaultJump(Instruction jump)
-    {
-        Add(jump, new(new CodeAddress()));
-        return Count - 1; // index of jump target address
-    }
-
-    #endregion
 }

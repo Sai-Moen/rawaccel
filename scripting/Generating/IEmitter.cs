@@ -1,5 +1,6 @@
 ﻿using scripting.Common;
 using scripting.Script;
+using System;
 
 namespace scripting.Generating;
 
@@ -27,14 +28,20 @@ public interface IEmitter
 /// <summary>
 /// Represents a program consisting of executable Instructions.
 /// </summary>
-public record Program(InstructionUnion[] Instructions, StaticData Data)
+public record Program(byte[] ByteCode, StaticData Data)
 {
-    public int Length => Instructions.Length;
+    public int Length => ByteCode.Length;
 
-    public InstructionUnion this[CodeAddress index] => Instructions[index];
+    public byte this[CodeAddress index] => ByteCode[index];
     public Number this[DataAddress index] => Data[index];
 
-    public InstructionOperand GetOperandFromNext(ref CodeAddress c) => this[++c].operand;
+    public ReadOnlySpan<byte> ExtractAddress(ref CodeAddress c)
+    {
+        int addressLength = ((InstructionType)this[c]).AddressLength();
+        ReadOnlySpan<byte> address = new(ByteCode, c.Address + 1, addressLength);
+        c += addressLength;
+        return address;
+    }
 }
 
 /// <summary>

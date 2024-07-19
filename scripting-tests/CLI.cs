@@ -1,4 +1,5 @@
 ﻿using scripting;
+using scripting.Common;
 using scripting.Interpreting;
 using scripting.Script;
 using System;
@@ -12,8 +13,6 @@ namespace scripting_tests;
 /// </summary>
 public static class CLI
 {
-    public const int LUT_MAX_CAPACITY = 257;
-
     /// <summary>
     /// Entry point.
     /// </summary>
@@ -28,7 +27,7 @@ public static class CLI
         IInterpreter interpreter = Wrapper.LoadScriptFromFile(args[0]);
         Callbacks callbacks = interpreter.Callbacks;
 
-        double[] xs = new double[LUT_MAX_CAPACITY];
+        double[] xs = new double[Constants.LUT_POINTS_CAPACITY];
         if (args.Length >= 2)
         {
             int trim = 0;
@@ -48,7 +47,7 @@ public static class CLI
             xs = new double[trim];
             Array.Copy(temp, xs, trim);
         }
-        else for (int i = 0; i < LUT_MAX_CAPACITY; i++)
+        else for (int i = 0; i < Constants.LUT_POINTS_CAPACITY; i++)
         {
             xs[i] = i + 1;
         }
