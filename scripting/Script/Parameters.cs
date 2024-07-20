@@ -10,9 +10,9 @@ namespace scripting.Script;
 /// </summary>
 public class Parameters : List<Parameter>, IList<Parameter>
 {
-    internal Parameters() : base(Constants.MAX_PARAMETERS) { }
+    internal Parameters() : base(Constants.MAX_PARAMETERS) {}
 
-    private Parameters(Parameters parameters) : base(parameters) { }
+    private Parameters(Parameters parameters) : base(parameters) {}
 
     public bool TryFindByName(string name, [MaybeNullWhen(false)] out Parameter p)
     {
@@ -36,7 +36,7 @@ public class Parameters : List<Parameter>, IList<Parameter>
 /// </summary>
 public class ReadOnlyParameters : ReadOnlyCollection<ReadOnlyParameter>, IList<ReadOnlyParameter>
 {
-    internal ReadOnlyParameters(IList<Parameter> parameters) : base(Wrap(parameters)) { }
+    internal ReadOnlyParameters(IList<Parameter> parameters) : base(Wrap(parameters)) {}
 
     private static List<ReadOnlyParameter> Wrap(IList<Parameter> parameters)
     {

@@ -49,7 +49,7 @@ public record Program(byte[] ByteCode, StaticData Data)
 /// </summary>
 public sealed class EmitException : GenerationException
 {
-    public EmitException(string message) : base(message) { }
+    public EmitException(string message) : base(message) {}
 
-    public EmitException(string message, uint line) : base(message, line) { }
+    public EmitException(string message, uint line) : base(message, line) {}
 }

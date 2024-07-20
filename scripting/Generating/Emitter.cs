@@ -3,6 +3,7 @@ using scripting.Script;
 using scripting.Parsing;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace scripting.Generating;
 
@@ -13,7 +14,7 @@ public class Emitter(IMemoryMap addresses) : IEmitter
 {
     #region Fields
 
-    private ByteCode byteCode = [];
+    private List<byte> byteCode = [];
     private Dictionary<Number, DataAddress> numberMap = [];
 
     #endregion
@@ -32,15 +33,14 @@ public class Emitter(IMemoryMap addresses) : IEmitter
 
     private Program EmitWithCallback(Action callback, int estimatedAmount)
     {
-        byteCode = new(estimatedAmount)
-        {
-            InstructionType.Start
-        };
+        byteCode = new(estimatedAmount);
+        AddInstruction(InstructionType.Start);
+
         numberMap = [];
 
         callback();
 
-        byteCode.Add(InstructionType.End);
+        AddInstruction(InstructionType.End);
         byte[] code = [.. byteCode];
         byteCode.Clear();
 
@@ -79,31 +79,27 @@ public class Emitter(IMemoryMap addresses) : IEmitter
                     Token identifier = ast.Identifier;
                     if (identifier.Type == TokenType.Input)
                     {
-                        OnSpecialAssignment(
-                            byteCode, isInline,
-                            InstructionType.LoadIn, modify, InstructionType.StoreIn);
+                        OnSpecialAssignment(isInline, InstructionType.LoadIn, modify, InstructionType.StoreIn);
                     }
                     else if (identifier.Type == TokenType.Output)
                     {
-                        OnSpecialAssignment(
-                            byteCode, isInline,
-                            InstructionType.LoadOut, modify, InstructionType.StoreOut);
+                        OnSpecialAssignment(isInline, InstructionType.LoadOut, modify, InstructionType.StoreOut);
                     }
                     else
                     {
                         MemoryAddress address = addresses[identifier.Symbol];
                         if (isInline)
                         {
-                            byteCode.Add(InstructionType.Load, (byte[])address);
-                            byteCode.Add(InstructionType.Swap);
-                            byteCode.Add(modify);
+                            AddInstruction(InstructionType.Load, (byte[])address);
+                            AddInstruction(InstructionType.Swap);
+                            AddInstruction(modify);
                         }
-                        byteCode.Add(InstructionType.Store, (byte[])address);
+                        AddInstruction(InstructionType.Store, (byte[])address);
                     }
                 }
                 break;
             case ASTTag.Return:
-                byteCode.Add(InstructionType.Return);
+                AddInstruction(InstructionType.Return);
                 break;
             case ASTTag.If:
                 {
@@ -111,37 +107,37 @@ public class Emitter(IMemoryMap addresses) : IEmitter
 
                     EmitExpression(ast.Condition);
 
-                    CodeAddress ifJumpTargetIndex = byteCode.AddDefaultJump(InstructionType.Jz);
+                    CodeAddress ifJumpTargetIndex = AddDefaultJump(InstructionType.Jz);
                     EmitBlock(ast.If);
                     CodeAddress ifJumpTarget;
                     if (ast.Else is null)
                     {
-                        ifJumpTarget = byteCode.Last;
+                        ifJumpTarget = byteCode.Count - 1;
                     }
                     else
                     {
-                        CodeAddress elseJumpTargetIndex = byteCode.AddDefaultJump(InstructionType.Jmp);
-                        ifJumpTarget = byteCode.Last;
+                        CodeAddress elseJumpTargetIndex = AddDefaultJump(InstructionType.Jmp);
+                        ifJumpTarget = byteCode.Count - 1;
                         EmitBlock(ast.Else);
-                        CodeAddress elseJumpTarget = byteCode.Last;
-                        byteCode.SetAddress(elseJumpTargetIndex, (byte[])elseJumpTarget);
+                        CodeAddress elseJumpTarget = byteCode.Count - 1;
+                        SetAddress(elseJumpTargetIndex, (byte[])elseJumpTarget);
                     }
-                    byteCode.SetAddress(ifJumpTargetIndex, (byte[])ifJumpTarget);
+                    SetAddress(ifJumpTargetIndex, (byte[])ifJumpTarget);
                 }
                 break;
             case ASTTag.While:
                 {
                     ASTWhile ast = union.astWhile;
 
-                    CodeAddress loopJumpTarget = byteCode.Last;
+                    CodeAddress loopJumpTarget = byteCode.Count - 1;
                     EmitExpression(ast.Condition);
                     
-                    CodeAddress whileJumpTargetIndex = byteCode.AddDefaultJump(InstructionType.Jz);
+                    CodeAddress whileJumpTargetIndex = AddDefaultJump(InstructionType.Jz);
                     EmitBlock(ast.While);
 
-                    byteCode.Add(InstructionType.Jmp, (byte[])loopJumpTarget);
-                    CodeAddress whileJumpTarget = byteCode.Last;
-                    byteCode.SetAddress(whileJumpTargetIndex, (byte[])whileJumpTarget);
+                    AddInstruction(InstructionType.Jmp, (byte[])loopJumpTarget);
+                    CodeAddress whileJumpTarget = byteCode.Count - 1;
+                    SetAddress(whileJumpTargetIndex, (byte[])whileJumpTarget);
                 }
                 break;
         }
@@ -166,21 +162,21 @@ public class Emitter(IMemoryMap addresses) : IEmitter
                     dAddress = (DataAddress)numberMap.Count;
                     numberMap.Add(number, dAddress);
                 }
-                byteCode.Add(InstructionType.LoadNumber, (byte[])dAddress);
+                AddInstruction(InstructionType.LoadNumber, (byte[])dAddress);
                 break;
             case TokenType.Parameter:
             case TokenType.Variable:
                 MemoryAddress mAddress = addresses[token.Symbol];
-                byteCode.Add(InstructionType.Load, (byte[])mAddress);
+                AddInstruction(InstructionType.Load, (byte[])mAddress);
                 break;
             case TokenType.Input:
-                byteCode.Add(InstructionType.LoadIn);
+                AddInstruction(InstructionType.LoadIn);
                 break;
             case TokenType.Output:
-                byteCode.Add(InstructionType.LoadOut);
+                AddInstruction(InstructionType.LoadOut);
                 break;
             case TokenType.Constant:
-                byteCode.Add(OnConstant(token));
+                AddInstruction(OnConstant(token));
                 break;
             case TokenType.Arithmetic:
                 InstructionType arithmetic = OnArithmetic(token);
@@ -188,53 +184,78 @@ public class Emitter(IMemoryMap addresses) : IEmitter
                 // attempt to convert [...LoadE, Pow...] to [...Exp...]
                 if (arithmetic == InstructionType.Pow && byteCode.Count > 0)
                 {
-                    if ((InstructionType)byteCode[^1] == InstructionType.LoadE)
+                    InstructionType prev = (InstructionType)byteCode[^1];
+                    if (prev == InstructionType.LoadE)
                     {
                         byteCode[^1] = (byte)InstructionType.Exp;
                         break;
                     }
                 }
 
-                byteCode.Add(arithmetic);
+                AddInstruction(arithmetic);
                 break;
             case TokenType.Comparison:
-                byteCode.Add(OnComparison(token));
+                AddInstruction(OnComparison(token));
                 break;
             case TokenType.Function:
-                byteCode.Add(OnFunction(token));
+                AddInstruction(OnFunction(token));
                 break;
             default:
-                throw EmitError("Cannot emit token!", token.Line);
+                throw EmitError("Cannot emit token!", token);
         }
     }
 
     #endregion
 
-    #region Helpers
+    #region ByteCode Helpers
 
-    private static void OnSpecialAssignment(
-        ByteCode instructionList, bool isInline,
-        InstructionType load, InstructionType modify, InstructionType store)
+    private void AddInstruction(InstructionType type)
+    {
+        Debug.Assert(type.AddressLength() == 0);
+
+        byteCode.Add((byte)type);
+    }
+
+    private void AddInstruction(InstructionType type, byte[] address)
+    {
+        Debug.Assert(type.AddressLength() == address.Length);
+
+        byteCode.Add((byte)type);
+        byteCode.AddRange(address);
+    }
+
+    private void SetAddress(CodeAddress start, byte[] address)
+    {
+        int offset = start.Address;
+        for (int i = 0; i < address.Length; i++)
+        {
+            byteCode[offset + i] = address[i];
+        }
+    }
+
+    private CodeAddress AddDefaultJump(InstructionType jump)
+    {
+        Debug.Assert(jump.IsBranch());
+
+        byte[] address = (byte[])default(CodeAddress);
+        AddInstruction(jump, address);
+        return byteCode.Count - address.Length; // index of jump target address
+    }
+
+    #endregion
+
+    #region Emit Helpers
+
+    private void OnSpecialAssignment(bool isInline, InstructionType load, InstructionType modify, InstructionType store)
     {
         if (isInline)
         {
-            instructionList.Add(load);
-            instructionList.Add(InstructionType.Swap);
-            instructionList.Add(modify);
+            AddInstruction(load);
+            AddInstruction(InstructionType.Swap);
+            AddInstruction(modify);
         }
-        instructionList.Add(store);
+        AddInstruction(store);
     }
-
-    private static InstructionType OnConstant(Token token) => token.Symbol switch
-    {
-        Tokens.ZERO => InstructionType.LoadZero,
-        Tokens.CONST_E => InstructionType.LoadE,
-        Tokens.CONST_PI => InstructionType.LoadPi,
-        Tokens.CONST_TAU => InstructionType.LoadTau,
-        Tokens.CONST_CAPACITY => InstructionType.LoadCapacity,
-
-        _ => throw EmitError("Cannot emit constant!", token.Line),
-    };
 
     private static InstructionType OnAssignment(Token token) => token.Symbol switch
     {
@@ -246,7 +267,18 @@ public class Emitter(IMemoryMap addresses) : IEmitter
         Tokens.IMOD => InstructionType.Mod,
         Tokens.IPOW => InstructionType.Pow,
 
-        _ => throw EmitError("Cannot emit assignment!", token.Line),
+        _ => throw EmitError("Cannot emit assignment!", token),
+    };
+
+    private static InstructionType OnConstant(Token token) => token.Symbol switch
+    {
+        Tokens.ZERO => InstructionType.LoadZero,
+        Tokens.CONST_E => InstructionType.LoadE,
+        Tokens.CONST_PI => InstructionType.LoadPi,
+        Tokens.CONST_TAU => InstructionType.LoadTau,
+        Tokens.CONST_CAPACITY => InstructionType.LoadCapacity,
+
+        _ => throw EmitError("Cannot emit constant!", token),
     };
 
     private static InstructionType OnArithmetic(Token token) => token.Symbol switch
@@ -258,7 +290,7 @@ public class Emitter(IMemoryMap addresses) : IEmitter
         Tokens.MOD => InstructionType.Mod,
         Tokens.POW => InstructionType.Pow,
 
-        _ => throw EmitError("Cannot emit arithmetic!", token.Line)
+        _ => throw EmitError("Cannot emit arithmetic!", token)
     };
 
     private static InstructionType OnComparison(Token token) => token.Symbol switch
@@ -273,7 +305,7 @@ public class Emitter(IMemoryMap addresses) : IEmitter
         Tokens.NE => InstructionType.Ne,
         Tokens.NOT => InstructionType.Not,
 
-        _ => throw EmitError("Cannot emit comparison!", token.Line),
+        _ => throw EmitError("Cannot emit comparison!", token),
     };
 
     private static InstructionType OnFunction(Token token) => token.Symbol switch
@@ -320,13 +352,13 @@ public class Emitter(IMemoryMap addresses) : IEmitter
         Tokens.FUSED_MULTIPLY_ADD => InstructionType.FusedMultiplyAdd,
         Tokens.SCALE_B => InstructionType.ScaleB,
 
-        _ => throw EmitError("Cannot emit function!", token.Line),
+        _ => throw EmitError("Cannot emit function!", token),
     };
 
     #endregion
 
-    private static EmitException EmitError(string error, uint line)
+    private static EmitException EmitError(string error, Token token)
     {
-        return new EmitException(error, line);
+        return new EmitException(error, token.Line);
     }
 }

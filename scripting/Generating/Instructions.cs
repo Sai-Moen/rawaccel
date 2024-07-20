@@ -66,6 +66,11 @@ public enum InstructionType : byte
 /// </summary>
 public static class Instructions
 {
+    /// <summary>
+    /// Gets the length of the address that follows this instruction.
+    /// </summary>
+    /// <param name="type">The type of the instruction</param>
+    /// <returns>Length of subsequent address in bytes</returns>
     public static int AddressLength(this InstructionType type) => type switch
     {
         InstructionType.Load => MemoryAddress.SIZE,
@@ -73,63 +78,29 @@ public static class Instructions
 
         InstructionType.LoadNumber => DataAddress.SIZE,
 
-        InstructionType.Jz => CodeAddress.SIZE,
         InstructionType.Jmp => CodeAddress.SIZE,
+        InstructionType.Jz => CodeAddress.SIZE,
 
         _ => 0,
     };
 
-    public static bool IsInline(this InstructionType type) => type != InstructionType.Store;
-
+    /// <summary>
+    /// Looks up if this instruction is a branch/jump instruction.
+    /// </summary>
+    /// <param name="type">The type of the instruction</param>
+    /// <returns>Whether this instruction is a jump</returns>
     public static bool IsBranch(this InstructionType type) => type switch
     {
-        InstructionType.Jz => true,
         InstructionType.Jmp => true,
+        InstructionType.Jz => true,
 
         _ => false,
     };
-}
 
-/// <summary>
-/// Represents bytecode.
-/// </summary>
-public class ByteCode : List<byte>, IList<byte>
-{
-    public ByteCode() : base() { }
-
-    public ByteCode(int capacity) : base(capacity) { }
-    
-    public int Last => Count - 1;
-
-    public void Add(InstructionType type)
-    {
-        Debug.Assert(type.AddressLength() == 0);
-
-        Add((byte)type);
-    }
-
-    public void Add(InstructionType type, ReadOnlySpan<byte> address)
-    {
-        Debug.Assert(type.AddressLength() == address.Length);
-
-        Add((byte)type);
-        AddRange(address.ToArray());
-    }
-
-    public void SetAddress(CodeAddress offset, ReadOnlySpan<byte> address)
-    {
-        for (int i = 0; i < address.Length; i++)
-        {
-            this[i + offset.Address] = address[i];
-        }
-    }
-
-    public CodeAddress AddDefaultJump(InstructionType jump)
-    {
-        Debug.Assert(jump.IsBranch());
-
-        ReadOnlySpan<byte> address = (byte[])(new CodeAddress());
-        Add(jump, address);
-        return Count - address.Length; // index of jump target address
-    }
+    /// <summary>
+    /// Looks up if this instruction is an inline assignment (i.e. 'composite' assignment).
+    /// </summary>
+    /// <param name="type">The type of the instruction</param>
+    /// <returns>Whether this instruction is an inline assignment operation</returns>
+    public static bool IsInline(this InstructionType type) => type != InstructionType.Store;
 }

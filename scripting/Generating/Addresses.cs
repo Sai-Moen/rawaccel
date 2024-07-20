@@ -17,15 +17,6 @@ public readonly record struct MemoryAddress(byte Address)
     public const int CAPACITY = MAX_VALUE + 1;
 
     public static implicit operator MemoryAddress(byte pointer) => new(pointer);
-
-    public static explicit operator MemoryAddress(int pointer)
-    {
-        if (pointer > MAX_VALUE)
-            throw new InterpreterException("Memory address overflow!");
-
-        return (byte)pointer;
-    }
-
     public static explicit operator MemoryAddress(ReadOnlySpan<byte> pointer) => pointer[0];
 
     public static implicit operator Index(MemoryAddress address) => address.Address;
@@ -44,15 +35,6 @@ public readonly record struct DataAddress(ushort Address)
     public const int CAPACITY = MAX_VALUE + 1;
 
     public static implicit operator DataAddress(ushort pointer) => new(pointer);
-
-    public static explicit operator DataAddress(int pointer)
-    {
-        if (pointer > MAX_VALUE)
-            throw new InterpreterException("Data address overflow!");
-
-        return (ushort)pointer;
-    }
-
     public static explicit operator DataAddress(ReadOnlySpan<byte> pointer) => BitConverter.ToUInt16(pointer);
 
     public static implicit operator Index(DataAddress address) => address.Address;

@@ -21,7 +21,7 @@ public class ScriptException : Exception
 /// </summary>
 public class GenerationException : ScriptException
 {
-    public GenerationException(string message) : base(message) { }
+    public GenerationException(string message) : base(message) {}
 
-    public GenerationException(string message, uint line) : base($"Line {line}: {message}") { }
+    public GenerationException(string message, uint line) : base($"Line {line}: {message}") {}
 }
