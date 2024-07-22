@@ -8,13 +8,13 @@ namespace scripting_tests.ParserTests;
 [TestClass]
 public class ParserTest
 {
-    private static IList<Token> GenerateParsingResultTokens(string script)
+    private static IList<ASTNode> GenerateParsingResultTokens(string script)
     {
         Lexer lexer = new(script);
         LexingResult input = lexer.Tokenize();
 
         Parser parser = new(input);
-        return parser.Parse().Callbacks[0].Code[0].Union.astAssign.Initializer;
+        return parser.Parse().Callbacks[0].Code;
     }
 
     [TestMethod]
@@ -42,10 +42,11 @@ public class ParserTest
         }
         builder.Append("; }");
 
-        IList<Token> result = GenerateParsingResultTokens(builder.ToString());
+        IList<ASTNode> code = GenerateParsingResultTokens(builder.ToString());
+        IList<Token> firstStatementInitializer = code[0].Union.astAssign.Initializer;
 
         int index = 0;
-        void AssertNextToken(Token token) => Assert.AreEqual(token, result[index++]);
+        void AssertNextToken(Token token) => Assert.AreEqual(token, firstStatementInitializer[index++]);
 
         for (int i = 0; i <= depth; i++)
         {
