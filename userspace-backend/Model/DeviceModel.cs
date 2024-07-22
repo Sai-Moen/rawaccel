@@ -18,6 +18,8 @@ namespace userspace_backend.Model
 
         public EditableSetting<int> PollRate { get; protected set; }
 
+        public EditableSetting<bool> Ignore { get; protected set; }
+
         protected override IEnumerable<IEditableSetting> EnumerateEditableSettings()
         {
             return [Name, HardwareID, DPI, PollRate];
@@ -34,6 +36,7 @@ namespace userspace_backend.Model
             HardwareID = new EditableSetting<string>(device.HWID, UserInputParsers.StringParser);
             DPI = new EditableSetting<int>(device.DPI, UserInputParsers.IntParser);
             PollRate = new EditableSetting<int>(device.PollingRate, UserInputParsers.IntParser);
+            Ignore = new EditableSetting<bool>(device.Ignore, UserInputParsers.BoolParser);
         }
 
         public override Device MapToData()
@@ -44,6 +47,7 @@ namespace userspace_backend.Model
                 HWID = this.HardwareID.EditableValue,
                 DPI = this.DPI.EditableValue,
                 PollingRate = this.PollRate.EditableValue,
+                Ignore = this.Ignore.EditableValue,
             };
         }
     }

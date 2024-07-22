@@ -4,4 +4,13 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="userinterface.Views.DevicesListView">
+  <StackPanel Orientation="Vertical">
+    <TextBlock
+      HorizontalAlignment="Left"
+      FontSize="18"
+      Margin="10,10,10,10">
+      Devices
+    </TextBlock>
+
+  </StackPanel>
 </UserControl>

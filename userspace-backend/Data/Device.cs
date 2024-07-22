@@ -11,6 +11,7 @@ namespace userspace_backend.Data
         public int DPI { get; set; }
 
         public int PollingRate { get; set; }
+        public bool Ignore { get; set; }
 
         public string DeviceGroup { get; set; }
 
@@ -21,6 +22,7 @@ namespace userspace_backend.Data
                    HWID == device.HWID &&
                    DPI == device.DPI &&
                    PollingRate == device.PollingRate &&
+                   Ignore == device.Ignore &&
                    DeviceGroup == device.DeviceGroup;
         }
 

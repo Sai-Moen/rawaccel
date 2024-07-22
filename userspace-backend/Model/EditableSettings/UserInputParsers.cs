@@ -14,6 +14,7 @@ namespace userspace_backend.Model.EditableSettings
         public static StringParser StringParser = new StringParser();
         public static IntParser IntParser = new IntParser();
         public static DoubleParser DoubleParser = new DoubleParser();
+        public static BoolParser BoolParser = new BoolParser();
         public static AccelerationDefinitionTypeParser AccelerationDefinitionTypeParser = new AccelerationDefinitionTypeParser();
         public static LookupTableTypeParser LookupTableTypeParser = new LookupTableTypeParser();
         public static LookupTableDataParser LookupTableDataParser = new LookupTableDataParser();
@@ -54,6 +55,20 @@ namespace userspace_backend.Model.EditableSettings
         public bool TryParse(string input, out double parsedValue)
         {
             if (double.TryParse(input, out parsedValue))
+            {
+                return true;
+            }
+
+            parsedValue = default;
+            return false;
+        }
+    }
+
+    public class BoolParser : IUserInputParser<bool>
+    {
+        public bool TryParse(string input, out bool parsedValue)
+        {
+            if (bool.TryParse(input, out parsedValue))
             {
                 return true;
             }

@@ -6,7 +6,10 @@
              x:Class="userinterface.Views.ProfileListView">
 
   <StackPanel Orientation="Vertical">
-    <TextBlock HorizontalAlignment="Left" Margin="10,10,10,10">
+    <TextBlock
+      HorizontalAlignment="Left"
+      FontSize="18"
+      Margin="10,10,10,10">
       Profiles
     </TextBlock>
     <ListBox>
