@@ -22,7 +22,7 @@ namespace userspace_backend.Model
 
         protected override IEnumerable<IEditableSetting> EnumerateEditableSettings()
         {
-            return [Name, HardwareID, DPI, PollRate];
+            return [Name, HardwareID, DPI, PollRate, Ignore];
         }
 
         protected override IEnumerable<IEditableSettingsCollection> EnumerateEditableSettingsCollections()
