@@ -2,10 +2,10 @@
 using scripting.Interpreting;
 using scripting.Script;
 
-namespace scripting_tests.InterpreterTests;
+namespace scripting_tests.IntegrationTests;
 
 [TestClass]
-public class InterpreterTest
+public class InterpreterTests
 {
     [TestMethod]
     [DataRow(1)]
@@ -34,12 +34,10 @@ public class InterpreterTest
             """;
 
         IInterpreter interpreter = Wrapper.LoadScript(script);
-
+        Callbacks callbacks = interpreter.Callbacks;
         Parameters parameters = interpreter.Settings;
         parameters[0].Value = value;
 
-        interpreter.Init();
-        Callbacks callbacks = interpreter.Callbacks;
         Assert.AreEqual(value * 4 + 6, callbacks.Calculate(0));
     }
 }

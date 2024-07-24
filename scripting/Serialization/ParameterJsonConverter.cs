@@ -3,7 +3,7 @@ using System;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace scripting.Serialization.Json;
+namespace scripting.Serialization;
 
 internal class ParameterJsonConverter(Parameter old) : JsonConverter<Parameter>
 {

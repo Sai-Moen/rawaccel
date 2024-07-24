@@ -1,5 +1,4 @@
-﻿using scripting.Common;
-using scripting.Lexing;
+﻿using scripting.Lexing;
 using System.Diagnostics;
 
 namespace scripting.Script;
@@ -174,5 +173,7 @@ public class Parameter
 /// <param name="Value">The value</param>
 public readonly record struct ReadOnlyParameter(string Name, ParameterType Type, Number Value)
 {
-    internal ReadOnlyParameter(Parameter parameter) : this(parameter.Name, parameter.Type, parameter.Value) {}
+    internal ReadOnlyParameter(Parameter parameter)
+        : this(parameter.Name, parameter.Type, parameter.Value)
+    {}
 }

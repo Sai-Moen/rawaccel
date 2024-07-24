@@ -6,7 +6,7 @@ using System;
 namespace scripting_tests.FormulaTests;
 
 [TestClass]
-public class PowerTest
+public class PowerTests
 {
     public const string POWER =
         """
@@ -50,7 +50,7 @@ public class PowerTest
     private readonly double offset_x;
     private readonly double constant;
 
-    public PowerTest()
+    public PowerTests()
     {
         offset_x = Math.Pow(offset / (exponent + 1), 1 / exponent) / scale;
         constant = offset_x * offset * exponent / (exponent + 1);
@@ -82,7 +82,6 @@ public class PowerTest
     {
         const double n = 0x1000;
 
-        interpreter.Init();
         Callbacks callbacks = interpreter.Callbacks;
         for (int x = 1; x <= n; x++)
         {

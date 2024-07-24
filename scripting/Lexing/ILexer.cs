@@ -1,6 +1,4 @@
-﻿using scripting.Common;
-
-namespace scripting.Lexing;
+﻿namespace scripting.Lexing;
 
 /// <summary>
 /// Defines the API of a RawAccelScript lexer.

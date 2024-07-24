@@ -1,5 +1,4 @@
-﻿using scripting.Common;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Text;
 
 namespace scripting.Lexing;

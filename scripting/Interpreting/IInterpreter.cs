@@ -1,5 +1,4 @@
-﻿using scripting.Common;
-using scripting.Script;
+﻿using scripting.Script;
 using scripting.Generating;
 using System.Collections.Generic;
 

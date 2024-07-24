@@ -3,12 +3,12 @@ using scripting.Parsing;
 using System.Collections.Generic;
 using System.Text;
 
-namespace scripting_tests.ParserTests;
+namespace scripting_tests.IntegrationTests;
 
 [TestClass]
-public class ParserTest
+public class ParserTests
 {
-    private static IList<ASTNode> GenerateParsingResultTokens(string script)
+    private static IList<ASTNode> GetCalculationASTs(string script)
     {
         Lexer lexer = new(script);
         LexingResult input = lexer.Tokenize();
@@ -42,7 +42,7 @@ public class ParserTest
         }
         builder.Append("; }");
 
-        IList<ASTNode> code = GenerateParsingResultTokens(builder.ToString());
+        IList<ASTNode> code = GetCalculationASTs(builder.ToString());
         IList<Token> firstStatementInitializer = code[0].Union.astAssign.Initializer;
 
         int index = 0;

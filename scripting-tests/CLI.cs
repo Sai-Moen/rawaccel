@@ -1,5 +1,4 @@
 ﻿using scripting;
-using scripting.Common;
 using scripting.Interpreting;
 using scripting.Script;
 using System;

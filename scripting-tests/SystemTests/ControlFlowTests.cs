@@ -3,10 +3,10 @@ using scripting.Interpreting;
 using scripting.Script;
 using System;
 
-namespace scripting_tests.GenerationTests;
+namespace scripting_tests.SystemTests;
 
 [TestClass]
-public class ControlFlowTest
+public class ControlFlowTests
 {
     [TestMethod]
     public void TestElse()
@@ -45,7 +45,6 @@ public class ControlFlowTest
         IInterpreter interpreter = Wrapper.LoadScript(script);
         Callbacks callbacks = interpreter.Callbacks;
 
-        interpreter.Init();
         for (int x = 1; x <= 32; x++)
         {
             Assert.AreEqual(EmulateScript(x), callbacks.Calculate(x));
@@ -130,7 +129,6 @@ public class ControlFlowTest
         Parameters parameters = interpreter.Settings;
         parameters[0].Value = value;
 
-        interpreter.Init();
         Assert.AreEqual(EmulateScript(), callbacks.Calculate(0));
     }
 }

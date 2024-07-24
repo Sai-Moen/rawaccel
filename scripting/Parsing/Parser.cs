@@ -1,5 +1,4 @@
-﻿using scripting.Common;
-using scripting.Lexing;
+﻿using scripting.Lexing;
 using scripting.Script;
 using System.Collections.Generic;
 using System.Diagnostics;

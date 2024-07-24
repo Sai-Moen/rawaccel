@@ -3,7 +3,7 @@ using System;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace scripting.Serialization.Json;
+namespace scripting.Serialization;
 
 public class ParametersJsonConverter(Parameters old) : JsonConverter<Parameters>
 {
@@ -31,7 +31,7 @@ public class ParametersJsonConverter(Parameters old) : JsonConverter<Parameters>
 
             parameters.Add(p);
         }
-        
+
         if (parameters.Count < old.Count)
         {
             throw new JsonException("Settings have fewer parameters than expected!");

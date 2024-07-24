@@ -1,7 +1,7 @@
 ﻿using scripting.Generating;
 using System.Diagnostics;
 
-namespace scripting.Common;
+namespace scripting;
 
 /// <summary>
 /// Constants used in the scripting namespace.

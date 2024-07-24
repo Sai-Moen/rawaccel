@@ -6,7 +6,7 @@ using System;
 namespace scripting_tests.FormulaTests;
 
 [TestClass]
-public class LinearTest
+public class LinearTests
 {
     public const string LINEAR =
         """
@@ -41,7 +41,7 @@ public class LinearTest
 
     private readonly double raised;
 
-    public LinearTest()
+    public LinearTests()
     {
         raised = Math.Pow(acceleration, exponent - 1);
     }
@@ -59,7 +59,6 @@ public class LinearTest
     {
         const double n = 0x1000;
 
-        interpreter.Init();
         Callbacks callbacks = interpreter.Callbacks;
         for (int x = 1; x <= n; x++)
         {
