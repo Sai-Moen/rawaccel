@@ -17,7 +17,7 @@
         CornerRadius="5"
         BorderBrush="Gray" BorderThickness="1"
         Padding="10"
-        Margin="5,5,5,5">
+        Margin="0,0,0,0">
         <StackPanel Orientation="Horizontal">
           <TextBlock Margin="5,0,5,0">Name: Mouse1</TextBlock>
           <TextBlock Margin="5,0,5,0">DPI: 32000</TextBlock>
@@ -30,7 +30,7 @@
         CornerRadius="5"
         BorderBrush="Gray" BorderThickness="1"
         Padding="10"
-        Margin="5,5,5,5">
+        Margin="0,0,0,0">
         <StackPanel Orientation="Horizontal">
           <TextBlock Margin="5,0,5,0">Name: Mouse2</TextBlock>
           <TextBlock Margin="5,0,5,0">DPI: 1200</TextBlock>

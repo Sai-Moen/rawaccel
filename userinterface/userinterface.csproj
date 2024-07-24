@@ -32,4 +32,8 @@
   <ItemGroup>
     <Content Include="mouse.ico" />
   </ItemGroup>
+
+  <ItemGroup>
+    <UpToDateCheckInput Remove="Views\ProfileView.axaml" />
+  </ItemGroup>
 </Project>
