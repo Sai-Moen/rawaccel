@@ -5,8 +5,10 @@
 /// </summary>
 public static class Builtins
 {
-    // for reference, could be used in a regression test idk
-    public const string STATIC = "[]{}";
+    /// <summary>
+    /// No Accel, but as a script.
+    /// </summary>
+    public const string NO_ACCEL = "[]{}";
 
     /// <summary>
     /// Arc mode by SaiMoen.
@@ -32,6 +34,36 @@ public static class Builtins
             x -= Input_Offset;
             y += (pLimit / x) * (x - Midpoint * atan(x / Midpoint));
 
+        }
+        """;
+
+    /// <summary>
+    /// Preservation of RawAccel v1.6.1 Motivity.
+    /// </summary>
+    public const string MOTIVITY =
+        """
+        Preservation of RawAccel v1.6.1 Motivity.
+
+        [
+
+            Gain := false;
+
+            Growth_Rate := 1   (0};
+            Motivity    := 1.5 (1};
+            Midpoint    := 5   (0};
+
+        ]
+
+            accel := e ^ Growth_Rate;
+            motivity := 2 * log(Motivity);
+            midpoint := log(Midpoint);
+            constant := -motivity / 2
+
+        {
+        }
+
+        distribution
+        {
         }
         """;
 }

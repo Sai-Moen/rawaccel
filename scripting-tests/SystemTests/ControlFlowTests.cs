@@ -44,7 +44,6 @@ public class ControlFlowTests
 
         IInterpreter interpreter = Wrapper.LoadScript(script);
         Callbacks callbacks = interpreter.Callbacks;
-
         for (int x = 1; x <= 32; x++)
         {
             Assert.AreEqual(EmulateScript(x), callbacks.Calculate(x));

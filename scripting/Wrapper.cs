@@ -1,8 +1,10 @@
-﻿using scripting.Interpreting;
+﻿using scripting.Generating;
+using scripting.Interpreting;
 using scripting.Lexing;
 using scripting.Parsing;
 using scripting.Script;
 using System;
+using System.Collections.Generic;
 using System.IO;
 
 namespace scripting;
@@ -12,36 +14,6 @@ namespace scripting;
 /// </summary>
 public static class Wrapper
 {
-    /// <summary>
-    /// Utility method to generate an error message to display to script writers,
-    /// e.g. "[Emit] Branch mismatch!" for some EmitException.
-    /// </summary>
-    /// <param name="e">The error</param>
-    /// <returns>Exception message with type prepended</returns>
-    public static string GenerateErrorMessage(ScriptException e)
-    {
-        string name = e.GetType().Name;
-        int startIndex = name.IndexOf(nameof (Exception));
-        return startIndex == -1 ? e.Message : $"[{name.Remove(startIndex)}] {e.Message}";
-    }
-
-    /// <summary>
-    /// Attemps to load a RawAccelScript script.
-    /// </summary>
-    /// <param name="script">Script string to load</param>
-    /// <returns>Interpreter instance with the loaded script</returns>
-    /// <exception cref="ScriptException"/>
-    public static IInterpreter LoadScript(string script)
-    {
-        Lexer lexer = new(script);
-        LexingResult lexicalAnalysis = lexer.Tokenize();
-
-        Parser parser = new(lexicalAnalysis);
-        ParsingResult syntacticAnalysis = parser.Parse();
-
-        return new Interpreter(syntacticAnalysis);
-    }
-
     /// <summary>
     /// Attempts to load a RawAccelScript script from <paramref name="scriptPath"/>.
     /// Any exceptions while reading the file will be rethrown inside of a <see cref="ScriptException"/>.
@@ -62,6 +34,89 @@ public static class Wrapper
         }
 
         return LoadScript(script);
+    }
+
+    /// <summary>
+    /// Attemps to load a RawAccelScript script.
+    /// </summary>
+    /// <param name="script">Script string to load</param>
+    /// <returns>Interpreter instance with the loaded script</returns>
+    /// <exception cref="ScriptException"/>
+    public static IInterpreter LoadScript(string script)
+    {
+        return CompileToInterpreter(script);
+    }
+
+    /// <summary>
+    /// Compiles a script only up to and including the Lexer phase.
+    /// </summary>
+    /// <param name="script">Script to compile</param>
+    /// <returns>Result of lexing</returns>
+    public static LexingResult CompileToLexingResult(string script)
+    {
+        Lexer lexer = new(script);
+        return lexer.Tokenize();
+    }
+
+    /// <summary>
+    /// Compiles a script only up to and including the Parser phase.
+    /// </summary>
+    /// <param name="script">Script to compile</param>
+    /// <returns>Result of parsing</returns>
+    public static ParsingResult CompileToParsingResult(string script)
+    {
+        Parser parser = new(CompileToLexingResult(script));
+        return parser.Parse();
+    }
+
+    /// <summary>
+    /// Compiles a script only up to and including the Parser phase,
+    /// but also emits all callbacks present in the script to Programs.
+    /// </summary>
+    /// <param name="script">Script to compile</param>
+    /// <returns>All callbacks as an array of <see cref="Program"/>s</returns>
+    public static Program[] CompileToCallbackPrograms(string script)
+    {
+        ParsingResult result = CompileToParsingResult(script);
+        MemoryMap addresses = [];
+
+        Parameters parameters = result.Parameters;
+        for (int i = 0; i < parameters.Count; i++)
+        {
+            string name = parameters[i].Name;
+            addresses.Add(name, (MemoryAddress)i);
+        }
+
+        IList<ASTAssign> variables = result.Variables;
+        for (int i = 0; i < variables.Count; i++)
+        {
+            string name = variables[i].Identifier.Symbol;
+            addresses.Add(name, (MemoryAddress)(Constants.MAX_PARAMETERS + i));
+        }
+
+        Emitter emitter = new(addresses);
+
+        IList<ParsedCallback> callbacks = result.Callbacks;
+        Program[] programs = new Program[callbacks.Count];
+        for (int i = 0; i < callbacks.Count; i++)
+        {
+            IBlock code = callbacks[i].Code;
+            programs[i] = emitter.Emit(code);
+        }
+
+        return programs;
+    }
+
+    /// <summary>
+    /// Compiles all the way, resulting in a (concrete) Interpreter instance.
+    /// Only recommended to use for testing.
+    /// </summary>
+    /// <param name="script">Script to compile</param>
+    /// <returns>Concrete Interpreter instance</returns>
+    public static Interpreter CompileToInterpreter(string script)
+    {
+        Interpreter interpreter = new(CompileToParsingResult(script));
+        return interpreter;
     }
 
     /// <summary>

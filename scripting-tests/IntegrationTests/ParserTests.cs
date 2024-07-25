@@ -1,4 +1,5 @@
-﻿using scripting.Lexing;
+﻿using scripting;
+using scripting.Lexing;
 using scripting.Parsing;
 using System.Collections.Generic;
 using System.Text;
@@ -10,11 +11,7 @@ public class ParserTests
 {
     private static IList<ASTNode> GetCalculationASTs(string script)
     {
-        Lexer lexer = new(script);
-        LexingResult input = lexer.Tokenize();
-
-        Parser parser = new(input);
-        return parser.Parse().Callbacks[0].Code;
+        return Wrapper.CompileToParsingResult(script).Callbacks[0].Code;
     }
 
     [TestMethod]

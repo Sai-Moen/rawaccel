@@ -16,7 +16,7 @@ public class Parser : IParser
     private readonly HashSet<string> variableNames = new(Constants.MAX_VARIABLES);
 
     private readonly Queue<Token> tokenBuffer = new();
-    private readonly Stack<Token> operatorStack = new();
+    private readonly Stack<Operator> operatorStack = new();
 
     private int currentIndex;
     private readonly int maxIndex;
@@ -297,14 +297,15 @@ public class Parser : IParser
                     output.Add(ResolveIdentifier(token));
                     break;
                 case TokenType.Arithmetic:
-                    CheckUnary(output, prev, token.Line);
-                    OnPrecedence(output, token);
+                    bool unary = CheckUnary(output, token, prev);
+                    OnPrecedence(output, token, unary);
                     break;
                 case TokenType.ArgumentSeparator:
+                    OnSeparator(output);
                     break;
                 case TokenType.Function:
                 case TokenType.ParenOpen:
-                    operatorStack.Push(token);
+                    OnOpen(token);
                     break;
                 case TokenType.ParenClose:
                     OnClose(output);
@@ -511,17 +512,18 @@ public class Parser : IParser
                     output.Add(ResolveIdentifier(token));
                     break;
                 case TokenType.Arithmetic:
-                    CheckUnary(output, prev, token.Line);
-                    OnPrecedence(output, token);
+                    bool unary = CheckUnary(output, token, prev);
+                    OnPrecedence(output, token, unary);
                     break;
                 case TokenType.Comparison:
                     OnPrecedence(output, token);
                     break;
                 case TokenType.ArgumentSeparator:
+                    OnSeparator(output);
                     break;
                 case TokenType.Function:
                 case TokenType.ParenOpen:
-                    operatorStack.Push(token);
+                    OnOpen(token);
                     break;
                 case TokenType.ParenClose:
                     OnClose(output);
@@ -535,33 +537,37 @@ public class Parser : IParser
         return output;
     }
 
+    #endregion
+
+    #region Expression Helpers
+
+    private void OnOpen(Token token)
+    {
+        operatorStack.Push(new(token, -1));
+    }
+
     private void OnClose(TokenList output)
     {
-        Token top;
-        if (!operatorStack.TryPeek(out top!))
+        Operator? oper;
+        while (operatorStack.TryPop(out oper) && oper.Type != TokenType.ParenOpen)
         {
-            throw ParserError($"Unexpected: {Tokens.PAREN_CLOSE}");
+            output.Add(oper.Token);
+        }
+        // the parenthesis is discarded intentionally (if the operator is not null)
+
+        // if popping fails, there was no matching opening parenthesis before the bottom of the stack
+        if (oper is null)
+        {
+            throw ParserError($"No matching: {Tokens.PAREN_OPEN}");
         }
 
-        while (top.Type != TokenType.ParenOpen)
+        if (operatorStack.TryPeek(out var maybeFunction) && maybeFunction.Type == TokenType.Function)
         {
-            output.Add(operatorStack.Pop());
-            if (operatorStack.Count == 0)
-            {
-                throw ParserError($"No matching: {Tokens.PAREN_OPEN}");
-            }
-
-            top = operatorStack.Peek();
-        }
-
-        _ = operatorStack.Pop();
-        if (operatorStack.Count != 0 && operatorStack.Peek().Type == TokenType.Function)
-        {
-            output.Add(operatorStack.Pop());
+            output.Add(operatorStack.Pop().Token);
         }
     }
 
-    private static void CheckUnary(TokenList output, Token? prev, uint line)
+    private static bool CheckUnary(TokenList output, Token token, Token? prev)
     {
         switch ((prev ?? Tokens.DUMMY).Type)
         {
@@ -574,40 +580,62 @@ public class Parser : IParser
             case TokenType.Input:
             case TokenType.Output:
             case TokenType.ParenClose:
-                return;
+                return false;
         }
 
-        output.Add(Tokens.GetReserved(Tokens.ZERO, line));
+        output.Add(Tokens.GetReserved(Tokens.ZERO, token.Line));
+        return true;
     }
 
-    private void OnPrecedence(TokenList output, Token token)
+    private void OnPrecedence(TokenList output, Token token, bool unary = false)
     {
-        int precedence = token.Precedence();
+        Operator tokenOperator = new(token, token.Precedence(unary));
         bool left = token.LeftAssociative();
-        while (operatorStack.Count != 0)
+        while (operatorStack.TryPop(out var oper))
         {
-            Token op = operatorStack.Peek();
-            TokenType opType = op.Type;
-            if (opType != TokenType.Comparison && opType != TokenType.Arithmetic)
+            if (oper.HasHigherPrecedence(tokenOperator, left))
             {
+                output.Add(oper.Token);
+            }
+            else
+            {
+                operatorStack.Push(oper);
                 break;
             }
-
-            int pOperator = op.Precedence();
-            if (precedence < pOperator || left && precedence == pOperator)
-            {
-                output.Add(operatorStack.Pop());
-            }
-            else break;
         }
-        operatorStack.Push(token);
+        operatorStack.Push(tokenOperator);
+    }
+
+    private void OnSeparator(TokenList output)
+    {
+        while (operatorStack.TryPop(out var oper))
+        {
+            if (oper.Type == TokenType.ParenOpen)
+            {
+                // the opening parenthesis should be discarded by a closing one
+                
+                // analysis -> loop(TryPop) then Push vs loop(TryPeek then Pop):
+                // where n is the amount of elements up to and including the goal,
+                // or the total length of the stack if the goal is not present
+                // n+1 vs 2n-1 if the parenthesis is there
+                // n vs 2n if the parenthesis is not there
+                // so we use the former, same logic applies in OnPrecedence
+                operatorStack.Push(oper);
+                return;
+            }
+
+            output.Add(oper.Token);
+        }
+
+        // if popping fails, this was just a random separator
+        throw ParserError($"Unexpected: {Tokens.ARG_SEP}");
     }
 
     private void OnEmptyQueue(TokenList output)
     {
-        while (operatorStack.Count != 0)
+        while (operatorStack.TryPop(out var oper))
         {
-            Token token = operatorStack.Pop();
+            Token token = oper.Token;
             if (token.Type == TokenType.ParenOpen)
             {
                 throw ParserError($"No matching: {Tokens.PAREN_CLOSE}");
@@ -620,26 +648,6 @@ public class Parser : IParser
         {
             throw ParserError("Empty expression!");
         }
-    }
-
-    private void Expect(TokenType type)
-    {
-        if (Accept(type))
-        {
-            return;
-        }
-
-        throw ParserError("Unexpected token!");
-    }
-
-    private bool Accept(TokenType type)
-    {
-        bool success = type == currentToken.Type;
-        if (success)
-        {
-            AdvanceToken();
-        }
-        return success;
     }
 
     #endregion
@@ -666,6 +674,26 @@ public class Parser : IParser
     #endregion
 
     #region Helpers
+
+    private void Expect(TokenType type)
+    {
+        if (Accept(type))
+        {
+            return;
+        }
+
+        throw ParserError("Unexpected token!");
+    }
+
+    private bool Accept(TokenType type)
+    {
+        bool success = type == currentToken.Type;
+        if (success)
+        {
+            AdvanceToken();
+        }
+        return success;
+    }
 
     private void AdvanceToken()
     {

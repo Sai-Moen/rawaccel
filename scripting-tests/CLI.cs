@@ -34,7 +34,7 @@ public static class CLI
             string inputs = File.ReadAllText(args[1]);
             foreach (string input in inputs.Split(';'))
             {
-                if (xs.Length <= trim)
+                if (trim >= xs.Length)
                 {
                     throw new IndexOutOfRangeException("Too many points in the input file!");
                 }
@@ -42,16 +42,13 @@ public static class CLI
                 xs[trim++] = double.Parse(input);
             }
 
-            var temp = xs;
-            xs = new double[trim];
-            Array.Copy(temp, xs, trim);
+            Array.Resize(ref xs, trim);
         }
         else for (int i = 0; i < Constants.LUT_POINTS_CAPACITY; i++)
         {
             xs[i] = i + 1;
         }
 
-        interpreter.Init();
         Trace.WriteLine(callbacks.Calculate(xs));
     }
 }

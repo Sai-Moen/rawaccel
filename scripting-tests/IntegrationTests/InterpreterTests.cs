@@ -1,4 +1,5 @@
 ﻿using scripting;
+using scripting.Generating;
 using scripting.Interpreting;
 using scripting.Script;
 
@@ -7,6 +8,12 @@ namespace scripting_tests.IntegrationTests;
 [TestClass]
 public class InterpreterTests
 {
+    private static (Interpreter, Program[]) WastefulWayToGetInterpreterAndCallbackPrograms(string script)
+    {
+        // makes me twice as aware of compilation speed, by compiling separately 2 times for no good reason
+        return (Wrapper.CompileToInterpreter(script), Wrapper.CompileToCallbackPrograms(script));
+    }
+
     [TestMethod]
     [DataRow(1)]
     [DataRow(2)]
@@ -33,11 +40,18 @@ public class InterpreterTests
             }
             """;
 
-        IInterpreter interpreter = Wrapper.LoadScript(script);
-        Callbacks callbacks = interpreter.Callbacks;
+        (Interpreter interpreter, Program[] programs) = WastefulWayToGetInterpreterAndCallbackPrograms(script);
         Parameters parameters = interpreter.Settings;
         parameters[0].Value = value;
 
-        Assert.AreEqual(value * 4 + 6, callbacks.Calculate(0));
+        // a + (a + 1) + (a + 1 + 1) + (a + 1 + 1 + 1) = 4a + 6
+        double expected = value * 4 + 6;
+
+        interpreter.Init();
+        Number[] remainder = interpreter.ExecuteProgram(programs[0]);
+        Assert.AreEqual(0, remainder.Length);
+        double actual = interpreter.Y;
+
+        Assert.AreEqual(expected, actual);
     }
 }
