@@ -4,18 +4,12 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:v="using:userinterface.Views"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-             x:Class="userinterface.Views.ProfileView">
-   <Grid ColumnDefinitions="*,3*"
-         ShowGridLines="True">
-     <v:ProfileSettingsView
-       Grid.Row="0"
-       Grid.Column="0"/>
-     <TextBlock
-       HorizontalAlignment="Center"
-       VerticalAlignment="Center"
-       Grid.Row="0"
-       Grid.Column="1">
-        Chart will go here
-     </TextBlock>
-   </Grid>
+             x:Class="userinterface.Views.HiddenProfileSettingsView">
+  <StackPanel Orientation="Vertical">
+    <v:EditableFieldView FieldName="Rotation"/>
+    <v:EditableFieldView FieldName="L/R Ratio"/>
+    <v:EditableFieldView FieldName="U/D Ratio"/>
+    <v:EditableFieldView FieldName="Speed Cap"/>
+    <v:EditableFieldView FieldName="Angle Snapping"/>
+  </StackPanel>
 </UserControl>
