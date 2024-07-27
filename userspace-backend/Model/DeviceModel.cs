@@ -7,8 +7,10 @@ namespace userspace_backend.Model
 {
     public class DeviceModel : EditableSettingsCollection<Device>
     {
-        public DeviceModel(Device device) : base(device)
-        { }
+        public DeviceModel(Device device, DeviceGroupModel deviceGroup) : base(device)
+        {
+            DeviceGroup = deviceGroup;
+        }
 
         public EditableSetting<string> Name { get; protected set; }
 
@@ -20,7 +22,7 @@ namespace userspace_backend.Model
 
         public EditableSetting<bool> Ignore { get; protected set; }
 
-        public EditableSetting<string> DeviceGroup { get; protected set; }
+        public DeviceGroupModel DeviceGroup { get; protected set; }
 
         protected override IEnumerable<IEditableSetting> EnumerateEditableSettings()
         {
@@ -29,7 +31,7 @@ namespace userspace_backend.Model
 
         protected override IEnumerable<IEditableSettingsCollection> EnumerateEditableSettingsCollections()
         {
-            return Enumerable.Empty<IEditableSettingsCollection>();
+            return [DeviceGroup];
         }
 
         protected override void InitEditableSettingsAndCollections(Device device)
@@ -50,6 +52,7 @@ namespace userspace_backend.Model
                 DPI = this.DPI.EditableValue,
                 PollingRate = this.PollRate.EditableValue,
                 Ignore = this.Ignore.EditableValue,
+                DeviceGroup = DeviceGroup.MapToData(),
             };
         }
     }

@@ -9,9 +9,15 @@ using userspace_backend.Model;
 namespace userspace_backend
 {
     // TODO: remove before release
-    public static class Bootstrapper
+    public class Bootstrapper : IBackEndLoader
     {
-        public static BackEnd CreateBootstrappingBackend()
+        public Device[] DevicesToLoad { get; set; }
+
+        public MappingSet MappingsToLoad { get; set; }
+
+        public ProfileModel[] ProfilesToLoad { get; set; }
+
+        public IEnumerable<Device> LoadDevices()
         {
             Device[] devices =
             {
@@ -20,9 +26,22 @@ namespace userspace_backend
                 new Device() { Name = "Razer Viper 8K", DPI = 1200, HWID = @"HID\VID_31E3&PID_1310", PollingRate = 1000, DeviceGroup = "Testing"},
             };
 
-            BackEnd backEnd = new BackEnd();
-            backEnd.Devices = new List<DeviceModel>(devices.Select(d => new DeviceModel(d)));
-            return backEnd;
+            return DevicesToLoad;
+        }
+
+        public MappingSet LoadMappings()
+        {
+            return MappingsToLoad;
+        }
+
+        public IEnumerable<ProfileModel> LoadProfiles()
+        {
+            return ProfilesToLoad;
+        }
+
+        public void WriteSettingsToDisk(IEnumerable<DeviceModel> devices)
+        {
+            // Do nothing
         }
     }
 }

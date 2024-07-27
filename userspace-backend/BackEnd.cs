@@ -12,30 +12,43 @@ namespace userspace_backend
 {
     public class BackEnd
     {
-        public static DevicesReaderWriter DevicesReaderWriter = new DevicesReaderWriter();
+
+        public BackEnd(IBackEndLoader backEndLoader)
+        {
+            BackEndLoader = backEndLoader;
+            DeviceGroups = new DeviceGroups();
+            Devices = new List<DeviceModel>();
+            Mappings = new MappingSet();
+            Profiles = new List<ProfileModel>();
+        }
 
         public IList<DeviceModel> Devices { get; set; }
 
         public DeviceGroups DeviceGroups { get; set; }
 
-        public IList<Mapping> Mappings { get; set; }
+        public MappingSet Mappings { get; set; }
 
-        public IList<Profile> Profiles { get; set; }
+        public IList<ProfileModel> Profiles { get; set; }
 
-        public void Load(string settingsDirectory)
+        protected IBackEndLoader BackEndLoader { get; set; }
+
+        public void Load()
         {
-            LoadDevices(settingsDirectory);
+            IEnumerable<Device> devicesData = BackEndLoader.LoadDevices(); ;
+            LoadDevicesFromData(devicesData);
         }
 
-        protected void LoadDevices(string settingsDirectory)
+        protected void LoadDevicesFromData(IEnumerable<Device> devicesData)
         {
-            string devicesFile = Path.Combine(settingsDirectory, "devices.json");
-            string devicesText = File.ReadAllText(devicesFile);
-            IEnumerable<Device> devicesData = DevicesReaderWriter.Read(devicesText);
-            Devices = devicesData.Select(d => new DeviceModel(d)).ToList();
+            foreach(var deviceData in devicesData)
+            {
+                DeviceGroupModel deviceGroup = DeviceGroups.AddOrGetDeviceGroup(deviceData.DeviceGroup);
+                DeviceModel deviceModel = new DeviceModel(deviceData, deviceGroup);
+                Devices.Add(deviceModel);
+            }
         }
 
-        public void Apply(string settingsDirectory)
+        public void Apply()
         {
             try
             {
@@ -46,30 +59,16 @@ namespace userspace_backend
                 return;
             }
 
-            WriteSettingsToDisk(settingsDirectory);
+            WriteSettingsToDisk();
+        }
+
+        protected void WriteSettingsToDisk()
+        {
+            BackEndLoader.WriteSettingsToDisk(Devices);
         }
 
         protected void WriteToDriver()
         {
         }
-
-        protected void WriteSettingsToDisk(string settingsDirectory)
-        {
-            WriteDevices(settingsDirectory);
-        }
-
-        protected void WriteDevices(string settingsDirectory)
-        {
-            IEnumerable<Device> devicesData = Devices.Select(d => d.MapToData());
-            string devicesFileText = DevicesReaderWriter.Serialize(devicesData);
-            string devicesFilePath = GetDevicesFile(settingsDirectory);
-            File.WriteAllText(devicesFilePath, devicesFileText);
-        }
-
-        protected static string GetDevicesFile(string settingsDirectory) => Path.Combine(settingsDirectory, "devices.json");
-
-        protected static string GetMappingsDirectory(string settingsDirectory) => Path.Combine(settingsDirectory, "mappings");
-
-        protected static string GetProfilesDirectory(string settingsDirectory) => Path.Combine(settingsDirectory, "profiles");
     }
 }
