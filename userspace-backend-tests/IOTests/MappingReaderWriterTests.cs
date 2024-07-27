@@ -22,10 +22,11 @@ namespace userspace_backend_tests.IOTests
         {
             var mapping = new Mapping()
             {
-                ProfilesToGroups = new Dictionary<string, DeviceGroups>()
+                GroupsToProfiles = new Dictionary<string, string>()
                 {
-                    { "Default", new DeviceGroups() { Groups = new List<string>() { "Default", "Logitech Mice", } } },
-                    { "Test", new DeviceGroups() { Groups = new List<string>() { "Test Mice", } } },
+                    { "Default", "Default" },
+                    { "Logitech Mice", "Default" },
+                    { "Test Mice", "Test" },
                 },
             };
 
@@ -46,10 +47,11 @@ namespace userspace_backend_tests.IOTests
         {
             var mapping = new Mapping()
             {
-                ProfilesToGroups = new Dictionary<string, DeviceGroups>()
+                GroupsToProfiles = new Dictionary<string, string>()
                 {
-                    { "Default", new DeviceGroups() { Groups = new List<string>() { "Default", "Logitech Mice", } } },
-                    { "Test", new DeviceGroups() { Groups = new List<string>() { "Test Mice", } } },
+                    { "Default", "Default" },
+                    { "Logitech Mice", "Default" },
+                    { "Test Mice", "Test" },
                 },
             };
 
@@ -59,7 +61,7 @@ namespace userspace_backend_tests.IOTests
             Assert.IsTrue(File.Exists(writePath));
 
             // Change mapping:
-            mapping.ProfilesToGroups["Test"] = new DeviceGroups() { Groups = new List<string>() { "User has changed this group", } };
+            mapping.GroupsToProfiles["Test Mice"] = "User has changed this mapping";
 
             writer.Write(writePath, mapping);
             string actualOutput = File.ReadAllText(writePath);
@@ -74,10 +76,11 @@ namespace userspace_backend_tests.IOTests
         {
             var expectedMapping = new Mapping()
             {
-                ProfilesToGroups = new Dictionary<string, DeviceGroups>()
+                GroupsToProfiles = new Dictionary<string, string>()
                 {
-                    { "Default", new DeviceGroups() { Groups = new List<string>() { "Default", "Logitech Mice", } } },
-                    { "Test", new DeviceGroups() { Groups = new List<string>() { "Test Mice", } } },
+                    { "Default", "Default" },
+                    { "Logitech Mice", "Default" },
+                    { "Test Mice", "Test" },
                 },
             };
 

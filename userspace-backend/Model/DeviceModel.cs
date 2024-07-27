@@ -20,6 +20,8 @@ namespace userspace_backend.Model
 
         public EditableSetting<bool> Ignore { get; protected set; }
 
+        public EditableSetting<string> DeviceGroup { get; protected set; }
+
         protected override IEnumerable<IEditableSetting> EnumerateEditableSettings()
         {
             return [Name, HardwareID, DPI, PollRate, Ignore];

@@ -4,20 +4,20 @@
     "HWID": "blah-blah-blah",
     "DPI": 12000,
     "PollingRate": 2000,
-    "MappingGroup": "Logitech Mice"
+    "DeviceGroup": "Logitech Mice"
   },
   {
     "Name": "Superlight (wired)",
     "HWID": "blah-blah-blah-2",
     "DPI": 12000,
     "PollingRate": 2000,
-    "MappingGroup": "Logitech Mice"
+    "DeviceGroup": "Logitech Mice"
   },
   {
     "Name": "The user has changed the name of this device",
     "HWID": "this-is-a-fake-hwid",
     "DPI": 1600,
     "PollingRate": 1000,
-    "MappingGroup": "Test Mice"
+    "DeviceGroup": "Test Mice"
   }
 ]

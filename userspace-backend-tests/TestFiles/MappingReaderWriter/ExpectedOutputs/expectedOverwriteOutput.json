@@ -1,15 +1,7 @@
 {
-  "ProfilesToGroups": {
-    "Default": {
-      "Groups": [
-        "Default",
-        "Logitech Mice"
-      ]
-    },
-    "Test": {
-      "Groups": [
-        "User has changed this group"
-      ]
-    }
+  "GroupsToProfiles": {
+    "Default": "Default",
+    "Logitech Mice": "Default",
+    "Test Mice": "User has changed this mapping"
   }
 }

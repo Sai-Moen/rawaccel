@@ -8,19 +8,19 @@ namespace userspace_backend.Data
     public class Mapping
     {
         [JsonRequired]
-        public Dictionary<string, DeviceGroups> ProfilesToGroups { get; set; }
+        public Dictionary<string, string> GroupsToProfiles { get; set; }
 
         public override bool Equals(object? obj)
         {
             bool isEqual = obj is Mapping mapping &&
-                mapping.ProfilesToGroups.Count == ProfilesToGroups.Count && !mapping.ProfilesToGroups.Except(ProfilesToGroups).Any();
+                mapping.GroupsToProfiles.Count == GroupsToProfiles.Count && !mapping.GroupsToProfiles.Except(GroupsToProfiles).Any();
 
             return isEqual;
         }
 
         public override int GetHashCode()
         {
-            return HashCode.Combine(ProfilesToGroups);
+            return HashCode.Combine(GroupsToProfiles);
         }
     }
 }

@@ -110,6 +110,7 @@ namespace userspace_backend_tests.IOTests
                 DeviceGroup = "Test Mice",
                 DPI = 1600,
                 PollingRate = 1000,
+                Ignore = true,
             };
 
             var devices = new List<Device>() { device1, device2, device3 };

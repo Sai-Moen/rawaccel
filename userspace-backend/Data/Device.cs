@@ -1,4 +1,6 @@
 ﻿using System;
+using System.ComponentModel;
+using System.Text.Json.Serialization;
 
 namespace userspace_backend.Data
 {
@@ -12,6 +14,7 @@ namespace userspace_backend.Data
 
         public int PollingRate { get; set; }
 
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
         public bool Ignore { get; set; }
 
         public string DeviceGroup { get; set; }

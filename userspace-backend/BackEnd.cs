@@ -16,6 +16,8 @@ namespace userspace_backend
 
         public IList<DeviceModel> Devices { get; set; }
 
+        public DeviceGroups DeviceGroups { get; set; }
+
         public IList<Mapping> Mappings { get; set; }
 
         public IList<Profile> Profiles { get; set; }

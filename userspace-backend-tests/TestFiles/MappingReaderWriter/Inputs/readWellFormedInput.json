@@ -1,15 +1,7 @@
 {
-  "ProfilesToGroups": {
-    "Default": {
-      "Groups": [
-        "Default",
-        "Logitech Mice"
-      ]
-    },
-    "Test": {
-      "Groups": [
-        "Test Mice"
-      ]
-    }
+  "GroupsToProfiles": {
+    "Default": "Default",
+    "Logitech Mice": "Default",
+    "Test Mice": "Test"
   }
 }
