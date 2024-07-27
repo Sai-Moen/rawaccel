@@ -9,23 +9,23 @@ using userspace_backend.Data;
 
 namespace userspace_backend.IO
 {
-    public class MappingReaderWriter : ReaderWriterBase<Mapping>
+    public class MappingsReaderWriter : ReaderWriterBase<MappingSet>
     {
         public static JsonSerializerOptions JsonOptions = new JsonSerializerOptions
         {
             WriteIndented = true,
         };
 
-        protected override string FileType => "Mapping";
+        protected override string FileType => "Mappings";
 
-        public override string Serialize(Mapping toWrite)
+        public override string Serialize(MappingSet toWrite)
         {
             return JsonSerializer.Serialize(toWrite, JsonOptions);
         }
 
-        public override Mapping Deserialize(string toRead)
+        public override MappingSet Deserialize(string toRead)
         {
-            return JsonSerializer.Deserialize<Mapping>(toRead);
+            return JsonSerializer.Deserialize<MappingSet>(toRead);
         }
     }
 }

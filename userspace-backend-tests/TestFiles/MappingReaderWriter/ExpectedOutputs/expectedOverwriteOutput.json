@@ -1,7 +1,18 @@
 {
-  "GroupsToProfiles": {
-    "Default": "Default",
-    "Logitech Mice": "Default",
-    "Test Mice": "User has changed this mapping"
-  }
+  "Mappings": [
+    {
+      "Name": "GeneralFavorite",
+      "GroupsToProfiles": {
+        "Default": "Default",
+        "Logitech Mice": "Default",
+        "Test Mice": "User has changed this mapping"
+      }
+    },
+    {
+      "Name": "MappingForSpecificGame",
+      "GroupsToProfiles": {
+        "Default": "SpecificGameProfile"
+      }
+    }
+  ]
 }

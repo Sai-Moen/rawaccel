@@ -20,19 +20,34 @@ namespace userspace_backend_tests.IOTests
         [TestMethod]
         public void GivenValidInput_Writes()
         {
-            var mapping = new Mapping()
+            var mappings = new MappingSet()
             {
-                GroupsToProfiles = new Dictionary<string, string>()
-                {
-                    { "Default", "Default" },
-                    { "Logitech Mice", "Default" },
-                    { "Test Mice", "Test" },
-                },
+                Mappings =
+                [
+                    new Mapping()
+                    {
+                        Name = "GeneralFavorite",
+                        GroupsToProfiles = new Mapping.GroupsToProfilesMapping()
+                        {
+                            { "Default", "Default" },
+                            { "Logitech Mice", "Default" },
+                            { "Test Mice", "Test" },
+                        },
+                    },
+                    new Mapping()
+                    {
+                        Name = "MappingForSpecificGame",
+                        GroupsToProfiles = new Mapping.GroupsToProfilesMapping()
+                        {
+                            { "Default", "SpecificGameProfile" },
+                        },
+                    }
+                ]
             };
 
-            var writer = new MappingReaderWriter();
+            var writer = new MappingsReaderWriter();
             var writePath = Path.Combine(TestDirectory, "testMapping.json");
-            writer.Write(writePath, mapping);
+            writer.Write(writePath, mappings);
 
             Assert.IsTrue(File.Exists(writePath));
             string actualOutput = File.ReadAllText(writePath);
@@ -45,25 +60,40 @@ namespace userspace_backend_tests.IOTests
         [TestMethod]
         public void GivenValidInput_OverwritesExistingFile()
         {
-            var mapping = new Mapping()
+            var mappings = new MappingSet()
             {
-                GroupsToProfiles = new Dictionary<string, string>()
-                {
-                    { "Default", "Default" },
-                    { "Logitech Mice", "Default" },
-                    { "Test Mice", "Test" },
-                },
+                Mappings =
+                [
+                    new Mapping()
+                    {
+                        Name = "GeneralFavorite",
+                        GroupsToProfiles = new Mapping.GroupsToProfilesMapping()
+                        {
+                            { "Default", "Default" },
+                            { "Logitech Mice", "Default" },
+                            { "Test Mice", "Test" },
+                        },
+                    },
+                    new Mapping()
+                    {
+                        Name = "MappingForSpecificGame",
+                        GroupsToProfiles = new Mapping.GroupsToProfilesMapping()
+                        {
+                            { "Default", "SpecificGameProfile" },
+                        },
+                    }
+                ]
             };
 
-            var writer = new MappingReaderWriter();
+            var writer = new MappingsReaderWriter();
             var writePath = Path.Combine(TestDirectory, "testMapping.json");
-            writer.Write(writePath, mapping);
+            writer.Write(writePath, mappings);
             Assert.IsTrue(File.Exists(writePath));
 
             // Change mapping:
-            mapping.GroupsToProfiles["Test Mice"] = "User has changed this mapping";
+            mappings.Mappings[0].GroupsToProfiles["Test Mice"] = "User has changed this mapping";
 
-            writer.Write(writePath, mapping);
+            writer.Write(writePath, mappings);
             string actualOutput = File.ReadAllText(writePath);
 
             string expectedWriteOutputFile = Path.Combine(ExpectedOutputs, "expectedOverwriteOutput.json");
@@ -74,27 +104,42 @@ namespace userspace_backend_tests.IOTests
         [TestMethod]
         public void GivenValidInput_Reads()
         {
-            var expectedMapping = new Mapping()
+            var exptectedMappings = new MappingSet()
             {
-                GroupsToProfiles = new Dictionary<string, string>()
-                {
-                    { "Default", "Default" },
-                    { "Logitech Mice", "Default" },
-                    { "Test Mice", "Test" },
-                },
+                Mappings =
+                [
+                    new Mapping()
+                    {
+                        Name = "GeneralFavorite",
+                        GroupsToProfiles = new Mapping.GroupsToProfilesMapping()
+                        {
+                            { "Default", "Default" },
+                            { "Logitech Mice", "Default" },
+                            { "Test Mice", "Test" },
+                        },
+                    },
+                    new Mapping()
+                    {
+                        Name = "MappingForSpecificGame",
+                        GroupsToProfiles = new Mapping.GroupsToProfilesMapping()
+                        {
+                            { "Default", "SpecificGameProfile" },
+                        },
+                    }
+                ]
             };
 
-            var reader = new MappingReaderWriter();
+            var reader = new MappingsReaderWriter();
 
             string readInputPath = Path.Combine(TestInputs, "readWellFormedInput.json");
             var actualReadMapping = reader.Read(readInputPath);
-            Assert.AreEqual(expectedMapping, actualReadMapping);
+            Assert.AreEqual(exptectedMappings, actualReadMapping);
         }
 
         [TestMethod]
         public void GivenInvalidInput_FailsToRead()
         {
-            var reader = new MappingReaderWriter();
+            var reader = new MappingsReaderWriter();
             string readInputPath = Path.Combine(TestInputs, "readInvalidInput.json");
             Exception foundException = null;
             try
@@ -112,7 +157,7 @@ namespace userspace_backend_tests.IOTests
         [TestMethod]
         public void GivenEmptyInput_FailsToRead()
         {
-            var reader = new MappingReaderWriter();
+            var reader = new MappingsReaderWriter();
             string readInputPath = Path.Combine(TestInputs, "readEmptyInput.json");
             Exception foundException = null;
             try
