@@ -12,7 +12,7 @@ internal enum Bound
     UpperIncl,
 }
 
-internal record ParameterValidation(Bound Type = Bound.None, Number Value = default)
+internal readonly record struct ParameterValidation(Bound Type = Bound.None, Number Value = default)
 {
     internal bool IsActive => Type != Bound.None;
 
@@ -59,7 +59,7 @@ public class Parameter
 
     #region Constructors
 
-    internal Parameter(Token name, Token value, ParameterValidation minval, ParameterValidation maxval)
+    internal Parameter(Token name, Token value, ParameterValidation minval = default, ParameterValidation maxval = default)
     {
         Debug.Assert(name.Type == TokenType.Parameter);
         Name = name.Symbol;

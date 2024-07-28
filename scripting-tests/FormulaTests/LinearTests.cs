@@ -20,7 +20,7 @@ public class LinearTests
 
         ]
 
-            base := zero;
+            var base := zero;
 
         {
 

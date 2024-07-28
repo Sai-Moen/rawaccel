@@ -12,8 +12,7 @@ public class Parser : IParser
 {
     #region Fields
 
-    private readonly HashSet<string> parameterNames = new(Constants.MAX_PARAMETERS);
-    private readonly HashSet<string> variableNames = new(Constants.MAX_VARIABLES);
+    private readonly Dictionary<string, TokenType> declNames = new(Constants.CAPACITY);
 
     private readonly Queue<Token> tokenBuffer = new();
     private readonly Stack<Operator> operatorStack = new();
@@ -63,6 +62,18 @@ public class Parser : IParser
     public ParsingResult Parse()
     {
         ParseTokens();
+
+        if (parameters.Count > Constants.MAX_PARAMETERS)
+        {
+            throw ParserError($"Too many parameters! Expected at most {Constants.MAX_PARAMETERS}, got {parameters.Count}.");
+        }
+
+        // this can be expanded a bit more since persistent and impersistent are separated, but for now it'll work
+        if (variables.Count > Constants.MAX_VARIABLES)
+        {
+            throw ParserError($"Too many variables! Expected at most {Constants.MAX_VARIABLES}, got {variables.Count}.");
+        }
+
         return new(description, parameters, variables, [.. callbacks.Values]);
     }
 
@@ -116,24 +127,17 @@ public class Parser : IParser
         Token token = CoerceIdentifier(TokenType.Parameter);
         string symbol = token.Symbol;
 
-        Debug.Assert(parameterNames.Count <= Constants.MAX_PARAMETERS);
-        if (parameterNames.Count == Constants.MAX_PARAMETERS)
+        if (!declNames.TryAdd(symbol, TokenType.Parameter))
         {
-            throw ParserError($"Too many parameters! (max {Constants.MAX_PARAMETERS})");
+            throw ParserError($"Name collision! Name {symbol} already exists.");
         }
-        else if (parameterNames.Contains(symbol))
-        {
-            throw ParserError("Parameter name already exists!");
-        }
-
-        parameterNames.Add(symbol);
 
         tokenBuffer.Enqueue(token);
         BufferExpectedToken(TokenType.Assignment);
         if (DeclAccept(TokenType.Bool))
         {
             TerminateParameter(out var nameB, out var valueB);
-            parameters.Add(new(nameB, valueB, new(), new()));
+            parameters.Add(new(nameB, valueB));
             return;
         }
 
@@ -238,29 +242,28 @@ public class Parser : IParser
 
     private void DeclareVariable()
     {
-        Token token = CoerceIdentifier(TokenType.Variable);
+        AdvanceToken();
+        Token declarer = previousToken;
+        TokenType declType = declarer.MapDeclarer();
+        if (declType == TokenType.Undefined)
+        {
+            throw new ParserException("Unknown declarer!", declarer.Line);
+        }
+
+        Token token = CoerceIdentifier(declType);
         string symbol = token.Symbol;
 
-        Debug.Assert(variableNames.Count <= Constants.MAX_VARIABLES);
-        if (variableNames.Count == Constants.MAX_VARIABLES)
+        if (declNames.ContainsKey(symbol))
         {
-            throw ParserError($"Too many variables! (max {Constants.MAX_VARIABLES})");
-        }
-        else if (parameterNames.Contains(symbol))
-        {
-            throw ParserError("Parameter/Variable name conflict!");
-        }
-        else if (variableNames.Contains(symbol))
-        {
-            throw ParserError("Variable name already exists!");
+            throw ParserError($"Name collision! Name {symbol} already exists.");
         }
 
         tokenBuffer.Enqueue(token);
         BufferExpectedToken(TokenType.Assignment);
         ExprVar();
         
-        // this must be done after ExprVar, due to name resolution
-        variableNames.Add(symbol);
+        // this is done after ExprVar to avoid having to check for circular dependencies on this variable
+        declNames.Add(symbol, declType);
     }
 
     private void ExprVar()
@@ -383,12 +386,27 @@ public class Parser : IParser
             Token target = previousToken;
             if (target.Type == TokenType.Identifier)
             {
-                if (!variableNames.Contains(target.Symbol))
+                if (!declNames.TryGetValue(target.Symbol, out TokenType declType))
                 {
-                    throw ParserError($"Only variables can be assigned to! {target.Symbol} is not a known variable.");
+                    throw ParserError($"Unknown assignment target! {target.Symbol} has not been declared.");
                 }
 
-                target = target.WithType(TokenType.Variable);
+                switch (declType)
+                {
+                    case TokenType.Parameter:
+                        throw ParserError("Cannot assign to parameter!");
+                    case TokenType.Immutable:
+                        throw ParserError("Cannot assign to immutable variable!");
+                    case TokenType.Persistent:
+                        break;
+                    case TokenType.Impersistent:
+                        break;
+                    default:
+                        Debug.Fail("Unreachable: got an unknown TokenType in declNames...");
+                        break;
+                }
+
+                target = target.WithType(declType);
             }
 
             Expect(TokenType.Assignment);
@@ -576,7 +594,9 @@ public class Parser : IParser
             case TokenType.Constant:
             case TokenType.Identifier:
             case TokenType.Parameter:
-            case TokenType.Variable:
+            case TokenType.Immutable:
+            case TokenType.Persistent:
+            case TokenType.Impersistent:
             case TokenType.Input:
             case TokenType.Output:
             case TokenType.ParenClose:
@@ -659,7 +679,7 @@ public class Parser : IParser
         string name = previousToken.Symbol;
 
         TokenList args = [];
-        if (Accept(TokenType.ParenOpen))
+        if (Accept(TokenType.ParenOpen) && !Accept(TokenType.ParenClose))
         {
             do args.Add(currentToken);
             while (Accept(TokenType.ArgumentSeparator));
@@ -709,20 +729,12 @@ public class Parser : IParser
 
     private Token ResolveIdentifier(Token token)
     {
-        Token resolved;
-        if (parameterNames.Contains(token.Symbol))
+        if (declNames.TryGetValue(token.Symbol, out TokenType declType))
         {
-            resolved = token.WithType(TokenType.Parameter);
+            return token.WithType(declType);
         }
-        else if (variableNames.Contains(token.Symbol))
-        {
-            resolved = token.WithType(TokenType.Variable);
-        }
-        else
-        {
-            throw ParserError("Could not resolve variable name!");
-        }
-        return resolved;
+        
+        throw ParserError($"Could not resolve name! (was: {token.Symbol})");
     }
 
     #endregion

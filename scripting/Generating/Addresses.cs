@@ -1,6 +1,7 @@
 ﻿using scripting.Interpreting;
 using scripting.Script;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 
 namespace scripting.Generating;
@@ -73,26 +74,35 @@ public readonly record struct CodeAddress(int Address)
 /// </summary>
 public class MemoryHeap
 {
-    private readonly Number[] Memory;
+    private Number[] persistent = [];
+    private Number[] impersistent = [];
 
-    public MemoryHeap(int capacity)
-    {
-        if (capacity > MemoryAddress.CAPACITY)
-            throw new InterpreterException("MemoryHeap capacity overflow!");
+    public Number GetPersistent(MemoryAddress address) => persistent[(Index)address];
+    public void SetPersistent(MemoryAddress address, Number value) => persistent[(Index)address] = value;
 
-        Memory = new Number[capacity];
-    }
-
-    public Number this[MemoryAddress address]
-    {
-        get => Memory[address];
-        set => Memory[address] = value;
-    }
+    public Number GetImpersistent(MemoryAddress address) => impersistent[(Index)address];
+    public void SetImpersistent(MemoryAddress address, Number value) => impersistent[(Index)address] = value;
 
     public void CopyFrom(MemoryHeap other)
     {
-        Debug.Assert(Memory.Length == other.Memory.Length);
-        other.Memory.CopyTo(Memory, 0);
+        int len = impersistent.Length;
+        Debug.Assert(len == other.impersistent.Length);
+        other.impersistent.CopyTo(impersistent, 0);
+    }
+
+    public void CopyAllFrom(MemoryHeap other)
+    {
+        CopyFrom(other);
+
+        int len = persistent.Length;
+        Debug.Assert(len == other.persistent.Length);
+        other.persistent.CopyTo(persistent, 0);
+    }
+
+    public void EnsureSizes(int numPersistent, int numImpersistent)
+    {
+        persistent = new Number[numPersistent];
+        impersistent = new Number[numImpersistent];
     }
 }
 

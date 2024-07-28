@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using static System.Math;
+using scripting.Lexing;
 
 namespace scripting.Interpreting;
 
@@ -18,8 +19,8 @@ public class Interpreter : IInterpreter
 
     private readonly MemoryMap addresses = [];
 
-    private readonly MemoryHeap stable;
-    private readonly MemoryHeap unstable;
+    private readonly MemoryHeap stable = new();
+    private readonly MemoryHeap unstable = new();
     private readonly Stack<Number> stack = new();
 
     private readonly Program[] startup;
@@ -31,53 +32,57 @@ public class Interpreter : IInterpreter
     /// <summary>
     /// Initializes the script and its default settings.
     /// </summary>
-    /// <param name="syntactic">Result of syntactic analysis</param>
+    /// <param name="parsed">Result of parsing</param>
     /// <exception cref="InterpreterException"/>
-    public Interpreter(ParsingResult syntactic)
+    public Interpreter(ParsingResult parsed)
     {
-        Description = syntactic.Description;
+        Description = parsed.Description;
 
         Emitter emitter = new(addresses);
+        int numPersistent = 0;
+        int numImpersistent = 0;
 
-        Parameters parameters = syntactic.Parameters;
+        Parameters parameters = parsed.Parameters;
         int numParameters = parameters.Count;
 
         Debug.Assert(numParameters <= Constants.MAX_PARAMETERS);
-        for (int i = 0; i < numParameters; i++)
+        foreach (Parameter parameter in parameters)
         {
-            Parameter parameter = parameters[i];
-
-            MemoryAddress address = (MemoryAddress)i;
-            addresses.Add(parameter.Name, address);
+            addresses.Add(parameter.Name, (MemoryAddress)numPersistent++);
         }
 
-        IList<ASTAssign> variables = syntactic.Variables;
+        IList<ASTAssign> variables = parsed.Variables;
         int numVariables = variables.Count;
         startup = new Program[numVariables];
-
-        int capacity = Constants.MAX_PARAMETERS + numVariables;
-        stable = new(capacity);
-        unstable = new(capacity);
 
         Debug.Assert(numVariables <= Constants.MAX_VARIABLES);
         for (int i = 0; i < numVariables; i++)
         {
             ASTAssign variable = variables[i];
-
-            MemoryAddress address = (MemoryAddress)(Constants.MAX_PARAMETERS + i);
-            addresses.Add(variable.Identifier.Symbol, address);
+            Token identifier = variable.Identifier;
+            MemoryAddress address = identifier.Type switch
+                {
+                    TokenType.Immutable or TokenType.Persistent => (MemoryAddress)numPersistent++,
+                    TokenType.Impersistent                      => (MemoryAddress)numImpersistent++,
+                
+                    _ => throw InterpreterError("Identifier does not have the correct type for a variable!")
+                };
+            addresses.Add(identifier.Symbol, address);
 
             ASTNode stmnt = new(ASTTag.Assign, new() { astAssign = variable });
             startup[i] = emitter.Emit([stmnt]);
         }
 
-        IList<ParsedCallback> callbacks = syntactic.Callbacks;
+        stable.EnsureSizes(numPersistent, numImpersistent);
+        unstable.EnsureSizes(numPersistent, numImpersistent);
+
+        IList<ParsedCallback> callbacks = parsed.Callbacks;
         Debug.Assert(callbacks.Count > 0);
 
-        Callbacks = new(this, callbacks[0], addresses);
-        foreach (ParsedCallback parsed in callbacks)
+        Callbacks = new(this, callbacks[0], emitter);
+        foreach (ParsedCallback cb in callbacks)
         {
-            Callbacks.Add(parsed, addresses);
+            Callbacks.Add(cb, emitter);
         }
 
         // responsibility to change settings from script defaults to saved settings is on the caller
@@ -108,22 +113,22 @@ public class Interpreter : IInterpreter
         foreach (Parameter parameter in Settings)
         {
             // most cache-friendly operation
-            stable[addresses[parameter.Name]] = parameter.Value;
+            stable.SetPersistent(addresses[parameter.Name], parameter.Value);
         }
-        Stabilize();
+        unstable.CopyAllFrom(stable);
 
         foreach (Program program in startup)
         {
             Number[] remainder = ExecuteProgram(program);
             Debug.Assert(remainder.Length == 0, "Startup stack was not empty?");
         }
-        stable.CopyFrom(unstable);
+        stable.CopyAllFrom(unstable);
+        Y = Number.DEFAULT_Y;
     }
 
     public void Stabilize()
     {
         unstable.CopyFrom(stable);
-        Y = Number.DEFAULT_Y;
     }
 
     public Number[] ExecuteProgram(Program program)
@@ -168,15 +173,31 @@ public class Interpreter : IInterpreter
                 Number[] rem = [.. stack];
                 stack.Clear();
                 return rem;
-            case InstructionType.Load:
-                MemoryAddress loadAddress = (MemoryAddress)program.ExtractAddress(ref c);
-                stack.Push(unstable[loadAddress]);
+            case InstructionType.LoadPersistent:
+                {
+                    MemoryAddress loadAddress = (MemoryAddress)program.ExtractAddress(ref c);
+                    stack.Push(unstable.GetPersistent(loadAddress));
+                }
                 break;
-            case InstructionType.Store:
-                MemoryAddress storeAddress = (MemoryAddress)program.ExtractAddress(ref c);
-                unstable[storeAddress] = stack.Pop();
+            case InstructionType.StorePersistent:
+                {
+                    MemoryAddress storeAddress = (MemoryAddress)program.ExtractAddress(ref c);
+                    unstable.SetPersistent(storeAddress, stack.Pop());
+                }
                 break;
-            case InstructionType.LoadIn:
+            case InstructionType.LoadImpersistent:
+                {
+                    MemoryAddress loadAddress = (MemoryAddress)program.ExtractAddress(ref c);
+                    stack.Push(unstable.GetImpersistent(loadAddress));
+                }
+                break;
+            case InstructionType.StoreImpersistent:
+                {
+                    MemoryAddress storeAddress = (MemoryAddress)program.ExtractAddress(ref c);
+                    unstable.SetImpersistent(storeAddress, stack.Pop());
+                }
+                break;
+                case InstructionType.LoadIn:
                 stack.Push(X);
                 break;
             case InstructionType.StoreIn:
@@ -322,6 +343,9 @@ public class Interpreter : IInterpreter
                 break;
             case InstructionType.LogB:
                 Fn2((b, a) => Log(a, b));
+                break;
+            case InstructionType.ILogB:
+                Fn1(a => ILogB(a));
                 break;
             case InstructionType.Sin:
                 Fn1(a => Sin(a));

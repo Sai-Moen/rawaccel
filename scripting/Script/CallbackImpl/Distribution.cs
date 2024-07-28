@@ -13,7 +13,7 @@ namespace scripting.Script.CallbackImpl
         private readonly int amount;
         private readonly Program program;
 
-        internal Distribution(ParsedCallback parsed, IMemoryMap addresses)
+        internal Distribution(ParsedCallback parsed, Emitter emitter)
         {
             Debug.Assert(parsed.Name == NAME);
 
@@ -25,9 +25,9 @@ namespace scripting.Script.CallbackImpl
                     break;
                 case 1:
                     amount = (int)(Number)args[0];
-                    if (amount < 0 || amount > Constants.LUT_POINTS_CAPACITY)
+                    if (amount <= 0 || amount > Constants.LUT_POINTS_CAPACITY)
                     {
-                        throw new GenerationException($"Amount argument out of range! range: [0, {Constants.LUT_POINTS_CAPACITY}]");
+                        throw new GenerationException($"Amount argument out of range! range: [1, {Constants.LUT_POINTS_CAPACITY}]");
                     }
                     break;
                 default:
@@ -35,7 +35,6 @@ namespace scripting.Script.CallbackImpl
                         $"Distribution Callback only has an optional 'amount' argument, but {args.Count} were given.");
             }
 
-            Emitter emitter = new(addresses);
             program = emitter.Emit(parsed.Code);
         }
 
@@ -49,7 +48,7 @@ namespace scripting.Script.CallbackImpl
             {
                 // X is stateful in this callback
                 interpreter.ExecuteProgram(program);
-                inputs[i] = interpreter.Y;
+                inputs[i] = interpreter.X;
 
                 interpreter.Stabilize();
             }

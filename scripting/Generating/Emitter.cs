@@ -73,15 +73,15 @@ public class Emitter(IMemoryMap addresses) : IEmitter
 
                     EmitExpression(ast.Initializer);
 
-                    InstructionType modify = OnAssignment(ast.Operator);
-                    bool isInline = modify.IsInline();
+                    bool isInline = OnAssignment(ast.Operator, out InstructionType modify);
 
                     Token identifier = ast.Identifier;
-                    if (identifier.Type == TokenType.Input)
+                    TokenType type = identifier.Type;
+                    if (type == TokenType.Input)
                     {
                         OnSpecialAssignment(isInline, InstructionType.LoadIn, modify, InstructionType.StoreIn);
                     }
-                    else if (identifier.Type == TokenType.Output)
+                    else if (type == TokenType.Output)
                     {
                         OnSpecialAssignment(isInline, InstructionType.LoadOut, modify, InstructionType.StoreOut);
                     }
@@ -90,11 +90,23 @@ public class Emitter(IMemoryMap addresses) : IEmitter
                         MemoryAddress address = addresses[identifier.Symbol];
                         if (isInline)
                         {
-                            AddInstruction(InstructionType.Load, (byte[])address);
+                            InstructionType load = type.MapToLoad();
+                            if (load == InstructionType.NoOp)
+                            {
+                                throw EmitError("Cannot map identifier's type to Load instruction!", identifier);
+                            }
+
+                            AddInstruction(load, (byte[])address);
                             AddInstruction(InstructionType.Swap);
                             AddInstruction(modify);
                         }
-                        AddInstruction(InstructionType.Store, (byte[])address);
+                        InstructionType store = type.MapToStore();
+                        if (store == InstructionType.NoOp)
+                        {
+                            throw EmitError("Cannot map identifier's type to Store instruction!", identifier);
+                        }
+
+                        AddInstruction(store, (byte[])address);
                     }
                 }
                 break;
@@ -153,7 +165,8 @@ public class Emitter(IMemoryMap addresses) : IEmitter
 
     private void EmitToken(Token token)
     {
-        switch (token.Type)
+        TokenType type = token.Type;
+        switch (type)
         {
             case TokenType.Number:
                 Number number = Number.Parse(token.Symbol, token.Line);
@@ -165,9 +178,11 @@ public class Emitter(IMemoryMap addresses) : IEmitter
                 AddInstruction(InstructionType.LoadNumber, (byte[])dAddress);
                 break;
             case TokenType.Parameter:
-            case TokenType.Variable:
+            case TokenType.Immutable:
+            case TokenType.Persistent:
+            case TokenType.Impersistent:
                 MemoryAddress mAddress = addresses[token.Symbol];
-                AddInstruction(InstructionType.Load, (byte[])mAddress);
+                AddInstruction(type.MapToLoad(), (byte[])mAddress);
                 break;
             case TokenType.Input:
                 AddInstruction(InstructionType.LoadIn);
@@ -257,18 +272,22 @@ public class Emitter(IMemoryMap addresses) : IEmitter
         AddInstruction(store);
     }
 
-    private static InstructionType OnAssignment(Token token) => token.Symbol switch
+    private static bool OnAssignment(Token token, out InstructionType modify)
     {
-        Tokens.ASSIGN => InstructionType.Store,
-        Tokens.IADD => InstructionType.Add,
-        Tokens.ISUB => InstructionType.Sub,
-        Tokens.IMUL => InstructionType.Mul,
-        Tokens.IDIV => InstructionType.Div,
-        Tokens.IMOD => InstructionType.Mod,
-        Tokens.IPOW => InstructionType.Pow,
+        modify = token.Symbol switch
+        {
+            Tokens.ASSIGN => InstructionType.NoOp,
+            Tokens.IADD => InstructionType.Add,
+            Tokens.ISUB => InstructionType.Sub,
+            Tokens.IMUL => InstructionType.Mul,
+            Tokens.IDIV => InstructionType.Div,
+            Tokens.IMOD => InstructionType.Mod,
+            Tokens.IPOW => InstructionType.Pow,
 
-        _ => throw EmitError("Cannot emit assignment!", token),
-    };
+            _ => throw EmitError("Cannot emit assignment!", token),
+        };
+        return modify != InstructionType.NoOp;
+    }
 
     private static InstructionType OnConstant(Token token) => token.Symbol switch
     {
@@ -332,6 +351,7 @@ public class Emitter(IMemoryMap addresses) : IEmitter
         Tokens.LOG_2 => InstructionType.Log2,
         Tokens.LOG_10 => InstructionType.Log10,
         Tokens.LOG_B => InstructionType.LogB,
+        Tokens.ILOG_B => InstructionType.ILogB,
 
         Tokens.SIN => InstructionType.Sin,
         Tokens.SINH => InstructionType.Sinh,

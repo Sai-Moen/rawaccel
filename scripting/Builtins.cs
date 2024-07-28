@@ -25,7 +25,7 @@ public static class Builtins
 
         ]
 
-            pLimit := Limit - 1;
+            const pLimit := Limit - 1;
 
         {
 
@@ -54,10 +54,10 @@ public static class Builtins
 
         ]
 
-            accel := e ^ Growth_Rate;
-            motivity := 2 * log(Motivity);
-            midpoint := log(Midpoint);
-            constant := -motivity / 2
+            const accel := e ^ Growth_Rate;
+            const motivity := 2 * log(Motivity);
+            const midpoint := log(Midpoint);
+            const constant := -motivity / 2;
 
         {
         }

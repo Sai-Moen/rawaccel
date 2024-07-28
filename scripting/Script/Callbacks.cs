@@ -11,10 +11,9 @@ public partial class Callbacks
     private readonly IInterpreter interpreter;
     private readonly Dictionary<string, object> callbacks = [];
 
-    internal Callbacks(IInterpreter interpreter, ParsedCallback calculation, IMemoryMap addresses)
+    internal Callbacks(Interpreter interpreter, ParsedCallback calculation, Emitter emitter)
     {
         this.interpreter = interpreter;
-        Emitter emitter = new(addresses);
         Calculation = new(emitter.Emit(calculation.Code));
     }
 
@@ -30,18 +29,18 @@ public partial class Callbacks
         return Calculation.Calculate(interpreter, xs);
     }
 
-    internal void Add(ParsedCallback parsed, IMemoryMap addresses)
+    internal void Add(ParsedCallback parsed, Emitter emitter)
     {
         string name = parsed.Name;
         if (name != Calculation.NAME)
         {
-            callbacks.Add(name, CreateCallback(parsed, addresses));
+            callbacks.Add(name, CreateCallback(parsed, emitter));
         }
     }
 
-    internal static object CreateCallback(ParsedCallback parsed, IMemoryMap addresses) => parsed.Name switch
+    internal static object CreateCallback(ParsedCallback parsed, Emitter emitter) => parsed.Name switch
     {
-        Distribution.NAME => new Distribution(parsed, addresses),
+        Distribution.NAME => new Distribution(parsed, emitter),
 
         _ => throw new GenerationException("Unknown Callback was attempted to be implemented!")
     };
@@ -75,6 +74,7 @@ public class Calculation
             interpreter.ExecuteProgram(program);
             ys[i] = interpreter.Y;
 
+            interpreter.Y = Number.DEFAULT_Y;
             interpreter.Stabilize();
         }
         return ys;

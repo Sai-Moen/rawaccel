@@ -29,9 +29,9 @@ public class InterpreterTests
 
             ]
 
-                b := a + 1;
-                c := b + 1;
-                d := c + 1;
+                const b := a + 1;
+                const c := b + 1;
+                const d := c + 1;
 
             {
 

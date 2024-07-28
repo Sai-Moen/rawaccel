@@ -97,9 +97,9 @@ public class ControlFlowTests
 
             ]
 
-                b := a + 2;
-                c := b * 2;
-                d := c ^ 2;
+                const b := a + 2;
+                const c := b * 2;
+                const d := c ^ 2;
 
             {
 

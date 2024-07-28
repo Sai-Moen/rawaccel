@@ -21,8 +21,8 @@ public class PowerTests
 
         ]
 
-            offset_x := (Offset / (Exponent + 1)) ^ (1 / Exponent) / Scale;
-            constant := offset_x * Offset * Exponent / (Exponent + 1);
+            const offset_x := (Offset / (Exponent + 1)) ^ (1 / Exponent) / Scale;
+            const constant := offset_x * Offset * Exponent / (Exponent + 1);
 
         {
 

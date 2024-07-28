@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Runtime.InteropServices;
+﻿using scripting.Lexing;
 
 namespace scripting.Generating;
 
@@ -15,11 +12,12 @@ public enum InstructionType : byte
     Return, // Early return 
 
     // TOS = Top Of Stack
-    Load, Store,       // Gets or Sets an Address in the 'heap', to/from TOS.
-    LoadIn, StoreIn,   // Gets or Sets the input register (x), to/from TOS.
-    LoadOut, StoreOut, // Gets or Sets the output register (y), to/from TOS.
-    LoadNumber,        // Loads a number from data.
-    Swap,              // Swaps the top two stack elements.
+    LoadPersistent, StorePersistent,     // Gets or Sets an address in persistent memory, to/from TOS.
+    LoadImpersistent, StoreImpersistent, // Gets or Sets an address in impersistent memory, to/from TOS.
+    LoadIn, StoreIn,                     // Gets or Sets the input register (x), to/from TOS.
+    LoadOut, StoreOut,                   // Gets or Sets the output register (y), to/from TOS.
+    LoadNumber,                          // Loads a number from data.
+    Swap,                                // Swaps the top two stack elements.
 
     // Branch,
     // Evaluates the TOS and jumps/skips to the next branch end marker if zero (Jz).
@@ -51,7 +49,7 @@ public enum InstructionType : byte
     Round, Trunc, Floor, Ceil, Clamp,
     Min, Max, MinM, MaxM,
     Sqrt, Cbrt,
-    Log, Log2, Log10, LogB,
+    Log, Log2, Log10, LogB, ILogB,
     Sin, Sinh, Asin, Asinh,
     Cos, Cosh, Acos, Acosh,
     Tan, Tanh, Atan, Atanh, Atan2,
@@ -73,15 +71,17 @@ public static class Instructions
     /// <returns>Length of subsequent address in bytes</returns>
     public static int AddressLength(this InstructionType type) => type switch
     {
-        InstructionType.Load => MemoryAddress.SIZE,
-        InstructionType.Store => MemoryAddress.SIZE,
+        InstructionType.LoadPersistent => MemoryAddress.SIZE,
+        InstructionType.StorePersistent => MemoryAddress.SIZE,
+        InstructionType.LoadImpersistent => MemoryAddress.SIZE,
+        InstructionType.StoreImpersistent => MemoryAddress.SIZE,
 
         InstructionType.LoadNumber => DataAddress.SIZE,
 
         InstructionType.Jmp => CodeAddress.SIZE,
         InstructionType.Jz => CodeAddress.SIZE,
 
-        _ => 0,
+        _ => 0
     };
 
     /// <summary>
@@ -94,7 +94,7 @@ public static class Instructions
         InstructionType.Jmp => true,
         InstructionType.Jz => true,
 
-        _ => false,
+        _ => false
     };
 
     /// <summary>
@@ -102,5 +102,41 @@ public static class Instructions
     /// </summary>
     /// <param name="type">The type of the instruction</param>
     /// <returns>Whether this instruction is an inline assignment operation</returns>
-    public static bool IsInline(this InstructionType type) => type != InstructionType.Store;
+    public static bool IsInline(this InstructionType type) => type switch
+    {
+        InstructionType.StorePersistent => false,
+        InstructionType.StoreImpersistent => false,
+
+        _ => true
+    };
+
+    /// <summary>
+    /// Maps a token type to an instruction type, specifically a Load instruction.
+    /// </summary>
+    /// <param name="type">Type of the token</param>
+    /// <returns>Load instruction, or NoOp if the token type cannot be mapped from</returns>
+    public static InstructionType MapToLoad(this TokenType type) => type switch
+    {
+        TokenType.Parameter or
+        TokenType.Immutable or
+        TokenType.Persistent => InstructionType.LoadPersistent,
+        TokenType.Impersistent => InstructionType.LoadImpersistent,
+
+        _ => InstructionType.NoOp
+    };
+
+    /// <summary>
+    /// Maps a token type to an instruction type, specifically a Store instruction.
+    /// </summary>
+    /// <param name="type">Type of the token</param>
+    /// <returns>Store instruction, or NoOp if the token type cannot be mapped from</returns>
+    public static InstructionType MapToStore(this TokenType type) => type switch
+    {
+        TokenType.Parameter or
+        TokenType.Immutable or
+        TokenType.Persistent => InstructionType.StorePersistent,
+        TokenType.Impersistent => InstructionType.StoreImpersistent,
+
+        _ => InstructionType.NoOp
+    };
 }

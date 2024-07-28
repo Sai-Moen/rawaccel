@@ -27,7 +27,7 @@ public class ParserTests
     {
         const string name = "um";
 
-        StringBuilder builder = new($"[] {name} := 1; {{ y += ");
+        StringBuilder builder = new($"[] var {name} := 1; {{ y += ");
         for (int i = 0; i < depth; i++)
         {
             builder.Append("-(");
@@ -49,7 +49,7 @@ public class ParserTests
         {
             AssertNextToken(Tokens.GetReserved(Tokens.ZERO, 1));
         }
-        AssertNextToken(new(new(TokenType.Variable, name), 1));
+        AssertNextToken(new(new(TokenType.Impersistent, name), 1));
         for (int i = 0; i <= depth; i++)
         {
             AssertNextToken(Tokens.GetReserved(Tokens.SUB, 1));

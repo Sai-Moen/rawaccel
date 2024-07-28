@@ -10,7 +10,10 @@ public enum TokenType
 {
     Undefined, // Doesn't mean invalid right away, depends on if you expect a certain symbol
     Number, Bool, Constant,
-    Identifier, Parameter, Variable, Input, Output,
+    Input, Output,
+    Identifier, Parameter,
+    Immutable, Persistent, Impersistent,
+    Const, Let, Var,
     Return, If, Else, While,
     Terminator, ParenOpen, ParenClose,
     SquareOpen, SquareClose, CurlyOpen, CurlyClose,
@@ -50,12 +53,7 @@ public static class Tokens
     public const string COMMENT_LINE = "#";
 
     // Keywords
-    // Calculation IO
-    public const string INPUT = "x";
-    public const string OUTPUT = "y";
-    public const string RETURN = "ret";
-
-    // Unary Minus Hack
+    // Zero
     public const string ZERO = "zero";
 
     // Constants
@@ -68,16 +66,25 @@ public static class Tokens
     public const string FALSE = "false";
     public const string TRUE = "true";
 
-    // Branching
+    // Calculation IO
+    public const string INPUT = "x";
+    public const string OUTPUT = "y";
+
+    // Declarations
+    public const string DECL_CONST = "const"; // immutable (so automatically persistent)
+    public const string DECL_LET = "let";     // persistent mutable
+    public const string DECL_VAR = "var";     // impersistent mutable
+
+    // Branches
+    public const string RETURN = "ret";
     public const string BRANCH_IF = "if";
     public const string BRANCH_ELSE = "else";
     public const string BRANCH_WHILE = "while";
-    public const string BRANCH_END = NONE;
 
     // Separators
     // Delimiters
     public const string SPACE = " ";
-    public const string UNDER = "_"; // For: spaces in parameter names
+    public const string UNDER = "_";   // For: spaces in parameter names
     public const string ARG_SEP = ","; // For: multiple function arguments
     public const string FPOINT = ".";
     public const string TERMINATOR = ";";
@@ -128,20 +135,20 @@ public static class Tokens
 
     // Functions
     // General
-    public const string ABS = "abs";      // Absolute Value
-    public const string SIGN = "sign";     // Sign
+    public const string ABS = "abs";            // Absolute Value
+    public const string SIGN = "sign";          // Sign
     public const string COPY_SIGN = "copysign"; // Copy Sign
 
     // Rounding
     public const string ROUND = "round"; // Round to nearest
     public const string TRUNC = "trunc"; // Round to 0
     public const string FLOOR = "floor"; // Round to -infinity
-    public const string CEIL = "ceil";  // Round to infinity
+    public const string CEIL = "ceil";   // Round to infinity
     public const string CLAMP = "clamp"; // Clamps second argument between the first and third
 
     // MinMax
-    public const string MIN = "min";  // Minimum of the two arguments
-    public const string MAX = "max";  // Maximum of the two arguments
+    public const string MIN = "min";            // Minimum of the two arguments
+    public const string MAX = "max";            // Maximum of the two arguments
     public const string MIN_MAGNITUDE = "minm"; // Closest to 0 of the two arguments
     public const string MAX_MAGNITUDE = "maxm"; // Furthest from 0 of the two arguments
 
@@ -150,33 +157,34 @@ public static class Tokens
     public const string CBRT = "cbrt"; // Cube Root
 
     // Logarithm
-    public const string LOG = "log";   // Natural Logarithm (loge x)
-    public const string LOG_2 = "log2";  // Binary Logarithm (log2 x)
-    public const string LOG_10 = "log10"; // Decimal Logarithm (log10 x)
-    public const string LOG_B = "logb";  // Logarithm with base b (logb x)
+    public const string LOG = "log";      // Natural Logarithm (ln a)
+    public const string LOG_2 = "log2";   // Binary Logarithm (log2 a)
+    public const string LOG_10 = "log10"; // Decimal Logarithm (log10 a)
+    public const string LOG_B = "logb";   // Logarithm with base b (logb a b)
+    public const string ILOG_B = "ilogb"; // Binary Logarithm that gets the integer exponent (ilogb a)
 
     // Sine
-    public const string SIN = "sin";   // Normal
-    public const string SINH = "sinh";  // Hyperbolic
-    public const string ASIN = "asin";  // Inverse
+    public const string SIN = "sin";     // Normal
+    public const string SINH = "sinh";   // Hyperbolic
+    public const string ASIN = "asin";   // Inverse
     public const string ASINH = "asinh"; // Inverse Hyperbolic
 
     // Cosine
-    public const string COS = "cos";   // Normal
-    public const string COSH = "cosh";  // Hyperbolic
-    public const string ACOS = "acos";  // Inverse
+    public const string COS = "cos";     // Normal
+    public const string COSH = "cosh";   // Hyperbolic
+    public const string ACOS = "acos";   // Inverse
     public const string ACOSH = "acosh"; // Inverse Hyperbolic
 
     // Tangent
-    public const string TAN = "tan";   // Normal
-    public const string TANH = "tanh";  // Hyperbolic
-    public const string ATAN = "atan";  // Inverse
+    public const string TAN = "tan";     // Normal
+    public const string TANH = "tanh";   // Hyperbolic
+    public const string ATAN = "atan";   // Inverse
     public const string ATANH = "atanh"; // Inverse Hyperbolic
     public const string ATAN2 = "atan2"; // Angle of which the tangent is y / x
 
     // Miscellaneous
-    public const string FUSED_MULTIPLY_ADD = "fma";    // x * y + z
-    public const string SCALE_B = "scaleb"; // Binary Scale (IEEE754 exponent trickery idfk)
+    public const string FUSED_MULTIPLY_ADD = "fma"; // x * y + z
+    public const string SCALE_B = "scaleb";         // Binary Scale (IEEE754 exponent trickery idfk)
 
     // Premade Tokens
     public static readonly Token DUMMY = new(new(TokenType.Undefined, NONE));
@@ -195,7 +203,6 @@ public static class Tokens
 
         new(TokenType.Input, INPUT),
         new(TokenType.Output, OUTPUT),
-        new(TokenType.Return, RETURN),
 
         new(TokenType.Constant, ZERO),
         new(TokenType.Constant, CONST_E),
@@ -206,6 +213,11 @@ public static class Tokens
         new(TokenType.Bool, FALSE),
         new(TokenType.Bool, TRUE),
 
+        new(TokenType.Const, DECL_CONST),
+        new(TokenType.Let, DECL_LET),
+        new(TokenType.Var, DECL_VAR),
+
+        new(TokenType.Return, RETURN),
         new(TokenType.If, BRANCH_IF),
         new(TokenType.Else, BRANCH_ELSE),
         new(TokenType.While, BRANCH_WHILE),
@@ -270,6 +282,7 @@ public static class Tokens
         new(TokenType.Function, LOG_2),
         new(TokenType.Function, LOG_10),
         new(TokenType.Function, LOG_B),
+        new(TokenType.Function, ILOG_B),
 
         new(TokenType.Function, SIN),
         new(TokenType.Function, SINH),

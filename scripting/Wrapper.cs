@@ -78,20 +78,29 @@ public static class Wrapper
     public static Program[] CompileToCallbackPrograms(string script)
     {
         ParsingResult result = CompileToParsingResult(script);
+
         MemoryMap addresses = [];
+        int numPersistent = 0;
+        int numImpersistent = 0;
 
         Parameters parameters = result.Parameters;
-        for (int i = 0; i < parameters.Count; i++)
+        foreach (Parameter parameter in parameters)
         {
-            string name = parameters[i].Name;
-            addresses.Add(name, (MemoryAddress)i);
+            addresses.Add(parameter.Name, (MemoryAddress)numPersistent++);
         }
 
         IList<ASTAssign> variables = result.Variables;
         for (int i = 0; i < variables.Count; i++)
         {
-            string name = variables[i].Identifier.Symbol;
-            addresses.Add(name, (MemoryAddress)(Constants.MAX_PARAMETERS + i));
+            Token identifier = variables[i].Identifier;
+            MemoryAddress address = identifier.Type switch
+                {
+                    TokenType.Immutable or TokenType.Persistent => (MemoryAddress)numPersistent++,
+                    TokenType.Impersistent                      => (MemoryAddress)numImpersistent++,
+
+                    _ => throw new ScriptException("Variable is not of the correct type here...")
+                };
+            addresses.Add(identifier.Symbol, address);
         }
 
         Emitter emitter = new(addresses);
