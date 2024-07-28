@@ -53,9 +53,21 @@ namespace userspace_backend.Model.AccelDefinitions.Formula
 
         protected override void InitSpecificSettingsAndCollections(LinearAccel dataObject)
         {
-            Acceleration = new EditableSetting<double>(dataObject.Acceleration, UserInputParsers.DoubleParser, ModelValueValidators.DefaultDoubleValidator);
-            Offset = new EditableSetting<double>(dataObject.Offset, UserInputParsers.DoubleParser, ModelValueValidators.DefaultDoubleValidator);
-            Cap = new EditableSetting<double>(dataObject.Cap, UserInputParsers.DoubleParser, ModelValueValidators.DefaultDoubleValidator);
+            Acceleration = new EditableSetting<double>(
+                displayName: "Acceleration",
+                initialValue: dataObject.Acceleration,
+                parser: UserInputParsers.DoubleParser,
+                validator: ModelValueValidators.DefaultDoubleValidator);
+            Offset = new EditableSetting<double>(
+                displayName: "Offset",
+                initialValue: dataObject.Offset,
+                parser: UserInputParsers.DoubleParser,
+                validator: ModelValueValidators.DefaultDoubleValidator);
+            Cap = new EditableSetting<double>(
+                displayName: "Cap",
+                initialValue: dataObject.Cap,
+                parser: UserInputParsers.DoubleParser,
+                validator: ModelValueValidators.DefaultDoubleValidator);
         }
     }
 }

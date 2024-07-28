@@ -35,6 +35,7 @@ namespace userspace_backend.Model.AccelDefinitions
         protected override void InitEditableSettingsAndCollections(Acceleration dataObject)
         {
             DefinitionType = new EditableSetting<AccelerationDefinitionType>(
+                displayName: "Definition Type",
                 initialValue: dataObject.Type,
                 parser: UserInputParsers.AccelerationDefinitionTypeParser,
                 validator: ModelValueValidators.DefaultAccelerationTypeValidator,

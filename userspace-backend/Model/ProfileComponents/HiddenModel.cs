@@ -48,11 +48,31 @@ namespace userspace_backend.Model.ProfileComponents
 
         protected override void InitEditableSettingsAndCollections(Hidden dataObject)
         {
-            RotationDegrees = new EditableSetting<double>(dataObject.RotationDegrees, UserInputParsers.DoubleParser, ModelValueValidators.DefaultDoubleValidator);
-            AngleSnappingDegrees = new EditableSetting<double>(dataObject.AngleSnappingDegrees, UserInputParsers.DoubleParser, ModelValueValidators.DefaultDoubleValidator);
-            LeftRightRatio = new EditableSetting<double>(dataObject.LeftRightRatio, UserInputParsers.DoubleParser, ModelValueValidators.DefaultDoubleValidator);
-            UpDownRatio = new EditableSetting<double>(dataObject.UpDownRatio, UserInputParsers.DoubleParser, ModelValueValidators.DefaultDoubleValidator);
-            SpeedCap = new EditableSetting<double>(dataObject.SpeedCap, UserInputParsers.DoubleParser, ModelValueValidators.DefaultDoubleValidator);
+            RotationDegrees = new EditableSetting<double>(
+                displayName: "Rotation",
+                initialValue: dataObject.RotationDegrees,
+                parser: UserInputParsers.DoubleParser,
+                validator: ModelValueValidators.DefaultDoubleValidator);
+            AngleSnappingDegrees = new EditableSetting<double>(
+                displayName: "Angle Snapping",
+                initialValue: dataObject.AngleSnappingDegrees,
+                parser: UserInputParsers.DoubleParser,
+                validator: ModelValueValidators.DefaultDoubleValidator);
+            LeftRightRatio = new EditableSetting<double>(
+                displayName: "L/R Ratio",
+                dataObject.LeftRightRatio,
+                parser: UserInputParsers.DoubleParser,
+                validator: ModelValueValidators.DefaultDoubleValidator);
+            UpDownRatio = new EditableSetting<double>(
+                displayName: "U/D Ratio",
+                dataObject.UpDownRatio,
+                parser: UserInputParsers.DoubleParser,
+                validator: ModelValueValidators.DefaultDoubleValidator);
+            SpeedCap = new EditableSetting<double>(
+                displayName: "Speed Cap",
+                dataObject.SpeedCap,
+                parser: UserInputParsers.DoubleParser,
+                validator: ModelValueValidators.DefaultDoubleValidator);
         }
     }
 }

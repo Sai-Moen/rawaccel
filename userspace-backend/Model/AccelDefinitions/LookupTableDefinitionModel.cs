@@ -50,8 +50,16 @@ namespace userspace_backend.Model.AccelDefinitions
 
         protected override void InitSpecificSettingsAndCollections(LookupTableAccel dataObject)
         {
-            ApplyAs = new EditableSetting<LookupTableType>(dataObject.ApplyAs, UserInputParsers.LookupTableTypeParser, ModelValueValidators.DefaultLookupTableTypeValidator);
-            Data = new EditableSetting<LookupTableData>(new LookupTableData(dataObject.Data), UserInputParsers.LookupTableDataParser, ModelValueValidators.DefaultLookupTableDataValidator);
+            ApplyAs = new EditableSetting<LookupTableType>(
+                displayName: "Apply as",
+                initialValue: dataObject.ApplyAs,
+                parser: UserInputParsers.LookupTableTypeParser,
+                validator: ModelValueValidators.DefaultLookupTableTypeValidator);
+            Data = new EditableSetting<LookupTableData>(
+                displayName: "Data",
+                initialValue: new LookupTableData(dataObject.Data),
+                parser: UserInputParsers.LookupTableDataParser,
+                validator: ModelValueValidators.DefaultLookupTableDataValidator);
         }
     }
 

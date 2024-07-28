@@ -58,10 +58,26 @@ namespace userspace_backend.Model.AccelDefinitions.Formula
 
         protected override void InitSpecificSettingsAndCollections(ClassicAccel dataObject)
         {
-            Acceleration = new EditableSetting<double>(dataObject.Acceleration, UserInputParsers.DoubleParser, ModelValueValidators.DefaultDoubleValidator);
-            Exponent = new EditableSetting<double>(dataObject.Exponent, UserInputParsers.DoubleParser, ModelValueValidators.DefaultDoubleValidator);
-            Offset = new EditableSetting<double>(dataObject.Offset, UserInputParsers.DoubleParser, ModelValueValidators.DefaultDoubleValidator);
-            Cap = new EditableSetting<double>(dataObject.Cap, UserInputParsers.DoubleParser, ModelValueValidators.DefaultDoubleValidator);
+            Acceleration = new EditableSetting<double>(
+                displayName: "Acceleration",
+                initialValue: dataObject.Acceleration,
+                parser: UserInputParsers.DoubleParser,
+                validator: ModelValueValidators.DefaultDoubleValidator);
+            Exponent = new EditableSetting<double>(
+                displayName: "Exponent",
+                initialValue: dataObject.Exponent,
+                parser: UserInputParsers.DoubleParser,
+                validator: ModelValueValidators.DefaultDoubleValidator);
+            Offset = new EditableSetting<double>(
+                displayName: "Offset",
+                initialValue: dataObject.Offset,
+                parser: UserInputParsers.DoubleParser,
+                validator: ModelValueValidators.DefaultDoubleValidator);
+            Cap = new EditableSetting<double>(
+                displayName: "Cap",
+                initialValue: dataObject.Cap,
+                parser: UserInputParsers.DoubleParser,
+                validator: ModelValueValidators.DefaultDoubleValidator);
         }
     }
 }

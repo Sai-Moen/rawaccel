@@ -53,9 +53,21 @@ namespace userspace_backend.Model.AccelDefinitions.Formula
 
         protected override void InitSpecificSettingsAndCollections(JumpAccel dataObject)
         {
-            Smooth = new EditableSetting<double>(dataObject.Smooth, UserInputParsers.DoubleParser, ModelValueValidators.DefaultDoubleValidator);
-            Input = new EditableSetting<double>(dataObject.Input, UserInputParsers.DoubleParser, ModelValueValidators.DefaultDoubleValidator);
-            Output = new EditableSetting<double>(dataObject.Output, UserInputParsers.DoubleParser, ModelValueValidators.DefaultDoubleValidator);
+            Smooth = new EditableSetting<double>(
+                displayName: "Smooth",
+                initialValue: dataObject.Smooth,
+                parser: UserInputParsers.DoubleParser, 
+                validator: ModelValueValidators.DefaultDoubleValidator);
+            Input = new EditableSetting<double>(
+                displayName: "Input",
+                initialValue: dataObject.Input,
+                parser: UserInputParsers.DoubleParser,
+                validator: ModelValueValidators.DefaultDoubleValidator);
+            Output = new EditableSetting<double>(
+                displayName: "Output",
+                initialValue: dataObject.Output,
+                parser: UserInputParsers.DoubleParser,
+                validator: ModelValueValidators.DefaultDoubleValidator);
         }
     }
 }

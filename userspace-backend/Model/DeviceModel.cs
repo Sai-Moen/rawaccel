@@ -42,11 +42,31 @@ namespace userspace_backend.Model
 
         protected override void InitEditableSettingsAndCollections(Device device)
         {
-            Name = new EditableSetting<string>(device.Name, UserInputParsers.StringParser, ModelValueValidators.DefaultStringValidator);
-            HardwareID = new EditableSetting<string>(device.HWID, UserInputParsers.StringParser, ModelValueValidators.DefaultStringValidator);
-            DPI = new EditableSetting<int>(device.DPI, UserInputParsers.IntParser, ModelValueValidators.DefaultIntValidator);
-            PollRate = new EditableSetting<int>(device.PollingRate, UserInputParsers.IntParser, ModelValueValidators.DefaultIntValidator);
-            Ignore = new EditableSetting<bool>(device.Ignore, UserInputParsers.BoolParser, ModelValueValidators.DefaultBoolValidator);
+            Name = new EditableSetting<string>(
+                displayName: "Name",
+                initialValue: device.Name,
+                parser: UserInputParsers.StringParser,
+                validator: ModelValueValidators.DefaultStringValidator);
+            HardwareID = new EditableSetting<string>(
+                displayName: "Hardware ID",
+                initialValue: device.HWID,
+                parser: UserInputParsers.StringParser,
+                validator: ModelValueValidators.DefaultStringValidator);
+            DPI = new EditableSetting<int>(
+               displayName: "DPI",
+               initialValue: device.DPI,
+               parser: UserInputParsers.IntParser,
+               validator: ModelValueValidators.DefaultIntValidator);
+            PollRate = new EditableSetting<int>(
+                displayName: "Polling Rate",
+                initialValue: device.PollingRate,
+                parser: UserInputParsers.IntParser,
+                validator: ModelValueValidators.DefaultIntValidator);
+            Ignore = new EditableSetting<bool>(
+                displayName: "Ignore",
+                initialValue: device.Ignore,
+                parser: UserInputParsers.BoolParser,
+                validator: ModelValueValidators.DefaultBoolValidator);
         }
 
         public override Device MapToData()

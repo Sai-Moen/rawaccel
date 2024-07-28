@@ -9,17 +9,24 @@ namespace userspace_backend.Model.EditableSettings
     public class EditableSetting<T> : IEditableSetting where T : IComparable
     {
         public EditableSetting(
+            string displayName,
             T initialValue,
             IUserInputParser<T> parser,
             IModelValueValidator<T> validator,
             Action setCallback = null)
         {
+            DisplayName = displayName;
             LastWrittenValue = initialValue;
             Parser = parser;
             SetCallback = setCallback;
             UpdateModelValue();
             UpdateInterfaceValue();
         }
+
+        /// <summary>
+        /// Display name for this setting in UI
+        /// </summary>
+        public string DisplayName { get; }
 
         /// <summary>
         /// This value can be bound in UI

@@ -49,11 +49,12 @@ namespace userspace_backend.Model.AccelDefinitions
         protected override void InitSpecificSettingsAndCollections(FormulaAccel dataObject)
         {
             FormulaType = new EditableSetting<FormulaAccel.AccelerationFormulaType>(
-                dataObject.FormulaType,
-                UserInputParsers.AccelerationFormulaTypeParser,
+                displayName: "Formula Type",
+                initialValue: dataObject.FormulaType,
+                parser: UserInputParsers.AccelerationFormulaTypeParser,
                 // When the definition type changes, contained editable settings collections need to correspond to new type
-                ModelValueValidators.DefaultAccelerationFormulaTypeValidator,
-                GatherEditableSettingsCollections);
+                validator: ModelValueValidators.DefaultAccelerationFormulaTypeValidator,
+                setCallback: GatherEditableSettingsCollections);
 
             FormulaModels = new Dictionary<FormulaAccel.AccelerationFormulaType, IAccelDefinitionModel>();
             foreach (FormulaAccel.AccelerationFormulaType formulaType in Enum.GetValues(typeof(FormulaAccel.AccelerationFormulaType)))

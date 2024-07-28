@@ -46,11 +46,31 @@ namespace userspace_backend.Model.ProfileComponents
 
         protected override void InitEditableSettingsAndCollections(Anisotropy dataObject)
         {
-            DomainX = new EditableSetting<double>(dataObject.Domain.X, UserInputParsers.DoubleParser, ModelValueValidators.DefaultDoubleValidator);
-            DomainY = new EditableSetting<double>(dataObject.Domain.Y, UserInputParsers.DoubleParser, ModelValueValidators.DefaultDoubleValidator);
-            RangeX = new EditableSetting<double>(dataObject.Range.X, UserInputParsers.DoubleParser, ModelValueValidators.DefaultDoubleValidator);
-            RangeY = new EditableSetting<double>(dataObject.Range.Y, UserInputParsers.DoubleParser, ModelValueValidators.DefaultDoubleValidator);
-            LPNorm = new EditableSetting<double>(dataObject.LPNorm, UserInputParsers.DoubleParser, ModelValueValidators.DefaultDoubleValidator);
+            DomainX = new EditableSetting<double>(
+                displayName: "Domain X",
+                initialValue: dataObject.Domain.X,
+                parser: UserInputParsers.DoubleParser,
+                validator: ModelValueValidators.DefaultDoubleValidator);
+            DomainY = new EditableSetting<double>(
+                displayName: "Domain Y",
+                initialValue: dataObject.Domain.Y,
+                parser: UserInputParsers.DoubleParser,
+                validator: ModelValueValidators.DefaultDoubleValidator);
+            RangeX = new EditableSetting<double>(
+                displayName: "Range X",
+                initialValue: dataObject.Range.X,
+                parser: UserInputParsers.DoubleParser,
+                validator: ModelValueValidators.DefaultDoubleValidator);
+            RangeY = new EditableSetting<double>(
+                displayName: "Range Y",
+                initialValue: dataObject.Range.Y,
+                parser: UserInputParsers.DoubleParser,
+                validator: ModelValueValidators.DefaultDoubleValidator);
+            LPNorm = new EditableSetting<double>(
+                displayName: "LP Norm",
+                initialValue: dataObject.LPNorm,
+                parser: UserInputParsers.DoubleParser,
+                validator: ModelValueValidators.DefaultDoubleValidator);
         }
     }
 }

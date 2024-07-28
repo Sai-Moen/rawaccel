@@ -54,10 +54,26 @@ namespace userspace_backend.Model.AccelDefinitions.Formula
 
         protected override void InitSpecificSettingsAndCollections(SynchronousAccel dataObject)
         {
-            Gamma = new EditableSetting<double>(dataObject.Gamma, UserInputParsers.DoubleParser, ModelValueValidators.DefaultDoubleValidator);
-            Motivity = new EditableSetting<double>(dataObject.Motivity, UserInputParsers.DoubleParser, ModelValueValidators.DefaultDoubleValidator);
-            SyncSpeed = new EditableSetting<double>(dataObject.SyncSpeed, UserInputParsers.DoubleParser, ModelValueValidators.DefaultDoubleValidator);
-            Smoothness = new EditableSetting<double>(dataObject.Smoothness, UserInputParsers.DoubleParser, ModelValueValidators.DefaultDoubleValidator);
+            Gamma = new EditableSetting<double>(
+                displayName: "Gamma",
+                dataObject.Gamma,
+                parser: UserInputParsers.DoubleParser,
+                validator: ModelValueValidators.DefaultDoubleValidator);
+            Motivity = new EditableSetting<double>(
+                displayName: "Motivity",
+                dataObject.Motivity,
+                parser: UserInputParsers.DoubleParser,
+                validator: ModelValueValidators.DefaultDoubleValidator);
+            SyncSpeed = new EditableSetting<double>(
+                displayName: "Sync Speed",
+                dataObject.SyncSpeed,
+                parser: UserInputParsers.DoubleParser,
+                validator: ModelValueValidators.DefaultDoubleValidator);
+            Smoothness = new EditableSetting<double>(
+                displayName: "Smoothness",
+                dataObject.Smoothness,
+                parser: UserInputParsers.DoubleParser,
+                validator: ModelValueValidators.DefaultDoubleValidator);
         }
     }
 }
