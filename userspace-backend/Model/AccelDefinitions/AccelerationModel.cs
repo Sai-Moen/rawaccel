@@ -19,7 +19,7 @@ namespace userspace_backend.Model.AccelDefinitions
 
         public override Acceleration MapToData()
         {
-            return DefinitionModels[DefinitionType.EditableValue].MapToData();
+            return DefinitionModels[DefinitionType.ModelValue].MapToData();
         }
 
         protected override IEnumerable<IEditableSetting> EnumerateEditableSettings()
@@ -29,16 +29,16 @@ namespace userspace_backend.Model.AccelDefinitions
 
         protected override IEnumerable<IEditableSettingsCollection> EnumerateEditableSettingsCollections()
         {
-            return [DefinitionModels[DefinitionType.EditableValue]];
+            return [DefinitionModels[DefinitionType.ModelValue]];
         }
 
         protected override void InitEditableSettingsAndCollections(Acceleration dataObject)
         {
             DefinitionType = new EditableSetting<AccelerationDefinitionType>(
-                dataObject.Type,
-                UserInputParsers.AccelerationDefinitionTypeParser,
+                initialValue: dataObject.Type,
+                parser: UserInputParsers.AccelerationDefinitionTypeParser,
                 // When the definition type changes, contained editable settings collections need to correspond to new type
-                GatherEditableSettingsCollections);
+                setCallback: GatherEditableSettingsCollections);
 
             DefinitionModels = new Dictionary<AccelerationDefinitionType, IAccelDefinitionModel>();
             foreach (AccelerationDefinitionType defnType in Enum.GetValues(typeof(AccelerationDefinitionType)))

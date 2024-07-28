@@ -25,9 +25,9 @@ namespace userspace_backend.Model.AccelDefinitions.Formula
         {
             return new LinearAccel()
             {
-                Acceleration = Acceleration.EditableValue,
-                Offset = Offset.EditableValue,
-                Cap = Cap.EditableValue,
+                Acceleration = Acceleration.ModelValue,
+                Offset = Offset.ModelValue,
+                Cap = Cap.ModelValue,
             };
         }
 

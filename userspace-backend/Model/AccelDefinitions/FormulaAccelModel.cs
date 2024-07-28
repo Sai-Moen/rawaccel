@@ -23,7 +23,7 @@ namespace userspace_backend.Model.AccelDefinitions
 
         public override Acceleration MapToData()
         {
-            return FormulaModels[FormulaType.EditableValue].MapToData();
+            return FormulaModels[FormulaType.ModelValue].MapToData();
         }
 
         protected override IEnumerable<IEditableSetting> EnumerateEditableSettings()
@@ -33,7 +33,7 @@ namespace userspace_backend.Model.AccelDefinitions
 
         protected override IEnumerable<IEditableSettingsCollection> EnumerateEditableSettingsCollections()
         {
-            return [ FormulaModels[FormulaType.EditableValue] ];
+            return [ FormulaModels[FormulaType.ModelValue] ];
         }
 
         protected override FormulaAccel GenerateDefaultDataObject()

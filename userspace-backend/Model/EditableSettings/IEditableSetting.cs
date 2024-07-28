@@ -11,7 +11,5 @@ namespace userspace_backend.Model.EditableSettings
         string EditedValueForDiplay { get; }
 
         bool HasChanged();
-
-        bool TryParseAndSet(string input);
     }
 }

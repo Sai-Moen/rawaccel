@@ -25,23 +25,23 @@ namespace userspace_backend.Model
                 return int.MaxValue;
             }
 
-            return other.Name.EditableValue.CompareTo(Name.EditableValue);
+            return other.Name.ModelValue.CompareTo(Name.ModelValue);
         }
 
         public override bool Equals(object? obj)
         {
             return obj is DeviceGroupModel model &&
-                   string.Equals(model.Name.EditableValue, this.Name.EditableValue, StringComparison.InvariantCultureIgnoreCase);
+                   string.Equals(model.Name.ModelValue, this.Name.ModelValue, StringComparison.InvariantCultureIgnoreCase);
         }
 
         public override int GetHashCode()
         {
-            return HashCode.Combine(Name.EditableValue);
+            return HashCode.Combine(Name.ModelValue);
         }
 
         public override string MapToData()
         {
-            return Name.EditableValue;
+            return Name.ModelValue;
         }
 
         protected override IEnumerable<IEditableSetting> EnumerateEditableSettings()

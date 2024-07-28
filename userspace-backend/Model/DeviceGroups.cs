@@ -19,16 +19,35 @@ namespace userspace_backend.Model
 
         public DeviceGroupModel AddOrGetDeviceGroup(string deviceGroupName)
         {
-            DeviceGroupModel deviceGroup = DeviceGroupModels.FirstOrDefault(
-                g => string.Equals(g.Name.EditableValue, deviceGroupName, StringComparison.InvariantCultureIgnoreCase));
-
-            if (deviceGroup == null)
+            if (!TryGetDeviceGroup(deviceGroupName, out DeviceGroupModel deviceGroup))
             {
                 deviceGroup = new DeviceGroupModel(deviceGroupName);
                 DeviceGroupModels.Add(deviceGroup);
             }
 
             return deviceGroup;
+        }
+
+        public bool TryAddDeviceGroup(string deviceGroupName)
+        {
+            // Do not add group if one already exists
+            if (TryGetDeviceGroup(deviceGroupName, out _))
+            {
+                return false;
+            }
+
+            DeviceGroupModel deviceGroup = new DeviceGroupModel(deviceGroupName);
+            DeviceGroupModels.Add(deviceGroup);
+
+            return true;
+        }
+
+        protected bool TryGetDeviceGroup(string name, out DeviceGroupModel deviceGroup)
+        {
+            deviceGroup = DeviceGroupModels.FirstOrDefault(
+                g => string.Equals(g.Name.ModelValue, name, StringComparison.InvariantCultureIgnoreCase));
+
+            return deviceGroup != null;
         }
     }
 }

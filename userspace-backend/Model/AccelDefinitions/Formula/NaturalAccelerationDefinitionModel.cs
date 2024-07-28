@@ -24,9 +24,9 @@ namespace userspace_backend.Model.AccelDefinitions.Formula
         {
             return new NaturalAccel()
             {
-                DecayRate = DecayRate.EditableValue,
-                InputOffset = InputOffset.EditableValue,
-                Limit = Limit.EditableValue,
+                DecayRate = DecayRate.ModelValue,
+                InputOffset = InputOffset.ModelValue,
+                Limit = Limit.ModelValue,
             };
         }
 

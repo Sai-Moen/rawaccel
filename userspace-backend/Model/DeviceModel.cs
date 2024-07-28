@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using userspace_backend.Data;
 using userspace_backend.Model.EditableSettings;
@@ -7,7 +8,8 @@ namespace userspace_backend.Model
 {
     public class DeviceModel : EditableSettingsCollection<Device>
     {
-        public DeviceModel(Device device, DeviceGroupModel deviceGroup) : base(device)
+        public DeviceModel(Device device, DeviceGroupModel deviceGroup)
+            : base(device)
         {
             DeviceGroup = deviceGroup;
         }
@@ -23,6 +25,10 @@ namespace userspace_backend.Model
         public EditableSetting<bool> Ignore { get; protected set; }
 
         public DeviceGroupModel DeviceGroup { get; protected set; }
+
+        protected Func<bool> NameSetConditional { get; set; }
+
+        protected Func<bool> HardwareIDSetConditional { get; set; }
 
         protected override IEnumerable<IEditableSetting> EnumerateEditableSettings()
         {
@@ -47,11 +53,11 @@ namespace userspace_backend.Model
         {
             return new Device()
             {
-                Name = this.Name.EditableValue,
-                HWID = this.HardwareID.EditableValue,
-                DPI = this.DPI.EditableValue,
-                PollingRate = this.PollRate.EditableValue,
-                Ignore = this.Ignore.EditableValue,
+                Name = this.Name.ModelValue,
+                HWID = this.HardwareID.ModelValue,
+                DPI = this.DPI.ModelValue,
+                PollingRate = this.PollRate.ModelValue,
+                Ignore = this.Ignore.ModelValue,
                 DeviceGroup = DeviceGroup.MapToData(),
             };
         }

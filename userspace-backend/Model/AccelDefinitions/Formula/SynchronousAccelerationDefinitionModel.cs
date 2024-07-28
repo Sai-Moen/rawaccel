@@ -24,10 +24,10 @@ namespace userspace_backend.Model.AccelDefinitions.Formula
         {
             return new SynchronousAccel()
             {
-                Gamma = Gamma.EditableValue,
-                Motivity = Motivity.EditableValue,
-                SyncSpeed = SyncSpeed.EditableValue,
-                Smoothness = Smoothness.EditableValue,
+                Gamma = Gamma.ModelValue,
+                Motivity = Motivity.ModelValue,
+                SyncSpeed = SyncSpeed.ModelValue,
+                Smoothness = Smoothness.ModelValue,
             };
         }
 

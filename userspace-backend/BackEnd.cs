@@ -16,15 +16,12 @@ namespace userspace_backend
         public BackEnd(IBackEndLoader backEndLoader)
         {
             BackEndLoader = backEndLoader;
-            DeviceGroups = new DeviceGroups();
-            Devices = new List<DeviceModel>();
+            Devices = new DevicesModel();
             Mappings = new MappingSet();
             Profiles = new List<ProfileModel>();
         }
 
-        public IList<DeviceModel> Devices { get; set; }
-
-        public DeviceGroups DeviceGroups { get; set; }
+        public DevicesModel Devices { get; set; }
 
         public MappingSet Mappings { get; set; }
 
@@ -42,9 +39,7 @@ namespace userspace_backend
         {
             foreach(var deviceData in devicesData)
             {
-                DeviceGroupModel deviceGroup = DeviceGroups.AddOrGetDeviceGroup(deviceData.DeviceGroup);
-                DeviceModel deviceModel = new DeviceModel(deviceData, deviceGroup);
-                Devices.Add(deviceModel);
+                Devices.TryAddDevice(deviceData);
             }
         }
 
@@ -64,7 +59,7 @@ namespace userspace_backend
 
         protected void WriteSettingsToDisk()
         {
-            BackEndLoader.WriteSettingsToDisk(Devices);
+            BackEndLoader.WriteSettingsToDisk(Devices.DevicesEnumerable);
         }
 
         protected void WriteToDriver()

@@ -31,9 +31,9 @@ namespace userspace_backend.Model
         {
             return new Profile()
             {
-                Name = Name.EditableValue,
-                OutputDPI = OutputDPI.EditableValue,
-                YXRatio = YXRatio.EditableValue,
+                Name = Name.ModelValue,
+                OutputDPI = OutputDPI.ModelValue,
+                YXRatio = YXRatio.ModelValue,
                 Acceleration = Acceleration.MapToData(),
                 Anisotropy = Anisotropy.MapToData(),
                 Hidden = Hidden.MapToData(),

@@ -28,11 +28,11 @@ namespace userspace_backend.Model.ProfileComponents
         {
             return new Hidden()
             {
-                RotationDegrees = RotationDegrees.EditableValue,
-                AngleSnappingDegrees = AngleSnappingDegrees.EditableValue,
-                LeftRightRatio = LeftRightRatio.EditableValue,
-                UpDownRatio = UpDownRatio.EditableValue,
-                SpeedCap = SpeedCap.EditableValue,
+                RotationDegrees = RotationDegrees.ModelValue,
+                AngleSnappingDegrees = AngleSnappingDegrees.ModelValue,
+                LeftRightRatio = LeftRightRatio.ModelValue,
+                UpDownRatio = UpDownRatio.ModelValue,
+                SpeedCap = SpeedCap.ModelValue,
             };
         }
 

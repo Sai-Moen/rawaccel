@@ -25,9 +25,9 @@ namespace userspace_backend.Model.AccelDefinitions.Formula
         {
             return new JumpAccel()
             {
-                Smooth = Smooth.EditableValue,
-                Input = Input.EditableValue,
-                Output = Output.EditableValue
+                Smooth = Smooth.ModelValue,
+                Input = Input.ModelValue,
+                Output = Output.ModelValue
             };
         }
 

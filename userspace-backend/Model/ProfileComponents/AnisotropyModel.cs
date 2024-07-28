@@ -28,9 +28,9 @@ namespace userspace_backend.Model.ProfileComponents
         {
             return new Anisotropy()
             {
-                Domain = new Vector2() { X = DomainX.EditableValue, Y = DomainY.EditableValue },
-                Range = new Vector2() { X = RangeX.EditableValue, Y = RangeY.EditableValue },
-                LPNorm = LPNorm.EditableValue,
+                Domain = new Vector2() { X = DomainX.ModelValue, Y = DomainY.ModelValue },
+                Range = new Vector2() { X = RangeX.ModelValue, Y = RangeY.ModelValue },
+                LPNorm = LPNorm.ModelValue,
             };
         }
 

@@ -27,10 +27,10 @@ namespace userspace_backend.Model.AccelDefinitions.Formula
         {
             return new ClassicAccel()
             {
-                Acceleration = Acceleration.EditableValue,
-                Exponent = Exponent.EditableValue,
-                Offset = Offset.EditableValue,
-                Cap = Cap.EditableValue,
+                Acceleration = Acceleration.ModelValue,
+                Exponent = Exponent.ModelValue,
+                Offset = Offset.ModelValue,
+                Cap = Cap.ModelValue,
             };
 
         }

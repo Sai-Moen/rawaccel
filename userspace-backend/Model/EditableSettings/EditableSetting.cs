@@ -8,41 +8,60 @@ namespace userspace_backend.Model.EditableSettings
 {
     public class EditableSetting<T> : IEditableSetting where T : IComparable
     {
-        public EditableSetting(T initialValue, IUserInputParser<T> parser, Action setCallback = null)
+        public EditableSetting(
+            T initialValue,
+            IUserInputParser<T> parser,
+            Action setCallback = null)
         {
-            EditableValue = initialValue;
-            LastKnownValue = initialValue;
+            LastWrittenValue = initialValue;
             Parser = parser;
             SetCallback = setCallback;
+            UpdateModelValue();
+            UpdateInterfaceValue();
         }
 
-        public T EditableValue { get; protected set; }
+        /// <summary>
+        /// This value can be bound in UI
+        /// </summary>
+        public string InterfaceValue { get; protected set; }
 
-        public T LastKnownValue { get; protected set; }
+        public T ModelValue { get; protected set; }
 
-        public string EditedValueForDiplay { get => EditableValue?.ToString() ?? string.Empty; }
+        public T LastWrittenValue { get; protected set; }
+
+        public string EditedValueForDiplay { get => ModelValue?.ToString() ?? string.Empty; }
 
         protected Action SetCallback { get; }
 
         private IUserInputParser<T> Parser { get; }
 
-        public bool HasChanged() => EditableValue.CompareTo(LastKnownValue) == 0;
+        public bool HasChanged() => ModelValue.CompareTo(LastWrittenValue) == 0;
 
-        public bool TryParseAndSet(string input)
+        public bool TryUpdateFromInterface()
         {
-            if (string.IsNullOrEmpty(input))
+            if (string.IsNullOrEmpty(InterfaceValue))
             {
                 return false;
             }
 
-            if (Parser.TryParse(input.Trim(), out T parsedValue))
+            if (!Parser.TryParse(InterfaceValue.Trim(), out T parsedValue))
             {
-                EditableValue = parsedValue;
-                SetCallback?.Invoke();
-                return true;
+                return false;
             }
 
-            return false;
+            ModelValue = parsedValue;
+            SetCallback?.Invoke();
+            return true;
+        }
+
+        protected void UpdateInterfaceValue()
+        {
+            InterfaceValue = ModelValue?.ToString();
+        }
+
+        protected void UpdateModelValue()
+        {
+            ModelValue = LastWrittenValue;
         }
     }
 }

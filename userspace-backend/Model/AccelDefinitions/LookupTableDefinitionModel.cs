@@ -24,8 +24,8 @@ namespace userspace_backend.Model.AccelDefinitions
         {
             return new LookupTableAccel()
             {
-                ApplyAs = this.ApplyAs.EditableValue,
-                Data = this.Data.EditableValue.Data,
+                ApplyAs = this.ApplyAs.ModelValue,
+                Data = this.Data.ModelValue.Data,
             };
         }
 
