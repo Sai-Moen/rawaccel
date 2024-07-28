@@ -8,10 +8,16 @@ namespace userspace_backend.Model
 {
     public class DeviceModel : EditableSettingsCollection<Device>
     {
-        public DeviceModel(Device device, DeviceGroupModel deviceGroup)
+        public DeviceModel(
+            Device device,
+            DeviceGroupModel deviceGroup,
+            DeviceModelNameValidator deviceModelNameValidator,
+            DeviceModelHWIDValidator deviceModelHWIDValidator)
             : base(device)
         {
             DeviceGroup = deviceGroup;
+            DeviceModelNameValidator = deviceModelNameValidator;
+            DeviceModelHWIDValidator = deviceModelHWIDValidator;
         }
 
         public EditableSetting<string> Name { get; protected set; }
@@ -26,9 +32,9 @@ namespace userspace_backend.Model
 
         public DeviceGroupModel DeviceGroup { get; protected set; }
 
-        protected Func<bool> NameSetConditional { get; set; }
+        protected DeviceModelNameValidator DeviceModelNameValidator { get; }
 
-        protected Func<bool> HardwareIDSetConditional { get; set; }
+        protected DeviceModelHWIDValidator DeviceModelHWIDValidator { get; }
 
         protected override IEnumerable<IEditableSetting> EnumerateEditableSettings()
         {
@@ -46,12 +52,12 @@ namespace userspace_backend.Model
                 displayName: "Name",
                 initialValue: device.Name,
                 parser: UserInputParsers.StringParser,
-                validator: ModelValueValidators.DefaultStringValidator);
+                validator: DeviceModelNameValidator);
             HardwareID = new EditableSetting<string>(
                 displayName: "Hardware ID",
                 initialValue: device.HWID,
                 parser: UserInputParsers.StringParser,
-                validator: ModelValueValidators.DefaultStringValidator);
+                validator: DeviceModelHWIDValidator);
             DPI = new EditableSetting<int>(
                displayName: "DPI",
                initialValue: device.DPI,

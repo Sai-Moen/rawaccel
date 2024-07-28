@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using userspace_backend.Data;
+using userspace_backend.Model.EditableSettings;
 
 namespace userspace_backend.Model
 {
@@ -13,6 +14,8 @@ namespace userspace_backend.Model
         {
             Devices = new List<DeviceModel>();
             DeviceGroups = new DeviceGroups();
+            DeviceModelNameValidator = new DeviceModelNameValidator(this);
+            DeviceModelHWIDValidator = new DeviceModelHWIDValidator(this);
         }
 
         public DeviceGroups DeviceGroups { get; set; }
@@ -20,6 +23,10 @@ namespace userspace_backend.Model
         public IEnumerable<DeviceModel> DevicesEnumerable { get => Devices; }
 
         protected IList<DeviceModel> Devices { get; set; }
+
+        protected DeviceModelNameValidator DeviceModelNameValidator { get; }
+
+        protected DeviceModelHWIDValidator DeviceModelHWIDValidator { get; }
 
         public bool TryAddDevice(Device deviceData)
         {
@@ -54,4 +61,35 @@ namespace userspace_backend.Model
                 string.Equals(d.HardwareID.ModelValue, hwid, StringComparison.InvariantCultureIgnoreCase));
         }
     }
+
+    public class DeviceModelNameValidator : IModelValueValidator<string>
+    {
+        public DeviceModelNameValidator(DevicesModel devices)
+        {
+            Devices = devices;
+        }
+
+        public DevicesModel Devices { get; }
+
+        public bool Validate(string modelValue)
+        {
+            return !Devices.DoesDeviceNameAlreadyExist(modelValue);
+        }
+    }
+
+    public class DeviceModelHWIDValidator : IModelValueValidator<string>
+    {
+        public DeviceModelHWIDValidator(DevicesModel devices)
+        {
+            Devices = devices;
+        }
+
+        public DevicesModel Devices { get; }
+
+        public bool Validate(string modelValue)
+        {
+            return !Devices.DoesDeviceHardwareIDAlreadyExist(modelValue);
+        }
+    }
+
 }
