@@ -51,10 +51,10 @@ namespace userspace_backend.Model.AccelDefinitions.Formula
 
         protected override void InitSpecificSettingsAndCollections(PowerAccel dataObject)
         {
-            Scale = new EditableSetting<double>(dataObject.Scale, UserInputParsers.DoubleParser);
-            Exponent = new EditableSetting<double>(dataObject.Exponent, UserInputParsers.DoubleParser);
-            OutputOffset = new EditableSetting<double>(dataObject.OutputOffset, UserInputParsers.DoubleParser);
-            Cap = new EditableSetting<double>(dataObject.Cap, UserInputParsers.DoubleParser);
+            Scale = new EditableSetting<double>(dataObject.Scale, UserInputParsers.DoubleParser, ModelValueValidators.DefaultDoubleValidator);
+            Exponent = new EditableSetting<double>(dataObject.Exponent, UserInputParsers.DoubleParser, ModelValueValidators.DefaultDoubleValidator);
+            OutputOffset = new EditableSetting<double>(dataObject.OutputOffset, UserInputParsers.DoubleParser, ModelValueValidators.DefaultDoubleValidator);
+            Cap = new EditableSetting<double>(dataObject.Cap, UserInputParsers.DoubleParser, ModelValueValidators.DefaultDoubleValidator);
         }
     }
 }

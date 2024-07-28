@@ -52,9 +52,9 @@ namespace userspace_backend.Model
 
         protected override void InitEditableSettingsAndCollections(Profile dataObject)
         {
-            Name = new EditableSetting<string>(dataObject.Name, UserInputParsers.StringParser);
-            OutputDPI = new EditableSetting<int>(dataObject.OutputDPI, UserInputParsers.IntParser);
-            YXRatio = new EditableSetting<double>(dataObject.YXRatio, UserInputParsers.DoubleParser);
+            Name = new EditableSetting<string>(dataObject.Name, UserInputParsers.StringParser, ModelValueValidators.DefaultStringValidator);
+            OutputDPI = new EditableSetting<int>(dataObject.OutputDPI, UserInputParsers.IntParser, ModelValueValidators.DefaultIntValidator);
+            YXRatio = new EditableSetting<double>(dataObject.YXRatio, UserInputParsers.DoubleParser, ModelValueValidators.DefaultDoubleValidator);
             Acceleration = new AccelerationModel(dataObject.Acceleration);
             Anisotropy = new AnisotropyModel(dataObject.Anisotropy);
             Hidden = new HiddenModel(dataObject.Hidden);

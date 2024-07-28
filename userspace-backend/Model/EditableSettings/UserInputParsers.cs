@@ -78,7 +78,7 @@ namespace userspace_backend.Model.EditableSettings
         }
     }
 
-    public class AccelerationDefinitionTypeParser : IUserInputParser<Acceleration.AccelerationDefinitionType>
+        public class AccelerationDefinitionTypeParser : IUserInputParser<Acceleration.AccelerationDefinitionType>
     {
         public bool TryParse(string input, out Acceleration.AccelerationDefinitionType parsedValue)
         {
@@ -136,6 +136,7 @@ namespace userspace_backend.Model.EditableSettings
             }
             catch
             {
+                // Empty so that all code paths return value. False returned below
             }
 
             parsedValue = new LookupTableData();

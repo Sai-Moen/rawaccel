@@ -42,11 +42,11 @@ namespace userspace_backend.Model
 
         protected override void InitEditableSettingsAndCollections(Device device)
         {
-            Name = new EditableSetting<string>(device.Name, UserInputParsers.StringParser);
-            HardwareID = new EditableSetting<string>(device.HWID, UserInputParsers.StringParser);
-            DPI = new EditableSetting<int>(device.DPI, UserInputParsers.IntParser);
-            PollRate = new EditableSetting<int>(device.PollingRate, UserInputParsers.IntParser);
-            Ignore = new EditableSetting<bool>(device.Ignore, UserInputParsers.BoolParser);
+            Name = new EditableSetting<string>(device.Name, UserInputParsers.StringParser, ModelValueValidators.DefaultStringValidator);
+            HardwareID = new EditableSetting<string>(device.HWID, UserInputParsers.StringParser, ModelValueValidators.DefaultStringValidator);
+            DPI = new EditableSetting<int>(device.DPI, UserInputParsers.IntParser, ModelValueValidators.DefaultIntValidator);
+            PollRate = new EditableSetting<int>(device.PollingRate, UserInputParsers.IntParser, ModelValueValidators.DefaultIntValidator);
+            Ignore = new EditableSetting<bool>(device.Ignore, UserInputParsers.BoolParser, ModelValueValidators.DefaultBoolValidator);
         }
 
         public override Device MapToData()

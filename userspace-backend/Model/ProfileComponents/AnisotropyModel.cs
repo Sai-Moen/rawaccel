@@ -46,11 +46,11 @@ namespace userspace_backend.Model.ProfileComponents
 
         protected override void InitEditableSettingsAndCollections(Anisotropy dataObject)
         {
-            DomainX = new EditableSetting<double>(dataObject.Domain.X, UserInputParsers.DoubleParser);
-            DomainY = new EditableSetting<double>(dataObject.Domain.Y, UserInputParsers.DoubleParser);
-            RangeX = new EditableSetting<double>(dataObject.Range.X, UserInputParsers.DoubleParser);
-            RangeY = new EditableSetting<double>(dataObject.Range.Y, UserInputParsers.DoubleParser);
-            LPNorm = new EditableSetting<double>(dataObject.LPNorm, UserInputParsers.DoubleParser);
+            DomainX = new EditableSetting<double>(dataObject.Domain.X, UserInputParsers.DoubleParser, ModelValueValidators.DefaultDoubleValidator);
+            DomainY = new EditableSetting<double>(dataObject.Domain.Y, UserInputParsers.DoubleParser, ModelValueValidators.DefaultDoubleValidator);
+            RangeX = new EditableSetting<double>(dataObject.Range.X, UserInputParsers.DoubleParser, ModelValueValidators.DefaultDoubleValidator);
+            RangeY = new EditableSetting<double>(dataObject.Range.Y, UserInputParsers.DoubleParser, ModelValueValidators.DefaultDoubleValidator);
+            LPNorm = new EditableSetting<double>(dataObject.LPNorm, UserInputParsers.DoubleParser, ModelValueValidators.DefaultDoubleValidator);
         }
     }
 }

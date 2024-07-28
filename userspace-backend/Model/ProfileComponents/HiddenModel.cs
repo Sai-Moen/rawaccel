@@ -48,11 +48,11 @@ namespace userspace_backend.Model.ProfileComponents
 
         protected override void InitEditableSettingsAndCollections(Hidden dataObject)
         {
-            RotationDegrees = new EditableSetting<double>(dataObject.RotationDegrees, UserInputParsers.DoubleParser);
-            AngleSnappingDegrees = new EditableSetting<double>(dataObject.AngleSnappingDegrees, UserInputParsers.DoubleParser);
-            LeftRightRatio = new EditableSetting<double>(dataObject.LeftRightRatio, UserInputParsers.DoubleParser);
-            UpDownRatio = new EditableSetting<double>(dataObject.UpDownRatio, UserInputParsers.DoubleParser);
-            SpeedCap = new EditableSetting<double>(dataObject.SpeedCap, UserInputParsers.DoubleParser);
+            RotationDegrees = new EditableSetting<double>(dataObject.RotationDegrees, UserInputParsers.DoubleParser, ModelValueValidators.DefaultDoubleValidator);
+            AngleSnappingDegrees = new EditableSetting<double>(dataObject.AngleSnappingDegrees, UserInputParsers.DoubleParser, ModelValueValidators.DefaultDoubleValidator);
+            LeftRightRatio = new EditableSetting<double>(dataObject.LeftRightRatio, UserInputParsers.DoubleParser, ModelValueValidators.DefaultDoubleValidator);
+            UpDownRatio = new EditableSetting<double>(dataObject.UpDownRatio, UserInputParsers.DoubleParser, ModelValueValidators.DefaultDoubleValidator);
+            SpeedCap = new EditableSetting<double>(dataObject.SpeedCap, UserInputParsers.DoubleParser, ModelValueValidators.DefaultDoubleValidator);
         }
     }
 }

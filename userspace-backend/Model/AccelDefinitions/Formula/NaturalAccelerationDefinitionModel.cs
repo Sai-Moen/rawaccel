@@ -52,9 +52,9 @@ namespace userspace_backend.Model.AccelDefinitions.Formula
 
         protected override void InitSpecificSettingsAndCollections(NaturalAccel dataObject)
         {
-            DecayRate = new EditableSetting<double>(dataObject.DecayRate, UserInputParsers.DoubleParser);
-            InputOffset = new EditableSetting<double>(dataObject.InputOffset, UserInputParsers.DoubleParser);
-            Limit = new EditableSetting<double>(dataObject.Limit, UserInputParsers.DoubleParser);
+            DecayRate = new EditableSetting<double>(dataObject.DecayRate, UserInputParsers.DoubleParser, ModelValueValidators.DefaultDoubleValidator);
+            InputOffset = new EditableSetting<double>(dataObject.InputOffset, UserInputParsers.DoubleParser, ModelValueValidators.DefaultDoubleValidator);
+            Limit = new EditableSetting<double>(dataObject.Limit, UserInputParsers.DoubleParser, ModelValueValidators.DefaultDoubleValidator);
         }
     }
 }

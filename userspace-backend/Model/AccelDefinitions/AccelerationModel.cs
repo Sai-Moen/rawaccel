@@ -37,6 +37,7 @@ namespace userspace_backend.Model.AccelDefinitions
             DefinitionType = new EditableSetting<AccelerationDefinitionType>(
                 initialValue: dataObject.Type,
                 parser: UserInputParsers.AccelerationDefinitionTypeParser,
+                validator: ModelValueValidators.DefaultAccelerationTypeValidator,
                 // When the definition type changes, contained editable settings collections need to correspond to new type
                 setCallback: GatherEditableSettingsCollections);
 

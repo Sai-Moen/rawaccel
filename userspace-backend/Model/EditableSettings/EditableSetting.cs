@@ -11,6 +11,7 @@ namespace userspace_backend.Model.EditableSettings
         public EditableSetting(
             T initialValue,
             IUserInputParser<T> parser,
+            IModelValueValidator<T> validator,
             Action setCallback = null)
         {
             LastWrittenValue = initialValue;
@@ -35,6 +36,8 @@ namespace userspace_backend.Model.EditableSettings
 
         private IUserInputParser<T> Parser { get; }
 
+        private IModelValueValidator<T> Validator { get; }
+
         public bool HasChanged() => ModelValue.CompareTo(LastWrittenValue) == 0;
 
         public bool TryUpdateFromInterface()
@@ -45,6 +48,11 @@ namespace userspace_backend.Model.EditableSettings
             }
 
             if (!Parser.TryParse(InterfaceValue.Trim(), out T parsedValue))
+            {
+                return false;
+            }
+
+            if (!Validator.Validate(parsedValue))
             {
                 return false;
             }

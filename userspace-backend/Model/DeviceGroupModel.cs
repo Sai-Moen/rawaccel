@@ -56,7 +56,7 @@ namespace userspace_backend.Model
 
         protected override void InitEditableSettingsAndCollections(string dataObject)
         {
-            Name = new EditableSetting<string>(dataObject, UserInputParsers.StringParser);
+            Name = new EditableSetting<string>(dataObject, UserInputParsers.StringParser, ModelValueValidators.DefaultStringValidator);
         }
     }
 }

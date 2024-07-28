@@ -52,6 +52,7 @@ namespace userspace_backend.Model.AccelDefinitions
                 dataObject.FormulaType,
                 UserInputParsers.AccelerationFormulaTypeParser,
                 // When the definition type changes, contained editable settings collections need to correspond to new type
+                ModelValueValidators.DefaultAccelerationFormulaTypeValidator,
                 GatherEditableSettingsCollections);
 
             FormulaModels = new Dictionary<FormulaAccel.AccelerationFormulaType, IAccelDefinitionModel>();

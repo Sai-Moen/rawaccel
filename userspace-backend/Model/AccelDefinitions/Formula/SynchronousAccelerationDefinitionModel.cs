@@ -54,10 +54,10 @@ namespace userspace_backend.Model.AccelDefinitions.Formula
 
         protected override void InitSpecificSettingsAndCollections(SynchronousAccel dataObject)
         {
-            Gamma = new EditableSetting<double>(dataObject.Gamma, UserInputParsers.DoubleParser);
-            Motivity = new EditableSetting<double>(dataObject.Motivity, UserInputParsers.DoubleParser);
-            SyncSpeed = new EditableSetting<double>(dataObject.SyncSpeed, UserInputParsers.DoubleParser);
-            Smoothness = new EditableSetting<double>(dataObject.Smoothness, UserInputParsers.DoubleParser);
+            Gamma = new EditableSetting<double>(dataObject.Gamma, UserInputParsers.DoubleParser, ModelValueValidators.DefaultDoubleValidator);
+            Motivity = new EditableSetting<double>(dataObject.Motivity, UserInputParsers.DoubleParser, ModelValueValidators.DefaultDoubleValidator);
+            SyncSpeed = new EditableSetting<double>(dataObject.SyncSpeed, UserInputParsers.DoubleParser, ModelValueValidators.DefaultDoubleValidator);
+            Smoothness = new EditableSetting<double>(dataObject.Smoothness, UserInputParsers.DoubleParser, ModelValueValidators.DefaultDoubleValidator);
         }
     }
 }
