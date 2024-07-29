@@ -20,6 +20,7 @@ public partial class App : Application
     public override void OnFrameworkInitializationCompleted()
     {
         BackEnd backEnd = new BackEnd(BootstrapBackEnd());
+        backEnd.Load();
 
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {

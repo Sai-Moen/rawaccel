@@ -2,8 +2,10 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:userinterface.ViewModels"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-             x:Class="userinterface.Views.DevicesListView">
+             x:Class="userinterface.Views.DevicesListView"
+             x:DataType="vm:DevicesListViewModel">
   <StackPanel Orientation="Vertical">
     <TextBlock
       HorizontalAlignment="Left"
@@ -12,33 +14,26 @@
       Devices
     </TextBlock>
     <ListBox
-      Background="Black">
-      <Border
-        CornerRadius="5"
-        BorderBrush="Gray" BorderThickness="1"
-        Padding="10"
-        Margin="0,0,0,0">
-        <StackPanel Orientation="Horizontal">
-          <TextBlock Margin="5,0,5,0">Name: Mouse1</TextBlock>
-          <TextBlock Margin="5,0,5,0">DPI: 32000</TextBlock>
-          <TextBlock Margin="5,0,5,0">Polling Rate: 1000</TextBlock>
-          <TextBlock Margin="5,0,5,0">Ignore: false</TextBlock>
-          <TextBlock Margin="5,0,5,0">Device Group: Device Group A</TextBlock>
-        </StackPanel>
-      </Border>
-      <Border
-        CornerRadius="5"
-        BorderBrush="Gray" BorderThickness="1"
-        Padding="10"
-        Margin="0,0,0,0">
-        <StackPanel Orientation="Horizontal">
-          <TextBlock Margin="5,0,5,0">Name: Mouse2</TextBlock>
-          <TextBlock Margin="5,0,5,0">DPI: 1200</TextBlock>
-          <TextBlock Margin="5,0,5,0">Polling Rate: 8000</TextBlock>
-          <TextBlock Margin="5,0,5,0">Ignore: true</TextBlock>
-          <TextBlock Margin="5,0,5,0">Device Group: Device Group B</TextBlock>
-        </StackPanel>
-      </Border>
+      Background="Black"
+      Name="DevicesListInView"
+      ItemsSource="{Binding Devices}">
+      <ListBox.ItemTemplate>
+        <DataTemplate>
+          <Border
+            CornerRadius="5"
+            BorderBrush="Gray" BorderThickness="1"
+            Padding="10"
+            Margin="0,0,0,0">
+            <StackPanel Orientation="Horizontal">
+              <TextBlock Margin="5,0,5,0">Name: Mouse1</TextBlock>
+              <TextBlock Margin="5,0,5,0">DPI: 32000</TextBlock>
+              <TextBlock Margin="5,0,5,0">Polling Rate: 1000</TextBlock>
+              <TextBlock Margin="5,0,5,0">Ignore: false</TextBlock>
+              <TextBlock Margin="5,0,5,0">Device Group: Device Group A</TextBlock>
+            </StackPanel>
+          </Border>
+        </DataTemplate>
+      </ListBox.ItemTemplate>
     </ListBox>
   </StackPanel>
 </UserControl>

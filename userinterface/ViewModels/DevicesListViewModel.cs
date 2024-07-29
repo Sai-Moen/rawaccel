@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using userspace_backend.Model;
 using BE = userspace_backend.Model;
 
 namespace userinterface.ViewModels
@@ -15,5 +16,7 @@ namespace userinterface.ViewModels
         }
 
         protected BE.DevicesModel DevicesBE { get; set; }
+
+        public IEnumerable<BE.DeviceModel> Devices => DevicesBE.DevicesEnumerable;
     }
 }
