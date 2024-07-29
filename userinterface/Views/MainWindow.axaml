@@ -17,7 +17,7 @@
     </Design.DataContext>
   <TabControl TabStripPlacement = "Left">
     <TabItem Header = "Devices">
-      <v:DevicesPageView/>
+      <ContentControl Content="{Binding DevicesPage}"/>
     </TabItem>
     <TabItem Header = "Mappings">
       <v:MappingsPageView/>
