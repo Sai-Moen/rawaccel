@@ -3,10 +3,17 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using BE = userspace_backend.Model;
 
 namespace userinterface.ViewModels
 {
     public partial class DevicesListViewModel : ViewModelBase
     {
+        public DevicesListViewModel(BE.DevicesModel devicesBE)
+        {
+            DevicesBE = devicesBE;
+        }
+
+        protected BE.DevicesModel DevicesBE { get; set; }
     }
 }

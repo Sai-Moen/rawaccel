@@ -41,4 +41,8 @@
   <ItemGroup>
     <UpToDateCheckInput Remove="Views\HiddenProfileSettingsView.axaml" />
   </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\userspace-backend\userspace-backend.csproj" />
+  </ItemGroup>
 </Project>
