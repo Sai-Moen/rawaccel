@@ -12,13 +12,23 @@
         BorderBrush="Gray" BorderThickness="1"
         Padding="10"
         Margin="0,0,0,0">
-        <StackPanel Orientation="Horizontal" Spacing="10">
-          <ContentControl Content="{Binding NameField}"/>
-          <ContentControl Content="{Binding HWIDField}"/>
-          <ContentControl Content="{Binding DPIField}"/>
-          <ContentControl Content="{Binding PollRateField}"/>
-          <TextBlock Margin="5,0,5,0">Ignore: false</TextBlock>
-          <TextBlock Margin="5,0,5,0">Device Group: Device Group A</TextBlock>
-        </StackPanel>
+        <Grid ColumnDefinitions="*,*,*,*,*,*">
+          <ContentControl Content="{Binding NameField}" Grid.Column="0" Grid.Row="0"/>
+          <ContentControl Content="{Binding HWIDField}" Grid.Column="1" Grid.Row="0"/>
+          <ContentControl Content="{Binding DPIField}" Grid.Column="2" Grid.Row="0"/>
+          <ContentControl Content="{Binding PollRateField}" Grid.Column="3" Grid.Row="0"/>
+          <TextBlock
+            Margin="5,0,5,0"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+            Grid.Column="4"
+            Grid.Row="0">Ignore: false</TextBlock>
+          <TextBlock
+            Margin="5,0,5,0"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+            Grid.Column="5"
+            Grid.Row="0">Device Group: Device Group A</TextBlock>
+        </Grid>
       </Border>
 </UserControl>
