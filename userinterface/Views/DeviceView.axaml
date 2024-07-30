@@ -17,12 +17,7 @@
           <ContentControl Content="{Binding HWIDField}" Grid.Column="1" Grid.Row="0"/>
           <ContentControl Content="{Binding DPIField}" Grid.Column="2" Grid.Row="0"/>
           <ContentControl Content="{Binding PollRateField}" Grid.Column="3" Grid.Row="0"/>
-          <TextBlock
-            Margin="5,0,5,0"
-            HorizontalAlignment="Center"
-            VerticalAlignment="Center"
-            Grid.Column="4"
-            Grid.Row="0">Ignore: false</TextBlock>
+          <ContentControl Content="{Binding IgnoreBool}" Grid.Column="4" Grid.Row="0"/>
           <TextBlock
             Margin="5,0,5,0"
             HorizontalAlignment="Center"
