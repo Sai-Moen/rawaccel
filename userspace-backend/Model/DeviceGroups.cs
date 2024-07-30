@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -12,10 +13,10 @@ namespace userspace_backend.Model
 
         public DeviceGroups()
         {
-            DeviceGroupModels = new HashSet<DeviceGroupModel>() { DefaultDeviceGroup };
+            DeviceGroupModels = new ObservableCollection<DeviceGroupModel>() { DefaultDeviceGroup };
         }
 
-        protected HashSet<DeviceGroupModel> DeviceGroupModels { get; }
+        public ObservableCollection<DeviceGroupModel> DeviceGroupModels { get; }
 
         public DeviceGroupModel AddOrGetDeviceGroup(string deviceGroupName)
         {

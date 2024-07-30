@@ -7,15 +7,16 @@
              x:Class="userinterface.Views.EditableFieldView"
              x:DataType="vm:EditableFieldViewModel"
              x:CompileBindings="True">
-   <DockPanel HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-    <TextBlock
-      Margin="5,5,5,5"
-      Name="textBlock"
-      VerticalAlignment="Center"/>
-    <TextBox
-      Margin="5,5,5,5"
-      Text="{Binding ValueText}"
-      KeyDown="TextBox_KeyDown"
-      LostFocus="LostFocusHandler"/>
-  </DockPanel>
+     <StackPanel Orientation="Horizontal">
+      <TextBlock
+        Margin="5,5,5,5"
+        Name="textBlock"
+        VerticalAlignment="Center"
+        Text="{Binding Name}"/>
+      <TextBox
+        Margin="5,5,5,5"
+        Text="{Binding ValueText, UpdateSourceTrigger=LostFocus}"
+        KeyDown="TextBox_KeyDown"
+        LostFocus="LostFocusHandler"/>
+     </StackPanel>
 </UserControl>

@@ -16,8 +16,8 @@ namespace userspace_backend.Model
             : base(device)
         {
             DeviceGroup = deviceGroup;
-            DeviceModelNameValidator = deviceModelNameValidator;
-            DeviceModelHWIDValidator = deviceModelHWIDValidator;
+            Name.Validator = deviceModelNameValidator;
+            HardwareID.Validator = deviceModelHWIDValidator;
         }
 
         public EditableSetting<string> Name { get; protected set; }
@@ -52,12 +52,12 @@ namespace userspace_backend.Model
                 displayName: "Name",
                 initialValue: device.Name,
                 parser: UserInputParsers.StringParser,
-                validator: DeviceModelNameValidator);
+                validator: ModelValueValidators.DefaultStringValidator);
             HardwareID = new EditableSetting<string>(
                 displayName: "Hardware ID",
                 initialValue: device.HWID,
                 parser: UserInputParsers.StringParser,
-                validator: DeviceModelHWIDValidator);
+                validator: ModelValueValidators.DefaultStringValidator);
             DPI = new EditableSetting<int>(
                displayName: "DPI",
                initialValue: device.DPI,

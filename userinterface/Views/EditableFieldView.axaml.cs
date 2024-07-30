@@ -11,7 +11,6 @@ public partial class EditableFieldView : UserControl
     public EditableFieldView()
     {
         InitializeComponent();
-        this.DataContext = new EditableFieldViewModel();
     }
     
     public void TextBox_KeyDown(object sender, KeyEventArgs e)
@@ -24,6 +23,8 @@ public partial class EditableFieldView : UserControl
 
     public void LostFocusHandler(object sender, RoutedEventArgs args)
     {
+        var viewModel = this.DataContext as EditableFieldViewModel;
+        viewModel?.TrySetFromInterface();
     }
 
     public static readonly StyledProperty<string> FieldNameProperty =

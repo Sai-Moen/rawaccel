@@ -19,6 +19,7 @@ namespace userspace_backend.Model.EditableSettings
             LastWrittenValue = initialValue;
             Parser = parser;
             SetCallback = setCallback;
+            Validator = validator;
             UpdateModelValue();
             UpdateInterfaceValue();
         }
@@ -31,7 +32,7 @@ namespace userspace_backend.Model.EditableSettings
         /// <summary>
         /// This value can be bound in UI
         /// </summary>
-        public string InterfaceValue { get; protected set; }
+        public string InterfaceValue { get; set; }
 
         public T ModelValue { get; protected set; }
 
@@ -43,7 +44,8 @@ namespace userspace_backend.Model.EditableSettings
 
         private IUserInputParser<T> Parser { get; }
 
-        private IModelValueValidator<T> Validator { get; }
+        //TODO: change settings collections init so that this can be made private for non-static validators
+        public IModelValueValidator<T> Validator { get; set; }
 
         public bool HasChanged() => ModelValue.CompareTo(LastWrittenValue) == 0;
 
@@ -51,16 +53,24 @@ namespace userspace_backend.Model.EditableSettings
         {
             if (string.IsNullOrEmpty(InterfaceValue))
             {
+                UpdateInterfaceValue();
                 return false;
             }
 
             if (!Parser.TryParse(InterfaceValue.Trim(), out T parsedValue))
             {
+                UpdateInterfaceValue();
                 return false;
+            }
+
+            if (parsedValue.CompareTo(ModelValue) == 0)
+            {
+                return true;
             }
 
             if (!Validator.Validate(parsedValue))
             {
+                UpdateInterfaceValue();
                 return false;
             }
 

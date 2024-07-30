@@ -8,8 +8,14 @@ namespace userspace_backend.Model.EditableSettings
 {
     public interface IEditableSetting
     {
+        string DisplayName { get; }
+
         string EditedValueForDiplay { get; }
 
+        string InterfaceValue { get; set; }
+
         bool HasChanged();
+
+        bool TryUpdateFromInterface();
     }
 }

@@ -3,6 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:userinterface.ViewModels"
+             xmlns:v="using:userinterface.Views"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="userinterface.Views.DevicesListView"
              x:DataType="vm:DevicesListViewModel">
@@ -16,22 +17,10 @@
     <ListBox
       Background="Black"
       Name="DevicesListInView"
-      ItemsSource="{Binding Devices}">
+      ItemsSource="{Binding ListViews}">
       <ListBox.ItemTemplate>
         <DataTemplate>
-          <Border
-            CornerRadius="5"
-            BorderBrush="Gray" BorderThickness="1"
-            Padding="10"
-            Margin="0,0,0,0">
-            <StackPanel Orientation="Horizontal">
-              <TextBlock Margin="5,0,5,0">Name: Mouse1</TextBlock>
-              <TextBlock Margin="5,0,5,0">DPI: 32000</TextBlock>
-              <TextBlock Margin="5,0,5,0">Polling Rate: 1000</TextBlock>
-              <TextBlock Margin="5,0,5,0">Ignore: false</TextBlock>
-              <TextBlock Margin="5,0,5,0">Device Group: Device Group A</TextBlock>
-            </StackPanel>
-          </Border>
+          <ContentControl Content="{Binding DeviceView}"/>
         </DataTemplate>
       </ListBox.ItemTemplate>
     </ListBox>

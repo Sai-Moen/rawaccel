@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -12,7 +13,7 @@ namespace userspace_backend.Model
     {
         public DevicesModel()
         {
-            Devices = new List<DeviceModel>();
+            Devices = new ObservableCollection<DeviceModel>();
             DeviceGroups = new DeviceGroups();
             DeviceModelNameValidator = new DeviceModelNameValidator(this);
             DeviceModelHWIDValidator = new DeviceModelHWIDValidator(this);
@@ -22,7 +23,7 @@ namespace userspace_backend.Model
 
         public IEnumerable<DeviceModel> DevicesEnumerable { get => Devices; }
 
-        protected IList<DeviceModel> Devices { get; set; }
+        public ObservableCollection<DeviceModel> Devices { get; set; }
 
         protected DeviceModelNameValidator DeviceModelNameValidator { get; }
 
@@ -36,7 +37,7 @@ namespace userspace_backend.Model
             }
 
             DeviceGroupModel deviceGroup = DeviceGroups.AddOrGetDeviceGroup(deviceData.DeviceGroup);
-            DeviceModel deviceModel = new DeviceModel(deviceData, deviceGroup);
+            DeviceModel deviceModel = new DeviceModel(deviceData, deviceGroup, DeviceModelNameValidator, DeviceModelHWIDValidator);
             Devices.Add(deviceModel);
 
             return true;
