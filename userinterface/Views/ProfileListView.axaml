@@ -9,6 +9,7 @@
     <TextBlock
       HorizontalAlignment="Left"
       FontSize="18"
+      FontStyle="Italic"
       Margin="10,10,10,10">
       Profiles
     </TextBlock>

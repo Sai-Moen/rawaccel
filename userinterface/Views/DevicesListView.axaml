@@ -11,6 +11,7 @@
     <TextBlock
       HorizontalAlignment="Left"
       FontSize="18"
+      FontStyle="Italic"
       Margin="10,10,10,10">
       Devices
     </TextBlock>
@@ -24,5 +25,10 @@
         </DataTemplate>
       </ListBox.ItemTemplate>
     </ListBox>
+    <Button
+      HorizontalAlignment="Center"
+      Margin="10,10,10,10">
+      Add Device
+    </Button>
   </StackPanel>
 </UserControl>
