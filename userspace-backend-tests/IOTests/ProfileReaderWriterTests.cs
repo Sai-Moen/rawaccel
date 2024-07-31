@@ -5,7 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using userspace_backend.Data;
+using DATA = userspace_backend.Data;
 using userspace_backend.Data.Profiles;
 using userspace_backend.Data.Profiles.Accel;
 using userspace_backend.IO;
@@ -22,7 +22,7 @@ namespace userspace_backend_tests.IOTests
         [TestMethod]
         public void GivenValidInput_Writes()
         {
-            var profile = new Profile()
+            var profile = new DATA.Profile()
             {
                 Name = "default",
                 OutputDPI = 1200,

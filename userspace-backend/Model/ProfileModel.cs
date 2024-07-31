@@ -3,16 +3,16 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using userspace_backend.Data;
+using DATA = userspace_backend.Data;
 using userspace_backend.Model.AccelDefinitions;
 using userspace_backend.Model.EditableSettings;
 using userspace_backend.Model.ProfileComponents;
 
 namespace userspace_backend.Model
 {
-    public class ProfileModel : EditableSettingsCollection<Profile>
+    public class ProfileModel : EditableSettingsCollection<DATA.Profile>
     {
-        public ProfileModel(Profile dataObject) : base(dataObject)
+        public ProfileModel(DATA.Profile dataObject) : base(dataObject)
         {
         }
         public EditableSetting<string> Name { get; set; }
@@ -27,9 +27,9 @@ namespace userspace_backend.Model
 
         public HiddenModel Hidden { get; set; }
 
-        public override Profile MapToData()
+        public override DATA.Profile MapToData()
         {
-            return new Profile()
+            return new DATA.Profile()
             {
                 Name = Name.ModelValue,
                 OutputDPI = OutputDPI.ModelValue,
@@ -50,7 +50,7 @@ namespace userspace_backend.Model
             return [Acceleration, Anisotropy, Hidden];
         }
 
-        protected override void InitEditableSettingsAndCollections(Profile dataObject)
+        protected override void InitEditableSettingsAndCollections(DATA.Profile dataObject)
         {
             Name = new EditableSetting<string>(
                 displayName: "Name",

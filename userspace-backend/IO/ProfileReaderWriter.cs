@@ -1,10 +1,10 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Serialization;
-using userspace_backend.Data;
+using DATA = userspace_backend.Data;
 
 namespace userspace_backend.IO
 {
-    public class ProfileReaderWriter : ReaderWriterBase<Profile>
+    public class ProfileReaderWriter : ReaderWriterBase<DATA.Profile>
     {
         public static JsonSerializerOptions JsonOptions = new JsonSerializerOptions
         {
@@ -14,12 +14,12 @@ namespace userspace_backend.IO
 
         protected override string FileType => "Profile";
 
-        public override Profile Deserialize(string toRead)
+        public override DATA.Profile Deserialize(string toRead)
         {
-            return JsonSerializer.Deserialize<Profile>(toRead);
+            return JsonSerializer.Deserialize<DATA.Profile>(toRead);
         }
 
-        public override string Serialize(Profile toWrite)
+        public override string Serialize(DATA.Profile toWrite)
         {
             return JsonSerializer.Serialize(toWrite, JsonOptions);
         }

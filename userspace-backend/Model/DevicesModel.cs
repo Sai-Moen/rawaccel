@@ -17,6 +17,8 @@ namespace userspace_backend.Model
             DeviceGroups = new DeviceGroups();
             DeviceModelNameValidator = new DeviceModelNameValidator(this);
             DeviceModelHWIDValidator = new DeviceModelHWIDValidator(this);
+            SystemDevices = new ObservableCollection<MultiHandleDevice>();
+            RefreshSystemDevices();
         }
 
         public DeviceGroups DeviceGroups { get; set; }
@@ -24,6 +26,8 @@ namespace userspace_backend.Model
         public IEnumerable<DeviceModel> DevicesEnumerable { get => Devices; }
 
         public ObservableCollection<DeviceModel> Devices { get; set; }
+
+        public ObservableCollection<MultiHandleDevice> SystemDevices { get; protected set; }
 
         protected DeviceModelNameValidator DeviceModelNameValidator { get; }
 
@@ -60,6 +64,16 @@ namespace userspace_backend.Model
         {
             return Devices.Any(d =>
                 string.Equals(d.HardwareID.ModelValue, hwid, StringComparison.InvariantCultureIgnoreCase));
+        }
+
+        protected void RefreshSystemDevices()
+        {
+            SystemDevices.Clear();
+            var systemDevicesList = MultiHandleDevice.GetList();
+            foreach (var systemDevice in systemDevicesList)
+            {
+                SystemDevices.Add(systemDevice);
+            }
         }
     }
 
