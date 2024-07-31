@@ -7,23 +7,23 @@
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="userinterface.Views.DeviceView"
              x:DataType="vm:DeviceViewModel">
-      <Border
-        CornerRadius="5"
-        BorderBrush="Gray" BorderThickness="1"
-        Padding="10"
-        Margin="0,0,0,0">
-        <Grid ColumnDefinitions="*,*,*,*,*,*">
-          <ContentControl Content="{Binding NameField}" Grid.Column="0" Grid.Row="0"/>
-          <ContentControl Content="{Binding HWIDField}" Grid.Column="1" Grid.Row="0"/>
-          <ContentControl Content="{Binding DPIField}" Grid.Column="2" Grid.Row="0"/>
-          <ContentControl Content="{Binding PollRateField}" Grid.Column="3" Grid.Row="0"/>
-          <ContentControl Content="{Binding IgnoreBool}" Grid.Column="4" Grid.Row="0"/>
-          <TextBlock
-            Margin="5,0,5,0"
-            HorizontalAlignment="Center"
-            VerticalAlignment="Center"
-            Grid.Column="5"
-            Grid.Row="0">Device Group: Device Group A</TextBlock>
+      <Expander BorderThickness="1" BorderBrush="Gray" HorizontalAlignment="Stretch">
+        <Expander.Header>
+          <Grid ColumnDefinitions="*,*,*,*" HorizontalAlignment="Stretch">
+            <ContentControl Content="{Binding NameField}" Grid.Column="0" Grid.Row="0"/>
+            <ContentControl Content="{Binding DPIField}" Grid.Column="1" Grid.Row="0"/>
+            <TextBlock
+              Margin="5,0,5,0"
+              HorizontalAlignment="Center"
+              VerticalAlignment="Center"
+              Grid.Column="3"
+              Grid.Row="0">Device Group: Device Group A</TextBlock>
+           <ContentControl Content="{Binding IgnoreBool}" Grid.Column="2" Grid.Row="0"/>
+          </Grid>
+        </Expander.Header>
+        <Grid ColumnDefinitions="*,*" HorizontalAlignment="Stretch">
+          <ContentControl Content="{Binding HWIDField}" Grid.Column="0" Grid.Row="0"/>
+          <ContentControl Content="{Binding PollRateField}" Grid.Column="1" Grid.Row="0"/>
         </Grid>
-      </Border>
+      </Expander>
 </UserControl>
