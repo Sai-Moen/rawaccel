@@ -27,7 +27,7 @@ namespace userinterface.ViewModels
 
             foreach (BE.DeviceModel device in DevicesBE.Devices)
             {
-                ListViews.Add(new DeviceViewHolder(device));
+                ListViews.Add(new DeviceViewHolder(device, DevicesBE.DeviceGroups));
             }
         }
 
@@ -39,9 +39,9 @@ namespace userinterface.ViewModels
 
     public class DeviceViewHolder
     {
-        public DeviceViewHolder(BE.DeviceModel device)
+        public DeviceViewHolder(BE.DeviceModel device, BE.DeviceGroups groups)
         {
-            DeviceView = new DeviceViewModel(device);
+            DeviceView = new DeviceViewModel(device, groups);
         }
 
         public DeviceViewModel DeviceView { get; set; }

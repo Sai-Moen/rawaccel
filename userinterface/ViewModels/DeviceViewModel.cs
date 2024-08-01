@@ -9,7 +9,7 @@ namespace userinterface.ViewModels
 {
     public partial class DeviceViewModel : ViewModelBase
     {
-        public DeviceViewModel(BE.DeviceModel deviceBE)
+        public DeviceViewModel(BE.DeviceModel deviceBE, BE.DeviceGroups deviceGroupsBE)
         {
             DeviceBE = deviceBE;
             NameField = new EditableFieldViewModel(DeviceBE.Name);
