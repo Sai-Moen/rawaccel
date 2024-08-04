@@ -18,5 +18,20 @@ namespace userinterface.ViewModels
         protected BE.DeviceGroups DeviceGroupsBE { get; }
 
         public ObservableCollection<BE.DeviceGroupModel> DeviceGroups { get => DeviceGroupsBE.DeviceGroupModels; }
+
+        public bool TryAddNewDeviceGroup()
+        {
+            for (int i = 1; i < 10; i++)
+            {
+                string newGroupName = $"DeviceGroup{i}";
+
+                if (DeviceGroupsBE.TryAddDeviceGroup(newGroupName))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
     }
 }

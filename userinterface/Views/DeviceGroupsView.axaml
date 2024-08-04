@@ -6,7 +6,9 @@
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="userinterface.Views.DeviceGroupsView"
              x:DataType="vm:DeviceGroupsViewModel">
-  <StackPanel Orientation="Vertical">
+  <StackPanel
+    Orientation="Vertical"
+    VerticalAlignment="Stretch">
     <TextBlock
       HorizontalAlignment="Left"
       FontSize="18"
@@ -31,5 +33,12 @@
         </DataTemplate>
       </ItemsRepeater.ItemTemplate>
     </ItemsRepeater>
+    <Button
+      HorizontalAlignment="Center"
+      VerticalAlignment="Bottom"
+      Margin="10,10,10,10"
+      Click="ClickHandler">
+      Add Device Group
+    </Button>
   </StackPanel>
 </UserControl>
