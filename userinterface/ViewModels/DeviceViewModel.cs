@@ -17,6 +17,7 @@ namespace userinterface.ViewModels
             DPIField = new EditableFieldViewModel(DeviceBE.DPI);
             PollRateField = new EditableFieldViewModel(DeviceBE.PollRate);
             IgnoreBool = new EditableBoolViewModel(DeviceBE.Ignore);
+            DeviceGroup = new DeviceGroupSelectorViewModel(DeviceBE, deviceGroupsBE); ;
         }
 
         protected BE.DeviceModel DeviceBE { get; }
@@ -30,5 +31,7 @@ namespace userinterface.ViewModels
         public EditableFieldViewModel PollRateField { get; set; }
 
         public EditableBoolViewModel IgnoreBool { get; set; }
+
+        public DeviceGroupSelectorViewModel DeviceGroup { get; set; }
     }
 }

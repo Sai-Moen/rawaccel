@@ -30,7 +30,7 @@ namespace userspace_backend.Model
 
         public EditableSetting<bool> Ignore { get; protected set; }
 
-        public DeviceGroupModel DeviceGroup { get; protected set; }
+        public DeviceGroupModel DeviceGroup { get; set; }
 
         protected DeviceModelNameValidator DeviceModelNameValidator { get; }
 

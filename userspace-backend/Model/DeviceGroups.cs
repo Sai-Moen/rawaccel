@@ -43,7 +43,7 @@ namespace userspace_backend.Model
             return true;
         }
 
-        protected bool TryGetDeviceGroup(string name, out DeviceGroupModel deviceGroup)
+        public bool TryGetDeviceGroup(string name, out DeviceGroupModel deviceGroup)
         {
             deviceGroup = DeviceGroupModels.FirstOrDefault(
                 g => string.Equals(g.Name.ModelValue, name, StringComparison.InvariantCultureIgnoreCase));
