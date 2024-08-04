@@ -47,7 +47,7 @@ namespace userinterface.ViewModels
             {
                 DeviceGroupEntries.Add(new DeviceGroupSelectorEntry
                 {
-                    DeviceGroupName = deviceGroupBE.Name.EditedValueForDiplay,
+                    DeviceGroupName = deviceGroupBE.Name.ModelValue,
                     IsValidDeviceGroup = true,
                 });
             }
