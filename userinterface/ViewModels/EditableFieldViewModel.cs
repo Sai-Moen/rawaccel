@@ -19,8 +19,6 @@ namespace userinterface.ViewModels
             ResetValueTextFromBackEnd();
         }
 
-        public string Name => SettingBE.DisplayName;
-
         protected BE.IEditableSetting SettingBE { get; set; }
 
         public bool TrySetFromInterface()

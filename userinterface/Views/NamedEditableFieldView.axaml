@@ -4,14 +4,21 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:userinterface.ViewModels"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-             x:Class="userinterface.Views.EditableFieldView"
-             x:DataType="vm:EditableFieldViewModel"
+             x:Class="userinterface.Views.NamedEditableFieldView"
+             x:DataType="vm:NamedEditableFieldViewModel"
              x:CompileBindings="True">
-      <TextBox
+     <Grid ColumnDefinitions="*,*">
+      <TextBlock
         Margin="5,0,5,0"
-        HorizontalAlignment="Stretch"
+        Name="textBlock"
+        HorizontalAlignment="Right"
         VerticalAlignment="Center"
-        Text="{Binding ValueText, UpdateSourceTrigger=LostFocus}"
-        KeyDown="TextBox_KeyDown"
-        LostFocus="LostFocusHandler"/>
+        Grid.Row="0"
+        Grid.Column="0"
+        Text="{Binding Name}"/>
+      <ContentControl
+        Grid.Row="0"
+        Grid.Column="1"
+        Content="{Binding Field}"/>
+     </Grid>
 </UserControl>

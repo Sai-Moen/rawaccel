@@ -28,7 +28,10 @@
             CornerRadius="5"
             BorderBrush="Gray" BorderThickness="1"
             Padding="5">
-            <TextBlock Text="{Binding CurrentNameValue}"/>
+            <TextBox
+              KeyDown="TextBox_KeyDown"
+              LostFocus="LostFocusHandler"
+              Text="{Binding InterfaceValue, Mode=TwoWay}"/>
           </Border>
         </DataTemplate>
       </ItemsRepeater.ItemTemplate>

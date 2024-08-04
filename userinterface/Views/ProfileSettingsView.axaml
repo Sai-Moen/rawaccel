@@ -8,8 +8,8 @@
       <StackPanel
         HorizontalAlignment="Center"
         VerticalAlignment="Center">
-        <v:EditableFieldView FieldName="Output DPI"/>
-        <v:EditableFieldView FieldName="Y/X Output Ratio"/>
+        <v:NamedEditableFieldView FieldName="Output DPI"/>
+        <v:NamedEditableFieldView FieldName="Y/X Output Ratio"/>
         <Expander VerticalAlignment="Top"
                   Header="Hidden"
                   HorizontalAlignment="Center">

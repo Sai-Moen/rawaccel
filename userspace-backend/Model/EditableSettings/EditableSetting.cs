@@ -1,4 +1,5 @@
-﻿using System;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -6,8 +7,20 @@ using System.Threading.Tasks;
 
 namespace userspace_backend.Model.EditableSettings
 {
-    public class EditableSetting<T> : IEditableSetting where T : IComparable
+    public partial class EditableSetting<T> : ObservableObject, IEditableSetting where T : IComparable
     {
+        /// <summary>
+        /// This value can be bound in UI for direct editing
+        /// </summary>
+        [ObservableProperty]
+        public string interfaceValue;
+
+        /// <summary>
+        /// This value can be bound in UI for readonly display of validated input
+        /// </summary>
+        [ObservableProperty]
+        public string currentValidatedValue;
+
         public EditableSetting(
             string displayName,
             T initialValue,
@@ -20,7 +33,7 @@ namespace userspace_backend.Model.EditableSettings
             Parser = parser;
             SetCallback = setCallback;
             Validator = validator;
-            UpdateModelValue();
+            UpdateModelValueFromLastKnown();
             UpdateInterfaceValue();
         }
 
@@ -29,18 +42,13 @@ namespace userspace_backend.Model.EditableSettings
         /// </summary>
         public string DisplayName { get; }
 
-        /// <summary>
-        /// This value can be bound in UI
-        /// </summary>
-        public string InterfaceValue { get; set; }
-
-        public T ModelValue { get; protected set; }
+        public virtual T ModelValue { get; protected set; }
 
         public T LastWrittenValue { get; protected set; }
 
         public string EditedValueForDiplay { get => ModelValue?.ToString() ?? string.Empty; }
 
-        protected Action SetCallback { get; }
+        protected Action? SetCallback { get; }
 
         private IUserInputParser<T> Parser { get; }
 
@@ -74,7 +82,7 @@ namespace userspace_backend.Model.EditableSettings
                 return false;
             }
 
-            ModelValue = parsedValue;
+            UpdatedModeValue(parsedValue);
             SetCallback?.Invoke();
             return true;
         }
@@ -84,9 +92,20 @@ namespace userspace_backend.Model.EditableSettings
             InterfaceValue = ModelValue?.ToString();
         }
 
-        protected void UpdateModelValue()
+        protected void UpdateModelValueFromLastKnown()
         {
-            ModelValue = LastWrittenValue;
+            UpdatedModeValue(LastWrittenValue);
+        }
+
+        protected void UpdatedModeValue(T value)
+        {
+            ModelValue = value;
+            CurrentValidatedValue = ModelValue?.ToString();
+        }
+
+        partial void OnCurrentValidatedValueChanging(string? oldValue, string newValue)
+        {
+            newValue = oldValue ?? string.Empty;
         }
     }
 }

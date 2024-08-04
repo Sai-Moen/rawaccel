@@ -19,6 +19,7 @@ namespace userspace_backend.Model.EditableSettings
         public static DefaultModelValueValidator<int> DefaultIntValidator = new DefaultModelValueValidator<int>();
         public static DefaultModelValueValidator<double> DefaultDoubleValidator = new DefaultModelValueValidator<double>();
         public static DefaultModelValueValidator<string> DefaultStringValidator = new DefaultModelValueValidator<string>();
+        public static AllChangeInvalidValueValidator<string> AllChangesInvalidStringValidator = new AllChangeInvalidValueValidator<string>();
         public static DefaultModelValueValidator<bool> DefaultBoolValidator = new DefaultModelValueValidator<bool>();
         public static DefaultModelValueValidator<Acceleration.AccelerationDefinitionType> DefaultAccelerationTypeValidator = new DefaultModelValueValidator<Acceleration.AccelerationDefinitionType>();
         public static DefaultModelValueValidator<LookupTableAccel.LookupTableType> DefaultLookupTableTypeValidator = new DefaultModelValueValidator<LookupTableAccel.LookupTableType>();
@@ -32,5 +33,10 @@ namespace userspace_backend.Model.EditableSettings
         {
             return true;
         }
+    }
+
+    public class AllChangeInvalidValueValidator<T> : IModelValueValidator<T>
+    {
+        public bool Validate(T value) => false;
     }
 }

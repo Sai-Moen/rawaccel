@@ -6,10 +6,10 @@
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="userinterface.Views.HiddenProfileSettingsView">
   <StackPanel Orientation="Vertical">
-    <v:EditableFieldView FieldName="Rotation"/>
-    <v:EditableFieldView FieldName="L/R Ratio"/>
-    <v:EditableFieldView FieldName="U/D Ratio"/>
-    <v:EditableFieldView FieldName="Speed Cap"/>
-    <v:EditableFieldView FieldName="Angle Snapping"/>
+    <v:NamedEditableFieldView FieldName="Rotation"/>
+    <v:NamedEditableFieldView FieldName="L/R Ratio"/>
+    <v:NamedEditableFieldView FieldName="U/D Ratio"/>
+    <v:NamedEditableFieldView FieldName="Speed Cap"/>
+    <v:NamedEditableFieldView FieldName="Angle Snapping"/>
   </StackPanel>
 </UserControl>

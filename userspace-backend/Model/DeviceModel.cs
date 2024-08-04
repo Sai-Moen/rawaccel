@@ -38,12 +38,12 @@ namespace userspace_backend.Model
 
         protected override IEnumerable<IEditableSetting> EnumerateEditableSettings()
         {
-            return [Name, HardwareID, DPI, PollRate, Ignore];
+            return [Name, HardwareID, DPI, PollRate, Ignore, DeviceGroup];
         }
 
         protected override IEnumerable<IEditableSettingsCollection> EnumerateEditableSettingsCollections()
         {
-            return [DeviceGroup];
+            return [];
         }
 
         protected override void InitEditableSettingsAndCollections(Device device)
@@ -84,7 +84,7 @@ namespace userspace_backend.Model
                 DPI = this.DPI.ModelValue,
                 PollingRate = this.PollRate.ModelValue,
                 Ignore = this.Ignore.ModelValue,
-                DeviceGroup = DeviceGroup.MapToData(),
+                DeviceGroup = DeviceGroup.ModelValue,
             };
         }
     }

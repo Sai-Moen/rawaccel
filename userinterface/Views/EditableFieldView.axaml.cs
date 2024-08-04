@@ -26,17 +26,4 @@ public partial class EditableFieldView : UserControl
         var viewModel = this.DataContext as EditableFieldViewModel;
         viewModel?.TrySetFromInterface();
     }
-
-    public static readonly StyledProperty<string> FieldNameProperty =
-        Avalonia.AvaloniaProperty.Register<EditableFieldView, string>(nameof(FieldName));
-
-    public string FieldName
-    {
-        get => GetValue(FieldNameProperty);
-        set
-        {
-            SetValue(FieldNameProperty, value);
-            textBlock.Text = value;
-        }
-    }
 }

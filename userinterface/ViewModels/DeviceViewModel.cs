@@ -12,23 +12,23 @@ namespace userinterface.ViewModels
         public DeviceViewModel(BE.DeviceModel deviceBE, BE.DeviceGroups deviceGroupsBE)
         {
             DeviceBE = deviceBE;
-            NameField = new EditableFieldViewModel(DeviceBE.Name);
-            HWIDField = new EditableFieldViewModel(DeviceBE.HardwareID);
-            DPIField = new EditableFieldViewModel(DeviceBE.DPI);
-            PollRateField = new EditableFieldViewModel(DeviceBE.PollRate);
+            NameField = new NamedEditableFieldViewModel(DeviceBE.Name);
+            HWIDField = new NamedEditableFieldViewModel(DeviceBE.HardwareID);
+            DPIField = new NamedEditableFieldViewModel(DeviceBE.DPI);
+            PollRateField = new NamedEditableFieldViewModel(DeviceBE.PollRate);
             IgnoreBool = new EditableBoolViewModel(DeviceBE.Ignore);
             DeviceGroup = new DeviceGroupSelectorViewModel(DeviceBE, deviceGroupsBE); ;
         }
 
         protected BE.DeviceModel DeviceBE { get; }
 
-        public EditableFieldViewModel NameField { get; set; }
+        public NamedEditableFieldViewModel NameField { get; set; }
 
-        public EditableFieldViewModel HWIDField { get; set; }
+        public NamedEditableFieldViewModel HWIDField { get; set; }
 
-        public EditableFieldViewModel DPIField { get; set; }
+        public NamedEditableFieldViewModel DPIField { get; set; }
 
-        public EditableFieldViewModel PollRateField { get; set; }
+        public NamedEditableFieldViewModel PollRateField { get; set; }
 
         public EditableBoolViewModel IgnoreBool { get; set; }
 

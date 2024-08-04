@@ -8,15 +8,12 @@ using userspace_backend.Model.EditableSettings;
 
 namespace userspace_backend.Model
 {
-    public class DeviceGroupModel : EditableSettingsCollection<string>, IComparable
+    public class DeviceGroupModel : EditableSetting<string>, IComparable
     {
-        public DeviceGroupModel(string dataObject) : base(dataObject)
+        public DeviceGroupModel(string dataObject, IModelValueValidator<string> validator)
+            : base("Device Group", dataObject, UserInputParsers.StringParser, validator)
         {
         }
-
-        public EditableSetting<string> Name { get; private set; }
-
-        public string CurrentNameValue => Name.ModelValue;
 
         public int CompareTo(object? obj)
         {
@@ -27,42 +24,18 @@ namespace userspace_backend.Model
                 return int.MaxValue;
             }
 
-            return other.Name.ModelValue.CompareTo(Name.ModelValue);
+            return other.ModelValue.CompareTo(ModelValue);
         }
 
         public override bool Equals(object? obj)
         {
             return obj is DeviceGroupModel model &&
-                   string.Equals(model.Name.ModelValue, this.Name.ModelValue, StringComparison.InvariantCultureIgnoreCase);
+                   string.Equals(model.ModelValue, this.ModelValue, StringComparison.InvariantCultureIgnoreCase);
         }
 
         public override int GetHashCode()
         {
-            return HashCode.Combine(Name.ModelValue);
-        }
-
-        public override string MapToData()
-        {
-            return Name.ModelValue;
-        }
-
-        protected override IEnumerable<IEditableSetting> EnumerateEditableSettings()
-        {
-            return [Name];
-        }
-
-        protected override IEnumerable<IEditableSettingsCollection> EnumerateEditableSettingsCollections()
-        {
-            return Enumerable.Empty<IEditableSettingsCollection>();
-        }
-
-        protected override void InitEditableSettingsAndCollections(string dataObject)
-        {
-            Name = new EditableSetting<string>(
-                displayName: "Name",
-                initialValue: dataObject,
-                parser: UserInputParsers.StringParser,
-                validator: ModelValueValidators.DefaultStringValidator);
+            return HashCode.Combine(ModelValue);
         }
     }
 }

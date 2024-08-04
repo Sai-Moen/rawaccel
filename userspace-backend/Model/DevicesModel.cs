@@ -14,7 +14,7 @@ namespace userspace_backend.Model
         public DevicesModel()
         {
             Devices = new ObservableCollection<DeviceModel>();
-            DeviceGroups = new DeviceGroups();
+            DeviceGroups = new DeviceGroups([]);
             DeviceModelNameValidator = new DeviceModelNameValidator(this);
             DeviceModelHWIDValidator = new DeviceModelHWIDValidator(this);
             SystemDevices = new ObservableCollection<MultiHandleDevice>();
