@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -15,5 +16,7 @@ namespace userinterface.ViewModels
         }
 
         protected BE.DeviceGroups DeviceGroupsBE { get; }
+
+        public ObservableCollection<BE.DeviceGroupModel> DeviceGroups { get => DeviceGroupsBE.DeviceGroupModels; }
     }
 }

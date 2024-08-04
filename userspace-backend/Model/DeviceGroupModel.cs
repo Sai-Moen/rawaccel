@@ -16,6 +16,8 @@ namespace userspace_backend.Model
 
         public EditableSetting<string> Name { get; private set; }
 
+        public string CurrentNameValue => Name.ModelValue;
+
         public int CompareTo(object? obj)
         {
             DeviceGroupModel other = obj as DeviceGroupModel;

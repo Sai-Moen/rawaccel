@@ -10,13 +10,13 @@ namespace userinterface.ViewModels
 {
     public partial class DeviceGroupSelectorViewModel : ViewModelBase
     {
-        protected DeviceGroupSelectorEntry selectedEntry;
+        protected DeviceGroupEntry selectedEntry;
 
         public DeviceGroupSelectorViewModel(BE.DeviceModel device, BE.DeviceGroups deviceGroupsBE)
         {
             Device = device;
             DeviceGroupsBE = deviceGroupsBE;
-            DeviceGroupEntries = new ObservableCollection<DeviceGroupSelectorEntry>();
+            DeviceGroupEntries = new ObservableCollection<DeviceGroupEntry>();
             RefreshDeviceGroupEntries();
         }
 
@@ -24,9 +24,9 @@ namespace userinterface.ViewModels
 
         protected BE.DeviceGroups DeviceGroupsBE { get; }
 
-        public ObservableCollection<DeviceGroupSelectorEntry> DeviceGroupEntries { get; }
+        public ObservableCollection<DeviceGroupEntry> DeviceGroupEntries { get; }
 
-        public DeviceGroupSelectorEntry SelectedEntry
+        public DeviceGroupEntry SelectedEntry
         {
             get => selectedEntry;
             set
@@ -45,7 +45,7 @@ namespace userinterface.ViewModels
 
             foreach (var deviceGroupBE in DeviceGroupsBE.DeviceGroupModels)
             {
-                DeviceGroupEntries.Add(new DeviceGroupSelectorEntry
+                DeviceGroupEntries.Add(new DeviceGroupEntry
                 {
                     DeviceGroupName = deviceGroupBE.Name.ModelValue,
                     IsValidDeviceGroup = true,
@@ -54,7 +54,7 @@ namespace userinterface.ViewModels
 
             if (!DeviceGroupsBE.DeviceGroupModels.Any(g => g.Equals(Device.DeviceGroup)))           
             {
-                DeviceGroupEntries.Add(new DeviceGroupSelectorEntry
+                DeviceGroupEntries.Add(new DeviceGroupEntry
                 {
                     DeviceGroupName = Device.DeviceGroup.Name.ModelValue,
                     IsValidDeviceGroup = false,
@@ -66,7 +66,7 @@ namespace userinterface.ViewModels
         }
     }
 
-    public class DeviceGroupSelectorEntry
+    public class DeviceGroupEntry
     {
         public string DeviceGroupName { get; set; }
 

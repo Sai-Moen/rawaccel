@@ -14,23 +14,22 @@
       Margin="10,10,10,10">
       Device Groups
     </TextBlock>
-    <WrapPanel>
-      <Border Margin="10,10,10,10"
-        CornerRadius="5"
-        BorderBrush="Gray" BorderThickness="1"
-        Padding="5">
-        <TextBlock>
-          Device group A
-        </TextBlock>
-      </Border>
-      <Border Margin="10,10,10,10"
-        CornerRadius="5"
-        BorderBrush="Gray" BorderThickness="1"
-        Padding="5">
-        <TextBlock>
-          Device group B
-        </TextBlock>
-        </Border>
-    </WrapPanel>
+    <ItemsRepeater
+      ItemsSource="{Binding DeviceGroups}">
+      <ItemsRepeater.Layout>
+        <WrapLayout
+          Orientation="Horizontal"/>
+      </ItemsRepeater.Layout>
+      <ItemsRepeater.ItemTemplate>
+        <DataTemplate>
+          <Border Margin="10,10,10,10"
+            CornerRadius="5"
+            BorderBrush="Gray" BorderThickness="1"
+            Padding="5">
+            <TextBlock Text="{Binding CurrentNameValue}"/>
+          </Border>
+        </DataTemplate>
+      </ItemsRepeater.ItemTemplate>
+    </ItemsRepeater>
   </StackPanel>
 </UserControl>

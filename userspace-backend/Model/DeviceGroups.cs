@@ -16,7 +16,7 @@ namespace userspace_backend.Model
             DeviceGroupModels = new ObservableCollection<DeviceGroupModel>() { DefaultDeviceGroup };
         }
 
-        public ObservableCollection<DeviceGroupModel> DeviceGroupModels { get; }
+        public ObservableCollection<DeviceGroupModel> DeviceGroupModels { get; set; }
 
         public DeviceGroupModel AddOrGetDeviceGroup(string deviceGroupName)
         {
