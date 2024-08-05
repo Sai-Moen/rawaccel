@@ -8,9 +8,12 @@ public partial class MainWindowViewModel : ViewModelBase
     {
         BackEnd = backEnd;
         DevicesPage = new DevicesPageViewModel(backEnd.Devices);
+        ProfilesPage = new ProfilesPageViewModel(backEnd.Profiles);
     }
 
     public DevicesPageViewModel DevicesPage { get; }
+
+    public ProfilesPageViewModel ProfilesPage { get; }
 
     protected BE.BackEnd BackEnd { get; set; }
 }

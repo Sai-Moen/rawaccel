@@ -6,7 +6,7 @@ using Avalonia.Markup.Xaml;
 using userinterface.ViewModels;
 using userinterface.Views;
 using userspace_backend;
-using userspace_backend.Data;
+using DATA = userspace_backend.Data;
 
 namespace userinterface;
 
@@ -40,12 +40,18 @@ public partial class App : Application
     {
         return new Bootstrapper()
         {
-            DevicesToLoad = new[]
-            {
-                new Device() { Name = "Superlight 2", DPI = 32000, HWID = @"HID\VID_046D&PID_C54D&MI_00", PollingRate = 1000, DeviceGroup = "Logitech Mice" },
-                new Device() { Name = "Outset AX", DPI = 1200, HWID = @"HID\VID_3057&PID_0001", PollingRate = 1000, DeviceGroup = "Testing" },
-                new Device() { Name = "Razer Viper 8K", DPI = 1200, HWID = @"HID\VID_31E3&PID_1310", PollingRate = 1000, DeviceGroup = "Testing" },
-            },
+            DevicesToLoad =
+            [
+                new DATA.Device() { Name = "Superlight 2", DPI = 32000, HWID = @"HID\VID_046D&PID_C54D&MI_00", PollingRate = 1000, DeviceGroup = "Logitech Mice" },
+                new DATA.Device() { Name = "Outset AX", DPI = 1200, HWID = @"HID\VID_3057&PID_0001", PollingRate = 1000, DeviceGroup = "Testing" },
+                new DATA.Device() { Name = "Razer Viper 8K", DPI = 1200, HWID = @"HID\VID_31E3&PID_1310", PollingRate = 1000, DeviceGroup = "Testing" },
+            ],
+
+            ProfilesToLoad =
+            [
+                new DATA.Profile() { Name = "Favorite", OutputDPI = 1600, YXRatio = 1.333 },
+                new DATA.Profile() { Name = "Test", OutputDPI = 1200, YXRatio = 1.0, Hidden = new DATA.Profiles.Hidden() { RotationDegrees = 8, }, },
+            ],
         };
     }
 }

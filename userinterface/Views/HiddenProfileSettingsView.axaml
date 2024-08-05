@@ -3,13 +3,19 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:v="using:userinterface.Views"
+             xmlns:vm="using:userinterface.ViewModels"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-             x:Class="userinterface.Views.HiddenProfileSettingsView">
-  <StackPanel Orientation="Vertical">
-    <v:NamedEditableFieldView FieldName="Rotation"/>
-    <v:NamedEditableFieldView FieldName="L/R Ratio"/>
-    <v:NamedEditableFieldView FieldName="U/D Ratio"/>
-    <v:NamedEditableFieldView FieldName="Speed Cap"/>
-    <v:NamedEditableFieldView FieldName="Angle Snapping"/>
-  </StackPanel>
+             x:Class="userinterface.Views.HiddenProfileSettingsView"
+             x:DataType="vm:HiddenProfileSettingsViewModel">
+  <Expander VerticalAlignment="Top"
+            Header="Hidden"
+            HorizontalAlignment="Center">
+    <StackPanel Orientation="Vertical">
+      <ContentControl Content="{Binding RotationField}"/>
+      <ContentControl Content="{Binding LRRatioField}"/>
+      <ContentControl Content="{Binding UDRatioField}"/>
+      <ContentControl Content="{Binding SpeedCapField}"/>
+      <ContentControl Content="{Binding AngleSnappingField}"/>
+    </StackPanel>
+  </Expander>
 </UserControl>

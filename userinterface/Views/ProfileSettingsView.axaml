@@ -3,17 +3,15 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:v="using:userinterface.Views"
+             xmlns:vm="using:userinterface.ViewModels"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-             x:Class="userinterface.Views.ProfileSettingsView">
+             x:Class="userinterface.Views.ProfileSettingsView"
+             x:DataType="vm:ProfileSettingsViewModel">
       <StackPanel
         HorizontalAlignment="Center"
         VerticalAlignment="Center">
-        <v:NamedEditableFieldView FieldName="Output DPI"/>
-        <v:NamedEditableFieldView FieldName="Y/X Output Ratio"/>
-        <Expander VerticalAlignment="Top"
-                  Header="Hidden"
-                  HorizontalAlignment="Center">
-          <v:HiddenProfileSettingsView/>
-        </Expander>
+        <ContentControl Content="{Binding OutputDPIField}"/>
+        <ContentControl Content="{Binding YXRatioField}"/>
+        <ContentControl Content="{Binding HiddenSettings}"/>
       </StackPanel>
 </UserControl>

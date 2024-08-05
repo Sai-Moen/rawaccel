@@ -23,7 +23,7 @@
       <v:MappingsPageView/>
     </TabItem>
     <TabItem Header = "Profiles">
-      <v:ProfilesPageView/>
+      <ContentControl Content="{Binding ProfilesPage}"/>
     </TabItem>
   </TabControl>
 

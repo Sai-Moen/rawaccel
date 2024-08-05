@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using userspace_backend.Data;
+using DATA = userspace_backend.Data;
 using userspace_backend.IO;
 using userspace_backend.Model;
 
@@ -12,11 +12,11 @@ namespace userspace_backend
 {
     public interface IBackEndLoader
     {
-        public IEnumerable<Device> LoadDevices();
+        public IEnumerable<DATA.Device> LoadDevices();
 
-        public MappingSet LoadMappings();
+        public DATA.MappingSet LoadMappings();
 
-        public IEnumerable<ProfileModel> LoadProfiles();
+        public IEnumerable<DATA.Profile> LoadProfiles();
 
         public void WriteSettingsToDisk(IEnumerable<DeviceModel> devices);
     }
@@ -32,21 +32,20 @@ namespace userspace_backend
 
         public string SettingsDirectory { get; private set; }
 
-        public IEnumerable<Device> LoadDevices()
+        public IEnumerable<DATA.Device> LoadDevices()
         {
             string devicesFile = GetDevicesFile(SettingsDirectory);
             string devicesText = File.ReadAllText(devicesFile);
-            IEnumerable<Device> devicesData = DevicesReaderWriter.Read(devicesText);
+            IEnumerable<DATA.Device> devicesData = DevicesReaderWriter.Read(devicesText);
             return devicesData;
-
         }
 
-        public MappingSet LoadMappings()
+        public DATA.MappingSet LoadMappings()
         {
             throw new NotImplementedException();
         }
 
-        public IEnumerable<ProfileModel> LoadProfiles()
+        public IEnumerable<DATA.Profile> LoadProfiles()
         {
             throw new NotImplementedException();
         }
@@ -58,7 +57,7 @@ namespace userspace_backend
 
         protected void WriteDevices(IEnumerable<DeviceModel> devices)
         {
-            IEnumerable<Device> devicesData = devices.Select(d => d.MapToData());
+            IEnumerable<DATA.Device> devicesData = devices.Select(d => d.MapToData());
             string devicesFileText = DevicesReaderWriter.Serialize(devicesData);
             string devicesFilePath = GetDevicesFile(SettingsDirectory);
             File.WriteAllText(devicesFilePath, devicesFileText);

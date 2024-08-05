@@ -33,7 +33,9 @@ namespace userspace_backend.Model.AccelDefinitions
 
         protected override IEnumerable<IEditableSettingsCollection> EnumerateEditableSettingsCollections()
         {
-            return [ FormulaModels[FormulaType.ModelValue] ];
+            // TODO: uncomment once formula models set up
+            //return [ FormulaModels[FormulaType.ModelValue] ];
+            return [];
         }
 
         protected override FormulaAccel GenerateDefaultDataObject()

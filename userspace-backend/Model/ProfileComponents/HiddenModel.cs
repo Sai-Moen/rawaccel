@@ -50,27 +50,27 @@ namespace userspace_backend.Model.ProfileComponents
         {
             RotationDegrees = new EditableSetting<double>(
                 displayName: "Rotation",
-                initialValue: dataObject.RotationDegrees,
+                initialValue: dataObject?.RotationDegrees ?? 0,
                 parser: UserInputParsers.DoubleParser,
                 validator: ModelValueValidators.DefaultDoubleValidator);
             AngleSnappingDegrees = new EditableSetting<double>(
                 displayName: "Angle Snapping",
-                initialValue: dataObject.AngleSnappingDegrees,
+                initialValue: dataObject?.AngleSnappingDegrees ?? 0,
                 parser: UserInputParsers.DoubleParser,
                 validator: ModelValueValidators.DefaultDoubleValidator);
             LeftRightRatio = new EditableSetting<double>(
                 displayName: "L/R Ratio",
-                dataObject.LeftRightRatio,
+                initialValue: dataObject?.LeftRightRatio ?? 1,
                 parser: UserInputParsers.DoubleParser,
                 validator: ModelValueValidators.DefaultDoubleValidator);
             UpDownRatio = new EditableSetting<double>(
                 displayName: "U/D Ratio",
-                dataObject.UpDownRatio,
+                initialValue: dataObject?.UpDownRatio ?? 1,
                 parser: UserInputParsers.DoubleParser,
                 validator: ModelValueValidators.DefaultDoubleValidator);
             SpeedCap = new EditableSetting<double>(
                 displayName: "Speed Cap",
-                dataObject.SpeedCap,
+                initialValue: dataObject?.SpeedCap ?? 1,
                 parser: UserInputParsers.DoubleParser,
                 validator: ModelValueValidators.DefaultDoubleValidator);
         }

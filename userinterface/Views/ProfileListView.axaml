@@ -2,8 +2,10 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:userinterface.ViewModels"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-             x:Class="userinterface.Views.ProfileListView">
+             x:Class="userinterface.Views.ProfileListView"
+             x:DataType="vm:ProfileListViewModel">
 
   <StackPanel Orientation="Vertical">
     <TextBlock
@@ -13,9 +15,16 @@
       Margin="10,10,10,10">
       Profiles
     </TextBlock>
-    <ListBox>
-      <TextBlock HorizontalAlignment="Left">Profile1</TextBlock>
-      <TextBlock HorizontalAlignment="Left">Profile2</TextBlock>
+    <ListBox
+      ItemsSource="{Binding Profiles}"
+      SelectionChanged="OnSelectionChanged">
+      <ListBox.ItemTemplate>
+        <DataTemplate>
+          <TextBlock
+            Margin="5 5 5 5"
+            Text="{Binding CurrentNameForDisplay}"/>
+        </DataTemplate>
+      </ListBox.ItemTemplate>
     </ListBox>
   </StackPanel>
 </UserControl>

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using userspace_backend.Data;
+using DATA = userspace_backend.Data;
 using userspace_backend.Model;
 
 namespace userspace_backend
@@ -11,23 +11,23 @@ namespace userspace_backend
     // TODO: remove before release
     public class Bootstrapper : IBackEndLoader
     {
-        public Device[] DevicesToLoad { get; set; }
+        public DATA.Device[] DevicesToLoad { get; set; }
 
-        public MappingSet MappingsToLoad { get; set; }
+        public DATA.MappingSet MappingsToLoad { get; set; }
 
-        public ProfileModel[] ProfilesToLoad { get; set; }
+        public DATA.Profile[] ProfilesToLoad { get; set; }
 
-        public IEnumerable<Device> LoadDevices()
+        public IEnumerable<DATA.Device> LoadDevices()
         {
             return DevicesToLoad;
         }
 
-        public MappingSet LoadMappings()
+        public DATA.MappingSet LoadMappings()
         {
             return MappingsToLoad;
         }
 
-        public IEnumerable<ProfileModel> LoadProfiles()
+        public IEnumerable<DATA.Profile> LoadProfiles()
         {
             return ProfilesToLoad;
         }

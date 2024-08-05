@@ -3,24 +3,26 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:v="using:userinterface.Views"
+             xmlns:vm="using:userinterface.ViewModels"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-             x:Class="userinterface.Views.ProfilesPageView">
+             x:Class="userinterface.Views.ProfilesPageView"
+             x:DataType="vm:ProfilesPageViewModel">
    <Grid ColumnDefinitions="3*,*">
      <Border Margin="10,10,10,10"
-          CornerRadius="5"
-          BorderBrush="Gray" BorderThickness="1"
-          Padding="5"
-          Grid.Row="0"
-          Grid.Column="0">
-          <v:ProfileView/>
+      CornerRadius="5"
+      BorderBrush="Gray" BorderThickness="1"
+      Padding="5"
+      Grid.Row="0"
+      Grid.Column="0">
+      <ContentControl Content="{Binding SelectedProfileView}"/>
     </Border>
     <Border Margin="10,10,10,10"
-          CornerRadius="5"
-          BorderBrush="Gray" BorderThickness="1"
-          Padding="5"
-          Grid.Row="0"
-          Grid.Column="1">
-      <v:ProfileListView/>
+      CornerRadius="5"
+      BorderBrush="Gray" BorderThickness="1"
+      Padding="5"
+      Grid.Row="0"
+      Grid.Column="1">
+      <ContentControl Content="{Binding ProfileListView}"/>
     </Border>
    </Grid>
 </UserControl>

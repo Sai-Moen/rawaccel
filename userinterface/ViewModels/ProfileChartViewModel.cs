@@ -10,6 +10,10 @@ namespace userinterface.ViewModels
 {
     public partial class ProfileChartViewModel : ViewModelBase
     {
+        public ProfileChartViewModel()
+        {
+        }
+
         public ISeries[] Series { get; set; } 
             = new ISeries[]
             {

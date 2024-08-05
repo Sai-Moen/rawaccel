@@ -48,27 +48,27 @@ namespace userspace_backend.Model.ProfileComponents
         {
             DomainX = new EditableSetting<double>(
                 displayName: "Domain X",
-                initialValue: dataObject.Domain.X,
+                initialValue: dataObject?.Domain?.X ?? 1,
                 parser: UserInputParsers.DoubleParser,
                 validator: ModelValueValidators.DefaultDoubleValidator);
             DomainY = new EditableSetting<double>(
                 displayName: "Domain Y",
-                initialValue: dataObject.Domain.Y,
+                initialValue: dataObject?.Domain?.Y ?? 1,
                 parser: UserInputParsers.DoubleParser,
                 validator: ModelValueValidators.DefaultDoubleValidator);
             RangeX = new EditableSetting<double>(
                 displayName: "Range X",
-                initialValue: dataObject.Range.X,
+                initialValue: dataObject?.Range?.X ?? 1,
                 parser: UserInputParsers.DoubleParser,
                 validator: ModelValueValidators.DefaultDoubleValidator);
             RangeY = new EditableSetting<double>(
                 displayName: "Range Y",
-                initialValue: dataObject.Range.Y,
+                initialValue: dataObject?.Range?.Y ?? 1,
                 parser: UserInputParsers.DoubleParser,
                 validator: ModelValueValidators.DefaultDoubleValidator);
             LPNorm = new EditableSetting<double>(
                 displayName: "LP Norm",
-                initialValue: dataObject.LPNorm,
+                initialValue: dataObject?.LPNorm ?? 1,
                 parser: UserInputParsers.DoubleParser,
                 validator: ModelValueValidators.DefaultDoubleValidator);
         }

@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using userspace_backend.Data;
+using DATA = userspace_backend.Data;
 using userspace_backend.IO;
 using userspace_backend.Model;
 
@@ -17,13 +17,13 @@ namespace userspace_backend
         {
             BackEndLoader = backEndLoader;
             Devices = new DevicesModel();
-            Mappings = new MappingSet();
+            Mappings = new DATA.MappingSet();
             Profiles = new List<ProfileModel>();
         }
 
         public DevicesModel Devices { get; set; }
 
-        public MappingSet Mappings { get; set; }
+        public DATA.MappingSet Mappings { get; set; }
 
         public IList<ProfileModel> Profiles { get; set; }
 
@@ -31,15 +31,26 @@ namespace userspace_backend
 
         public void Load()
         {
-            IEnumerable<Device> devicesData = BackEndLoader.LoadDevices(); ;
+            IEnumerable<DATA.Device> devicesData = BackEndLoader.LoadDevices(); ;
             LoadDevicesFromData(devicesData);
+
+            IEnumerable<DATA.Profile> profilesData = BackEndLoader.LoadProfiles(); ;
+            LoadProfilesFromData(profilesData);
         }
 
-        protected void LoadDevicesFromData(IEnumerable<Device> devicesData)
+        protected void LoadDevicesFromData(IEnumerable<DATA.Device> devicesData)
         {
             foreach(var deviceData in devicesData)
             {
                 Devices.TryAddDevice(deviceData);
+            }
+        }
+
+        protected void LoadProfilesFromData(IEnumerable<DATA.Profile> profileData)
+        {
+            foreach (var profile in profileData)
+            {
+                Profiles.Add(new ProfileModel(profile));
             }
         }
 

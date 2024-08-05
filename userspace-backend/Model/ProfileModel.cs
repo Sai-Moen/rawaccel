@@ -15,6 +15,9 @@ namespace userspace_backend.Model
         public ProfileModel(DATA.Profile dataObject) : base(dataObject)
         {
         }
+
+        public string CurrentNameForDisplay => Name.CurrentValidatedValue;
+
         public EditableSetting<string> Name { get; set; }
 
         public EditableSetting<int> OutputDPI { get; set; }
