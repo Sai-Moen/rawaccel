@@ -17,8 +17,6 @@ namespace userspace_backend.Data
 
         public Acceleration Acceleration { get; set; }
 
-        public Anisotropy Anisotropy { get; set; }
-        
         public Hidden Hidden { get; set; }
     }
 }

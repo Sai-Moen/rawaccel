@@ -21,11 +21,8 @@ namespace userinterface.ViewModels
             ProfileViewModels = new ObservableCollection<ProfileViewModel>();
             UpdatedProfileViewModels();
             SelectedProfileView = ProfileViewModels.FirstOrDefault();
-            OnListSelectionChanged = new RelayCommand(UpdateSelectedProfileView);
             ProfileListView = new ProfileListViewModel(profileModels, UpdateSelectedProfileView);
         }
-
-        protected RelayCommand OnListSelectionChanged { get; }
 
         protected IEnumerable<BE.ProfileModel> ProfileModels { get; }
 

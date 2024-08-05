@@ -27,23 +27,23 @@ namespace userspace_backend_tests.IOTests
                 Name = "default",
                 OutputDPI = 1200,
                 YXRatio = 1.3333,
-                Anisotropy = new Anisotropy()
-                {
-                    Domain = new Vector2()
-                    {
-                        X = 1,
-                        Y = 4,
-                    },
-                    Range = new Vector2()
-                    {
-                        X = 1,
-                        Y = 1,
-                    },
-                    LPNorm = 1,
-                },
                 Acceleration = new Acceleration()
                 {
                     Type = Acceleration.AccelerationDefinitionType.None,
+                    Anisotropy = new Anisotropy()
+                    {
+                        Domain = new Vector2()
+                        {
+                            X = 1,
+                            Y = 4,
+                        },
+                        Range = new Vector2()
+                        {
+                            X = 1,
+                            Y = 1,
+                        },
+                        LPNorm = 1,
+                    },
                 },
             };
 

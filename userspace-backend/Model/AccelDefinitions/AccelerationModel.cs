@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using userspace_backend.Data.Profiles;
 using userspace_backend.Data.Profiles.Accel;
 using userspace_backend.Model.EditableSettings;
+using userspace_backend.Model.ProfileComponents;
 using static userspace_backend.Data.Profiles.Acceleration;
 
 namespace userspace_backend.Model.AccelDefinitions
@@ -16,6 +17,8 @@ namespace userspace_backend.Model.AccelDefinitions
         public EditableSetting<AccelerationDefinitionType> DefinitionType { get; set; }
 
         protected Dictionary<AccelerationDefinitionType, IAccelDefinitionModel> DefinitionModels { get; set; }
+
+        public AnisotropyModel Anisotropy { get; set; }
 
         public override Acceleration MapToData()
         {
@@ -47,6 +50,8 @@ namespace userspace_backend.Model.AccelDefinitions
             {
                 DefinitionModels.Add(defnType, CreateAccelerationDefinitionModelOfType(defnType, dataObject));
             }
+
+            Anisotropy = new AnisotropyModel(dataObject?.Anisotropy);
         }
 
         protected IAccelDefinitionModel CreateAccelerationDefinitionModelOfType(AccelerationDefinitionType definitionType, Acceleration dataObject)

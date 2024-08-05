@@ -38,7 +38,6 @@ namespace userspace_backend.Model
                 OutputDPI = OutputDPI.ModelValue,
                 YXRatio = YXRatio.ModelValue,
                 Acceleration = Acceleration.MapToData(),
-                Anisotropy = Anisotropy.MapToData(),
                 Hidden = Hidden.MapToData(),
             };
         }
@@ -71,7 +70,6 @@ namespace userspace_backend.Model
                 parser: UserInputParsers.DoubleParser,
                 validator: ModelValueValidators.DefaultDoubleValidator);
             Acceleration = new AccelerationModel(dataObject.Acceleration);
-            Anisotropy = new AnisotropyModel(dataObject.Anisotropy);
             Hidden = new HiddenModel(dataObject.Hidden);
         }
     }

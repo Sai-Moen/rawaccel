@@ -3,17 +3,17 @@
   "OutputDPI": 1200,
   "YXRatio": 1.3333,
   "Acceleration": {
-    "Type": 0
-  },
-  "Anisotropy": {
-    "Domain": {
-      "X": 1,
-      "Y": 4
-    },
-    "Range": {
-      "X": 1,
-      "Y": 1
-    },
-    "LPNorm": 1
+    "Type": 0,
+    "Anisotropy": {
+      "Domain": {
+        "X": 1,
+        "Y": 4
+      },
+      "Range": {
+        "X": 1,
+        "Y": 1
+      },
+      "LPNorm": 1
+    }
   }
 }
