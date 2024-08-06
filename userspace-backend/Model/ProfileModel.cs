@@ -12,8 +12,9 @@ namespace userspace_backend.Model
 {
     public class ProfileModel : EditableSettingsCollection<DATA.Profile>
     {
-        public ProfileModel(DATA.Profile dataObject) : base(dataObject)
+        public ProfileModel(DATA.Profile dataObject, IModelValueValidator<string> nameValidator) : base(dataObject)
         {
+            NameValidator = nameValidator;
         }
 
         public string CurrentNameForDisplay => Name.CurrentValidatedValue;
@@ -29,6 +30,8 @@ namespace userspace_backend.Model
         public AnisotropyModel Anisotropy { get; set; }
 
         public HiddenModel Hidden { get; set; }
+
+        protected IModelValueValidator<string> NameValidator { get; }
 
         public override DATA.Profile MapToData()
         {
@@ -58,7 +61,7 @@ namespace userspace_backend.Model
                 displayName: "Name",
                 initialValue: dataObject.Name,
                 parser: UserInputParsers.StringParser,
-                validator: ModelValueValidators.DefaultStringValidator);
+                validator: NameValidator);
             OutputDPI = new EditableSetting<int>(
                 displayName: "Output DPI",
                 initialValue: dataObject.OutputDPI,

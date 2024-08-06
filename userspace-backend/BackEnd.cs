@@ -18,14 +18,14 @@ namespace userspace_backend
             BackEndLoader = backEndLoader;
             Devices = new DevicesModel();
             Mappings = new DATA.MappingSet();
-            Profiles = new List<ProfileModel>();
+            Profiles = new ProfilesModel([]);
         }
 
         public DevicesModel Devices { get; set; }
 
         public DATA.MappingSet Mappings { get; set; }
 
-        public IList<ProfileModel> Profiles { get; set; }
+        public ProfilesModel Profiles { get; set; }
 
         protected IBackEndLoader BackEndLoader { get; set; }
 
@@ -50,7 +50,7 @@ namespace userspace_backend
         {
             foreach (var profile in profileData)
             {
-                Profiles.Add(new ProfileModel(profile));
+                Profiles.TryAddProfile(profile);
             }
         }
 
