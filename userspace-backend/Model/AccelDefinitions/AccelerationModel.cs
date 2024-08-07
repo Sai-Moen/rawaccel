@@ -25,6 +25,11 @@ namespace userspace_backend.Model.AccelDefinitions
             return DefinitionModels[DefinitionType.ModelValue].MapToData();
         }
 
+        public AccelArgs MapToDriver()
+        {
+            return DefinitionModels[DefinitionType.ModelValue].MapToDriver();
+        }
+
         protected override IEnumerable<IEditableSetting> EnumerateEditableSettings()
         {
             return [DefinitionType];

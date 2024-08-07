@@ -15,13 +15,13 @@ namespace userinterface.ViewModels
         [ObservableProperty]
         public ProfileViewModel selectedProfileView;
 
-        public ProfilesPageViewModel(IEnumerable<BE.ProfileModel> profileModels)
+        public ProfilesPageViewModel(BE.ProfilesModel profileModels)
         {
-            ProfileModels = profileModels;
+            ProfileModels = profileModels.Profiles;
             ProfileViewModels = new ObservableCollection<ProfileViewModel>();
             UpdatedProfileViewModels();
             SelectedProfileView = ProfileViewModels.FirstOrDefault();
-            ProfileListView = new ProfileListViewModel(profileModels, UpdateSelectedProfileView);
+            ProfileListView = new ProfileListViewModel(ProfileModels, UpdateSelectedProfileView);
         }
 
         protected IEnumerable<BE.ProfileModel> ProfileModels { get; }

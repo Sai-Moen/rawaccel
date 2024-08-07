@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using DATA = userspace_backend.Data;
 using userspace_backend.Model.EditableSettings;
+using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace userspace_backend.Model
 {
@@ -26,6 +27,11 @@ namespace userspace_backend.Model
         protected ProfilesModel Profiles { get; }
 
         protected MappingNameValidator NameValidator { get; }
+
+        public MappingModel GetMappingToSetActive()
+        {
+            return Mappings.FirstOrDefault(m => m.SetActive);
+        }
 
         public bool TryGetMapping(string name, out MappingModel? mapping)
         {
@@ -54,19 +60,19 @@ namespace userspace_backend.Model
 
         protected override IEnumerable<IEditableSetting> EnumerateEditableSettings()
         {
-            throw new NotImplementedException();
+            return [];
         }
 
         protected override IEnumerable<IEditableSettingsCollection> EnumerateEditableSettingsCollections()
         {
-            throw new NotImplementedException();
+            return Mappings;
         }
 
         protected override void InitEditableSettingsAndCollections(DATA.MappingSet dataObject)
         {
             Mappings = new ObservableCollection<MappingModel>();
 
-            foreach (DATA.Mapping mapping in dataObject.Mappings)
+            foreach (DATA.Mapping mapping in dataObject?.Mappings ?? [])
             {
                 TryAddMapping(mapping);
             }

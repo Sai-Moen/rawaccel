@@ -21,6 +21,11 @@ namespace userspace_backend.Model.AccelDefinitions
 
         protected Dictionary<FormulaAccel.AccelerationFormulaType, IAccelDefinitionModel> FormulaModels { get; set; }
 
+        public override AccelArgs MapToDriver()
+        {
+            return FormulaModels[FormulaType.ModelValue].MapToDriver();
+        }
+
         public override Acceleration MapToData()
         {
             return FormulaModels[FormulaType.ModelValue].MapToData();

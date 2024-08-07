@@ -17,6 +17,14 @@ namespace userspace_backend.Model.AccelDefinitions
 
         public NoAcceleration NoAcceleration { get; protected set; }
 
+        public override AccelArgs MapToDriver()
+        {
+            return new AccelArgs()
+            {
+                mode = AccelMode.noaccel,
+            };
+        }
+
         public override Acceleration MapToData()
         {
             return NoAcceleration;

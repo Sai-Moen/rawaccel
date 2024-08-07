@@ -20,6 +20,16 @@ namespace userspace_backend.Model.AccelDefinitions
 
         public EditableSetting<LookupTableData> Data { get; set; }
 
+        public override AccelArgs MapToDriver()
+        {
+            return new AccelArgs
+            {
+                mode = AccelMode.lut,
+                data = Data.ModelValue.Data.Select(Convert.ToSingle).ToArray(),
+                length = Data.ModelValue.Data.Length,
+            };
+        }
+
         public override Acceleration MapToData()
         {
             return new LookupTableAccel()

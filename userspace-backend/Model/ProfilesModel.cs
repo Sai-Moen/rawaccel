@@ -9,6 +9,9 @@ namespace userspace_backend.Model
 {
     public class ProfilesModel : EditableSettingsCollection<IEnumerable<DATA.Profile>>
     {
+        public static readonly ProfileModel DefaultProfile = new ProfileModel(
+            GenerateNewDefaultProfile("Default"), ModelValueValidators.AllChangesInvalidStringValidator);
+
         public ProfilesModel(IEnumerable<DATA.Profile> dataObject) : base(dataObject)
         {
             NameValidator = new ProfileNameValidator(this);
@@ -71,7 +74,7 @@ namespace userspace_backend.Model
             return true;
         }
 
-        protected DATA.Profile GenerateNewDefaultProfile(string name)
+        protected static DATA.Profile GenerateNewDefaultProfile(string name)
         {
             return new DATA.Profile()
             {

@@ -11,6 +11,8 @@ namespace userspace_backend.Model.AccelDefinitions
     public interface IAccelDefinitionModel : IEditableSettingsCollection
     {
         Acceleration MapToData();
+
+        AccelArgs MapToDriver();
     }
 
     public abstract class AccelDefinitionModel<T> : EditableSettingsCollection<Acceleration>, IAccelDefinitionModel where T : Acceleration
@@ -28,5 +30,7 @@ namespace userspace_backend.Model.AccelDefinitions
         protected abstract void InitSpecificSettingsAndCollections(T dataObject);
 
         protected abstract T GenerateDefaultDataObject();
+
+        public abstract AccelArgs MapToDriver();
     }
 }

@@ -21,6 +21,16 @@ namespace userspace_backend.Model.AccelDefinitions.Formula
 
         public EditableSetting<double> Output { get; set; }
 
+        public override AccelArgs MapToDriver()
+        {
+            return new AccelArgs
+            {
+                mode = AccelMode.jump,
+                smooth = Smooth.ModelValue,
+                cap = new Vec2<double> { x = Input.ModelValue, y = Output.ModelValue },
+            };
+        }
+
         public override Acceleration MapToData()
         {
             return new JumpAccel()

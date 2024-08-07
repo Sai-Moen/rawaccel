@@ -23,6 +23,18 @@ namespace userspace_backend.Model.AccelDefinitions.Formula
 
         public EditableSetting<double> Cap { get; set; }
 
+        public override AccelArgs MapToDriver()
+        {
+            return new AccelArgs
+            {
+                mode = AccelMode.classic,
+                acceleration = Acceleration.ModelValue,
+                exponentClassic = Exponent.ModelValue,
+                inputOffset = Offset.ModelValue,
+                cap = new Vec2<double> { x = 0, y = Cap.ModelValue },
+            };
+        }
+
         public override Acceleration MapToData()
         {
             return new ClassicAccel()

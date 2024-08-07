@@ -9,6 +9,7 @@ using userspace_backend.Model.EditableSettings;
 using userspace_backend.Model.ProfileComponents;
 using userspace_backend.Data;
 using CommunityToolkit.Mvvm.Collections;
+using System.Collections.ObjectModel;
 
 namespace userspace_backend.Model
 {
@@ -19,12 +20,17 @@ namespace userspace_backend.Model
             IModelValueValidator<string> nameValidator) : base(dataObject)
         {
             NameValidator = nameValidator;
+            SetActive = true;
         }
+
+        public bool SetActive { get; set; }
 
         public EditableSetting<string> Name { get; set; }
 
         public ObservableGroupedCollection<string, MappingGroup> IndividualMappings { get; protected set; }
 
+        public ObservableCollection<DeviceGroups> DeviceGroupsStillUnmapped { get; protected set; }
+        
         protected IModelValueValidator<string> NameValidator { get; }
 
         public override Mapping MapToData()
@@ -63,4 +69,5 @@ namespace userspace_backend.Model
         public DeviceGroupModel DeviceGroup { get; set; }
 
         public ProfileModel Profile { get; set; }
+    }
 }

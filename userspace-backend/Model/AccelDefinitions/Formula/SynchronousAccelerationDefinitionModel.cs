@@ -20,6 +20,18 @@ namespace userspace_backend.Model.AccelDefinitions.Formula
 
         public EditableSetting<double> Smoothness { get; set; }
 
+        public override AccelArgs MapToDriver()
+        {
+            return new AccelArgs
+            {
+                mode = AccelMode.synchronous,
+                syncSpeed = SyncSpeed.ModelValue,
+                motivity = Motivity.ModelValue,
+                gamma = Gamma.ModelValue,
+                smooth = Smoothness.ModelValue,
+            };
+        }
+
         public override Acceleration MapToData()
         {
             return new SynchronousAccel()

@@ -20,6 +20,17 @@ namespace userspace_backend.Model.AccelDefinitions.Formula
 
         public EditableSetting<double> Limit { get; set; }
 
+        public override AccelArgs MapToDriver()
+        {
+            return new AccelArgs
+            {
+                mode = AccelMode.natural,
+                decayRate = DecayRate.ModelValue,
+                inputOffset = InputOffset.ModelValue,
+                limit = Limit.ModelValue,
+            };
+        }
+
         public override Acceleration MapToData()
         {
             return new NaturalAccel()
