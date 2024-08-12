@@ -17,35 +17,51 @@ namespace userspace_backend.Model
     {
         public MappingModel(
             Mapping dataObject,
-            IModelValueValidator<string> nameValidator) : base(dataObject)
+            IModelValueValidator<string> nameValidator,
+            DeviceGroups deviceGroups,
+            ProfilesModel profiles) : base(dataObject)
         {
             NameValidator = nameValidator;
             SetActive = true;
+            DeviceGroups = deviceGroups;
+            Profiles = profiles;
+            InitIndividualMappings(dataObject);
         }
 
         public bool SetActive { get; set; }
 
         public EditableSetting<string> Name { get; set; }
 
-        public ObservableGroupedCollection<string, MappingGroup> IndividualMappings { get; protected set; }
+        public ObservableCollection<MappingGroup> IndividualMappings { get; protected set; }
 
         public ObservableCollection<DeviceGroups> DeviceGroupsStillUnmapped { get; protected set; }
         
         protected IModelValueValidator<string> NameValidator { get; }
 
+        protected DeviceGroups DeviceGroups { get; }
+
+        protected ProfilesModel Profiles { get; }
+
         public override Mapping MapToData()
         {
-            throw new NotImplementedException();
+            Mapping mapping = new Mapping();
+
+            foreach (var group in IndividualMappings)
+            {
+                mapping.GroupsToProfiles.Add(group.DeviceGroup.ModelValue, group.Profile.Name.ModelValue);
+            }
+
+            return mapping;
         }
 
         protected override IEnumerable<IEditableSetting> EnumerateEditableSettings()
         {
-            throw new NotImplementedException();
+            return [];
         }
 
         protected override IEnumerable<IEditableSettingsCollection> EnumerateEditableSettingsCollections()
         {
-            throw new NotImplementedException();
+            return [];
         }
 
         protected override void InitEditableSettingsAndCollections(Mapping dataObject)
@@ -56,11 +72,40 @@ namespace userspace_backend.Model
                 parser: UserInputParsers.StringParser,
                 validator: NameValidator);
 
-            IndividualMappings = new ObservableGroupedCollection<string, MappingGroup>();
+            IndividualMappings = new ObservableCollection<MappingGroup>();
+        }
 
+        protected void InitIndividualMappings(Mapping dataObject)
+        {
             foreach (var kvp in dataObject.GroupsToProfiles)
             {
+                TryAddMapping(kvp.Key, kvp.Value);
             }
+        }
+
+        public bool TryAddMapping(string deviceGroupName, string profileName)
+        {
+            if (!DeviceGroups.TryGetDeviceGroup(deviceGroupName, out DeviceGroupModel? deviceGroup)
+                || deviceGroup == null
+                || IndividualMappings.Any(m => m.DeviceGroup.Equals(deviceGroup)))
+            {
+                return false;
+            }
+
+            if (!Profiles.TryGetProfile(profileName, out ProfileModel? profile)
+                || profile == null)
+            {
+                return false;
+            }
+
+            MappingGroup group = new MappingGroup()
+            {
+                DeviceGroup = deviceGroup,
+                Profile = profile,
+            };
+
+            IndividualMappings.Add(group);
+            return true;
         }
     }
 

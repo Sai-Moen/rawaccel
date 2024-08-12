@@ -51,7 +51,31 @@ public partial class App : Application
             [
                 new DATA.Profile() { Name = "Favorite", OutputDPI = 1600, YXRatio = 1.333 },
                 new DATA.Profile() { Name = "Test", OutputDPI = 1200, YXRatio = 1.0, Hidden = new DATA.Profiles.Hidden() { RotationDegrees = 8, }, },
+                new DATA.Profile() { Name = "SpecificGame", OutputDPI = 3200, YXRatio = 1.333 },
             ],
+
+            MappingsToLoad = new DATA.MappingSet()
+            {
+                Mappings = new DATA.Mapping[]
+                {
+                    new DATA.Mapping() {
+                        Name = "Usual",
+                        GroupsToProfiles = new DATA.Mapping.GroupsToProfilesMapping()
+                        {
+                            { "Logitech Mice", "Favorite" },
+                            { "Testing", "Testing" },
+                        },
+                    },
+                    new DATA.Mapping() {
+                        Name = "ForSpecificGame",
+                        GroupsToProfiles = new DATA.Mapping.GroupsToProfilesMapping()
+                        {
+                            { "Logitech Mice", "SpecificGame" },
+                            { "Testing", "SpecificGame" },
+                        },
+                    },
+                },
+            },
         };
     }
 }

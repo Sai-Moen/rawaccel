@@ -102,14 +102,13 @@ namespace userspace_backend
 
         protected IEnumerable<DeviceSettings> MapToDriverDevices(MappingModel mapping)
         {
-            IEnumerable<(DeviceGroupModel, string)> deviceGroupsToMap = mapping.IndividualMappings.AsReadOnly()
-                .Select(m => { MappingGroup group = m.FirstOrDefault(); return (group.DeviceGroup, group.Profile.Name.ModelValue); });
-            return deviceGroupsToMap.SelectMany(dg => MapToDriverDevices(dg.Item1, dg.Item2));
+            return mapping.IndividualMappings.SelectMany(
+                dg => MapToDriverDevices(dg.DeviceGroup, dg.Profile.Name.ModelValue));
         }
 
         protected IEnumerable<Profile> MapToDriverProfiles(MappingModel mapping)
         {
-            IEnumerable<ProfileModel> ProfilesToMap = mapping.IndividualMappings.AsReadOnly().Select(m => m.FirstOrDefault().Profile).Distinct();
+            IEnumerable<ProfileModel> ProfilesToMap = mapping.IndividualMappings.Select(m => m.Profile).Distinct();
             return ProfilesToMap.Select(MapToDriverProfile);
         }
 

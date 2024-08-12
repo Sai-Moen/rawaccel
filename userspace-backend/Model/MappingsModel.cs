@@ -18,6 +18,7 @@ namespace userspace_backend.Model
             DeviceGroups = deviceGroups;
             Profiles = profiles;
             NameValidator = new MappingNameValidator(this);
+            InitMappings(dataObject);
         }
 
         public ObservableCollection<MappingModel> Mappings { get; protected set; }
@@ -48,14 +49,17 @@ namespace userspace_backend.Model
                 return false;
             }
 
-            MappingModel mapping = new MappingModel(mappingToAdd, NameValidator);
+            MappingModel mapping = new MappingModel(mappingToAdd, NameValidator, DeviceGroups, Profiles);
             Mappings.Add(mapping);
             return true;
         }
 
         public override DATA.MappingSet MapToData()
         {
-            throw new NotImplementedException();
+            return new DATA.MappingSet()
+            {
+                Mappings = Mappings.Select(m => m.MapToData()).ToArray(),
+            };
         }
 
         protected override IEnumerable<IEditableSetting> EnumerateEditableSettings()
@@ -71,7 +75,10 @@ namespace userspace_backend.Model
         protected override void InitEditableSettingsAndCollections(DATA.MappingSet dataObject)
         {
             Mappings = new ObservableCollection<MappingModel>();
+        }
 
+        protected void InitMappings(DATA.MappingSet dataObject)
+        {
             foreach (DATA.Mapping mapping in dataObject?.Mappings ?? [])
             {
                 TryAddMapping(mapping);
