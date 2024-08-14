@@ -20,7 +20,7 @@
       <ContentControl Content="{Binding DevicesPage}"/>
     </TabItem>
     <TabItem Header = "Mappings">
-      <v:MappingsPageView/>
+      <ContentControl Content="{Binding MappingsPage}"/>
     </TabItem>
     <TabItem Header = "Profiles">
       <ContentControl Content="{Binding ProfilesPage}"/>

@@ -46,7 +46,7 @@ namespace userspace_backend.Model
             profileModel = Profiles.FirstOrDefault(
                 p => string.Equals(p.Name.ModelValue, name, StringComparison.InvariantCultureIgnoreCase));
 
-            return false;
+            return profileModel != null;
         }
 
         public bool TryAddNewDefaultProfile(string name)
