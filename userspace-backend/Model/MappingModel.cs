@@ -34,7 +34,7 @@ namespace userspace_backend.Model
 
         public ObservableCollection<MappingGroup> IndividualMappings { get; protected set; }
 
-        public ObservableCollection<DeviceGroups> DeviceGroupsStillUnmapped { get; protected set; }
+        public ObservableCollection<DeviceGroupModel> DeviceGroupsStillUnmapped { get; protected set; }
         
         protected IModelValueValidator<string> NameValidator { get; }
 
@@ -102,10 +102,24 @@ namespace userspace_backend.Model
             {
                 DeviceGroup = deviceGroup,
                 Profile = profile,
+                Profiles = Profiles,
             };
 
             IndividualMappings.Add(group);
             return true;
+        }
+
+        protected void FindDeviceGroupsStillUnmapped()
+        {
+            DeviceGroupsStillUnmapped.Clear();
+
+            foreach (DeviceGroupModel group in DeviceGroups.DeviceGroupModels)
+            {
+                if (!IndividualMappings.Any(m => m.DeviceGroup.Equals(group)))
+                {
+                    DeviceGroupsStillUnmapped.Add(group);
+                }
+            }
         }
     }
 
@@ -114,5 +128,8 @@ namespace userspace_backend.Model
         public DeviceGroupModel DeviceGroup { get; set; }
 
         public ProfileModel Profile { get; set; }
+
+        // This is here for easy binding
+        public ProfilesModel Profiles { get; set; }
     }
 }
