@@ -18,6 +18,8 @@
       <Button.Flyout>
         <Flyout>
           <ListBox
+            Name="DeviceGroupSelectorToAddMapping"
+            SelectionChanged="AddMappingSelectionChanged"
             ItemsSource="{Binding MappingBE.DeviceGroupsStillUnmapped}">
             <ListBox.ItemTemplate>
               <DataTemplate>

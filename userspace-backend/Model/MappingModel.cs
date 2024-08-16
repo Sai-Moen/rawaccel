@@ -30,6 +30,7 @@ namespace userspace_backend.Model
             DeviceGroupsStillUnmapped = new ObservableCollection<DeviceGroupModel>();
             FindDeviceGroupsStillUnmapped();
             IndividualMappings.CollectionChanged += OnIndividualMappingsChanged;
+            DeviceGroups.DeviceGroupModels.CollectionChanged += OnIndividualMappingsChanged;
         }
 
         public bool SetActive { get; set; }

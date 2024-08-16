@@ -38,7 +38,7 @@ namespace userspace_backend.Model
 
         protected override void InitEditableSettingsAndCollections(IEnumerable<DATA.Profile> dataObject)
         {
-            Profiles = new ObservableCollection<ProfileModel>();
+            Profiles = new ObservableCollection<ProfileModel>() { DefaultProfile, };
         }
 
         public bool TryGetProfile(string name, out ProfileModel? profileModel)
