@@ -10,6 +10,7 @@ using userspace_backend.Model.ProfileComponents;
 using userspace_backend.Data;
 using CommunityToolkit.Mvvm.Collections;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 
 namespace userspace_backend.Model
 {
@@ -26,6 +27,9 @@ namespace userspace_backend.Model
             DeviceGroups = deviceGroups;
             Profiles = profiles;
             InitIndividualMappings(dataObject);
+            DeviceGroupsStillUnmapped = new ObservableCollection<DeviceGroupModel>();
+            FindDeviceGroupsStillUnmapped();
+            IndividualMappings.CollectionChanged += OnIndividualMappingsChanged;
         }
 
         public bool SetActive { get; set; }
@@ -120,6 +124,11 @@ namespace userspace_backend.Model
                     DeviceGroupsStillUnmapped.Add(group);
                 }
             }
+        }
+
+        protected void OnIndividualMappingsChanged(object? sender, NotifyCollectionChangedEventArgs e)
+        {
+            FindDeviceGroupsStillUnmapped();
         }
     }
 

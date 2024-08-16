@@ -7,24 +7,30 @@
              x:Class="userinterface.Views.ProfileListView"
              x:DataType="vm:ProfileListViewModel">
 
-  <StackPanel Orientation="Vertical">
+  <DockPanel>
     <TextBlock
+      DockPanel.Dock="Top"
       HorizontalAlignment="Left"
       FontSize="18"
       FontStyle="Italic"
       Margin="10,10,10,10">
       Profiles
     </TextBlock>
-    <ListBox
-      ItemsSource="{Binding Profiles}"
-      SelectionChanged="OnSelectionChanged">
-      <ListBox.ItemTemplate>
-        <DataTemplate>
-          <TextBlock
-            Margin="5 5 5 5"
-            Text="{Binding CurrentNameForDisplay}"/>
-        </DataTemplate>
-      </ListBox.ItemTemplate>
-    </ListBox>
-  </StackPanel>
+    <Button
+      DockPanel.Dock="Bottom"
+      Content="Add Profile"/>
+    <StackPanel Orientation="Vertical">
+      <ListBox
+        ItemsSource="{Binding Profiles}"
+        SelectionChanged="OnSelectionChanged">
+        <ListBox.ItemTemplate>
+          <DataTemplate>
+            <TextBlock
+              Margin="5 5 5 5"
+              Text="{Binding CurrentNameForDisplay}"/>
+          </DataTemplate>
+        </ListBox.ItemTemplate>
+      </ListBox>
+    </StackPanel>
+  </DockPanel>
 </UserControl>
