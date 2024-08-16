@@ -73,22 +73,24 @@ public class Emitter(IMemoryMap addresses) : IEmitter
 
                     EmitExpression(ast.Initializer);
 
-                    bool isInline = OnAssignment(ast.Operator, out InstructionType modify);
+                    Token op = ast.Operator;
+                    bool isCompound = op.Type == TokenType.Compound;
+                    InstructionType modify = isCompound ? OnCompound(op) : default;
 
                     Token identifier = ast.Identifier;
                     TokenType type = identifier.Type;
                     if (type == TokenType.Input)
                     {
-                        OnSpecialAssignment(isInline, InstructionType.LoadIn, modify, InstructionType.StoreIn);
+                        OnSpecialAssignment(isCompound, InstructionType.LoadIn, modify, InstructionType.StoreIn);
                     }
                     else if (type == TokenType.Output)
                     {
-                        OnSpecialAssignment(isInline, InstructionType.LoadOut, modify, InstructionType.StoreOut);
+                        OnSpecialAssignment(isCompound, InstructionType.LoadOut, modify, InstructionType.StoreOut);
                     }
                     else
                     {
                         MemoryAddress address = addresses[identifier.Symbol];
-                        if (isInline)
+                        if (isCompound)
                         {
                             InstructionType load = type.MapToLoad();
                             if (load == InstructionType.NoOp)
@@ -109,9 +111,6 @@ public class Emitter(IMemoryMap addresses) : IEmitter
                         AddInstruction(store, (byte[])address);
                     }
                 }
-                break;
-            case ASTTag.Return:
-                AddInstruction(InstructionType.Return);
                 break;
             case ASTTag.If:
                 {
@@ -151,6 +150,17 @@ public class Emitter(IMemoryMap addresses) : IEmitter
                     CodeAddress whileJumpTarget = byteCode.Count - 1;
                     SetAddress(whileJumpTargetIndex, (byte[])whileJumpTarget);
                 }
+                break;
+            case ASTTag.Function:
+                {
+                    ASTFunction ast = union.astFunction;
+
+                    // TODO implement codegen for this
+                    throw new NotImplementedException();
+                }
+                //break;
+            case ASTTag.Return:
+                AddInstruction(InstructionType.Return);
                 break;
         }
     }
@@ -212,7 +222,7 @@ public class Emitter(IMemoryMap addresses) : IEmitter
             case TokenType.Comparison:
                 AddInstruction(OnComparison(token));
                 break;
-            case TokenType.Function:
+            case TokenType.MathFunction:
                 AddInstruction(OnFunction(token));
                 break;
             default:
@@ -272,22 +282,17 @@ public class Emitter(IMemoryMap addresses) : IEmitter
         AddInstruction(store);
     }
 
-    private static bool OnAssignment(Token token, out InstructionType modify)
+    private static InstructionType OnCompound(Token token) => token.Symbol switch
     {
-        modify = token.Symbol switch
-        {
-            Tokens.ASSIGN => InstructionType.NoOp,
-            Tokens.IADD => InstructionType.Add,
-            Tokens.ISUB => InstructionType.Sub,
-            Tokens.IMUL => InstructionType.Mul,
-            Tokens.IDIV => InstructionType.Div,
-            Tokens.IMOD => InstructionType.Mod,
-            Tokens.IPOW => InstructionType.Pow,
+        Tokens.C_ADD => InstructionType.Add,
+        Tokens.C_SUB => InstructionType.Sub,
+        Tokens.C_MUL => InstructionType.Mul,
+        Tokens.C_DIV => InstructionType.Div,
+        Tokens.C_MOD => InstructionType.Mod,
+        Tokens.C_POW => InstructionType.Pow,
 
-            _ => throw EmitError("Cannot emit assignment!", token),
-        };
-        return modify != InstructionType.NoOp;
-    }
+        _ => throw EmitError("Cannot emit assignment!", token),
+    };
 
     private static InstructionType OnConstant(Token token) => token.Symbol switch
     {

@@ -13,12 +13,12 @@ public enum TokenType
     Input, Output,
     Identifier, Parameter,
     Immutable, Persistent, Impersistent,
-    Const, Let, Var,
+    Const, Let, Var, Fn,
     Return, If, Else, While,
     Terminator, ParenOpen, ParenClose,
     SquareOpen, SquareClose, CurlyOpen, CurlyClose,
-    Assignment, Arithmetic, Comparison,
-    ArgumentSeparator, Function,
+    Assignment, Compound, Arithmetic, Comparison,
+    Function, ArgumentSeparator, MathFunction,
 }
 
 /// <summary>
@@ -74,6 +74,7 @@ public static class Tokens
     public const string DECL_CONST = "const"; // immutable (so automatically persistent)
     public const string DECL_LET = "let";     // persistent mutable
     public const string DECL_VAR = "var";     // impersistent mutable
+    public const string DECL_FN = "fn";       // user-defined function
 
     // Branches
     public const string RETURN = "ret";
@@ -107,12 +108,12 @@ public static class Tokens
     public const string SECOND = "="; // if there is a second character, it should be this!
 
     // Inline Arithmetic
-    public const string IADD = "+=";
-    public const string ISUB = "-=";
-    public const string IMUL = "*=";
-    public const string IDIV = "/=";
-    public const string IMOD = "%=";
-    public const string IPOW = "^=";
+    public const string C_ADD = "+=";
+    public const string C_SUB = "-=";
+    public const string C_MUL = "*=";
+    public const string C_DIV = "/=";
+    public const string C_MOD = "%=";
+    public const string C_POW = "^=";
 
     // Normal Arithmetic
     public const string ADD = "+";
@@ -152,7 +153,7 @@ public static class Tokens
     public const string MIN_MAGNITUDE = "minm"; // Closest to 0 of the two arguments
     public const string MAX_MAGNITUDE = "maxm"; // Furthest from 0 of the two arguments
 
-    // Roots (bloody roots)
+    // Roots
     public const string SQRT = "sqrt"; // Square Root
     public const string CBRT = "cbrt"; // Cube Root
 
@@ -216,6 +217,7 @@ public static class Tokens
         new(TokenType.Const, DECL_CONST),
         new(TokenType.Let, DECL_LET),
         new(TokenType.Var, DECL_VAR),
+        new(TokenType.Fn, DECL_FN),
 
         new(TokenType.Return, RETURN),
         new(TokenType.If, BRANCH_IF),
@@ -236,12 +238,12 @@ public static class Tokens
         new(TokenType.CurlyClose, CURLY_CLOSE),
 
         new(TokenType.Assignment, ASSIGN),
-        new(TokenType.Assignment, IADD),
-        new(TokenType.Assignment, ISUB),
-        new(TokenType.Assignment, IMUL),
-        new(TokenType.Assignment, IDIV),
-        new(TokenType.Assignment, IMOD),
-        new(TokenType.Assignment, IPOW),
+        new(TokenType.Compound, C_ADD),
+        new(TokenType.Compound, C_SUB),
+        new(TokenType.Compound, C_MUL),
+        new(TokenType.Compound, C_DIV),
+        new(TokenType.Compound, C_MOD),
+        new(TokenType.Compound, C_POW),
 
         new(TokenType.Arithmetic, ADD),
         new(TokenType.Arithmetic, SUB),
@@ -260,48 +262,48 @@ public static class Tokens
         new(TokenType.Comparison, AND),
         new(TokenType.Comparison, OR),
 
-        new(TokenType.Function, ABS),
-        new(TokenType.Function, SIGN),
-        new(TokenType.Function, COPY_SIGN),
+        new(TokenType.MathFunction, ABS),
+        new(TokenType.MathFunction, SIGN),
+        new(TokenType.MathFunction, COPY_SIGN),
 
-        new(TokenType.Function, ROUND),
-        new(TokenType.Function, TRUNC),
-        new(TokenType.Function, FLOOR),
-        new(TokenType.Function, CEIL),
-        new(TokenType.Function, CLAMP),
+        new(TokenType.MathFunction, ROUND),
+        new(TokenType.MathFunction, TRUNC),
+        new(TokenType.MathFunction, FLOOR),
+        new(TokenType.MathFunction, CEIL),
+        new(TokenType.MathFunction, CLAMP),
 
-        new(TokenType.Function, MIN),
-        new(TokenType.Function, MAX),
-        new(TokenType.Function, MIN_MAGNITUDE),
-        new(TokenType.Function, MAX_MAGNITUDE),
+        new(TokenType.MathFunction, MIN),
+        new(TokenType.MathFunction, MAX),
+        new(TokenType.MathFunction, MIN_MAGNITUDE),
+        new(TokenType.MathFunction, MAX_MAGNITUDE),
 
-        new(TokenType.Function, SQRT),
-        new(TokenType.Function, CBRT),
+        new(TokenType.MathFunction, SQRT),
+        new(TokenType.MathFunction, CBRT),
 
-        new(TokenType.Function, LOG),
-        new(TokenType.Function, LOG_2),
-        new(TokenType.Function, LOG_10),
-        new(TokenType.Function, LOG_B),
-        new(TokenType.Function, ILOG_B),
+        new(TokenType.MathFunction, LOG),
+        new(TokenType.MathFunction, LOG_2),
+        new(TokenType.MathFunction, LOG_10),
+        new(TokenType.MathFunction, LOG_B),
+        new(TokenType.MathFunction, ILOG_B),
 
-        new(TokenType.Function, SIN),
-        new(TokenType.Function, SINH),
-        new(TokenType.Function, ASIN),
-        new(TokenType.Function, ASINH),
+        new(TokenType.MathFunction, SIN),
+        new(TokenType.MathFunction, SINH),
+        new(TokenType.MathFunction, ASIN),
+        new(TokenType.MathFunction, ASINH),
 
-        new(TokenType.Function, COS),
-        new(TokenType.Function, COSH),
-        new(TokenType.Function, ACOS),
-        new(TokenType.Function, ACOSH),
+        new(TokenType.MathFunction, COS),
+        new(TokenType.MathFunction, COSH),
+        new(TokenType.MathFunction, ACOS),
+        new(TokenType.MathFunction, ACOSH),
 
-        new(TokenType.Function, TAN),
-        new(TokenType.Function, TANH),
-        new(TokenType.Function, ATAN),
-        new(TokenType.Function, ATANH),
-        new(TokenType.Function, ATAN2),
+        new(TokenType.MathFunction, TAN),
+        new(TokenType.MathFunction, TANH),
+        new(TokenType.MathFunction, ATAN),
+        new(TokenType.MathFunction, ATANH),
+        new(TokenType.MathFunction, ATAN2),
 
-        new(TokenType.Function, FUSED_MULTIPLY_ADD),
-        new(TokenType.Function, SCALE_B),
+        new(TokenType.MathFunction, FUSED_MULTIPLY_ADD),
+        new(TokenType.MathFunction, SCALE_B),
     ];
 
     #endregion

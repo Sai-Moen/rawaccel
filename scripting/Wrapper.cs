@@ -89,10 +89,10 @@ public static class Wrapper
             addresses.Add(parameter.Name, (MemoryAddress)numPersistent++);
         }
 
-        IList<ASTAssign> variables = result.Variables;
+        IBlock variables = result.Declarations;
         for (int i = 0; i < variables.Count; i++)
         {
-            Token identifier = variables[i].Identifier;
+            Token identifier = variables[i].Assign!.Identifier; // TODO fix this when functions are implemented
             MemoryAddress address = identifier.Type switch
                 {
                     TokenType.Immutable or TokenType.Persistent => (MemoryAddress)numPersistent++,

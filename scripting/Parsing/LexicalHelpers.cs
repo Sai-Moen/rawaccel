@@ -49,6 +49,7 @@ public static class LexicalHelpers
         TokenType.Const => TokenType.Immutable,
         TokenType.Let => TokenType.Persistent,
         TokenType.Var => TokenType.Impersistent,
+        TokenType.Fn => TokenType.Function,
 
         _ => TokenType.Undefined
     };

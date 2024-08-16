@@ -11,24 +11,24 @@ public enum InstructionType : byte
     Start, End, // Helps with jumps not going out of bounds (in an otherwise correct program)
     Return, // Early return 
 
-    // TOS = Top Of Stack
-    LoadPersistent, StorePersistent,     // Gets or Sets an address in persistent memory, to/from TOS.
-    LoadImpersistent, StoreImpersistent, // Gets or Sets an address in impersistent memory, to/from TOS.
+    // Load/Store (TOS = Top Of Stack)
+    LoadNumber,                          // Loads a number from data.
     LoadIn, StoreIn,                     // Gets or Sets the input register (x), to/from TOS.
     LoadOut, StoreOut,                   // Gets or Sets the output register (y), to/from TOS.
-    LoadNumber,                          // Loads a number from data.
+    LoadPersistent, StorePersistent,     // Gets or Sets an address in persistent memory, to/from TOS.
+    LoadImpersistent, StoreImpersistent, // Gets or Sets an address in impersistent memory, to/from TOS.
     Swap,                                // Swaps the top two stack elements.
-
-    // Branch,
-    // Evaluates the TOS and jumps/skips to the next branch end marker if zero (Jz).
-    // The jump itself can be unconditional (Jmp) instead, to implement loops (Jmp backwards).
-    Jmp, Jz,
 
     // Constant,
     // Pushes a constant to the stack.
     LoadZero,
     LoadE, LoadPi, LoadTau,
     LoadCapacity,
+
+    // Branch,
+    // Evaluates the TOS and jumps/skips to the next branch end marker if zero (Jz).
+    // The jump itself can be unconditional (Jmp) instead, to implement loops (Jmp backwards).
+    Jmp, Jz,
 
     // Operator,
     // Does an operation on the second and first Stack item respectively,
@@ -44,6 +44,8 @@ public enum InstructionType : byte
     Eq, Ne, Not,
 
     // Function,
+    Call, // user-defined
+
     // Take arguments from the stack and give a transformed version back.
     Abs, Sign, CopySign,
     Round, Trunc, Floor, Ceil, Clamp,

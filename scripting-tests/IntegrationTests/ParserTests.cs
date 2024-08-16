@@ -9,7 +9,7 @@ namespace scripting_tests.IntegrationTests;
 [TestClass]
 public class ParserTests
 {
-    private static IList<ASTNode> GetCalculationASTs(string script)
+    private static IList<IASTNode> GetCalculationASTs(string script)
     {
         return Wrapper.CompileToParsingResult(script).Callbacks[0].Code;
     }
@@ -39,8 +39,8 @@ public class ParserTests
         }
         builder.Append("; }");
 
-        IList<ASTNode> code = GetCalculationASTs(builder.ToString());
-        IList<Token> firstStatementInitializer = code[0].Union.astAssign.Initializer;
+        IList<IASTNode> code = GetCalculationASTs(builder.ToString());
+        IList<Token> firstStatementInitializer = code[0].Assign!.Initializer;
 
         int index = 0;
         void AssertNextToken(Token token) => Assert.AreEqual(token, firstStatementInitializer[index++]);

@@ -34,7 +34,7 @@ public class Lexer : ILexer
     private readonly char[] characters;
 
     private string description = string.Empty;
-    private readonly ITokenList lexicalTokens = [];
+    private readonly TokenList lexicalTokens = [];
 
     #endregion
 

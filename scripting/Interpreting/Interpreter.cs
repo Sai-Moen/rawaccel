@@ -51,22 +51,22 @@ public class Interpreter : IInterpreter
             addresses.Add(parameter.Name, (MemoryAddress)numPersistent++);
         }
 
-        IList<ASTAssign> variables = parsed.Variables;
-        int numVariables = variables.Count;
-        startup = new Program[numVariables];
+        IBlock declarations = parsed.Declarations;
+        int numDeclarations = declarations.Count;
+        startup = new Program[numDeclarations]; // TODO fix this, determine how to separate functions and variables
 
-        Debug.Assert(numVariables <= Constants.MAX_VARIABLES);
-        for (int i = 0; i < numVariables; i++)
+        Debug.Assert(numDeclarations <= Constants.MAX_VARIABLES);
+        for (int i = 0; i < numDeclarations; i++)
         {
-            ASTAssign variable = variables[i];
+            ASTAssign variable = declarations[i].Assign!; // TODO handle the function case
             Token identifier = variable.Identifier;
             MemoryAddress address = identifier.Type switch
-                {
-                    TokenType.Immutable or TokenType.Persistent => (MemoryAddress)numPersistent++,
-                    TokenType.Impersistent                      => (MemoryAddress)numImpersistent++,
+            {
+                TokenType.Immutable or TokenType.Persistent => (MemoryAddress)numPersistent++,
+                TokenType.Impersistent                      => (MemoryAddress)numImpersistent++,
                 
-                    _ => throw InterpreterError("Identifier does not have the correct type for a variable!")
-                };
+                _ => throw InterpreterError("Identifier does not have the correct type for a variable!")
+            };
             addresses.Add(identifier.Symbol, address);
 
             ASTNode stmnt = new(ASTTag.Assign, new() { astAssign = variable });

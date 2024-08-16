@@ -1,7 +1,6 @@
 ﻿using scripting.Interpreting;
 using scripting.Script;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 
 namespace scripting.Generating;
