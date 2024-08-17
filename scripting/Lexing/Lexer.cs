@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text;
 
 namespace scripting.Lexing;
@@ -34,7 +35,7 @@ public class Lexer : ILexer
     private readonly char[] characters;
 
     private string description = string.Empty;
-    private readonly TokenList lexicalTokens = [];
+    private readonly List<Token> lexicalTokens = [];
 
     #endregion
 

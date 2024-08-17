@@ -2,6 +2,7 @@
 using scripting.Script;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 
 namespace scripting.Parsing;
 
@@ -12,19 +13,19 @@ public class Parser : IParser
 {
     #region Fields
 
-    private readonly Dictionary<string, TokenType> declNames = new(Constants.CAPACITY);
-
-    private readonly Stack<Operator> operatorStack = new();
-
     private int currentIndex;
     private readonly int maxIndex;
 
     private Token previousToken = Tokens.DUMMY;
     private Token currentToken;
-    private readonly ITokenList lexicalTokens;
+    private readonly IList<Token> lexicalTokens;
     
+    private readonly Dictionary<string, TokenType> declarationNames = new(Constants.CAPACITY);
+    private readonly HashSet<string> functionLocalNames = [];
+
     // keeps track of amount of recursion, could also consider using explicit stack
     private int depth;
+    private readonly Stack<Operator> operatorStack = new();
 
     private readonly string description;
     private readonly Parameters parameters = [];
@@ -66,8 +67,8 @@ public class Parser : IParser
             throw ParserError($"Too many parameters! Expected at most {Constants.MAX_PARAMETERS}, got {parameters.Count}.");
 
         // this can be expanded a bit more since persistent and impersistent are separated, but for now it'll work
-        if (declarations.Count > Constants.MAX_VARIABLES)
-            throw ParserError($"Too many variables! Expected at most {Constants.MAX_VARIABLES}, got {declarations.Count}.");
+        if (declarations.Count > Constants.MAX_DECLARATIONS)
+            throw ParserError($"Too many declarations! Expected at most {Constants.MAX_DECLARATIONS}, got {declarations.Count}.");
 
         return new(description, parameters, declarations, [.. callbacks.Values]);
     }
@@ -82,24 +83,26 @@ public class Parser : IParser
         // Declarations
         AdvanceToken();
         while (currentToken.Type != TokenType.CurlyOpen)
-            DeclareVariable();
+            ParseDeclaration();
 
         // Calculation
         AdvanceToken();
         Block asts = [];
         while (currentToken.Type != TokenType.CurlyClose)
             asts.Add(Statement());
-        callbacks.Add(Calculation.NAME, new(Calculation.NAME, [], asts));
+        callbacks.Add(Calculation.NAME, new(Calculation.NAME, [], asts.ToWrappedList()));
 
         if (currentIndex == maxIndex)
             return;
 
         // Optional Callbacks
         AdvanceToken();
-        while (Accept(TokenType.Identifier))
+        while (Accept(TokenType.Identifier, out var identifier))
         {
-            ASTFunction fn = ParseFunction();
-            ParsedCallback callback = new(fn.Identifier.Symbol, fn.Args, fn.Code);
+            List<Token> args = ParseArgs();
+            Block code = ParseBlock();
+
+            ParsedCallback callback = new(identifier.Symbol, args, code.ToWrappedList());
             if (callbacks.ContainsKey(callback.Name))
                 throw ParserError("Duplicate callbacks detected!");
 
@@ -115,24 +118,24 @@ public class Parser : IParser
     {
         Token identifier = Expect(TokenType.Identifier).WithType(TokenType.Parameter);
         string symbol = identifier.Symbol;
-        if (!declNames.TryAdd(symbol, TokenType.Parameter))
-        {
+        if (!declarationNames.TryAdd(symbol, TokenType.Parameter))
             throw ParserError($"Name collision! Name {symbol} already exists.");
-        }
 
         Discard(TokenType.Assignment);
-        if (Accept(TokenType.Bool))
+        if (Accept(TokenType.Bool, out var value))
         {
-            Token value = previousToken;
             Discard(TokenType.Terminator);
             parameters.Add(new(identifier, value));
         }
-        else
+        else if (Accept(TokenType.Number, out value))
         {
-            Token value = Expect(TokenType.Number);
             ParseBounds(out var minval, out var maxval);
             Discard(TokenType.Terminator);
             parameters.Add(new(identifier, value, minval, maxval));
+        }
+        else
+        {
+            throw ParserError("Expected either a boolean or numeric value for the parameter!");
         }
     }
 
@@ -186,10 +189,14 @@ public class Parser : IParser
             upper = Expect(TokenType.Number);
         }
         else if (!noLowerBound)
+        {
             throw ParserError("Expected a separator and number for upper bound!");
+        }
         else
+        {
             upper = Expect(TokenType.Number);
-        
+        }
+
         if (Accept(TokenType.SquareClose))
             maxval = new(Bound.UpperIncl, (Number)upper);
         else if (Accept(TokenType.ParenClose))
@@ -204,37 +211,42 @@ public class Parser : IParser
 
     #region Declaration Parsing
 
-    private void DeclareVariable()
+    private void ParseDeclaration()
     {
         Token declarer = currentToken;
-        TokenType declType = declarer.MapDeclarer();
-        if (declType == TokenType.Undefined)
+        TokenType type = declarer.MapDeclarer();
+        if (type == TokenType.Undefined)
             throw ParserError("Unknown declarer!");
         else // couldn't use Expect due to mapping, so we have to advance manually
             AdvanceToken();
 
-        Token identifier = Expect(TokenType.Identifier).WithType(declType);
+        Token identifier = Expect(TokenType.Identifier).WithType(type);
         string symbol = identifier.Symbol;
-        if (declNames.ContainsKey(symbol))
+        if (declarationNames.ContainsKey(symbol))
             throw ParserError($"Name collision! Name {symbol} already exists.");
 
         ASTTag tag;
         ASTUnion union;
-        if (declType == TokenType.Function)
+        if (type == TokenType.Function)
         {
-            ASTFunction fn = ParseFunction();
+            List<Token> args = ParseArgs();
+            foreach (Token arg in args)
+                functionLocalNames.Add(arg.Symbol);
+
+            Block code = ParseBlock();
+            functionLocalNames.Clear();
 
             tag = ASTTag.Function;
             union = new()
             {
-                astFunction = fn
+                astFunction = new(identifier, code.ToWrappedList())
             };
         }
         else
         {
             Token eq = Expect(TokenType.Assignment);
 
-            TokenList output = ExprVar();
+            List<Token> output = ExprVar();
 
             tag = ASTTag.Assign;
             union = new()
@@ -245,28 +257,25 @@ public class Parser : IParser
         declarations.Add(new ASTNode(tag, union));
         
         // this is done last to avoid having to check for circular dependencies on this variable
-        declNames.Add(symbol, declType);
+        declarationNames.Add(symbol, type);
     }
 
-    private TokenList ExprVar()
+    private List<Token> ExprVar()
     {
         Queue<Token> input = new();
-        while (currentToken.Type != TokenType.Terminator)
+        while (!Accept(TokenType.Terminator))
         {
-            if (currentToken.Type == TokenType.CurlyOpen)
-            {
+            if (Accept(TokenType.CurlyOpen))
                 throw ParserError("Calculation block reached unexpectedly!");
-            }
 
             input.Enqueue(currentToken);
             AdvanceToken();
         }
-        AdvanceToken();
 
         Debug.Assert(operatorStack.Count == 0);
 
         // Shunting Yard Algorithm (RPN)
-        TokenList output = new(input.Count);
+        List<Token> output = new(input.Count);
 
         Token? prev = null;
         foreach (Token token in input)
@@ -311,6 +320,21 @@ public class Parser : IParser
 
     #region Block Parsing
 
+    private Block ParseBlock()
+    {
+        if (++depth > Constants.MAX_RECURSION_DEPTH)
+            throw ParserError("Exceeded Maximum Recursion Depth!");
+
+        // collection expression on Block should work because it's well-behaved
+        Block asts = [];
+        Discard(TokenType.CurlyOpen);
+        while (!Accept(TokenType.CurlyClose))
+            asts.Add(Statement());
+
+        --depth;
+        return asts;
+    }
+
     private ASTNode Statement()
     {
         ASTTag tag;
@@ -325,32 +349,31 @@ public class Parser : IParser
             Token target = previousToken;
             if (target.Type == TokenType.Identifier)
             {
-                if (!declNames.TryGetValue(target.Symbol, out TokenType declType))
-                {
-                    throw ParserError($"Unknown assignment target! {target.Symbol} has not been declared.");
-                }
+                string name = target.Symbol;
+                if (!ResolveIdentifier(name, out TokenType type))
+                    throw ParserError($"Unknown assignment target! {name} has not been declared.");
 
-                switch (declType)
+                switch (type)
                 {
                     case TokenType.Parameter:
                         throw ParserError("Cannot assign to parameter!");
                     case TokenType.Immutable:
                         throw ParserError("Cannot assign to immutable variable!");
                     case TokenType.Persistent:
-                        break;
                     case TokenType.Impersistent:
+                    case TokenType.FunctionLocal:
                         break;
                     default:
-                        Debug.Fail("Unreachable: got an unknown TokenType in declNames...");
+                        Debug.Fail("Unreachable: got an unknown TokenType...");
                         break;
                 }
 
-                target = target.WithType(declType);
+                target = target.WithType(type);
             }
 
             Token assignment = Accept(TokenType.Assignment) ? previousToken : Expect(TokenType.Compound);
 
-            TokenList initializer = Expression(TokenType.Terminator);
+            List<Token> initializer = Expression(TokenType.Terminator);
 
             tag = ASTTag.Assign;
             union = new()
@@ -361,33 +384,31 @@ public class Parser : IParser
         else if (Accept(TokenType.If))
         {
             Discard(TokenType.ParenOpen);
-            TokenList condition = Expression(TokenType.ParenClose, TokenType.CurlyOpen);
+            List<Token> condition = Expression(TokenType.ParenClose, TokenType.CurlyOpen);
 
-            IBlock ifBlock = CollectStatements();
+            Block ifBlock = ParseBlock();
 
-            IBlock? elseBlock = null;
+            Block? elseBlock = null;
             if (Accept(TokenType.Else))
-            {
-                elseBlock = CollectStatements();
-            }
+                elseBlock = ParseBlock();
 
             tag = ASTTag.If;
             union = new()
             {
-                astIf = new(condition, ifBlock, elseBlock)
+                astIf = new(condition, ifBlock.ToWrappedList(), elseBlock?.ToWrappedList())
             };
         }
         else if (Accept(TokenType.While))
         {
             Discard(TokenType.ParenOpen);
-            TokenList condition = Expression(TokenType.ParenClose, TokenType.CurlyOpen);
+            List<Token> condition = Expression(TokenType.ParenClose, TokenType.CurlyOpen);
 
-            IBlock whileBlock = CollectStatements();
+            Block whileBlock = ParseBlock();
 
             tag = ASTTag.While;
             union = new()
             {
-                astWhile = new(condition, whileBlock)
+                astWhile = new(condition, whileBlock.ToWrappedList())
             };
         }
         else if (Accept(TokenType.Return))
@@ -408,24 +429,7 @@ public class Parser : IParser
         return new ASTNode(tag, union);
     }
 
-    private Block CollectStatements()
-    {
-        if (++depth > Constants.MAX_RECURSION_DEPTH)
-        {
-            throw ParserError("Exceeded Maximum Recursion Depth!");
-        }
-
-        // collection expression on Block should work because it's well-behaved
-        Block asts = [];
-        Discard(TokenType.CurlyOpen);
-        while (!Accept(TokenType.CurlyClose))
-            asts.Add(Statement());
-
-        --depth;
-        return asts;
-    }
-
-    private TokenList Expression(TokenType end, TokenType after = TokenType.Undefined)
+    private List<Token> Expression(TokenType end, TokenType after = TokenType.Undefined)
     {
         bool noAfter = after == TokenType.Undefined;
 
@@ -435,24 +439,20 @@ public class Parser : IParser
             Token current = currentToken;
             TokenType currentType = current.Type;
             if (currentType == TokenType.CurlyClose)
-            {
                 throw ParserError("Block end reached unexpectedly!");
-            }
 
             AdvanceToken();
             TokenType nextType = currentToken.Type;
             bool nextIsExpected = noAfter || after == nextType;
             if (currentType == end && nextIsExpected)
-            {
                 break;
-            }
 
             input.Enqueue(current);
         }
         Debug.Assert(operatorStack.Count == 0);
 
         // Shunting Yard Algorithm (RPN)
-        TokenList output = new(input.Count);
+        List<Token> output = new(input.Count);
 
         Token? prev = null;
         foreach (Token token in input)
@@ -502,30 +502,29 @@ public class Parser : IParser
 
     #region Statement Helpers
 
-    private ASTFunction ParseFunction()
+    private List<Token> ParseArgs()
     {
-        Token identifier = previousToken;
-
-        TokenList args = [];
+        List<Token> args = [];
         if (Accept(TokenType.ParenOpen) && !Accept(TokenType.ParenClose))
         {
             do args.Add(currentToken);
             while (Accept(TokenType.ArgumentSeparator));
             Discard(TokenType.ParenClose);
         }
-
-        IBlock code = CollectStatements();
-
-        return new(identifier, args, code);
+        return args;
     }
 
     #endregion
 
     #region Expression Helpers
 
-    private void OnIdentifier(TokenList output, Token token)
+    private void OnIdentifier(List<Token> output, Token token)
     {
-        Token resolved = ResolveIdentifier(token);
+        string name = token.Symbol;
+        if (!ResolveIdentifier(name, out TokenType type))
+            throw ParserError($"Could not resolve name! (name was: {name})");
+
+        Token resolved = token.WithType(type);
         if (resolved.Type == TokenType.Function)
             OnFunction(resolved);
         else
@@ -542,28 +541,22 @@ public class Parser : IParser
         operatorStack.Push(new(token, -1));
     }
 
-    private void OnClose(TokenList output)
+    private void OnClose(List<Token> output)
     {
         Operator? oper;
         while (operatorStack.TryPop(out oper) && oper.Type != TokenType.ParenOpen)
-        {
             output.Add(oper.Token);
-        }
         // the parenthesis is discarded intentionally (if the operator is not null)
 
         // if popping fails, there was no matching opening parenthesis before the bottom of the stack
         if (oper is null)
-        {
             throw ParserError($"No matching: {Tokens.PAREN_OPEN}");
-        }
 
         if (operatorStack.TryPeek(out var maybeFunction) && maybeFunction.Type == TokenType.MathFunction)
-        {
             output.Add(operatorStack.Pop().Token);
-        }
     }
 
-    private static bool CheckUnary(TokenList output, Token token, Token? prev)
+    private static bool CheckUnary(List<Token> output, Token token, Token? prev)
     {
         switch ((prev ?? Tokens.DUMMY).Type)
         {
@@ -585,7 +578,7 @@ public class Parser : IParser
         return true;
     }
 
-    private void OnPrecedence(TokenList output, Token token, bool unary = false)
+    private void OnPrecedence(List<Token> output, Token token, bool unary = false)
     {
         Operator tokenOperator = new(token, token.Precedence(unary));
         bool left = token.LeftAssociative();
@@ -604,7 +597,7 @@ public class Parser : IParser
         operatorStack.Push(tokenOperator);
     }
 
-    private void OnSeparator(TokenList output)
+    private void OnSeparator(List<Token> output)
     {
         while (operatorStack.TryPop(out var oper))
         {
@@ -629,28 +622,39 @@ public class Parser : IParser
         throw ParserError($"Unexpected: {Tokens.ARG_SEP}");
     }
 
-    private void OnEmptyQueue(TokenList output)
+    private void OnEmptyQueue(List<Token> output)
     {
         while (operatorStack.TryPop(out var oper))
         {
             Token token = oper.Token;
             if (token.Type == TokenType.ParenOpen)
-            {
                 throw ParserError($"No matching: {Tokens.PAREN_CLOSE}");
-            }
 
             output.Add(token);
         }
 
         if (output.Count == 0)
-        {
             throw ParserError("Empty expression!");
-        }
     }
 
     #endregion
 
     #region Helpers
+
+    private bool ResolveIdentifier(string name, out TokenType type)
+    {
+        bool resolved = false;
+        if (functionLocalNames.Contains(name))
+        {
+            type = TokenType.FunctionLocal;
+            resolved = true;
+        }
+        else if (declarationNames.TryGetValue(name, out type))
+        {
+            resolved = true;
+        }
+        return resolved;
+    }
 
     private Token Expect(TokenType type)
     {
@@ -660,10 +664,8 @@ public class Parser : IParser
 
     private void Discard(TokenType type)
     {
-        if (Accept(type))
-            return;
-
-        throw ParserError("Unexpected token!");
+        if (!Accept(type))
+            throw ParserError("Unexpected token!");
     }
 
     private bool Accept(TokenType type)
@@ -671,6 +673,16 @@ public class Parser : IParser
         bool success = type == currentToken.Type;
         if (success)
             AdvanceToken();
+        return success;
+    }
+
+    private bool Accept(TokenType type, [MaybeNullWhen(false)] out Token token)
+    {
+        bool success = Accept(type);
+        if (success)
+            token = previousToken;
+        else
+            token = null;
         return success;
     }
 
@@ -682,14 +694,6 @@ public class Parser : IParser
 
         previousToken = currentToken;
         currentToken = lexicalTokens[++currentIndex];
-    }
-
-    private Token ResolveIdentifier(Token token)
-    {
-        if (declNames.TryGetValue(token.Symbol, out TokenType declType))
-            return token.WithType(declType);
-        
-        throw ParserError($"Could not resolve name! (was: {token.Symbol})");
     }
 
     #endregion

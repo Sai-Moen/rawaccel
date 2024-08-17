@@ -1,7 +1,9 @@
-﻿using scripting.Interpreting;
-using scripting.Script.CallbackImpl;
-using scripting.Generating;
+﻿using scripting.Generating;
+using scripting.Interpreting;
+using scripting.Lexing;
 using scripting.Parsing;
+using scripting.Script.CallbackImpl;
+using System.Collections.Generic;
 using System.Diagnostics;
 
 namespace scripting.Script.CallbackImpl
@@ -17,7 +19,7 @@ namespace scripting.Script.CallbackImpl
         {
             Debug.Assert(parsed.Name == NAME);
 
-            ITokenList args = parsed.Args;
+            IList<Token> args = parsed.Args;
             switch (args.Count)
             {
                 case 0:

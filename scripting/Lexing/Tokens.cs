@@ -10,15 +10,14 @@ public enum TokenType
 {
     Undefined, // Doesn't mean invalid right away, depends on if you expect a certain symbol
     Number, Bool, Constant,
-    Input, Output,
-    Identifier, Parameter,
+    Input, Output, Identifier, Parameter,
     Immutable, Persistent, Impersistent,
     Const, Let, Var, Fn,
     Return, If, Else, While,
     Terminator, ParenOpen, ParenClose,
     SquareOpen, SquareClose, CurlyOpen, CurlyClose,
     Assignment, Compound, Arithmetic, Comparison,
-    Function, ArgumentSeparator, MathFunction,
+    Function, FunctionLocal, ArgumentSeparator, MathFunction,
 }
 
 /// <summary>

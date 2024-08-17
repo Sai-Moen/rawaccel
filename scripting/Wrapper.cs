@@ -70,53 +70,6 @@ public static class Wrapper
     }
 
     /// <summary>
-    /// Compiles a script only up to and including the Parser phase,
-    /// but also emits all callbacks present in the script to Programs.
-    /// </summary>
-    /// <param name="script">Script to compile</param>
-    /// <returns>All callbacks as an array of <see cref="Program"/>s</returns>
-    public static Program[] CompileToCallbackPrograms(string script)
-    {
-        ParsingResult result = CompileToParsingResult(script);
-
-        MemoryMap addresses = [];
-        int numPersistent = 0;
-        int numImpersistent = 0;
-
-        Parameters parameters = result.Parameters;
-        foreach (Parameter parameter in parameters)
-        {
-            addresses.Add(parameter.Name, (MemoryAddress)numPersistent++);
-        }
-
-        IBlock variables = result.Declarations;
-        for (int i = 0; i < variables.Count; i++)
-        {
-            Token identifier = variables[i].Assign!.Identifier; // TODO fix this when functions are implemented
-            MemoryAddress address = identifier.Type switch
-                {
-                    TokenType.Immutable or TokenType.Persistent => (MemoryAddress)numPersistent++,
-                    TokenType.Impersistent                      => (MemoryAddress)numImpersistent++,
-
-                    _ => throw new ScriptException("Variable is not of the correct type here...")
-                };
-            addresses.Add(identifier.Symbol, address);
-        }
-
-        Emitter emitter = new(addresses);
-
-        IList<ParsedCallback> callbacks = result.Callbacks;
-        Program[] programs = new Program[callbacks.Count];
-        for (int i = 0; i < callbacks.Count; i++)
-        {
-            IBlock code = callbacks[i].Code;
-            programs[i] = emitter.Emit(code);
-        }
-
-        return programs;
-    }
-
-    /// <summary>
     /// Compiles all the way, resulting in a (concrete) Interpreter instance.
     /// Only recommended to use for testing.
     /// </summary>

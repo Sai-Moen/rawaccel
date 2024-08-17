@@ -1,7 +1,7 @@
-﻿using scripting.Interpreting;
-using scripting.Script.CallbackImpl;
-using scripting.Generating;
+﻿using scripting.Generating;
+using scripting.Interpreting;
 using scripting.Parsing;
+using scripting.Script.CallbackImpl;
 using System.Collections.Generic;
 
 namespace scripting.Script;
@@ -33,9 +33,7 @@ public partial class Callbacks
     {
         string name = parsed.Name;
         if (name != Calculation.NAME)
-        {
             callbacks.Add(name, CreateCallback(parsed, emitter));
-        }
     }
 
     internal static object CreateCallback(ParsedCallback parsed, Emitter emitter) => parsed.Name switch

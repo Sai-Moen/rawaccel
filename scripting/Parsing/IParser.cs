@@ -28,7 +28,7 @@ public interface IParser
 public record ParsingResult(
     string Description,
     Parameters Parameters,
-    IBlock Declarations,
+    IList<IASTNode> Declarations,
     IList<ParsedCallback> Callbacks);
 
 /// <summary>
@@ -56,10 +56,10 @@ public enum ASTTag : byte
     Function, Return,
 }
 
-public record ASTAssign(Token Identifier, Token Operator, ITokenList Initializer);
-public record ASTIf(ITokenList Condition, IBlock If, IBlock? Else);
-public record ASTWhile(ITokenList Condition, IBlock While);
-public record ASTFunction(Token Identifier, ITokenList Args, IBlock Code);
+public record ASTAssign(Token Identifier, Token Operator, IList<Token> Initializer);
+public record ASTIf(IList<Token> Condition, IList<IASTNode> If, IList<IASTNode>? Else);
+public record ASTWhile(IList<Token> Condition, IList<IASTNode> While);
+public record ASTFunction(Token Identifier, IList<IASTNode> Code);
 public record ASTReturn();
 
 /// <summary>
@@ -68,7 +68,7 @@ public record ASTReturn();
 /// <param name="Name">Name</param>
 /// <param name="Args">Arguments</param>
 /// <param name="Code">Code (as an AST)</param>
-public record ParsedCallback(string Name, ITokenList Args, IBlock Code);
+public record ParsedCallback(string Name, IList<Token> Args, IList<IASTNode> Code);
 
 /// <summary>
 /// Exception for parsing-related errors.

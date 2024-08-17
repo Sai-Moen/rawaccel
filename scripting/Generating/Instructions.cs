@@ -78,6 +78,8 @@ public static class Instructions
         InstructionType.LoadImpersistent => MemoryAddress.SIZE,
         InstructionType.StoreImpersistent => MemoryAddress.SIZE,
 
+        InstructionType.Call => MemoryAddress.SIZE,
+
         InstructionType.LoadNumber => DataAddress.SIZE,
 
         InstructionType.Jmp => CodeAddress.SIZE,

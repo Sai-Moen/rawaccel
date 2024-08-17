@@ -1,5 +1,8 @@
-﻿using scripting.Script;
+﻿using scripting.Lexing;
+using scripting.Parsing;
+using scripting.Script;
 using System;
+using System.Collections.Generic;
 
 namespace scripting.Generating;
 
@@ -13,7 +16,7 @@ public interface IEmitter
     /// </summary>
     /// <param name="code">Code as expression</param>
     /// <returns>A Program instance</returns>
-    Program Emit(ITokenList code);
+    Program Emit(IList<Token> code);
 
     /// <summary>
     /// Runs the emitter, produces the program from ASTs.
@@ -21,7 +24,7 @@ public interface IEmitter
     /// <param name="code">Code as ASTs</param>
     /// <returns>A Program instance</returns>
     /// <exception cref="EmitException"/>
-    Program Emit(IBlock code);
+    Program Emit(IList<IASTNode> code);
 }
 
 /// <summary>
@@ -48,9 +51,11 @@ public record Program(byte[] ByteCode, StaticData Data)
 /// </summary>
 public sealed class EmitException : GenerationException
 {
-    public EmitException(string message) : base(message)
+    public EmitException(string message)
+        : base(message)
     {}
 
-    public EmitException(string message, uint line) : base(message, line)
+    public EmitException(string message, uint line)
+        : base(message, line)
     {}
 }

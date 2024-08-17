@@ -10,7 +10,10 @@ namespace scripting.Generating;
 /// <summary>
 /// Emits AST(s) into programs, which the interpreter can execute.
 /// </summary>
-public class Emitter(IMemoryMap addresses) : IEmitter
+public class Emitter(
+    IDictionary<string, MemoryAddress> assignmentAddresses,
+    IDictionary<string, MemoryAddress> functionAddresses)
+    : IEmitter
 {
     #region Fields
 
@@ -21,12 +24,12 @@ public class Emitter(IMemoryMap addresses) : IEmitter
 
     #region Methods
 
-    public Program Emit(ITokenList code)
+    public Program Emit(IList<Token> code)
     {
         return EmitWithCallback(() => EmitExpression(code), code.Count);
     }
 
-    public Program Emit(IBlock code)
+    public Program Emit(IList<IASTNode> code)
     {
         return EmitWithCallback(() => EmitBlock(code), code.Count);
     }
@@ -46,20 +49,16 @@ public class Emitter(IMemoryMap addresses) : IEmitter
 
         StaticData data = new(numberMap.Count);
         foreach ((Number number, DataAddress dAddress) in numberMap)
-        {
             data[dAddress] = number;
-        }
         numberMap.Clear();
 
         return new Program(code, data);
     }
 
-    private void EmitBlock(IBlock code)
+    private void EmitBlock(IList<IASTNode> code)
     {
-        foreach (ASTNode node in code)
-        {
-            EmitStatement(node);
-        }
+        foreach (IASTNode node in code)
+            EmitStatement(ASTNode.Unwrap(node));
     }
 
     private void EmitStatement(ASTNode stmnt)
@@ -89,7 +88,7 @@ public class Emitter(IMemoryMap addresses) : IEmitter
                     }
                     else
                     {
-                        MemoryAddress address = addresses[identifier.Symbol];
+                        MemoryAddress address = assignmentAddresses[identifier.Symbol];
                         if (isCompound)
                         {
                             InstructionType load = type.MapToLoad();
@@ -104,9 +103,7 @@ public class Emitter(IMemoryMap addresses) : IEmitter
                         }
                         InstructionType store = type.MapToStore();
                         if (store == InstructionType.NoOp)
-                        {
                             throw EmitError("Cannot map identifier's type to Store instruction!", identifier);
-                        }
 
                         AddInstruction(store, (byte[])address);
                     }
@@ -151,26 +148,16 @@ public class Emitter(IMemoryMap addresses) : IEmitter
                     SetAddress(whileJumpTargetIndex, (byte[])whileJumpTarget);
                 }
                 break;
-            case ASTTag.Function:
-                {
-                    ASTFunction ast = union.astFunction;
-
-                    // TODO implement codegen for this
-                    throw new NotImplementedException();
-                }
-                //break;
             case ASTTag.Return:
                 AddInstruction(InstructionType.Return);
                 break;
         }
     }
 
-    private void EmitExpression(ITokenList expr)
+    private void EmitExpression(IList<Token> expr)
     {
         foreach (Token token in expr)
-        {
             EmitToken(token);
-        }
     }
 
     private void EmitToken(Token token)
@@ -191,7 +178,7 @@ public class Emitter(IMemoryMap addresses) : IEmitter
             case TokenType.Immutable:
             case TokenType.Persistent:
             case TokenType.Impersistent:
-                MemoryAddress mAddress = addresses[token.Symbol];
+                MemoryAddress mAddress = assignmentAddresses[token.Symbol];
                 AddInstruction(type.MapToLoad(), (byte[])mAddress);
                 break;
             case TokenType.Input:
@@ -221,6 +208,10 @@ public class Emitter(IMemoryMap addresses) : IEmitter
                 break;
             case TokenType.Comparison:
                 AddInstruction(OnComparison(token));
+                break;
+            case TokenType.Function:
+                MemoryAddress functionAddress = functionAddresses[token.Symbol];
+                AddInstruction(InstructionType.Call, (byte[])functionAddress);
                 break;
             case TokenType.MathFunction:
                 AddInstruction(OnFunction(token));
@@ -271,9 +262,9 @@ public class Emitter(IMemoryMap addresses) : IEmitter
 
     #region Emit Helpers
 
-    private void OnSpecialAssignment(bool isInline, InstructionType load, InstructionType modify, InstructionType store)
+    private void OnSpecialAssignment(bool isCompound, InstructionType load, InstructionType modify, InstructionType store)
     {
-        if (isInline)
+        if (isCompound)
         {
             AddInstruction(load);
             AddInstruction(InstructionType.Swap);
@@ -281,6 +272,17 @@ public class Emitter(IMemoryMap addresses) : IEmitter
         }
         AddInstruction(store);
     }
+
+    private static InstructionType OnConstant(Token token) => token.Symbol switch
+    {
+        Tokens.ZERO => InstructionType.LoadZero,
+        Tokens.CONST_E => InstructionType.LoadE,
+        Tokens.CONST_PI => InstructionType.LoadPi,
+        Tokens.CONST_TAU => InstructionType.LoadTau,
+        Tokens.CONST_CAPACITY => InstructionType.LoadCapacity,
+
+        _ => throw EmitError("Cannot emit constant!", token),
+    };
 
     private static InstructionType OnCompound(Token token) => token.Symbol switch
     {
@@ -292,17 +294,6 @@ public class Emitter(IMemoryMap addresses) : IEmitter
         Tokens.C_POW => InstructionType.Pow,
 
         _ => throw EmitError("Cannot emit assignment!", token),
-    };
-
-    private static InstructionType OnConstant(Token token) => token.Symbol switch
-    {
-        Tokens.ZERO => InstructionType.LoadZero,
-        Tokens.CONST_E => InstructionType.LoadE,
-        Tokens.CONST_PI => InstructionType.LoadPi,
-        Tokens.CONST_TAU => InstructionType.LoadTau,
-        Tokens.CONST_CAPACITY => InstructionType.LoadCapacity,
-
-        _ => throw EmitError("Cannot emit constant!", token),
     };
 
     private static InstructionType OnArithmetic(Token token) => token.Symbol switch

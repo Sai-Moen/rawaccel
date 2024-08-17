@@ -15,12 +15,7 @@ public static class Constants
 
     public const int CAPACITY = MemoryAddress.CAPACITY;
     public const int MAX_PARAMETERS = 8;
-    public const int MAX_VARIABLES = CAPACITY - MAX_PARAMETERS;
+    public const int MAX_DECLARATIONS = CAPACITY - MAX_PARAMETERS;
 
     public const int MAX_RECURSION_DEPTH = 0x1000;
-
-    static Constants()
-    {
-        Debug.Assert(CAPACITY == MAX_PARAMETERS + MAX_VARIABLES);
-    }
 }

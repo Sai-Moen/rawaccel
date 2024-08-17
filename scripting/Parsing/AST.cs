@@ -20,24 +20,26 @@ public readonly record struct ASTNode(ASTTag Tag, ASTUnion Union) : IASTNode
 
     public static ASTNode Unwrap(IASTNode ast)
     {
+        static ArgumentException UnwrapError() => new("Property is null despite tag!", nameof(ast));
+
         ASTTag tag = ast.Tag;
         ASTUnion union = new();
         switch (tag)
         {
             case ASTTag.Assign:
-                union.astAssign = ast.Assign!;
+                union.astAssign = ast.Assign ?? throw UnwrapError();
                 break;
             case ASTTag.If:
-                union.astIf = ast.If!;
+                union.astIf = ast.If ?? throw UnwrapError();
                 break;
             case ASTTag.While:
-                union.astWhile = ast.While!;
+                union.astWhile = ast.While ?? throw UnwrapError();
                 break;
             case ASTTag.Function:
-                union.astFunction = ast.Function!;
+                union.astFunction = ast.Function ?? throw UnwrapError();
                 break;
             case ASTTag.Return:
-                union.astReturn = ast.Return!;
+                union.astReturn = ast.Return ?? throw UnwrapError();
                 break;
             default:
                 throw new ArgumentException("Unsupported tag value!", nameof(ast));
@@ -60,9 +62,9 @@ public struct ASTUnion
 }
 
 /// <summary>
-/// Struct-of-Arrays IBlock implementation.
+/// Struct-of-Arrays list of nodes implementation.
 /// </summary>
-public class Block : IBlock
+public class Block : IList<ASTNode>
 {
     private readonly List<ASTTag> tags;
     private readonly List<ASTUnion> unions;
@@ -79,28 +81,27 @@ public class Block : IBlock
         unions = new(capacity);
     }
 
-    public Block(IEnumerable<IASTNode> items)
-        : this()
-    {
-        foreach (IASTNode ast in items)
-            Add(ast);
-    }
-
     public Block(IEnumerable<ASTNode> items)
         : this()
     {
-        foreach (IASTNode ast in items)
+        foreach (ASTNode ast in items)
             Add(ast);
     }
 
-    public IASTNode this[int index]
+    public Block(IList<IASTNode> items)
+        : this(items.Count)
     {
-        get => new ASTNode(tags[index], unions[index]);
+        foreach (IASTNode ast in items)
+            Add(ASTNode.Unwrap(ast));
+    }
+
+    public ASTNode this[int index]
+    {
+        get => new(tags[index], unions[index]);
         set
         {
-            ASTNode item = ASTNode.Unwrap(value);
-            tags[index] = item.Tag;
-            unions[index] = item.Union;
+            tags[index] = value.Tag;
+            unions[index] = value.Union;
         }
     }
 
@@ -108,11 +109,6 @@ public class Block : IBlock
     public int Count => tags.Count;
 
     public bool IsReadOnly => false;
-
-    public void Add(IASTNode item)
-    {
-        Add(ASTNode.Unwrap(item));
-    }
 
     public void Add(ASTNode item)
     {
@@ -126,19 +122,13 @@ public class Block : IBlock
         unions.Clear();
     }
 
-    public bool Contains(IASTNode item)
-    {
-        return Contains(ASTNode.Unwrap(item));
-    }
-
     public bool Contains(ASTNode item)
     {
         return IndexOf(item) != -1;
     }
 
-    public void CopyTo(IASTNode[] array, int arrayIndex)
+    public void CopyTo(ASTNode[] array, int arrayIndex)
     {
-        ArgumentNullException.ThrowIfNull(array);
         ArgumentOutOfRangeException.ThrowIfLessThan(arrayIndex, 0);
 
         int len = array.Length;
@@ -150,11 +140,11 @@ public class Block : IBlock
         }
 
         int i = arrayIndex;
-        foreach (IASTNode ast in this)
+        foreach (ASTNode ast in this)
             array[i++] = ast;
     }
 
-    public IEnumerator<IASTNode> GetEnumerator()
+    public IEnumerator<ASTNode> GetEnumerator()
     {
         for (int i = 0; i < Count; i++)
         {
@@ -162,7 +152,7 @@ public class Block : IBlock
         }
     }
 
-    public int IndexOf(IASTNode item)
+    public int IndexOf(ASTNode item)
     {
         for (int i = 0; i < Count; i++)
         {
@@ -172,30 +162,10 @@ public class Block : IBlock
         return -1;
     }
 
-    public int IndexOf(ASTNode item)
-    {
-        for (int i = 0; i < Count; i++)
-        {
-            if (item == new ASTNode(tags[i], unions[i]))
-                return i;
-        }
-        return -1;
-    }
-
-    public void Insert(int index, IASTNode item)
-    {
-        Insert(index, ASTNode.Unwrap(item));
-    }
-
     public void Insert(int index, ASTNode item)
     {
         tags.Insert(index, item.Tag);
         unions.Insert(index, item.Union);
-    }
-
-    public bool Remove(IASTNode item)
-    {
-        return Remove(ASTNode.Unwrap(item));
     }
 
     public bool Remove(ASTNode item)
@@ -215,4 +185,12 @@ public class Block : IBlock
     }
 
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+
+    public IList<IASTNode> ToWrappedList()
+    {
+        List<IASTNode> wrapped = new(Count);
+        foreach (ASTNode item in this)
+            wrapped.Add(item);
+        return wrapped;
+    }
 }

@@ -1,4 +1,6 @@
-﻿namespace scripting.Lexing;
+﻿using System.Collections.Generic;
+
+namespace scripting.Lexing;
 
 /// <summary>
 /// Defines the API of a RawAccelScript lexer.
@@ -18,7 +20,7 @@ public interface ILexer
 /// </summary>
 /// <param name="Description">The description of the script</param>
 /// <param name="Tokens">The tokens after the description</param>
-public record LexingResult(string Description, ITokenList Tokens);
+public record LexingResult(string Description, IList<Token> Tokens);
 
 /// <summary>
 /// Exception for tokenizing-specific errors.
