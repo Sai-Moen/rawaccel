@@ -16,6 +16,7 @@ namespace userinterface.ViewModels
             ProfileModelBE = profileBE;
             OutputDPIField = new NamedEditableFieldViewModel(profileBE.OutputDPI);
             YXRatioField = new NamedEditableFieldViewModel(profileBE.YXRatio);
+            AccelerationSettings = new AccelerationProfileSettingsViewModel(profileBE.Acceleration);
             HiddenSettings = new HiddenProfileSettingsViewModel(profileBE.Hidden);
         }
 
@@ -24,6 +25,8 @@ namespace userinterface.ViewModels
         public NamedEditableFieldViewModel OutputDPIField { get; set; }
 
         public NamedEditableFieldViewModel YXRatioField { get; set; }
+
+        public AccelerationProfileSettingsViewModel AccelerationSettings { get; set; }
 
         public HiddenProfileSettingsViewModel HiddenSettings { get; set; }
     }

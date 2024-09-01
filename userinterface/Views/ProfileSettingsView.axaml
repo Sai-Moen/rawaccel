@@ -12,6 +12,7 @@
         VerticalAlignment="Center">
         <ContentControl Content="{Binding OutputDPIField}"/>
         <ContentControl Content="{Binding YXRatioField}"/>
+        <ContentControl Content="{Binding AccelerationSettings}"/>
         <ContentControl Content="{Binding HiddenSettings}"/>
       </StackPanel>
 </UserControl>

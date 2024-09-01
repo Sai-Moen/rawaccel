@@ -30,7 +30,6 @@
         </Flyout>
       </Button.Flyout>
     </Button>
-    <StackPanel>
     <ListBox
       ItemsSource="{Binding IndividualMappings}">
       <ListBox.ItemTemplate>
@@ -66,6 +65,5 @@
         </DataTemplate>
       </ListBox.ItemTemplate>
     </ListBox>
-    </StackPanel>
   </DockPanel>
 </UserControl>
