@@ -4,9 +4,8 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:userinterface.ViewModels"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-             x:Class="userinterface.Views.ProfileListView"
-             x:DataType="vm:ProfileListViewModel">
-
+             x:Class="userinterface.Views.ActiveProfilesListView"
+             x:DataType="vm:ActiveProfilesListViewModel">
   <DockPanel>
     <TextBlock
       DockPanel.Dock="Top"
@@ -14,15 +13,11 @@
       FontSize="18"
       FontStyle="Italic"
       Margin="10,10,10,10">
-      Saved Profiles
+      Active Profiles
     </TextBlock>
-    <Button
-      DockPanel.Dock="Bottom"
-      Content="Add Profile"/>
     <StackPanel Orientation="Vertical">
       <ListBox
-        ItemsSource="{Binding Profiles}"
-        SelectionChanged="OnSelectionChanged">
+        ItemsSource="{Binding ActiveProfiles}">
         <ListBox.ItemTemplate>
           <DataTemplate>
             <TextBlock
