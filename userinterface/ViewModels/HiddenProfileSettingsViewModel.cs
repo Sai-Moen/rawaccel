@@ -19,6 +19,7 @@ namespace userinterface.ViewModels
             LRRatioField = new NamedEditableFieldViewModel(hiddenBE.LeftRightRatio);
             UDRatioField = new NamedEditableFieldViewModel(hiddenBE.UpDownRatio);
             AngleSnappingField = new NamedEditableFieldViewModel(hiddenBE.AngleSnappingDegrees);
+            OutputSmoothingHalfLifeField = new NamedEditableFieldViewModel(hiddenBE.OutputSmoothingHalfLife);
         }
 
         protected BE.ProfileComponents.HiddenModel HiddenBE { get; }
@@ -32,5 +33,7 @@ namespace userinterface.ViewModels
         public NamedEditableFieldViewModel UDRatioField { get; set; }
 
         public NamedEditableFieldViewModel AngleSnappingField { get; set; }
+
+        public NamedEditableFieldViewModel OutputSmoothingHalfLifeField { get; set; }
     }
 }

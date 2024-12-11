@@ -12,5 +12,7 @@
         public virtual AccelerationDefinitionType Type { get; init; }
 
         public Anisotropy Anisotropy { get; init; }
+
+        public Coalescion Coalescion { get; init; }
     }
 }

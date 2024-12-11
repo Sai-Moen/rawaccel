@@ -6,16 +6,21 @@
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="userinterface.Views.AccelerationProfileSettingsView"
              x:DataType="vm:AccelerationProfileSettingsViewModel">
-  <StackPanel Orientation="Vertical">
-    <StackPanel
-      Orientation="Horizontal">
-      <TextBlock
-        Text="Acceleration:"/>
-      <ComboBox
-        ItemsSource="{Binding DefinitionTypesLocal}"
-        SelectedItem="{Binding AccelerationBE.DefinitionType.InterfaceValue}"
-        />
+  <Expander VerticalAlignment="Top"
+            Header="Acceleration"
+            HorizontalAlignment="Center">
+    <StackPanel Orientation="Vertical">
+      <StackPanel
+        Orientation="Horizontal">
+        <TextBlock
+          Text="Acceleration:"/>
+        <ComboBox
+          ItemsSource="{Binding DefinitionTypesLocal}"
+          SelectedItem="{Binding AccelerationBE.DefinitionType.InterfaceValue}"
+          />
+      </StackPanel>
+      <UserControl Content="{Binding AnisotropySettings}"/>
+      <UserControl Content="{Binding CoalescionSettings}"/>
     </StackPanel>
-    <UserControl Content="{Binding AnisotropySettings}"/>
-  </StackPanel>
+  </Expander>
 </UserControl>

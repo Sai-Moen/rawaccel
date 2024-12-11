@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using DATA = userspace_backend.Data;
 using userspace_backend.IO;
 using userspace_backend.Model;
+using userspace_backend.Data.Profiles;
 
 namespace userspace_backend
 {
@@ -161,6 +162,14 @@ namespace userspace_backend
                 snap = profileModel.Hidden.AngleSnappingDegrees.ModelValue,
                 maximumSpeed = profileModel.Hidden.SpeedCap.ModelValue,
                 minimumSpeed = 0,
+                inputSpeedArgs = new SpeedArgs
+                {
+                    combineMagnitudes = profileModel.Anisotropy.CombineXYComponents.ModelValue,
+                    lpNorm = profileModel.Anisotropy.LPNorm.ModelValue,
+                    outputSmoothHalflife = profileModel.Hidden.OutputSmoothingHalfLife.ModelValue,
+                    inputSmoothHalflife = profileModel.Acceleration.Coalescion.InputSmoothingHalfLife.ModelValue,
+                    scaleSmoothHalflife = profileModel.Acceleration.Coalescion.ScaleSmoothingHalfLife.ModelValue,
+                }
             };
         }
     }

@@ -24,6 +24,8 @@ namespace userspace_backend.Model.ProfileComponents
 
         public EditableSetting<double> SpeedCap { get; set; }
 
+        public EditableSetting<double> OutputSmoothingHalfLife { get; set; }
+
         public override Hidden MapToData()
         {
             return new Hidden()
@@ -33,6 +35,7 @@ namespace userspace_backend.Model.ProfileComponents
                 LeftRightRatio = LeftRightRatio.ModelValue,
                 UpDownRatio = UpDownRatio.ModelValue,
                 SpeedCap = SpeedCap.ModelValue,
+                OutputSmoothingHalfLife = OutputSmoothingHalfLife.ModelValue,
             };
         }
 
@@ -71,6 +74,11 @@ namespace userspace_backend.Model.ProfileComponents
             SpeedCap = new EditableSetting<double>(
                 displayName: "Speed Cap",
                 initialValue: dataObject?.SpeedCap ?? 1,
+                parser: UserInputParsers.DoubleParser,
+                validator: ModelValueValidators.DefaultDoubleValidator);
+            OutputSmoothingHalfLife = new EditableSetting<double>(
+                displayName: "Output Smoothing Half-Life",
+                initialValue: dataObject?.OutputSmoothingHalfLife ?? 0,
                 parser: UserInputParsers.DoubleParser,
                 validator: ModelValueValidators.DefaultDoubleValidator);
         }

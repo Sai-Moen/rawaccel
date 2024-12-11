@@ -16,6 +16,7 @@
       <ContentControl Content="{Binding UDRatioField}"/>
       <ContentControl Content="{Binding SpeedCapField}"/>
       <ContentControl Content="{Binding AngleSnappingField}"/>
+      <ContentControl Content="{Binding OutputSmoothingHalfLifeField}"/>
     </StackPanel>
   </Expander>
 </UserControl>

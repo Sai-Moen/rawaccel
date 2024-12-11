@@ -17,5 +17,7 @@ namespace userspace_backend.Data.Profiles
         public double UpDownRatio { get; set; }
 
         public double SpeedCap { get; set; }
+
+        public double OutputSmoothingHalfLife { get; set; }
     }
 }

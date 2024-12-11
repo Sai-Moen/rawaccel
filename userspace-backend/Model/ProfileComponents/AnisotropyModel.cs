@@ -24,6 +24,8 @@ namespace userspace_backend.Model.ProfileComponents
 
         public EditableSetting<double> LPNorm { get; set; }
 
+        public EditableSetting<bool> CombineXYComponents { get; set; }
+
         public override Anisotropy MapToData()
         {
             return new Anisotropy()

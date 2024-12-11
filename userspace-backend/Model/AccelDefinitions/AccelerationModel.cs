@@ -20,6 +20,8 @@ namespace userspace_backend.Model.AccelDefinitions
 
         public AnisotropyModel Anisotropy { get; set; }
 
+        public CoalescionModel Coalescion { get; set; }
+
         public override Acceleration MapToData()
         {
             return DefinitionModels[DefinitionType.ModelValue].MapToData();
@@ -57,6 +59,7 @@ namespace userspace_backend.Model.AccelDefinitions
             }
 
             Anisotropy = new AnisotropyModel(dataObject?.Anisotropy);
+            Coalescion = new CoalescionModel(dataObject?.Coalescion);
         }
 
         protected IAccelDefinitionModel CreateAccelerationDefinitionModelOfType(AccelerationDefinitionType definitionType, Acceleration dataObject)

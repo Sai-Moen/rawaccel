@@ -20,6 +20,7 @@ namespace userinterface.ViewModels
         {
             AccelerationBE = accelerationBE;
             AnisotropySettings = new AnisotropyProfileSettingsViewModel(accelerationBE.Anisotropy);
+            CoalescionSettings = new CoalescionProfileSettingsViewModel(accelerationBE.Coalescion);
         }
 
         public BE.AccelerationModel AccelerationBE { get; }
