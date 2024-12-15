@@ -8,7 +8,7 @@ namespace userspace_backend.ScriptingLanguage.Generating;
 /// <summary>
 /// Represents an address in the Interpreter's Heap Memory.
 /// </summary>
-/// <param name="Address">Heap Memory address</param>
+/// <param name="Address">Heap Memory address.</param>
 public readonly record struct MemoryAddress(byte Address)
 {
     public const int SIZE = sizeof(byte);
@@ -26,7 +26,7 @@ public readonly record struct MemoryAddress(byte Address)
 /// <summary>
 /// Represents an address of static program data.
 /// </summary>
-/// <param name="Address">Data address</param>
+/// <param name="Address">Data address.</param>
 public readonly record struct DataAddress(ushort Address)
 {
     public const int SIZE = sizeof(ushort);
@@ -44,7 +44,7 @@ public readonly record struct DataAddress(ushort Address)
 /// <summary>
 /// Represents an Instruction address in the Program in which it is present.
 /// </summary>
-/// <param name="Address">Instruction address</param>
+/// <param name="Address">Instruction address.</param>
 public readonly record struct CodeAddress(int Address)
 {
     public const int SIZE = sizeof(int);

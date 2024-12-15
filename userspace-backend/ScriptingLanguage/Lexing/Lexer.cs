@@ -26,16 +26,16 @@ public class Lexer : ILexer
     private CharBufferState bufferState = CharBufferState.Idle;
     private readonly StringBuilder charBuffer = new();
 
+    private int baseIndex = -1;
     private int currentIndex = -1;
     private readonly int maxIndex;
-
-    private uint currentLine = 1;
 
     private char currentChar;
     private readonly char[] characters;
 
     private string description = string.Empty;
     private readonly List<Token> lexicalTokens = [];
+    private readonly List<string> symbolSideTable = [];
 
     #endregion
 
@@ -44,7 +44,7 @@ public class Lexer : ILexer
     /// <summary>
     /// Processes and tokenizes the input script.
     /// </summary>
-    /// <param name="script">The input script</param>
+    /// <param name="script">The input script.</param>
     public Lexer(string script)
     {
         characters = script.ToCharArray();
@@ -58,7 +58,7 @@ public class Lexer : ILexer
     private static bool CmpCharStr(char c, string s) => c == s[0];
 
     private static bool IsAlphabeticCharacter(char c)
-        => c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z' || CmpCharStr(c, Tokens.UNDER);
+        => c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z' || CmpCharStr(c, Tokens.UNDERSCORE);
 
     private static bool IsNumericCharacter(char c)
         => c >= '0' && c <= '9' || CmpCharStr(c, Tokens.FPOINT);
@@ -73,7 +73,7 @@ public class Lexer : ILexer
     {
         TokenizeDescription();
         TokenizeScript();
-        return new(description, lexicalTokens);
+        return new(description, lexicalTokens, symbolSideTable);
     }
 
     private void TokenizeDescription()
@@ -82,21 +82,18 @@ public class Lexer : ILexer
         foreach (char c in characters)
         {
             if (CmpCharStr(c, Tokens.SQUARE_OPEN))
-            {
                 break;
-            }
-            else if (IsNewline(c))
-            {
-                currentLine++;
-            }
+
             currentIndex++;
             builder.Append(c);
         }
+        baseIndex = currentIndex;
         description = builder.ToString().Trim();
     }
 
     private void TokenizeScript()
     {
+        Debug.Assert(currentIndex <= maxIndex);
         if (currentIndex == maxIndex || !CmpCharStr(characters[currentIndex + 1], Tokens.SQUARE_OPEN))
         {
             throw LexerError("Parameters not found!");
@@ -107,11 +104,9 @@ public class Lexer : ILexer
             currentChar = characters[currentIndex];
             if (IsNewline(currentChar))
             {
-                currentLine++;
                 if (bufferState == CharBufferState.CommentLine)
-                {
                     bufferState = CharBufferState.Idle;
-                }
+
                 continue;
             }
             else if (CommentCheck())
@@ -166,6 +161,7 @@ public class Lexer : ILexer
         {
             case CharBufferState.Idle:
                 bufferState = CharBufferState.Identifier;
+                baseIndex = currentIndex;
                 return true;
             case CharBufferState.Identifier:
                 CapIdentifierLength();
@@ -184,6 +180,7 @@ public class Lexer : ILexer
         {
             case CharBufferState.Idle:
                 bufferState = CharBufferState.Number;
+                baseIndex = currentIndex;
                 return true;
             case CharBufferState.Identifier:
                 CapIdentifierLength();
@@ -204,15 +201,16 @@ public class Lexer : ILexer
                 return true;
             case CharBufferState.Identifier:
                 AddBufferedToken();
-                bufferState = CharBufferState.Idle;
-                return true;
+                break;
             case CharBufferState.Number:
                 AddNumber();
-                bufferState = CharBufferState.Idle;
-                return true;
+                break;
             default:
                 return false;
         }
+
+        bufferState = CharBufferState.Idle;
+        return true;
     }
 
     private bool OnSpecial()
@@ -220,18 +218,15 @@ public class Lexer : ILexer
         switch (bufferState)
         {
             case CharBufferState.Idle:
-                SpecialCheck();
-                return true;
+                break;
             case CharBufferState.Identifier:
                 AddBufferedToken();
-                SpecialCheck();
-                return true;
+                break;
             case CharBufferState.Number:
                 AddNumber();
-                SpecialCheck();
-                return true;
+                break;
             case CharBufferState.Special:
-                Debug.Assert(CmpCharStr(currentChar, Tokens.SECOND));
+                Debug.Assert(CmpCharStr(currentChar, Tokens.EQUALS_SIGN));
 
                 BufferCurrentChar();
                 AddBufferedToken();
@@ -239,16 +234,19 @@ public class Lexer : ILexer
             default:
                 return false;
         }
-    }
 
-    private void SpecialCheck()
-    {
         BufferCurrentChar();
-        if (PeekNext(out char c2) && CmpCharStr(c2, Tokens.SECOND))
+        if (PeekNext(out char c2) && CmpCharStr(c2, Tokens.EQUALS_SIGN))
         {
             bufferState = CharBufferState.Special;
+            baseIndex = currentIndex;
         }
-        else AddBufferedToken();
+        else
+        {
+            AddBufferedToken();
+        }
+
+        return true;
     }
 
     #endregion
@@ -268,18 +266,27 @@ public class Lexer : ILexer
         Token token;
         if (Tokens.IsReserved(symbol))
         {
-            token = Tokens.GetReserved(symbol, currentLine);
+            token = Tokens.GetReserved(symbol, baseIndex);
         }
         else
         {
-            token = new(new(TokenType.Identifier, Tokens.Normalize(symbol)), currentLine);
+            SymbolIndex symbolIndex = AddSymbolToSideTable(Tokens.Normalize(symbol));
+            token = new(TokenType.Identifier, baseIndex, symbolIndex);
         }
         AddToken(token);
     }
 
     private void AddNumber()
     {
-        AddToken(new(new(TokenType.Number, ConsumeBuffer()), currentLine));
+        SymbolIndex symbolIndex = AddSymbolToSideTable(ConsumeBuffer());
+        AddToken(new(TokenType.Number, baseIndex, symbolIndex));
+    }
+
+    private SymbolIndex AddSymbolToSideTable(string symbol)
+    {
+        SymbolIndex symbolIndex = (SymbolIndex)symbolSideTable.Count;
+        symbolSideTable.Add(symbol);
+        return symbolIndex;
     }
 
     private void BufferCurrentChar()
@@ -309,23 +316,19 @@ public class Lexer : ILexer
     private void CapIdentifierLength()
     {
         if (charBuffer.Length > Constants.MAX_IDENTIFIER_LEN)
-        {
             throw LexerError($"Identifier name too long! (max {Constants.MAX_IDENTIFIER_LEN} characters)");
-        }
     }
 
     private void CapNumberLength()
     {
         if (charBuffer.Length > Constants.MAX_NUMBER_LEN)
-        {
             throw LexerError($"Number too long! (max {Constants.MAX_NUMBER_LEN} characters)");
-        }
     }
 
     #endregion
 
     private LexerException LexerError(string error)
     {
-        return new LexerException(error, currentLine);
+        return new LexerException(error, Tokens.DUMMY with { Position = baseIndex });
     }
 }

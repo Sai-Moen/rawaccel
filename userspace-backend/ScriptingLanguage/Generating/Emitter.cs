@@ -11,6 +11,7 @@ namespace userspace_backend.ScriptingLanguage.Generating;
 /// Emits AST(s) into programs, which the interpreter can execute.
 /// </summary>
 public class Emitter(
+    IList<string> symbolSideTable,
     IDictionary<string, MemoryAddress> assignmentAddresses,
     IDictionary<string, MemoryAddress> functionAddresses)
     : IEmitter
@@ -88,7 +89,7 @@ public class Emitter(
                     }
                     else
                     {
-                        MemoryAddress address = assignmentAddresses[identifier.Symbol];
+                        MemoryAddress address = assignmentAddresses[GetSymbol(identifier)];
                         if (isCompound)
                         {
                             InstructionType load = type.MapToLoad();
@@ -166,7 +167,7 @@ public class Emitter(
         switch (type)
         {
             case TokenType.Number:
-                Number number = Number.Parse(token.Symbol, token.Line);
+                Number number = Number.Parse(GetSymbol(token), token);
                 if (!numberMap.TryGetValue(number, out DataAddress dAddress))
                 {
                     dAddress = (DataAddress)numberMap.Count;
@@ -178,7 +179,7 @@ public class Emitter(
             case TokenType.Immutable:
             case TokenType.Persistent:
             case TokenType.Impersistent:
-                MemoryAddress mAddress = assignmentAddresses[token.Symbol];
+                MemoryAddress mAddress = assignmentAddresses[GetSymbol(token)];
                 AddInstruction(type.MapToLoad(), (byte[])mAddress);
                 break;
             case TokenType.Input:
@@ -210,7 +211,7 @@ public class Emitter(
                 AddInstruction(OnComparison(token));
                 break;
             case TokenType.Function:
-                MemoryAddress functionAddress = functionAddresses[token.Symbol];
+                MemoryAddress functionAddress = functionAddresses[GetSymbol(token)];
                 AddInstruction(InstructionType.Call, (byte[])functionAddress);
                 break;
             case TokenType.MathFunction:
@@ -262,6 +263,15 @@ public class Emitter(
 
     #region Emit Helpers
 
+    internal string GetSymbol(Token token)
+    {
+        uint index = (uint)token.SymbolIndex;
+        if (index >= (uint)symbolSideTable.Count)
+            throw EmitError($"SymbolIndex out of bounds: {index} >= {symbolSideTable.Count}", token);
+
+        return symbolSideTable[(int)index];
+    }
+
     private void OnSpecialAssignment(bool isCompound, InstructionType load, InstructionType modify, InstructionType store)
     {
         if (isCompound)
@@ -273,108 +283,128 @@ public class Emitter(
         AddInstruction(store);
     }
 
-    private static InstructionType OnConstant(Token token) => token.Symbol switch
+    private static InstructionType OnConstant(Token token)
     {
-        Tokens.ZERO => InstructionType.LoadZero,
-        Tokens.CONST_E => InstructionType.LoadE,
-        Tokens.CONST_PI => InstructionType.LoadPi,
-        Tokens.CONST_TAU => InstructionType.LoadTau,
-        Tokens.CONST_CAPACITY => InstructionType.LoadCapacity,
+        Debug.Assert(token.Type == TokenType.Constant);
+        return (ExtraIndexConstant)token.ExtraIndex switch
+        {
+            ExtraIndexConstant.Zero     => InstructionType.LoadZero,
+            ExtraIndexConstant.E        => InstructionType.LoadE,
+            ExtraIndexConstant.Pi       => InstructionType.LoadPi,
+            ExtraIndexConstant.Tau      => InstructionType.LoadTau,
+            ExtraIndexConstant.Capacity => InstructionType.LoadCapacity,
 
-        _ => throw EmitError("Cannot emit constant!", token),
-    };
+            _ => throw EmitError($"Unknown ExtraIndexConstant value: {token.ExtraIndex}", token)
+        };
+    }
 
-    private static InstructionType OnCompound(Token token) => token.Symbol switch
+    private static InstructionType OnCompound(Token token)
     {
-        Tokens.C_ADD => InstructionType.Add,
-        Tokens.C_SUB => InstructionType.Sub,
-        Tokens.C_MUL => InstructionType.Mul,
-        Tokens.C_DIV => InstructionType.Div,
-        Tokens.C_MOD => InstructionType.Mod,
-        Tokens.C_POW => InstructionType.Pow,
+        Debug.Assert(token.Type == TokenType.Compound);
+        return (ExtraIndexCompound)token.ExtraIndex switch
+        {
+            ExtraIndexCompound.Add => InstructionType.Add,
+            ExtraIndexCompound.Sub => InstructionType.Sub,
+            ExtraIndexCompound.Mul => InstructionType.Mul,
+            ExtraIndexCompound.Div => InstructionType.Div,
+            ExtraIndexCompound.Mod => InstructionType.Mod,
+            ExtraIndexCompound.Pow => InstructionType.Pow,
 
-        _ => throw EmitError("Cannot emit assignment!", token),
-    };
+            _ => throw EmitError($"Unknown ExtraIndexCompound value: {token.ExtraIndex}", token)
+        };
+    }
 
-    private static InstructionType OnArithmetic(Token token) => token.Symbol switch
+    private static InstructionType OnArithmetic(Token token)
     {
-        Tokens.ADD => InstructionType.Add,
-        Tokens.SUB => InstructionType.Sub,
-        Tokens.MUL => InstructionType.Mul,
-        Tokens.DIV => InstructionType.Div,
-        Tokens.MOD => InstructionType.Mod,
-        Tokens.POW => InstructionType.Pow,
+        Debug.Assert(token.Type == TokenType.Arithmetic);
+        return (ExtraIndexArithmetic)token.ExtraIndex switch
+        {
+            ExtraIndexArithmetic.Add => InstructionType.Add,
+            ExtraIndexArithmetic.Sub => InstructionType.Sub,
+            ExtraIndexArithmetic.Mul => InstructionType.Mul,
+            ExtraIndexArithmetic.Div => InstructionType.Div,
+            ExtraIndexArithmetic.Mod => InstructionType.Mod,
+            ExtraIndexArithmetic.Pow => InstructionType.Pow,
 
-        _ => throw EmitError("Cannot emit arithmetic!", token)
-    };
+            _ => throw EmitError($"Unknown ExtraIndexArithmetic value: {token.ExtraIndex}", token)
+        };
+    }
 
-    private static InstructionType OnComparison(Token token) => token.Symbol switch
+    private static InstructionType OnComparison(Token token)
     {
-        Tokens.OR => InstructionType.Or,
-        Tokens.AND => InstructionType.And,
-        Tokens.LT => InstructionType.Lt,
-        Tokens.GT => InstructionType.Gt,
-        Tokens.LE => InstructionType.Le,
-        Tokens.GE => InstructionType.Ge,
-        Tokens.EQ => InstructionType.Eq,
-        Tokens.NE => InstructionType.Ne,
-        Tokens.NOT => InstructionType.Not,
+        Debug.Assert(token.Type == TokenType.Comparison);
+        return (ExtraIndexComparison)token.ExtraIndex switch
+        {
+            ExtraIndexComparison.Or                 => InstructionType.Or,
+            ExtraIndexComparison.And                => InstructionType.And,
+            ExtraIndexComparison.LessThan           => InstructionType.Lt,
+            ExtraIndexComparison.GreaterThan        => InstructionType.Gt,
+            ExtraIndexComparison.LessThanOrEqual    => InstructionType.Le,
+            ExtraIndexComparison.GreaterThanOrEqual => InstructionType.Ge,
+            ExtraIndexComparison.Equal              => InstructionType.Eq,
+            ExtraIndexComparison.NotEqual           => InstructionType.Ne,
+            ExtraIndexComparison.Not                => InstructionType.Not,
 
-        _ => throw EmitError("Cannot emit comparison!", token),
-    };
+            _ => throw EmitError($"Unknown ExtraIndexComparison value: {token.ExtraIndex}", token)
+        };
+    }
 
-    private static InstructionType OnFunction(Token token) => token.Symbol switch
+    private static InstructionType OnFunction(Token token)
     {
-        Tokens.ABS => InstructionType.Abs,
-        Tokens.SIGN => InstructionType.Sign,
-        Tokens.COPY_SIGN => InstructionType.CopySign,
+        Debug.Assert(token.Type == TokenType.MathFunction);
+        return (ExtraIndexMathFunction)token.ExtraIndex switch
+        {
+            ExtraIndexMathFunction.Abs      => InstructionType.Abs,
+            ExtraIndexMathFunction.Sign     => InstructionType.Sign,
+            ExtraIndexMathFunction.CopySign => InstructionType.CopySign,
 
-        Tokens.ROUND => InstructionType.Round,
-        Tokens.TRUNC => InstructionType.Trunc,
-        Tokens.FLOOR => InstructionType.Floor,
-        Tokens.CEIL => InstructionType.Ceil,
-        Tokens.CLAMP => InstructionType.Clamp,
+            ExtraIndexMathFunction.Round => InstructionType.Round,
+            ExtraIndexMathFunction.Trunc => InstructionType.Trunc,
+            ExtraIndexMathFunction.Floor => InstructionType.Floor,
+            ExtraIndexMathFunction.Ceil  => InstructionType.Ceil,
+            ExtraIndexMathFunction.Clamp => InstructionType.Clamp,
 
-        Tokens.MIN => InstructionType.Min,
-        Tokens.MAX => InstructionType.Max,
-        Tokens.MIN_MAGNITUDE => InstructionType.MinM,
-        Tokens.MAX_MAGNITUDE => InstructionType.MaxM,
+            ExtraIndexMathFunction.Min          => InstructionType.Min,
+            ExtraIndexMathFunction.Max          => InstructionType.Max,
+            ExtraIndexMathFunction.MinMagnitude => InstructionType.MinM,
+            ExtraIndexMathFunction.MaxMagnitude => InstructionType.MaxM,
 
-        Tokens.SQRT => InstructionType.Sqrt,
-        Tokens.CBRT => InstructionType.Cbrt,
+            ExtraIndexMathFunction.Sqrt => InstructionType.Sqrt,
+            ExtraIndexMathFunction.Cbrt => InstructionType.Cbrt,
 
-        Tokens.LOG => InstructionType.Log,
-        Tokens.LOG_2 => InstructionType.Log2,
-        Tokens.LOG_10 => InstructionType.Log10,
-        Tokens.LOG_B => InstructionType.LogB,
-        Tokens.ILOG_B => InstructionType.ILogB,
+            ExtraIndexMathFunction.Log   => InstructionType.Log,
+            ExtraIndexMathFunction.Log2  => InstructionType.Log2,
+            ExtraIndexMathFunction.Log10 => InstructionType.Log10,
+            ExtraIndexMathFunction.LogB  => InstructionType.LogB,
+            ExtraIndexMathFunction.ILogB => InstructionType.ILogB,
 
-        Tokens.SIN => InstructionType.Sin,
-        Tokens.SINH => InstructionType.Sinh,
-        Tokens.ASIN => InstructionType.Asin,
-        Tokens.ASINH => InstructionType.Asinh,
+            ExtraIndexMathFunction.Sin   => InstructionType.Sin,
+            ExtraIndexMathFunction.Sinh  => InstructionType.Sinh,
+            ExtraIndexMathFunction.Asin  => InstructionType.Asin,
+            ExtraIndexMathFunction.Asinh => InstructionType.Asinh,
 
-        Tokens.COS => InstructionType.Cos,
-        Tokens.COSH => InstructionType.Cosh,
-        Tokens.ACOS => InstructionType.Acos,
-        Tokens.ACOSH => InstructionType.Acosh,
+            ExtraIndexMathFunction.Cos   => InstructionType.Cos,
+            ExtraIndexMathFunction.Cosh  => InstructionType.Cosh,
+            ExtraIndexMathFunction.Acos  => InstructionType.Acos,
+            ExtraIndexMathFunction.Acosh => InstructionType.Acosh,
 
-        Tokens.TAN => InstructionType.Tan,
-        Tokens.TANH => InstructionType.Tanh,
-        Tokens.ATAN => InstructionType.Atan,
-        Tokens.ATANH => InstructionType.Atanh,
-        Tokens.ATAN2 => InstructionType.Atan2,
+            ExtraIndexMathFunction.Tan   => InstructionType.Tan,
+            ExtraIndexMathFunction.Tanh  => InstructionType.Tanh,
+            ExtraIndexMathFunction.Atan  => InstructionType.Atan,
+            ExtraIndexMathFunction.Atanh => InstructionType.Atanh,
+            ExtraIndexMathFunction.Atan2 => InstructionType.Atan2,
 
-        Tokens.FUSED_MULTIPLY_ADD => InstructionType.FusedMultiplyAdd,
-        Tokens.SCALE_B => InstructionType.ScaleB,
+            ExtraIndexMathFunction.FusedMultiplyAdd => InstructionType.FusedMultiplyAdd,
+            ExtraIndexMathFunction.ScaleB           => InstructionType.ScaleB,
 
-        _ => throw EmitError("Cannot emit function!", token),
-    };
+            _ => throw EmitError($"Unknown ExtraIndexMathFunction value: {token.ExtraIndex}", token)
+        };
+    }
 
     #endregion
 
     private static EmitException EmitError(string error, Token token)
     {
-        return new EmitException(error, token.Line);
+        return new EmitException(error, token);
     }
 }

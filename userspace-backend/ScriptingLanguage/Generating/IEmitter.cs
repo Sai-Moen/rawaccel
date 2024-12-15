@@ -14,15 +14,15 @@ public interface IEmitter
     /// <summary>
     /// Runs the emitter, produces the program from an expression.
     /// </summary>
-    /// <param name="code">Code as expression</param>
-    /// <returns>A Program instance</returns>
+    /// <param name="code">Code as expression.</param>
+    /// <returns>A Program instance.</returns>
     Program Emit(IList<Token> code);
 
     /// <summary>
     /// Runs the emitter, produces the program from ASTs.
     /// </summary>
-    /// <param name="code">Code as ASTs</param>
-    /// <returns>A Program instance</returns>
+    /// <param name="code">Code as ASTs.</param>
+    /// <returns>A Program instance.</returns>
     /// <exception cref="EmitException"/>
     Program Emit(IList<IASTNode> code);
 }
@@ -47,7 +47,7 @@ public record Program(byte[] ByteCode, StaticData Data)
 }
 
 /// <summary>
-/// Exception for errors relating to emitting bytecode into a program.
+/// Exception for errors related to emitting bytecode into a program.
 /// </summary>
 public sealed class EmitException : GenerationException
 {
@@ -55,7 +55,7 @@ public sealed class EmitException : GenerationException
         : base(message)
     { }
 
-    public EmitException(string message, uint line)
-        : base(message, line)
+    public EmitException(string message, Token suspect)
+        : base(message, suspect)
     { }
 }
