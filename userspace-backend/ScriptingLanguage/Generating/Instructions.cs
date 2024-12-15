@@ -69,8 +69,8 @@ public static class Instructions
     /// <summary>
     /// Gets the length of the address that follows this instruction.
     /// </summary>
-    /// <param name="type">The type of the instruction</param>
-    /// <returns>Length of subsequent address in bytes</returns>
+    /// <param name="type">The type of the instruction.</param>
+    /// <returns>Length of subsequent address in bytes.</returns>
     public static int AddressLength(this InstructionType type) => type switch
     {
         InstructionType.LoadPersistent => MemoryAddress.SIZE,
@@ -91,8 +91,8 @@ public static class Instructions
     /// <summary>
     /// Looks up if this instruction is a branch/jump instruction.
     /// </summary>
-    /// <param name="type">The type of the instruction</param>
-    /// <returns>Whether this instruction is a jump</returns>
+    /// <param name="type">The type of the instruction.</param>
+    /// <returns>Whether this instruction is a jump.</returns>
     public static bool IsBranch(this InstructionType type) => type switch
     {
         InstructionType.Jmp => true,
@@ -104,8 +104,8 @@ public static class Instructions
     /// <summary>
     /// Looks up if this instruction is an inline assignment (i.e. 'composite' assignment).
     /// </summary>
-    /// <param name="type">The type of the instruction</param>
-    /// <returns>Whether this instruction is an inline assignment operation</returns>
+    /// <param name="type">The type of the instruction.</param>
+    /// <returns>Whether this instruction is an inline assignment operation.</returns>
     public static bool IsInline(this InstructionType type) => type switch
     {
         InstructionType.StorePersistent => false,
@@ -117,8 +117,8 @@ public static class Instructions
     /// <summary>
     /// Maps a token type to an instruction type, specifically a Load instruction.
     /// </summary>
-    /// <param name="type">Type of the token</param>
-    /// <returns>Load instruction, or NoOp if the token type cannot be mapped from</returns>
+    /// <param name="type">Type of the token.</param>
+    /// <returns>Load instruction, or NoOp if the token type cannot be mapped from.</returns>
     public static InstructionType MapToLoad(this TokenType type) => type switch
     {
         TokenType.Parameter or
@@ -132,8 +132,8 @@ public static class Instructions
     /// <summary>
     /// Maps a token type to an instruction type, specifically a Store instruction.
     /// </summary>
-    /// <param name="type">Type of the token</param>
-    /// <returns>Store instruction, or NoOp if the token type cannot be mapped from</returns>
+    /// <param name="type">Type of the token.</param>
+    /// <returns>Store instruction, or NoOp if the token type cannot be mapped from.</returns>
     public static InstructionType MapToStore(this TokenType type) => type switch
     {
         TokenType.Parameter or

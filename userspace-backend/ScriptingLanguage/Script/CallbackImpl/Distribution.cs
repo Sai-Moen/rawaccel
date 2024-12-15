@@ -26,7 +26,11 @@ namespace userspace_backend.ScriptingLanguage.Script.CallbackImpl
                     amount = Constants.LUT_POINTS_CAPACITY;
                     break;
                 case 1:
-                    amount = (int)(Number)args[0];
+                    {
+                        Token first = args[0];
+                        amount = (int)Number.Parse(emitter.GetSymbol(first), first);
+                    }
+
                     if (amount <= 0 || amount > Constants.LUT_POINTS_CAPACITY)
                     {
                         throw new GenerationException($"Amount argument out of range! range: [1, {Constants.LUT_POINTS_CAPACITY}]");

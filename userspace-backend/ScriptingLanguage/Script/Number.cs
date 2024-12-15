@@ -8,7 +8,7 @@ namespace userspace_backend.ScriptingLanguage.Script;
 /// <summary>
 /// Represents a number or boolean in the script.
 /// </summary>
-/// <param name="Value">Value of the Number</param>
+/// <param name="Value">Value of the Number.</param>
 public readonly record struct Number(double Value)
 {
     #region Constants
@@ -31,9 +31,9 @@ public readonly record struct Number(double Value)
         return Parse(s, new GenerationException("Cannot parse number!"));
     }
 
-    public static Number Parse(string s, uint line)
+    public static Number Parse(string s, Token suspect)
     {
-        return Parse(s, new GenerationException("Cannot parse number!", line));
+        return Parse(s, new GenerationException("Cannot parse number!", suspect));
     }
 
     private static Number Parse(string s, GenerationException e)
@@ -49,12 +49,12 @@ public readonly record struct Number(double Value)
     public static Number FromBooleanLiteral(Token token)
     {
         Debug.Assert(token.Type == TokenType.Bool);
-        return token.Symbol switch
+        return token.ExtraIndex switch
         {
-            Tokens.FALSE => FALSE,
-            Tokens.TRUE => TRUE,
+            0 => FALSE,
+            1 => TRUE,
 
-            _ => throw new GenerationException("Invalid Boolean Symbol!", token.Line)
+            _ => throw new GenerationException($"Unknown Bool ExtraIndex value: {token.ExtraIndex}", token)
         };
     }
 
@@ -64,12 +64,6 @@ public readonly record struct Number(double Value)
 
     public static implicit operator Number(bool value) => Convert.ToDouble(value);
     public static implicit operator Number(double value) => new(value);
-
-    public static explicit operator Number(Token token)
-    {
-        Debug.Assert(token.Type == TokenType.Number);
-        return Parse(token.Symbol, token.Line);
-    }
 
     public static implicit operator bool(Number number) => number != ZERO;
     public static implicit operator double(Number number) => number.Value;

@@ -44,16 +44,21 @@ public class ParserTests
         IList<Token> firstStatementInitializer = code[0].Assign!.Initializer;
 
         int index = 0;
-        void AssertNextToken(Token token) => Assert.AreEqual(token, firstStatementInitializer[index++]);
+        void AssertNextToken(Token expected)
+        {
+            Token actual = firstStatementInitializer[index++];
+            Assert.AreEqual(expected.Type, actual.Type);
+            Assert.AreEqual(expected.ExtraIndex, actual.ExtraIndex);
+        }
 
         for (int i = 0; i <= depth; i++)
         {
-            AssertNextToken(Tokens.GetReserved(Tokens.ZERO, 1));
+            AssertNextToken(Tokens.GetReserved(Tokens.ZERO));
         }
-        AssertNextToken(new(new(TokenType.Impersistent, name), 1));
+        AssertNextToken(new(TokenType.Impersistent));
         for (int i = 0; i <= depth; i++)
         {
-            AssertNextToken(Tokens.GetReserved(Tokens.SUB, 1));
+            AssertNextToken(Tokens.GetReserved(Tokens.SUB));
         }
     }
 }

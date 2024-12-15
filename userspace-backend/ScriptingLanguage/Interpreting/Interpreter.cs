@@ -34,13 +34,24 @@ public class Interpreter : IInterpreter
     /// <summary>
     /// Initializes the script and its default settings.
     /// </summary>
-    /// <param name="parsed">Result of parsing</param>
+    /// <param name="parsed">Result of parsing.</param>
     /// <exception cref="InterpreterException"/>
     public Interpreter(ParsingResult parsed)
     {
+        IList<string> symbolSideTable = parsed.SymbolSideTable;
+
+        string GetSymbol(Token token)
+        {
+            uint index = (uint)token.SymbolIndex;
+            if (index >= (uint)symbolSideTable.Count)
+                throw new InterpreterException($"SymbolIndex out of bounds: {index} >= {symbolSideTable.Count}");
+
+            return symbolSideTable[(int)index];
+        }
+
         Description = parsed.Description;
 
-        Emitter emitter = new(assignmentAddresses, functionAddresses);
+        Emitter emitter = new(symbolSideTable, assignmentAddresses, functionAddresses);
         int numPersistent = 0;
         int numImpersistent = 0;
 
@@ -74,7 +85,7 @@ public class Interpreter : IInterpreter
 
                             _ => throw InterpreterError("Identifier does not have the correct type for a variable!")
                         };
-                        assignmentAddresses.Add(identifier.Symbol, address);
+                        assignmentAddresses.Add(GetSymbol(identifier), address);
 
                         assignmentsList.Add(emitter.Emit([ast]));
                     }
@@ -84,7 +95,7 @@ public class Interpreter : IInterpreter
                     {
                         Token identifier = function.Identifier;
                         MemoryAddress address = (MemoryAddress)numFunctions++;
-                        functionAddresses.Add(identifier.Symbol, address);
+                        functionAddresses.Add(GetSymbol(identifier), address);
 
                         functionsList.Add(emitter.Emit(function.Code));
                     }

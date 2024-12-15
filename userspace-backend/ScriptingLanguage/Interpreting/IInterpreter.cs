@@ -54,16 +54,16 @@ public interface IInterpreter
     /// <summary>
     /// Executes a program with the interpreter's own stack. Clears stack after use.
     /// </summary>
-    /// <param name="program">The program</param>
-    /// <returns>The remainder of the stack as an array</returns>
+    /// <param name="program">The program.</param>
+    /// <returns>The remainder of the stack as an array.</returns>
     Number[] ExecuteProgram(Program program);
 
     /// <summary>
     /// Executes a program with the given stack. Clears stack after use.
     /// </summary>
-    /// <param name="program">The program</param>
-    /// <param name="stack">The stack</param>
-    /// <returns>The remainder of the stack as an array</returns>
+    /// <param name="program">The program.</param>
+    /// <param name="stack">The stack.</param>
+    /// <returns>The remainder of the stack as an array.</returns>
     Number[] ExecuteProgram(Program program, Stack<Number> stack);
 }
 
@@ -71,5 +71,4 @@ public interface IInterpreter
 /// Exception for interpretation-related errors.
 /// </summary>
 public sealed class InterpreterException(string message) : ScriptException(message)
-{
-}
+{ }

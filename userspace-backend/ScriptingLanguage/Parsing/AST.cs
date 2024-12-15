@@ -8,8 +8,8 @@ namespace userspace_backend.ScriptingLanguage.Parsing;
 /// <summary>
 /// Saves a statement as an AST node (tagged union).
 /// </summary>
-/// <param name="Tag">Tag</param>
-/// <param name="Union">Union</param>
+/// <param name="Tag">Tag.</param>
+/// <param name="Union">Union.</param>
 public readonly record struct ASTNode(ASTTag Tag, ASTUnion Union) : IASTNode
 {
     public ASTAssign? Assign => Tag == ASTTag.Assign ? Union.astAssign : null;

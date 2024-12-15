@@ -1,5 +1,7 @@
-﻿using System.Diagnostics;
+﻿using System.Collections.Generic;
+using System.Diagnostics;
 using userspace_backend.ScriptingLanguage.Lexing;
+using userspace_backend.ScriptingLanguage.Parsing;
 
 namespace userspace_backend.ScriptingLanguage.Script;
 
@@ -59,16 +61,26 @@ public class Parameter
 
     #region Constructors
 
-    internal Parameter(Token name, Token value, ParameterValidation minval = default, ParameterValidation maxval = default)
+    internal Parameter(IList<string> symbolSideTable, Token name, Token value, ParameterValidation minval, ParameterValidation maxval)
     {
         Debug.Assert(name.Type == TokenType.Parameter);
-        Name = name.Symbol;
+
+        string GetSymbol(Token token)
+        {
+            uint index = (uint)token.SymbolIndex;
+            if (index >= (uint)symbolSideTable.Count)
+                throw new GenerationException($"SymbolIndex out of bounds: {index} >= {symbolSideTable.Count}", token);
+
+            return symbolSideTable[(int)index];
+        }
+
+        Name = GetSymbol(name);
 
         switch (value.Type)
         {
             case TokenType.Number:
                 Type = ParameterType.Real;
-                Value = (Number)value;
+                Value = Number.Parse(GetSymbol(value), value);
                 break;
             case TokenType.Bool:
                 Type = ParameterType.Logical;
@@ -83,11 +95,11 @@ public class Parameter
         max = maxval;
         if (min.Contradicts(max) || max.Contradicts(min))
         {
-            throw new GenerationException("Contradicting parameter bounds!", value.Line);
+            throw new GenerationException("Contradicting parameter bounds!", value);
         }
         else if (Validate(Value) != 0)
         {
-            throw new GenerationException("Default value does not comply with bounds!", value.Line);
+            throw new GenerationException("Default value does not comply with bounds!", value);
         }
     }
 
@@ -146,7 +158,7 @@ public class Parameter
     /// <summary>
     /// Validates the given value according to the Parameter's indicated bounds.
     /// </summary>
-    /// <param name="value">Value to validate</param>
+    /// <param name="value">Value to validate.</param>
     /// <returns>
     /// equal to 0 -> acceptable value <br/>
     /// less than 0 -> too low value   <br/>
@@ -168,9 +180,9 @@ public class Parameter
 /// <summary>
 /// Read-Only representation of a <see cref="Parameter"/>.
 /// </summary>
-/// <param name="Name">The name</param>
-/// <param name="Type">The type</param>
-/// <param name="Value">The value</param>
+/// <param name="Name">The name.</param>
+/// <param name="Type">The type.</param>
+/// <param name="Value">The value.</param>
 public readonly record struct ReadOnlyParameter(string Name, ParameterType Type, Number Value)
 {
     internal ReadOnlyParameter(Parameter parameter)
