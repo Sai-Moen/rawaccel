@@ -70,5 +70,6 @@ public interface IInterpreter
 /// <summary>
 /// Exception for interpretation-related errors.
 /// </summary>
-public sealed class InterpreterException(string message) : ScriptException(message)
+public sealed class InterpreterException(string message)
+    : ScriptException(message)
 { }

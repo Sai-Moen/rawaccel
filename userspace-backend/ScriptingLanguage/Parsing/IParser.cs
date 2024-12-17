@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using userspace_backend.ScriptingLanguage.Lexing;
 using userspace_backend.ScriptingLanguage.Script;
 
@@ -29,22 +30,15 @@ public record ParsingResult(
     string Description,
     IList<string> SymbolSideTable,
     Parameters Parameters,
-    IList<IASTNode> Declarations,
+    IList<ASTNode> Declarations,
     IList<ParsedCallback> Callbacks);
 
 /// <summary>
-/// The Ast Node interface, a safe wrapper over the tagged union used internally.
+/// Saves a statement as an AST node (tagged union).
 /// </summary>
-public interface IASTNode
-{
-    ASTTag Tag { get; }
-
-    ASTAssign? Assign { get; }
-    ASTIf? If { get; }
-    ASTWhile? While { get; }
-    ASTFunction? Function { get; }
-    ASTReturn? Return { get; }
-}
+/// <param name="Tag">Tag.</param>
+/// <param name="Union">Union.</param>
+public readonly record struct ASTNode(ASTTag Tag, ASTUnion Union);
 
 /// <summary>
 /// AST tag.
@@ -57,10 +51,23 @@ public enum ASTTag : byte
     Function, Return,
 }
 
-public record ASTAssign(Token Identifier, Token Operator, IList<Token> Initializer);
-public record ASTIf(IList<Token> Condition, IList<IASTNode> If, IList<IASTNode>? Else);
-public record ASTWhile(IList<Token> Condition, IList<IASTNode> While);
-public record ASTFunction(Token Identifier, IList<IASTNode> Code);
+/// <summary>
+/// Union of all possible statements.
+/// </summary>
+[StructLayout(LayoutKind.Explicit)]
+public struct ASTUnion
+{
+    [FieldOffset(0)] public ASTAssign astAssign;
+    [FieldOffset(0)] public ASTIf astIf;
+    [FieldOffset(0)] public ASTWhile astWhile;
+    [FieldOffset(0)] public ASTFunction astFunction;
+    [FieldOffset(0)] public ASTReturn astReturn;
+}
+
+public record ASTAssign(Token Identifier, Token Operator, Token[] Initializer);
+public record ASTIf(Token[] Condition, ASTNode[] If, ASTNode[] Else);
+public record ASTWhile(Token[] Condition, ASTNode[] While);
+public record ASTFunction(Token Identifier, ASTNode[] Code);
 public record ASTReturn();
 
 /// <summary>
@@ -69,10 +76,11 @@ public record ASTReturn();
 /// <param name="Name">Name.</param>
 /// <param name="Args">Arguments.</param>
 /// <param name="Code">Code (as an AST).</param>
-public record ParsedCallback(string Name, IList<Token> Args, IList<IASTNode> Code);
+public record ParsedCallback(string Name, Token[] Args, ASTNode[] Code);
 
 /// <summary>
 /// Exception for parsing-related errors.
 /// </summary>
-public sealed class ParserException(string message, Token suspect) : GenerationException(message, suspect)
+public sealed class ParserException(string message, Token suspect)
+    : GenerationException(message, suspect)
 { }

@@ -16,12 +16,8 @@ public class Emitter(
     IDictionary<string, MemoryAddress> functionAddresses)
     : IEmitter
 {
-    #region Fields
-
     private List<byte> byteCode = [];
     private Dictionary<Number, DataAddress> numberMap = [];
-
-    #endregion
 
     #region Methods
 
@@ -30,7 +26,7 @@ public class Emitter(
         return EmitWithCallback(() => EmitExpression(code), code.Count);
     }
 
-    public Program Emit(IList<IASTNode> code)
+    public Program Emit(IList<ASTNode> code)
     {
         return EmitWithCallback(() => EmitBlock(code), code.Count);
     }
@@ -56,10 +52,10 @@ public class Emitter(
         return new Program(code, data);
     }
 
-    private void EmitBlock(IList<IASTNode> code)
+    private void EmitBlock(IList<ASTNode> code)
     {
-        foreach (IASTNode node in code)
-            EmitStatement(ASTNode.Unwrap(node));
+        foreach (ASTNode node in code)
+            EmitStatement(node);
     }
 
     private void EmitStatement(ASTNode stmnt)
@@ -75,17 +71,17 @@ public class Emitter(
 
                     Token op = ast.Operator;
                     bool isCompound = op.Type == TokenType.Compound;
-                    InstructionType modify = isCompound ? OnCompound(op) : default;
+                    InstructionType modify = isCompound ? EmitCompoundAssignment(op) : default;
 
                     Token identifier = ast.Identifier;
                     TokenType type = identifier.Type;
                     if (type == TokenType.Input)
                     {
-                        OnSpecialAssignment(isCompound, InstructionType.LoadIn, modify, InstructionType.StoreIn);
+                        EmitRegisterAssignment(isCompound, InstructionType.LoadIn, modify, InstructionType.StoreIn);
                     }
                     else if (type == TokenType.Output)
                     {
-                        OnSpecialAssignment(isCompound, InstructionType.LoadOut, modify, InstructionType.StoreOut);
+                        EmitRegisterAssignment(isCompound, InstructionType.LoadOut, modify, InstructionType.StoreOut);
                     }
                     else
                     {
@@ -119,7 +115,7 @@ public class Emitter(
                     CodeAddress ifJumpTargetIndex = AddDefaultJump(InstructionType.Jz);
                     EmitBlock(ast.If);
                     CodeAddress ifJumpTarget;
-                    if (ast.Else is null)
+                    if (ast.Else.Length == 0)
                     {
                         ifJumpTarget = byteCode.Count - 1;
                     }
@@ -189,10 +185,10 @@ public class Emitter(
                 AddInstruction(InstructionType.LoadOut);
                 break;
             case TokenType.Constant:
-                AddInstruction(OnConstant(token));
+                AddInstruction(EmitConstant(token));
                 break;
             case TokenType.Arithmetic:
-                InstructionType arithmetic = OnArithmetic(token);
+                InstructionType arithmetic = EmitArithmetic(token);
 
                 // attempt to convert [...LoadE, Pow...] to [...Exp...]
                 if (arithmetic == InstructionType.Pow && byteCode.Count > 0)
@@ -208,14 +204,14 @@ public class Emitter(
                 AddInstruction(arithmetic);
                 break;
             case TokenType.Comparison:
-                AddInstruction(OnComparison(token));
+                AddInstruction(EmitComparison(token));
                 break;
             case TokenType.Function:
                 MemoryAddress functionAddress = functionAddresses[GetSymbol(token)];
                 AddInstruction(InstructionType.Call, (byte[])functionAddress);
                 break;
             case TokenType.MathFunction:
-                AddInstruction(OnFunction(token));
+                AddInstruction(EmitMathFunction(token));
                 break;
             default:
                 throw EmitError("Cannot emit token!", token);
@@ -245,9 +241,7 @@ public class Emitter(
     {
         int offset = start.Address;
         for (int i = 0; i < address.Length; i++)
-        {
             byteCode[offset + i] = address[i];
-        }
     }
 
     private CodeAddress AddDefaultJump(InstructionType jump)
@@ -272,7 +266,7 @@ public class Emitter(
         return symbolSideTable[(int)index];
     }
 
-    private void OnSpecialAssignment(bool isCompound, InstructionType load, InstructionType modify, InstructionType store)
+    private void EmitRegisterAssignment(bool isCompound, InstructionType load, InstructionType modify, InstructionType store)
     {
         if (isCompound)
         {
@@ -283,7 +277,7 @@ public class Emitter(
         AddInstruction(store);
     }
 
-    private static InstructionType OnConstant(Token token)
+    private static InstructionType EmitConstant(Token token)
     {
         Debug.Assert(token.Type == TokenType.Constant);
         return (ExtraIndexConstant)token.ExtraIndex switch
@@ -298,7 +292,7 @@ public class Emitter(
         };
     }
 
-    private static InstructionType OnCompound(Token token)
+    private static InstructionType EmitCompoundAssignment(Token token)
     {
         Debug.Assert(token.Type == TokenType.Compound);
         return (ExtraIndexCompound)token.ExtraIndex switch
@@ -314,7 +308,7 @@ public class Emitter(
         };
     }
 
-    private static InstructionType OnArithmetic(Token token)
+    private static InstructionType EmitArithmetic(Token token)
     {
         Debug.Assert(token.Type == TokenType.Arithmetic);
         return (ExtraIndexArithmetic)token.ExtraIndex switch
@@ -330,7 +324,7 @@ public class Emitter(
         };
     }
 
-    private static InstructionType OnComparison(Token token)
+    private static InstructionType EmitComparison(Token token)
     {
         Debug.Assert(token.Type == TokenType.Comparison);
         return (ExtraIndexComparison)token.ExtraIndex switch
@@ -349,7 +343,7 @@ public class Emitter(
         };
     }
 
-    private static InstructionType OnFunction(Token token)
+    private static InstructionType EmitMathFunction(Token token)
     {
         Debug.Assert(token.Type == TokenType.MathFunction);
         return (ExtraIndexMathFunction)token.ExtraIndex switch

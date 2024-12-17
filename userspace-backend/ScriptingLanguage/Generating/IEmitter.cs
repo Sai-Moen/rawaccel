@@ -24,7 +24,7 @@ public interface IEmitter
     /// <param name="code">Code as ASTs.</param>
     /// <returns>A Program instance.</returns>
     /// <exception cref="EmitException"/>
-    Program Emit(IList<IASTNode> code);
+    Program Emit(IList<ASTNode> code);
 }
 
 /// <summary>

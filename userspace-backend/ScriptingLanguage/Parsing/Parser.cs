@@ -30,7 +30,7 @@ public class Parser : IParser
 
     private readonly string description;
     private readonly Parameters parameters = [];
-    private readonly List<IASTNode> declarations = [];
+    private readonly Block declarations = [];
     private readonly Dictionary<string, ParsedCallback> callbacks = [];
 
     #endregion
@@ -90,7 +90,7 @@ public class Parser : IParser
         Block asts = [];
         while (currentToken.Type != TokenType.CurlyClose)
             asts.Add(Statement());
-        callbacks.Add(Calculation.NAME, new(Calculation.NAME, [], asts.ToWrappedList()));
+        callbacks.Add(Calculation.NAME, new(Calculation.NAME, [], [.. asts]));
 
         if (currentIndex == maxIndex)
             return;
@@ -102,7 +102,7 @@ public class Parser : IParser
             List<Token> args = ParseArgs();
             Block code = ParseBlock();
 
-            ParsedCallback callback = new(GetSymbol(identifier), args, code.ToWrappedList());
+            ParsedCallback callback = new(GetSymbol(identifier), [.. args], [.. code]);
             if (callbacks.ContainsKey(callback.Name))
                 throw ParserError("Duplicate callbacks detected!");
 
@@ -253,7 +253,7 @@ public class Parser : IParser
             tag = ASTTag.Function;
             union = new()
             {
-                astFunction = new(identifier, code.ToWrappedList())
+                astFunction = new(identifier, [.. code])
             };
         }
         else
@@ -265,7 +265,7 @@ public class Parser : IParser
             tag = ASTTag.Assign;
             union = new()
             {
-                astAssign = new(identifier, eq, output)
+                astAssign = new(identifier, eq, [.. output])
             };
         }
         declarations.Add(new ASTNode(tag, union));
@@ -392,7 +392,7 @@ public class Parser : IParser
             tag = ASTTag.Assign;
             union = new()
             {
-                astAssign = new(target, assignment, initializer)
+                astAssign = new(target, assignment, [.. initializer])
             };
         }
         else if (Accept(TokenType.If))
@@ -402,14 +402,16 @@ public class Parser : IParser
 
             Block ifBlock = ParseBlock();
 
-            Block? elseBlock = null;
+            Block elseBlock;
             if (Accept(TokenType.Else))
                 elseBlock = ParseBlock();
+            else
+                elseBlock = [];
 
             tag = ASTTag.If;
             union = new()
             {
-                astIf = new(condition, ifBlock.ToWrappedList(), elseBlock?.ToWrappedList())
+                astIf = new([.. condition], [.. ifBlock], [.. elseBlock])
             };
         }
         else if (Accept(TokenType.While))
@@ -422,7 +424,7 @@ public class Parser : IParser
             tag = ASTTag.While;
             union = new()
             {
-                astWhile = new(condition, whileBlock.ToWrappedList())
+                astWhile = new([.. condition], [.. whileBlock])
             };
         }
         else if (Accept(TokenType.Return))

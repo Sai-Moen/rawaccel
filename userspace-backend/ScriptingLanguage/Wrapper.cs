@@ -90,17 +90,11 @@ public static class Wrapper
     public static double[] RunScriptBasic(IInterpreter interpreter, double desiredSpeed)
     {
         Callbacks callbacks = interpreter.Callbacks;
-
         double[] xs;
         if (callbacks.HasDistribution)
-        {
             xs = callbacks.Distribute();
-        }
         else
-        {
             xs = DefaultDistribution(desiredSpeed);
-        }
-
         return callbacks.Calculate(xs);
     }
 
@@ -113,9 +107,7 @@ public static class Wrapper
 
         double[] xs = new double[cap];
         for (uint i = 0; i < cap; i++)
-        {
             xs[i] = i * step;
-        }
         return xs;
     }
 }
@@ -125,10 +117,12 @@ public static class Wrapper
 /// </summary>
 public class ScriptException : Exception
 {
-    public ScriptException(string message) : base(message)
+    public ScriptException(string message)
+        : base(message)
     { }
 
-    public ScriptException(string message, Exception innerException) : base(message, innerException)
+    public ScriptException(string message, Exception innerException)
+        : base(message, innerException)
     { }
 }
 
@@ -137,10 +131,12 @@ public class ScriptException : Exception
 /// </summary>
 public class GenerationException : ScriptException
 {
-    public GenerationException(string message) : base(message)
+    public GenerationException(string message)
+        : base(message)
     { }
 
-    public GenerationException(string message, Token suspect) : base(message)
+    public GenerationException(string message, Token suspect)
+        : base(message)
     {
         Suspect = suspect;
     }

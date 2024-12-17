@@ -1,65 +1,8 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Runtime.InteropServices;
 
 namespace userspace_backend.ScriptingLanguage.Parsing;
-
-/// <summary>
-/// Saves a statement as an AST node (tagged union).
-/// </summary>
-/// <param name="Tag">Tag.</param>
-/// <param name="Union">Union.</param>
-public readonly record struct ASTNode(ASTTag Tag, ASTUnion Union) : IASTNode
-{
-    public ASTAssign? Assign => Tag == ASTTag.Assign ? Union.astAssign : null;
-    public ASTIf? If => Tag == ASTTag.If ? Union.astIf : null;
-    public ASTWhile? While => Tag == ASTTag.While ? Union.astWhile : null;
-    public ASTFunction? Function => Tag == ASTTag.Function ? Union.astFunction : null;
-    public ASTReturn? Return => Tag == ASTTag.Return ? Union.astReturn : null;
-
-    public static ASTNode Unwrap(IASTNode ast)
-    {
-        static ArgumentException UnwrapError() => new("Property is null despite tag!", nameof(ast));
-
-        ASTTag tag = ast.Tag;
-        ASTUnion union = new();
-        switch (tag)
-        {
-            case ASTTag.Assign:
-                union.astAssign = ast.Assign ?? throw UnwrapError();
-                break;
-            case ASTTag.If:
-                union.astIf = ast.If ?? throw UnwrapError();
-                break;
-            case ASTTag.While:
-                union.astWhile = ast.While ?? throw UnwrapError();
-                break;
-            case ASTTag.Function:
-                union.astFunction = ast.Function ?? throw UnwrapError();
-                break;
-            case ASTTag.Return:
-                union.astReturn = ast.Return ?? throw UnwrapError();
-                break;
-            default:
-                throw new ArgumentException("Unsupported tag value!", nameof(ast));
-        }
-        return new(tag, union);
-    }
-}
-
-/// <summary>
-/// Union of all possible statements.
-/// </summary>
-[StructLayout(LayoutKind.Explicit)]
-public struct ASTUnion
-{
-    [FieldOffset(0)] public ASTAssign astAssign;
-    [FieldOffset(0)] public ASTIf astIf;
-    [FieldOffset(0)] public ASTWhile astWhile;
-    [FieldOffset(0)] public ASTFunction astFunction;
-    [FieldOffset(0)] public ASTReturn astReturn;
-}
 
 /// <summary>
 /// Struct-of-Arrays list of nodes implementation.
@@ -86,13 +29,6 @@ public class Block : IList<ASTNode>
     {
         foreach (ASTNode ast in items)
             Add(ast);
-    }
-
-    public Block(IList<IASTNode> items)
-        : this(items.Count)
-    {
-        foreach (IASTNode ast in items)
-            Add(ASTNode.Unwrap(ast));
     }
 
     public ASTNode this[int index]
@@ -147,9 +83,7 @@ public class Block : IList<ASTNode>
     public IEnumerator<ASTNode> GetEnumerator()
     {
         for (int i = 0; i < Count; i++)
-        {
             yield return this[i];
-        }
     }
 
     public int IndexOf(ASTNode item)
@@ -185,12 +119,4 @@ public class Block : IList<ASTNode>
     }
 
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-
-    public IList<IASTNode> ToWrappedList()
-    {
-        List<IASTNode> wrapped = new(Count);
-        foreach (ASTNode item in this)
-            wrapped.Add(item);
-        return wrapped;
-    }
 }
