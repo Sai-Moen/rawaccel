@@ -1,5 +1,4 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System.Collections.Generic;
 using System.Text;
 using userspace_backend.ScriptingLanguage;
 using userspace_backend.ScriptingLanguage.Lexing;
@@ -10,7 +9,7 @@ namespace userspace_backend_tests.ScriptingLanguageTests.IntegrationTests;
 [TestClass]
 public class ParserTests
 {
-    private static IList<IASTNode> GetCalculationASTs(string script)
+    private static ASTNode[] GetCalculationASTs(string script)
     {
         return Wrapper.CompileToParsingResult(script).Callbacks[0].Code;
     }
@@ -40,8 +39,8 @@ public class ParserTests
         }
         builder.Append("; }");
 
-        IList<IASTNode> code = GetCalculationASTs(builder.ToString());
-        IList<Token> firstStatementInitializer = code[0].Assign!.Initializer;
+        ASTNode[] code = GetCalculationASTs(builder.ToString());
+        Token[] firstStatementInitializer = code[0].Union.astAssign.Initializer;
 
         int index = 0;
         void AssertNextToken(Token expected)

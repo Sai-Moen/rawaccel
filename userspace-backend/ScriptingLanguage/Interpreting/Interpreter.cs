@@ -62,7 +62,7 @@ public class Interpreter : IInterpreter
         foreach (Parameter parameter in parameters)
             assignmentAddresses.Add(parameter.Name, (MemoryAddress)numPersistent++);
 
-        IList<IASTNode> declarations = parsed.Declarations;
+        IList<ASTNode> declarations = parsed.Declarations;
         int numDeclarations = declarations.Count;
 
         List<Program> assignmentsList = new(numDeclarations);
@@ -70,12 +70,12 @@ public class Interpreter : IInterpreter
         int numFunctions = 0;
 
         Debug.Assert(numDeclarations <= Constants.MAX_DECLARATIONS);
-        foreach (IASTNode ast in declarations)
+        foreach (ASTNode ast in declarations)
         {
             switch (ast.Tag)
             {
                 case ASTTag.Assign:
-                    ASTAssign assignment = ast.Assign ?? throw InterpreterError("Invalid AST node for an assignment tag!");
+                    ASTAssign assignment = ast.Union.astAssign;
                     {
                         Token identifier = assignment.Identifier;
                         MemoryAddress address = identifier.Type switch
@@ -91,7 +91,7 @@ public class Interpreter : IInterpreter
                     }
                     break;
                 case ASTTag.Function:
-                    ASTFunction function = ast.Function ?? throw InterpreterError("Invalid AST node for a function tag!");
+                    ASTFunction function = ast.Union.astFunction;
                     {
                         Token identifier = function.Identifier;
                         MemoryAddress address = (MemoryAddress)numFunctions++;
