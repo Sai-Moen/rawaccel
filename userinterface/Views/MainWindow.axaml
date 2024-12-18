@@ -15,16 +15,41 @@
              to set the actual DataContext for runtime, set the DataContext property in code (look at App.axaml.cs) -->
         <vm:MainWindowViewModel/>
     </Design.DataContext>
-  <TabControl TabStripPlacement = "Left">
-    <TabItem Header = "Devices">
-      <ContentControl Content="{Binding DevicesPage}"/>
-    </TabItem>
-    <TabItem Header = "Mappings">
-      <ContentControl Content="{Binding MappingsPage}"/>
-    </TabItem>
-    <TabItem Header = "Profiles">
-      <ContentControl Content="{Binding ProfilesPage}"/>
-    </TabItem>
-  </TabControl>
+  <Panel>
+    <TabControl VerticalAlignment="Stretch" HorizontalAlignment="Stretch" TabStripPlacement = "Left" ZIndex="0">
+      <TabControl.ItemsPanel>
+        <ItemsPanelTemplate>
+          <WrapPanel Width="130"/>
+        </ItemsPanelTemplate>
+      </TabControl.ItemsPanel>
+      <TabItem Header = "Devices">
+        <ContentControl Content="{Binding DevicesPage}"/>
+      </TabItem>
+      <TabItem Header = "Mappings">
+        <ContentControl Content="{Binding MappingsPage}"/>
+      </TabItem>
+      <TabItem Header = "Profiles">
+        <ContentControl Content="{Binding ProfilesPage}"/>
+      </TabItem>
+    </TabControl>
+    <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center">Testing</TextBlock>
+    <Panel
+      VerticalAlignment="Bottom"
+      HorizontalAlignment="Left"
+      Width="130"
+      ZIndex="1">
+      <Button
+        HorizontalAlignment="Center"
+        VerticalAlignment="Center"
+        Margin="16">
+        <TextBlock
+          VerticalAlignment="Center"
+          HorizontalAlignment="Center"
+          FontSize="25">
+          Apply
+        </TextBlock>
+      </Button>
 
+    </Panel>
+  </Panel>
 </Window>
