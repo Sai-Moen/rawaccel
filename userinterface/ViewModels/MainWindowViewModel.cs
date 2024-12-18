@@ -19,4 +19,9 @@ public partial class MainWindowViewModel : ViewModelBase
     public MappingsPageViewModel MappingsPage { get; }
 
     protected BE.BackEnd BackEnd { get; set; }
+
+    public void ApplyButtonClicked()
+    {
+        BackEnd.Apply();
+    }
 }

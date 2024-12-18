@@ -61,7 +61,7 @@ namespace userspace_backend
         {
             try
             {
-                WriteToDriver();
+                //WriteToDriver();
             }
             catch (Exception ex)
             {
@@ -73,7 +73,10 @@ namespace userspace_backend
 
         protected void WriteSettingsToDisk()
         {
-            BackEndLoader.WriteSettingsToDisk(Devices.DevicesEnumerable);
+            BackEndLoader.WriteSettingsToDisk(
+                Devices.DevicesEnumerable,
+                Mappings,
+                Profiles.Profiles);
         }
 
         protected void WriteToDriver()

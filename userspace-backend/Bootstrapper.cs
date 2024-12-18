@@ -17,6 +17,9 @@ namespace userspace_backend
 
         public DATA.Profile[] ProfilesToLoad { get; set; }
 
+        // Allows us to test parts of BackEndLoader as desired
+        public BackEndLoader BackEndLoader { get; set; }
+
         public IEnumerable<DATA.Device> LoadDevices()
         {
             return DevicesToLoad;
@@ -32,9 +35,12 @@ namespace userspace_backend
             return ProfilesToLoad;
         }
 
-        public void WriteSettingsToDisk(IEnumerable<DeviceModel> devices)
+        public void WriteSettingsToDisk(
+            IEnumerable<DeviceModel> devices,
+            MappingsModel mappings,
+            IEnumerable<ProfileModel> profiles)
         {
-            // Do nothing
+            BackEndLoader.WriteSettingsToDisk(devices, mappings, profiles);
         }
     }
 }

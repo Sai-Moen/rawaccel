@@ -8,6 +8,7 @@
     <AssemblyName>rawaccel</AssemblyName>
     <ApplicationIcon>mouse.ico</ApplicationIcon>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <BaseOutputPath>..\x64\</BaseOutputPath>
   </PropertyGroup>
 
   <ItemGroup>

@@ -40,6 +40,7 @@ public partial class App : Application
     {
         return new Bootstrapper()
         {
+            BackEndLoader = new BackEndLoader(System.AppDomain.CurrentDomain.BaseDirectory),
             DevicesToLoad =
             [
                 new DATA.Device() { Name = "Superlight 2", DPI = 32000, HWID = @"HID\VID_046D&PID_C54D&MI_00", PollingRate = 1000, DeviceGroup = "Logitech Mice" },

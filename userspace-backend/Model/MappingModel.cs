@@ -49,7 +49,11 @@ namespace userspace_backend.Model
 
         public override Mapping MapToData()
         {
-            Mapping mapping = new Mapping();
+            Mapping mapping = new Mapping()
+            {
+                Name = Name.ModelValue,
+                GroupsToProfiles = new Mapping.GroupsToProfilesMapping(),
+            };
 
             foreach (var group in IndividualMappings)
             {
