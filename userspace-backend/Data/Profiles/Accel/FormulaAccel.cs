@@ -10,12 +10,12 @@ namespace userspace_backend.Data.Profiles.Accel
     {
         public enum AccelerationFormulaType
         {
-            Linear,
-            Classic,
-            Power,
-            Natural,
-            Jump,
-            Synchronous,
+            Synchronous = 0,
+            Linear = 1,
+            Classic = 2,
+            Power = 3,
+            Natural = 4,
+            Jump = 5,
         }
 
         public override AccelerationDefinitionType Type { get => AccelerationDefinitionType.Formula; }

@@ -32,7 +32,6 @@
         <ContentControl Content="{Binding ProfilesPage}"/>
       </TabItem>
     </TabControl>
-    <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center">Testing</TextBlock>
     <Panel
       VerticalAlignment="Bottom"
       HorizontalAlignment="Left"
@@ -50,7 +49,6 @@
           Apply
         </TextBlock>
       </Button>
-
     </Panel>
   </Panel>
 </Window>

@@ -13,6 +13,7 @@ namespace userspace_backend.Model.AccelDefinitions
     {
         public NoAccelDefinitionModel(Acceleration dataObject) : base(dataObject)
         {
+            NoAcceleration = new NoAcceleration();
         }
 
         public NoAcceleration NoAcceleration { get; protected set; }

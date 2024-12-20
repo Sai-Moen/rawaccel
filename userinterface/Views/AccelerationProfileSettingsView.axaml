@@ -19,6 +19,7 @@
           SelectedItem="{Binding AccelerationBE.DefinitionType.InterfaceValue}"
           />
       </StackPanel>
+      <UserControl Content="{Binding AccelerationFormulaSettings}" IsVisible="{Binding AreFormulaSettingsVisible}"/>
       <UserControl Content="{Binding AnisotropySettings}"/>
       <UserControl Content="{Binding CoalescionSettings}"/>
     </StackPanel>

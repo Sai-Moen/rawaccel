@@ -19,6 +19,8 @@ namespace userspace_backend.Model.AccelDefinitions
 
         public EditableSetting<FormulaAccel.AccelerationFormulaType> FormulaType { get; set; }
 
+        public int FormulaTypeIndex { get => (int)FormulaType.ModelValue; }
+
         protected Dictionary<FormulaAccel.AccelerationFormulaType, IAccelDefinitionModel> FormulaModels { get; set; }
 
         public override AccelArgs MapToDriver()
@@ -29,6 +31,11 @@ namespace userspace_backend.Model.AccelDefinitions
         public override Acceleration MapToData()
         {
             return FormulaModels[FormulaType.ModelValue].MapToData();
+        }
+
+        public IAccelDefinitionModel GetAccelerationModelOfType(FormulaAccel.AccelerationFormulaType formulaType)
+        {
+            return FormulaModels[formulaType];
         }
 
         protected override IEnumerable<IEditableSetting> EnumerateEditableSettings()
@@ -61,12 +68,14 @@ namespace userspace_backend.Model.AccelDefinitions
                 parser: UserInputParsers.AccelerationFormulaTypeParser,
                 // When the definition type changes, contained editable settings collections need to correspond to new type
                 validator: ModelValueValidators.DefaultAccelerationFormulaTypeValidator,
-                setCallback: GatherEditableSettingsCollections);
+                setCallback: GatherEditableSettingsCollections,
+                autoUpdateFromInterface: true);
 
             FormulaModels = new Dictionary<FormulaAccel.AccelerationFormulaType, IAccelDefinitionModel>();
+
             foreach (FormulaAccel.AccelerationFormulaType formulaType in Enum.GetValues(typeof(FormulaAccel.AccelerationFormulaType)))
             {
-                CreateAccelerationDefinitionModelOfType(formulaType, dataObject);
+                FormulaModels.Add(formulaType, CreateAccelerationDefinitionModelOfType(formulaType, dataObject));
             }
         }
 

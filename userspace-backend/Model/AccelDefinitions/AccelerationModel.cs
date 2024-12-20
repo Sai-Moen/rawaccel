@@ -22,6 +22,8 @@ namespace userspace_backend.Model.AccelDefinitions
 
         public CoalescionModel Coalescion { get; set; }
 
+        public FormulaAccelModel FormulaAccel { get => DefinitionModels[AccelerationDefinitionType.Formula] as FormulaAccelModel; }
+
         public override Acceleration MapToData()
         {
             return DefinitionModels[DefinitionType.ModelValue].MapToData();

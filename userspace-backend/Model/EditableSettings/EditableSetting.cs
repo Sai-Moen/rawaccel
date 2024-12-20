@@ -19,14 +19,21 @@ namespace userspace_backend.Model.EditableSettings
         /// This value can be bound in UI for readonly display of validated input
         /// </summary>
         [ObservableProperty]
-        public string currentValidatedValue;
+        public string currentValidatedValueString;
+
+        /// <summary>
+        /// This value can be bound in UI for logic based on validated input
+        /// </summary>
+        [ObservableProperty]
+        public T currentValidatedValue;
 
         public EditableSetting(
             string displayName,
             T initialValue,
             IUserInputParser<T> parser,
             IModelValueValidator<T> validator,
-            Action setCallback = null)
+            Action setCallback = null,
+            bool autoUpdateFromInterface = false)
         {
             DisplayName = displayName;
             LastWrittenValue = initialValue;
@@ -35,6 +42,7 @@ namespace userspace_backend.Model.EditableSettings
             Validator = validator;
             UpdateModelValueFromLastKnown();
             UpdateInterfaceValue();
+            AutoUpdateFromInterface = autoUpdateFromInterface;
         }
 
         /// <summary>
@@ -47,6 +55,12 @@ namespace userspace_backend.Model.EditableSettings
         public T LastWrittenValue { get; protected set; }
 
         public string EditedValueForDiplay { get => ModelValue?.ToString() ?? string.Empty; }
+
+        /// <summary>
+        /// Interface can set this for cases when new value arrives all at once (such as menu selection)
+        /// instead of cases where new value arrives in parts (typing)
+        /// </summary>
+        public bool AutoUpdateFromInterface { get; set; }
 
         protected Action? SetCallback { get; }
 
@@ -100,12 +114,16 @@ namespace userspace_backend.Model.EditableSettings
         protected void UpdatedModeValue(T value)
         {
             ModelValue = value;
-            CurrentValidatedValue = ModelValue?.ToString();
+            CurrentValidatedValue = ModelValue;
+            CurrentValidatedValueString = ModelValue?.ToString();
         }
 
-        partial void OnCurrentValidatedValueChanging(string? oldValue, string newValue)
+        partial void OnInterfaceValueChanged(string value)
         {
-            newValue = oldValue ?? string.Empty;
+            if (AutoUpdateFromInterface)
+            {
+                TryUpdateFromInterface();
+            }
         }
     }
 }
