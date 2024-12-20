@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
-using userspace_backend.ScriptingLanguage.Generating;
-using userspace_backend.ScriptingLanguage.Interpreting;
-using userspace_backend.ScriptingLanguage.Parsing;
+using userspace_backend.ScriptingLanguage.Compiler.CodeGen;
+using userspace_backend.ScriptingLanguage.Compiler.Parser;
+using userspace_backend.ScriptingLanguage.Interpreter;
 using userspace_backend.ScriptingLanguage.Script.CallbackImpl;
 
 namespace userspace_backend.ScriptingLanguage.Script;
@@ -11,7 +11,7 @@ public partial class Callbacks
     private readonly IInterpreter interpreter;
     private readonly Dictionary<string, object> callbacks = [];
 
-    internal Callbacks(Interpreter interpreter, ParsedCallback calculation, Emitter emitter)
+    internal Callbacks(InterpreterImpl interpreter, ParsedCallback calculation, EmitterImpl emitter)
     {
         this.interpreter = interpreter;
         Calculation = new(emitter.Emit(calculation.Code));
@@ -29,18 +29,18 @@ public partial class Callbacks
         return Calculation.Calculate(interpreter, xs);
     }
 
-    internal void Add(ParsedCallback parsed, Emitter emitter)
+    internal void Add(ParsedCallback parsed, EmitterImpl emitter)
     {
         string name = parsed.Name;
         if (name != Calculation.NAME)
             callbacks.Add(name, CreateCallback(parsed, emitter));
     }
 
-    internal static object CreateCallback(ParsedCallback parsed, Emitter emitter) => parsed.Name switch
+    internal static object CreateCallback(ParsedCallback parsed, EmitterImpl emitter) => parsed.Name switch
     {
         Distribution.NAME => new Distribution(parsed, emitter),
 
-        _ => throw new GenerationException("Unknown Callback was attempted to be implemented!")
+        _ => throw new CompilationException("Unknown Callback was attempted to be implemented!")
     };
 
     private object? Get(string key)

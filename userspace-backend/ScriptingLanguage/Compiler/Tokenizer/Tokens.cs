@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace userspace_backend.ScriptingLanguage.Lexing;
+namespace userspace_backend.ScriptingLanguage.Compiler.Tokenizer;
 
 /// <summary>
 /// Enumerates all possible Token types.
@@ -8,7 +8,7 @@ namespace userspace_backend.ScriptingLanguage.Lexing;
 public enum TokenType
 {
     None, // Doesn't mean invalid right away, depends on if you expect a certain symbol
-    
+
     Number, Bool, Constant,
     Input, Output, Identifier, Parameter,
     Immutable, Persistent, Impersistent,
@@ -20,17 +20,6 @@ public enum TokenType
     Function, FunctionLocal, ArgumentSeparator, MathFunction,
 
     Count
-}
-
-/// <summary>
-/// Index of an identifier.
-/// The lexer must maintain a side table with the symbols that the indices correspond to.
-/// The reasoning for this is that punctuation and keywords don't need their textual representation to be stored (instead of potentially many times).
-/// Making this an enum instead of just a uint increases type safety, e.g. no accidental implicit conversions w/ random integers.
-/// </summary>
-public enum SymbolIndex : uint
-{
-    Invalid = ~0u // c-style literals :classic:
 }
 
 /// <summary>
@@ -246,39 +235,39 @@ public static class Tokens
 
     private static readonly Dictionary<string, Token> reservedMap = new()
     {
-        [UNDERSCORE]  = new(TokenType.None, ExtraIndex: (uint)ExtraIndexSpecial.Underscore),
+        [UNDERSCORE] = new(TokenType.None, ExtraIndex: (uint)ExtraIndexSpecial.Underscore),
         [EQUALS_SIGN] = new(TokenType.None, ExtraIndex: (uint)ExtraIndexSpecial.EqualsSign),
 
-        [INPUT]  = new(TokenType.Input),
+        [INPUT] = new(TokenType.Input),
         [OUTPUT] = new(TokenType.Output),
 
-        [ZERO]           = new(TokenType.Constant, ExtraIndex: (uint)ExtraIndexConstant.Zero),
-        [CONST_E]        = new(TokenType.Constant, ExtraIndex: (uint)ExtraIndexConstant.E),
-        [CONST_PI]       = new(TokenType.Constant, ExtraIndex: (uint)ExtraIndexConstant.Pi),
-        [CONST_TAU]      = new(TokenType.Constant, ExtraIndex: (uint)ExtraIndexConstant.Tau),
+        [ZERO] = new(TokenType.Constant, ExtraIndex: (uint)ExtraIndexConstant.Zero),
+        [CONST_E] = new(TokenType.Constant, ExtraIndex: (uint)ExtraIndexConstant.E),
+        [CONST_PI] = new(TokenType.Constant, ExtraIndex: (uint)ExtraIndexConstant.Pi),
+        [CONST_TAU] = new(TokenType.Constant, ExtraIndex: (uint)ExtraIndexConstant.Tau),
         [CONST_CAPACITY] = new(TokenType.Constant, ExtraIndex: (uint)ExtraIndexConstant.Capacity),
 
         [FALSE] = new(TokenType.Bool, ExtraIndex: 0),
-        [TRUE]  = new(TokenType.Bool, ExtraIndex: 1),
+        [TRUE] = new(TokenType.Bool, ExtraIndex: 1),
 
-        [DECL_CONST]   = new(TokenType.Const),
-        [DECL_LET]     = new(TokenType.Let),
-        [DECL_VAR]     = new(TokenType.Var),
-        [DECL_FN]      = new(TokenType.Fn),
-        [RETURN]       = new(TokenType.Return),
-        [BRANCH_IF]    = new(TokenType.If),
-        [BRANCH_ELSE]  = new(TokenType.Else),
+        [DECL_CONST] = new(TokenType.Const),
+        [DECL_LET] = new(TokenType.Let),
+        [DECL_VAR] = new(TokenType.Var),
+        [DECL_FN] = new(TokenType.Fn),
+        [RETURN] = new(TokenType.Return),
+        [BRANCH_IF] = new(TokenType.If),
+        [BRANCH_ELSE] = new(TokenType.Else),
         [BRANCH_WHILE] = new(TokenType.While),
-        [ARG_SEP]      = new(TokenType.ArgumentSeparator),
-        [FPOINT]       = new(TokenType.Number),
-        [TERMINATOR]   = new(TokenType.Terminator),
-        [PAREN_OPEN]   = new(TokenType.ParenOpen),
-        [PAREN_CLOSE]  = new(TokenType.ParenClose),
-        [SQUARE_OPEN]  = new(TokenType.SquareOpen),
+        [ARG_SEP] = new(TokenType.ArgumentSeparator),
+        [FPOINT] = new(TokenType.Number),
+        [TERMINATOR] = new(TokenType.Terminator),
+        [PAREN_OPEN] = new(TokenType.ParenOpen),
+        [PAREN_CLOSE] = new(TokenType.ParenClose),
+        [SQUARE_OPEN] = new(TokenType.SquareOpen),
         [SQUARE_CLOSE] = new(TokenType.SquareClose),
-        [CURLY_OPEN]   = new(TokenType.CurlyOpen),
-        [CURLY_CLOSE]  = new(TokenType.CurlyClose),
-        [ASSIGN]       = new(TokenType.Assignment),
+        [CURLY_OPEN] = new(TokenType.CurlyOpen),
+        [CURLY_CLOSE] = new(TokenType.CurlyClose),
+        [ASSIGN] = new(TokenType.Assignment),
 
         [C_ADD] = new(TokenType.Compound, ExtraIndex: (uint)ExtraIndexCompound.Add),
         [C_SUB] = new(TokenType.Compound, ExtraIndex: (uint)ExtraIndexCompound.Sub),
@@ -296,48 +285,48 @@ public static class Tokens
 
         [NOT] = new(TokenType.Comparison, ExtraIndex: (uint)ExtraIndexComparison.Not),
         [AND] = new(TokenType.Comparison, ExtraIndex: (uint)ExtraIndexComparison.And),
-        [OR]  = new(TokenType.Comparison, ExtraIndex: (uint)ExtraIndexComparison.Or),
-        [LT]  = new(TokenType.Comparison, ExtraIndex: (uint)ExtraIndexComparison.LessThan),
-        [GT]  = new(TokenType.Comparison, ExtraIndex: (uint)ExtraIndexComparison.GreaterThan),
-        [LE]  = new(TokenType.Comparison, ExtraIndex: (uint)ExtraIndexComparison.LessThanOrEqual),
-        [GE]  = new(TokenType.Comparison, ExtraIndex: (uint)ExtraIndexComparison.GreaterThanOrEqual),
-        [EQ]  = new(TokenType.Comparison, ExtraIndex: (uint)ExtraIndexComparison.Equal),
-        [NE]  = new(TokenType.Comparison, ExtraIndex: (uint)ExtraIndexComparison.NotEqual),
+        [OR] = new(TokenType.Comparison, ExtraIndex: (uint)ExtraIndexComparison.Or),
+        [LT] = new(TokenType.Comparison, ExtraIndex: (uint)ExtraIndexComparison.LessThan),
+        [GT] = new(TokenType.Comparison, ExtraIndex: (uint)ExtraIndexComparison.GreaterThan),
+        [LE] = new(TokenType.Comparison, ExtraIndex: (uint)ExtraIndexComparison.LessThanOrEqual),
+        [GE] = new(TokenType.Comparison, ExtraIndex: (uint)ExtraIndexComparison.GreaterThanOrEqual),
+        [EQ] = new(TokenType.Comparison, ExtraIndex: (uint)ExtraIndexComparison.Equal),
+        [NE] = new(TokenType.Comparison, ExtraIndex: (uint)ExtraIndexComparison.NotEqual),
 
-        [ABS]                = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.Abs),
-        [SIGN]               = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.Sign),
-        [COPY_SIGN]          = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.CopySign),
-        [ROUND]              = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.Round),
-        [TRUNC]              = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.Trunc),
-        [FLOOR]              = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.Floor),
-        [CEIL]               = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.Ceil),
-        [CLAMP]              = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.Clamp),
-        [MIN]                = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.Min),
-        [MAX]                = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.Max),
-        [MIN_MAGNITUDE]      = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.MinMagnitude),
-        [MAX_MAGNITUDE]      = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.MaxMagnitude),
-        [SQRT]               = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.Sqrt),
-        [CBRT]               = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.Cbrt),
-        [LOG]                = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.Log),
-        [LOG_2]              = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.Log2),
-        [LOG_10]             = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.Log10),
-        [LOG_B]              = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.LogB),
-        [ILOG_B]             = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.ILogB),
-        [SIN]                = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.Sin),
-        [SINH]               = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.Sinh),
-        [ASIN]               = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.Asin),
-        [ASINH]              = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.Asinh),
-        [COS]                = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.Cos),
-        [COSH]               = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.Cosh),
-        [ACOS]               = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.Acos),
-        [ACOSH]              = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.Acosh),
-        [TAN]                = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.Tan),
-        [TANH]               = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.Tanh),
-        [ATAN]               = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.Atan),
-        [ATANH]              = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.Atanh),
-        [ATAN2]              = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.Atan2),
+        [ABS] = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.Abs),
+        [SIGN] = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.Sign),
+        [COPY_SIGN] = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.CopySign),
+        [ROUND] = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.Round),
+        [TRUNC] = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.Trunc),
+        [FLOOR] = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.Floor),
+        [CEIL] = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.Ceil),
+        [CLAMP] = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.Clamp),
+        [MIN] = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.Min),
+        [MAX] = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.Max),
+        [MIN_MAGNITUDE] = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.MinMagnitude),
+        [MAX_MAGNITUDE] = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.MaxMagnitude),
+        [SQRT] = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.Sqrt),
+        [CBRT] = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.Cbrt),
+        [LOG] = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.Log),
+        [LOG_2] = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.Log2),
+        [LOG_10] = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.Log10),
+        [LOG_B] = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.LogB),
+        [ILOG_B] = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.ILogB),
+        [SIN] = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.Sin),
+        [SINH] = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.Sinh),
+        [ASIN] = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.Asin),
+        [ASINH] = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.Asinh),
+        [COS] = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.Cos),
+        [COSH] = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.Cosh),
+        [ACOS] = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.Acos),
+        [ACOSH] = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.Acosh),
+        [TAN] = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.Tan),
+        [TANH] = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.Tanh),
+        [ATAN] = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.Atan),
+        [ATANH] = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.Atanh),
+        [ATAN2] = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.Atan2),
         [FUSED_MULTIPLY_ADD] = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.FusedMultiplyAdd),
-        [SCALE_B]            = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.ScaleB),
+        [SCALE_B] = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.ScaleB),
     };
 
     public static string Normalize(string s) => s.Replace(UNDERSCORE, SPACE);

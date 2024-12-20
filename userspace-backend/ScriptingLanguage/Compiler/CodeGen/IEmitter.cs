@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using userspace_backend.ScriptingLanguage.Lexing;
-using userspace_backend.ScriptingLanguage.Parsing;
+using userspace_backend.ScriptingLanguage.Compiler.Parser;
+using userspace_backend.ScriptingLanguage.Compiler.Tokenizer;
 using userspace_backend.ScriptingLanguage.Script;
 
-namespace userspace_backend.ScriptingLanguage.Generating;
+namespace userspace_backend.ScriptingLanguage.Compiler.CodeGen;
 
 /// <summary>
 /// Defines the API of a RawAccelScript Emitter.
@@ -49,7 +49,7 @@ public record Program(byte[] ByteCode, StaticData Data)
 /// <summary>
 /// Exception for errors related to emitting bytecode into a program.
 /// </summary>
-public sealed class EmitException : GenerationException
+public sealed class EmitException : CompilationException
 {
     public EmitException(string message)
         : base(message)

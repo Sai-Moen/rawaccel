@@ -1,9 +1,9 @@
 ﻿using System.Collections.Generic;
 using System.Runtime.InteropServices;
-using userspace_backend.ScriptingLanguage.Lexing;
+using userspace_backend.ScriptingLanguage.Compiler.Tokenizer;
 using userspace_backend.ScriptingLanguage.Script;
 
-namespace userspace_backend.ScriptingLanguage.Parsing;
+namespace userspace_backend.ScriptingLanguage.Compiler.Parser;
 
 /// <summary>
 /// Defines the API of a RawAccelScript parser.
@@ -22,13 +22,12 @@ public interface IParser
 /// The result of parsing a list of lexical tokens.
 /// </summary>
 /// <param name="Description">The description of the script (usually derived from the 'comments' section in lexical analysis).</param>
-/// <param name="SymbolSideTable">The symbol side-table.</param>
 /// <param name="Parameters">The user-controlled parameters.</param>
 /// <param name="Declarations">The declarations used by the script.</param>
 /// <param name="Callbacks">The callbacks parsed from the script.</param>
 public record ParsingResult(
+    CompilerContext Context,
     string Description,
-    IList<string> SymbolSideTable,
     Parameters Parameters,
     IList<ASTNode> Declarations,
     IList<ParsedCallback> Callbacks);
@@ -82,5 +81,5 @@ public record ParsedCallback(string Name, Token[] Args, ASTNode[] Code);
 /// Exception for parsing-related errors.
 /// </summary>
 public sealed class ParserException(string message, Token suspect)
-    : GenerationException(message, suspect)
+    : CompilationException(message, suspect)
 { }

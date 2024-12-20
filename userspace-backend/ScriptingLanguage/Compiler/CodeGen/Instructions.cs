@@ -1,6 +1,6 @@
-﻿using userspace_backend.ScriptingLanguage.Lexing;
+﻿using userspace_backend.ScriptingLanguage.Compiler.Tokenizer;
 
-namespace userspace_backend.ScriptingLanguage.Generating;
+namespace userspace_backend.ScriptingLanguage.Compiler.CodeGen;
 
 /// <summary>
 /// Enumerates all types of instructions (for a stack machine).

@@ -2,7 +2,7 @@
 using System.Diagnostics;
 using System.Text;
 
-namespace userspace_backend.ScriptingLanguage.Lexing;
+namespace userspace_backend.ScriptingLanguage.Compiler.Tokenizer;
 
 /// <summary>
 /// State of the character buffer.
@@ -19,7 +19,7 @@ internal enum CharBufferState
 /// <summary>
 /// Automatically attempts to Tokenize when given an input script.
 /// </summary>
-public class Lexer : ILexer
+public class LexerImpl : ILexer
 {
     #region Fields
 
@@ -45,7 +45,7 @@ public class Lexer : ILexer
     /// Processes and tokenizes the input script.
     /// </summary>
     /// <param name="script">The input script.</param>
-    public Lexer(string script)
+    public LexerImpl(string script)
     {
         characters = script.ToCharArray();
         maxIndex = characters.Length - 1;
@@ -73,7 +73,8 @@ public class Lexer : ILexer
     {
         TokenizeDescription();
         TokenizeScript();
-        return new(description, lexicalTokens, symbolSideTable);
+        CompilerContext context = new(symbolSideTable);
+        return new(context, description, lexicalTokens);
     }
 
     private void TokenizeDescription()

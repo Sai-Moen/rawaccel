@@ -1,19 +1,19 @@
 ﻿using System.Collections.Generic;
 using System.Diagnostics;
-using userspace_backend.ScriptingLanguage.Lexing;
+using userspace_backend.ScriptingLanguage.Compiler.Tokenizer;
 using userspace_backend.ScriptingLanguage.Script;
 
-namespace userspace_backend.ScriptingLanguage.Parsing;
+namespace userspace_backend.ScriptingLanguage.Compiler.Parser;
 
 /// <summary>
 /// Can parse a list of Tokens.
 /// </summary>
-public class Parser : IParser
+public class ParserImpl : IParser
 {
     #region Fields
 
+    private readonly CompilerContext context;
     private readonly IList<Token> lexicalTokens;
-    private readonly IList<string> symbolSideTable;
 
     private int currentIndex;
     private readonly int maxIndex;
@@ -41,11 +41,11 @@ public class Parser : IParser
     /// Parses the input list of Tokens.
     /// </summary>
     /// <param name="tokens">List of tokens from the script.</param>
-    public Parser(LexingResult tokens)
+    public ParserImpl(LexingResult tokens)
     {
+        context = tokens.Context;
         description = tokens.Description;
         lexicalTokens = tokens.Tokens;
-        symbolSideTable = tokens.SymbolSideTable;
 
         maxIndex = lexicalTokens.Count - 1;
         if (maxIndex < 3)
@@ -70,7 +70,7 @@ public class Parser : IParser
         if (declarations.Count > Constants.MAX_DECLARATIONS)
             throw ParserError($"Too many declarations! Expected at most {Constants.MAX_DECLARATIONS}, got {declarations.Count}.");
 
-        return new(description, symbolSideTable, parameters, declarations, [.. callbacks.Values]);
+        return new(context, description, parameters, declarations, [.. callbacks.Values]);
     }
 
     private void ParseTokens()
@@ -102,7 +102,7 @@ public class Parser : IParser
             List<Token> args = ParseArgs();
             Block code = ParseBlock();
 
-            ParsedCallback callback = new(GetSymbol(identifier), [.. args], [.. code]);
+            ParsedCallback callback = new(context.GetSymbol(identifier), [.. args], [.. code]);
             if (callbacks.ContainsKey(callback.Name))
                 throw ParserError("Duplicate callbacks detected!");
 
@@ -117,7 +117,7 @@ public class Parser : IParser
     private void ParseParameter()
     {
         Token identifier = Expect(TokenType.Identifier) with { Type = TokenType.Parameter };
-        string symbol = GetSymbol(identifier);
+        string symbol = context.GetSymbol(identifier);
         if (!declarationNames.TryAdd(symbol, TokenType.Parameter))
             throw ParserError($"Name collision! Name {symbol} already exists.");
 
@@ -142,7 +142,7 @@ public class Parser : IParser
         }
 
         Discard(TokenType.Terminator);
-        parameters.Add(new(symbolSideTable, identifier, value, minval, maxval));
+        parameters.Add(new(context, identifier, value, minval, maxval));
     }
 
     private void ParseBounds(out ParameterValidation minval, out ParameterValidation maxval)
@@ -164,11 +164,11 @@ public class Parser : IParser
         {
             case TokenType.SquareOpen:
                 lower = Expect(TokenType.Number);
-                minval = new(Bound.LowerIncl, Number.Parse(GetSymbol(lower), lower));
+                minval = new(Bound.LowerIncl, Number.Parse(context.GetSymbol(lower), lower));
                 break;
             case TokenType.ParenOpen:
                 lower = Expect(TokenType.Number);
-                minval = new(Bound.LowerExcl, Number.Parse(GetSymbol(lower), lower));
+                minval = new(Bound.LowerExcl, Number.Parse(context.GetSymbol(lower), lower));
                 break;
             case TokenType.CurlyOpen:
                 minval = new();
@@ -205,11 +205,11 @@ public class Parser : IParser
 
         if (Accept(TokenType.SquareClose))
         {
-            maxval = new(Bound.UpperIncl, Number.Parse(GetSymbol(upper), upper));
+            maxval = new(Bound.UpperIncl, Number.Parse(context.GetSymbol(upper), upper));
         }
         else if (Accept(TokenType.ParenClose))
         {
-            maxval = new(Bound.UpperExcl, Number.Parse(GetSymbol(upper), upper));
+            maxval = new(Bound.UpperExcl, Number.Parse(context.GetSymbol(upper), upper));
         }
         else if (Accept(TokenType.CurlyClose))
         {
@@ -217,7 +217,7 @@ public class Parser : IParser
         }
         else
         {
-            throw ParserError($"Unknown upper bound symbol: '{GetSymbol(currentToken)}'!");
+            throw ParserError($"Unknown upper bound symbol: '{context.GetSymbol(currentToken)}'!");
         }
     }
 
@@ -235,7 +235,7 @@ public class Parser : IParser
             AdvanceToken();
 
         Token identifier = Expect(TokenType.Identifier) with { Type = type };
-        string symbol = GetSymbol(identifier);
+        string symbol = context.GetSymbol(identifier);
         if (declarationNames.ContainsKey(symbol))
             throw ParserError($"Name collision! Name {symbol} already exists.");
 
@@ -245,7 +245,7 @@ public class Parser : IParser
         {
             List<Token> args = ParseArgs();
             foreach (Token arg in args)
-                functionLocalNames.Add(GetSymbol(arg));
+                functionLocalNames.Add(context.GetSymbol(arg));
 
             Block code = ParseBlock();
             functionLocalNames.Clear();
@@ -363,7 +363,7 @@ public class Parser : IParser
             Token target = previousToken;
             if (target.Type == TokenType.Identifier)
             {
-                string name = GetSymbol(target);
+                string name = context.GetSymbol(target);
                 if (!ResolveIdentifier(name, out TokenType type))
                     throw ParserError($"Unknown assignment target! {name} has not been declared.");
 
@@ -536,7 +536,7 @@ public class Parser : IParser
 
     private void OnIdentifier(List<Token> output, Token token)
     {
-        string name = GetSymbol(token);
+        string name = context.GetSymbol(token);
         if (!ResolveIdentifier(name, out TokenType type))
             throw ParserError($"Could not resolve name! (name was: {name})");
 
@@ -656,15 +656,6 @@ public class Parser : IParser
     #endregion
 
     #region Helpers
-
-    private string GetSymbol(Token token)
-    {
-        uint index = (uint)token.SymbolIndex;
-        if (index >= (uint)symbolSideTable.Count)
-            throw new ParserException($"SymbolIndex out of bounds: {index} >= {symbolSideTable.Count}", token);
-
-        return symbolSideTable[(int)index];
-    }
 
     private bool ResolveIdentifier(string name, out TokenType type)
     {

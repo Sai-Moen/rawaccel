@@ -1,9 +1,10 @@
 ﻿using System.Collections.Generic;
 using System.Diagnostics;
-using userspace_backend.ScriptingLanguage.Generating;
-using userspace_backend.ScriptingLanguage.Interpreting;
-using userspace_backend.ScriptingLanguage.Lexing;
-using userspace_backend.ScriptingLanguage.Parsing;
+using userspace_backend.ScriptingLanguage.Compiler;
+using userspace_backend.ScriptingLanguage.Compiler.CodeGen;
+using userspace_backend.ScriptingLanguage.Compiler.Parser;
+using userspace_backend.ScriptingLanguage.Compiler.Tokenizer;
+using userspace_backend.ScriptingLanguage.Interpreter;
 using userspace_backend.ScriptingLanguage.Script.CallbackImpl;
 
 namespace userspace_backend.ScriptingLanguage.Script.CallbackImpl
@@ -15,12 +16,14 @@ namespace userspace_backend.ScriptingLanguage.Script.CallbackImpl
         private readonly int amount;
         private readonly Program program;
 
-        internal Distribution(ParsedCallback parsed, Emitter emitter)
+        internal Distribution(ParsedCallback parsed, EmitterImpl emitter)
         {
             Debug.Assert(parsed.Name == NAME);
 
-            IList<Token> args = parsed.Args;
-            switch (args.Count)
+            CompilerContext context = emitter.Context;
+
+            Token[] args = parsed.Args;
+            switch (args.Length)
             {
                 case 0:
                     amount = Constants.LUT_POINTS_CAPACITY;
@@ -28,17 +31,17 @@ namespace userspace_backend.ScriptingLanguage.Script.CallbackImpl
                 case 1:
                     {
                         Token first = args[0];
-                        amount = (int)Number.Parse(emitter.GetSymbol(first), first);
+                        amount = (int)Number.Parse(context.GetSymbol(first), first);
                     }
 
                     if (amount <= 0 || amount > Constants.LUT_POINTS_CAPACITY)
                     {
-                        throw new GenerationException($"Amount argument out of range! range: [1, {Constants.LUT_POINTS_CAPACITY}]");
+                        throw new CompilationException($"Amount argument out of range! range: [1, {Constants.LUT_POINTS_CAPACITY}]");
                     }
                     break;
                 default:
-                    throw new GenerationException(
-                        $"Distribution Callback only has an optional 'amount' argument, but {args.Count} were given.");
+                    throw new CompilationException(
+                        $"Distribution Callback only has an optional 'amount' argument, but {args.Length} were given.");
             }
 
             program = emitter.Emit(parsed.Code);

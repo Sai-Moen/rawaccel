@@ -1,7 +1,7 @@
 ﻿using System.Diagnostics;
-using userspace_backend.ScriptingLanguage.Lexing;
+using userspace_backend.ScriptingLanguage.Compiler.Tokenizer;
 
-namespace userspace_backend.ScriptingLanguage.Parsing;
+namespace userspace_backend.ScriptingLanguage.Compiler.Parser;
 
 internal record Operator(Token Token, int Precedence)
 {
@@ -75,12 +75,12 @@ public static class LexicalHelpers
 
                 ExtraIndexComparison.And => 1,
 
-                ExtraIndexComparison.Equal    => 2,
+                ExtraIndexComparison.Equal => 2,
                 ExtraIndexComparison.NotEqual => 2,
 
-                ExtraIndexComparison.LessThan           => 3,
-                ExtraIndexComparison.GreaterThan        => 3,
-                ExtraIndexComparison.LessThanOrEqual    => 3,
+                ExtraIndexComparison.LessThan => 3,
+                ExtraIndexComparison.GreaterThan => 3,
+                ExtraIndexComparison.LessThanOrEqual => 3,
                 ExtraIndexComparison.GreaterThanOrEqual => 3,
 
                 // this one is also unary, but the unary system is kind of a hack for when an operator has a unary and binary form
