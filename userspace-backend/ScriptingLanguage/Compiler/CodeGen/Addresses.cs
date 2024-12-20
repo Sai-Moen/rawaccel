@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Diagnostics;
-using userspace_backend.ScriptingLanguage.Interpreting;
+using userspace_backend.ScriptingLanguage.Interpreter;
 using userspace_backend.ScriptingLanguage.Script;
 
-namespace userspace_backend.ScriptingLanguage.Generating;
+namespace userspace_backend.ScriptingLanguage.Compiler.CodeGen;
 
 /// <summary>
 /// Represents an address in the Interpreter's Heap Memory.

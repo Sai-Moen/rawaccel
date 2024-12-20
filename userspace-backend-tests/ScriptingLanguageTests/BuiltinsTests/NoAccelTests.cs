@@ -1,6 +1,6 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using userspace_backend.ScriptingLanguage;
-using userspace_backend.ScriptingLanguage.Interpreting;
+using userspace_backend.ScriptingLanguage.Interpreter;
 using userspace_backend.ScriptingLanguage.Script;
 
 namespace userspace_backend_tests.ScriptingLanguageTests.BuiltinsTests;

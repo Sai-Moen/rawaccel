@@ -2,18 +2,19 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using userspace_backend.ScriptingLanguage.Generating;
-using userspace_backend.ScriptingLanguage.Lexing;
-using userspace_backend.ScriptingLanguage.Parsing;
+using userspace_backend.ScriptingLanguage.Compiler;
+using userspace_backend.ScriptingLanguage.Compiler.CodeGen;
+using userspace_backend.ScriptingLanguage.Compiler.Parser;
+using userspace_backend.ScriptingLanguage.Compiler.Tokenizer;
 using userspace_backend.ScriptingLanguage.Script;
 using static System.Math;
 
-namespace userspace_backend.ScriptingLanguage.Interpreting;
+namespace userspace_backend.ScriptingLanguage.Interpreter;
 
 /// <summary>
 /// Executes Programs.
 /// </summary>
-public class Interpreter : IInterpreter
+public class InterpreterImpl : IInterpreter
 {
     #region Fields
 
@@ -36,22 +37,12 @@ public class Interpreter : IInterpreter
     /// </summary>
     /// <param name="parsed">Result of parsing.</param>
     /// <exception cref="InterpreterException"/>
-    public Interpreter(ParsingResult parsed)
+    public InterpreterImpl(ParsingResult parsed)
     {
-        IList<string> symbolSideTable = parsed.SymbolSideTable;
-
-        string GetSymbol(Token token)
-        {
-            uint index = (uint)token.SymbolIndex;
-            if (index >= (uint)symbolSideTable.Count)
-                throw new InterpreterException($"SymbolIndex out of bounds: {index} >= {symbolSideTable.Count}");
-
-            return symbolSideTable[(int)index];
-        }
-
+        CompilerContext context = parsed.Context;
         Description = parsed.Description;
 
-        Emitter emitter = new(symbolSideTable, assignmentAddresses, functionAddresses);
+        EmitterImpl emitter = new(context, assignmentAddresses, functionAddresses);
         int numPersistent = 0;
         int numImpersistent = 0;
 
@@ -85,7 +76,7 @@ public class Interpreter : IInterpreter
 
                             _ => throw InterpreterError("Identifier does not have the correct type for a variable!")
                         };
-                        assignmentAddresses.Add(GetSymbol(identifier), address);
+                        assignmentAddresses.Add(context.GetSymbol(identifier), address);
 
                         assignmentsList.Add(emitter.Emit([ast]));
                     }
@@ -95,7 +86,7 @@ public class Interpreter : IInterpreter
                     {
                         Token identifier = function.Identifier;
                         MemoryAddress address = (MemoryAddress)numFunctions++;
-                        functionAddresses.Add(GetSymbol(identifier), address);
+                        functionAddresses.Add(context.GetSymbol(identifier), address);
 
                         functionsList.Add(emitter.Emit(function.Code));
                     }

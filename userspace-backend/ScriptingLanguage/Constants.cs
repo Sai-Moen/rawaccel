@@ -1,4 +1,4 @@
-﻿using userspace_backend.ScriptingLanguage.Generating;
+﻿using userspace_backend.ScriptingLanguage.Compiler.CodeGen;
 
 namespace userspace_backend.ScriptingLanguage;
 

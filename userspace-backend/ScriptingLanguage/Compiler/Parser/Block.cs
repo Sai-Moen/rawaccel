@@ -2,7 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 
-namespace userspace_backend.ScriptingLanguage.Parsing;
+namespace userspace_backend.ScriptingLanguage.Compiler.Parser;
 
 /// <summary>
 /// Struct-of-Arrays list of nodes implementation.

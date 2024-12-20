@@ -1,8 +1,8 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Text;
 using userspace_backend.ScriptingLanguage;
-using userspace_backend.ScriptingLanguage.Lexing;
-using userspace_backend.ScriptingLanguage.Parsing;
+using userspace_backend.ScriptingLanguage.Compiler.Parser;
+using userspace_backend.ScriptingLanguage.Compiler.Tokenizer;
 
 namespace userspace_backend_tests.ScriptingLanguageTests.IntegrationTests;
 

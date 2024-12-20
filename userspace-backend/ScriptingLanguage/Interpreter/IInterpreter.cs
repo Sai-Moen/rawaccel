@@ -1,8 +1,8 @@
 ﻿using System.Collections.Generic;
-using userspace_backend.ScriptingLanguage.Generating;
+using userspace_backend.ScriptingLanguage.Compiler.CodeGen;
 using userspace_backend.ScriptingLanguage.Script;
 
-namespace userspace_backend.ScriptingLanguage.Interpreting;
+namespace userspace_backend.ScriptingLanguage.Interpreter;
 
 /// <summary>
 /// Defines the API of a RawAccelScript interpreter.

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Globalization;
-using userspace_backend.ScriptingLanguage.Lexing;
+using userspace_backend.ScriptingLanguage.Compiler.Tokenizer;
 
 namespace userspace_backend.ScriptingLanguage.Script;
 
@@ -28,15 +28,15 @@ public readonly record struct Number(double Value)
 
     public static Number Parse(string s)
     {
-        return Parse(s, new GenerationException("Cannot parse number!"));
+        return Parse(s, new CompilationException("Cannot parse number!"));
     }
 
     public static Number Parse(string s, Token suspect)
     {
-        return Parse(s, new GenerationException("Cannot parse number!", suspect));
+        return Parse(s, new CompilationException("Cannot parse number!", suspect));
     }
 
-    private static Number Parse(string s, GenerationException e)
+    private static Number Parse(string s, CompilationException e)
     {
         if (double.TryParse(s, NumberStyles.Float, NumberFormatInfo.InvariantInfo, out double result))
         {
@@ -54,7 +54,7 @@ public readonly record struct Number(double Value)
             0 => FALSE,
             1 => TRUE,
 
-            _ => throw new GenerationException($"Unknown Bool ExtraIndex value: {token.ExtraIndex}", token)
+            _ => throw new CompilationException($"Unknown Bool ExtraIndex value: {token.ExtraIndex}", token)
         };
     }
 

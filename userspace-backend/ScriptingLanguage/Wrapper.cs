@@ -1,8 +1,8 @@
 ﻿using System;
 using System.IO;
-using userspace_backend.ScriptingLanguage.Interpreting;
-using userspace_backend.ScriptingLanguage.Lexing;
-using userspace_backend.ScriptingLanguage.Parsing;
+using userspace_backend.ScriptingLanguage.Compiler.Parser;
+using userspace_backend.ScriptingLanguage.Compiler.Tokenizer;
+using userspace_backend.ScriptingLanguage.Interpreter;
 using userspace_backend.ScriptingLanguage.Script;
 
 namespace userspace_backend.ScriptingLanguage;
@@ -52,7 +52,7 @@ public static class Wrapper
     /// <returns>Result of lexing.</returns>
     public static LexingResult CompileToLexingResult(string script)
     {
-        Lexer lexer = new(script);
+        LexerImpl lexer = new(script);
         return lexer.Tokenize();
     }
 
@@ -63,7 +63,7 @@ public static class Wrapper
     /// <returns>Result of parsing.</returns>
     public static ParsingResult CompileToParsingResult(string script)
     {
-        Parser parser = new(CompileToLexingResult(script));
+        ParserImpl parser = new(CompileToLexingResult(script));
         return parser.Parse();
     }
 
@@ -73,9 +73,9 @@ public static class Wrapper
     /// </summary>
     /// <param name="script">Script to compile.</param>
     /// <returns>Concrete Interpreter instance.</returns>
-    public static Interpreter CompileToInterpreter(string script)
+    public static InterpreterImpl CompileToInterpreter(string script)
     {
-        Interpreter interpreter = new(CompileToParsingResult(script));
+        InterpreterImpl interpreter = new(CompileToParsingResult(script));
         return interpreter;
     }
 
@@ -113,7 +113,7 @@ public static class Wrapper
 }
 
 /// <summary>
-/// Exception to derive from when doing anything inside the scripting namespace.
+/// Root ScriptingLanguage exception.
 /// </summary>
 public class ScriptException : Exception
 {
@@ -127,19 +127,26 @@ public class ScriptException : Exception
 }
 
 /// <summary>
-/// Base Exception used for errors in all stages of code generation.
+/// Base Exception used for errors in all stages of compilation.
 /// </summary>
-public class GenerationException : ScriptException
+public class CompilationException : ScriptException
 {
-    public GenerationException(string message)
+    public CompilationException(string message)
         : base(message)
     { }
 
-    public GenerationException(string message, Token suspect)
+    public CompilationException(string message, Token suspect)
         : base(message)
     {
         Suspect = suspect;
     }
 
+    /// <summary>
+    /// The token suspected of causing this exception.
+    /// Use the <see cref="Token.Position"/> property to scan through the source code,
+    /// to determine the location in (Line, Char) coordinates.
+    /// <br/>
+    /// Make sure to check whether this is a valid token when using it directly.
+    /// </summary>
     public Token Suspect { get; private set; }
 }
