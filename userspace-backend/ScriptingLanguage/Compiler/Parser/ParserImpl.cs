@@ -99,7 +99,19 @@ public class ParserImpl : IParser
         AdvanceToken();
         while (Accept(TokenType.Identifier, out var identifier))
         {
-            List<Token> args = ParseArgs();
+            List<Token> args = [];
+            if (Accept(TokenType.ParenOpen) && !Accept(TokenType.ParenClose))
+            {
+                do
+                {
+                    if (!Accept(TokenType.Number))
+                        throw ParserError("Callbacks can only have numeric arguments.");
+
+                    args.Add(previousToken);
+                }
+                while (Accept(TokenType.ArgumentSeparator));
+                Discard(TokenType.ParenClose);
+            }
             Block code = ParseBlock();
 
             ParsedCallback callback = new(context.GetSymbol(identifier), [.. args], [.. code]);
@@ -231,8 +243,9 @@ public class ParserImpl : IParser
         TokenType type = declarer.MapDeclarer();
         if (type == TokenType.None)
             throw ParserError("Unknown declarer!");
-        else // couldn't use Expect due to mapping, so we have to advance manually
-            AdvanceToken();
+        
+        // couldn't use Expect due to mapping, so we have to advance manually
+        AdvanceToken();
 
         Token identifier = Expect(TokenType.Identifier) with { Type = type };
         string symbol = context.GetSymbol(identifier);
@@ -243,9 +256,18 @@ public class ParserImpl : IParser
         ASTUnion union;
         if (type == TokenType.Function)
         {
-            List<Token> args = ParseArgs();
-            foreach (Token arg in args)
-                functionLocalNames.Add(context.GetSymbol(arg));
+            if (Accept(TokenType.ParenOpen) && !Accept(TokenType.ParenClose))
+            {
+                do
+                {
+                    if (!Accept(TokenType.Identifier))
+                        throw ParserError("User-defined functions can only have identifier arguments.");
+
+                    functionLocalNames.Add(context.GetSymbol(previousToken));
+                }
+                while (Accept(TokenType.ArgumentSeparator));
+                Discard(TokenType.ParenClose);
+            }
 
             Block code = ParseBlock();
             functionLocalNames.Clear();
@@ -339,7 +361,6 @@ public class ParserImpl : IParser
         if (++depth > Constants.MAX_RECURSION_DEPTH)
             throw ParserError("Exceeded Maximum Recursion Depth!");
 
-        // collection expression on Block should work because it's well-behaved
         Block asts = [];
         Discard(TokenType.CurlyOpen);
         while (!Accept(TokenType.CurlyClose))
@@ -516,22 +537,6 @@ public class ParserImpl : IParser
 
     #endregion
 
-    #region Statement Helpers
-
-    private List<Token> ParseArgs()
-    {
-        List<Token> args = [];
-        if (Accept(TokenType.ParenOpen) && !Accept(TokenType.ParenClose))
-        {
-            do args.Add(currentToken);
-            while (Accept(TokenType.ArgumentSeparator));
-            Discard(TokenType.ParenClose);
-        }
-        return args;
-    }
-
-    #endregion
-
     #region Expression Helpers
 
     private void OnIdentifier(List<Token> output, Token token)
@@ -549,7 +554,7 @@ public class ParserImpl : IParser
 
     private void OnFunction(Token token)
     {
-        OnOpen(token); // just does the same (for now...)
+        OnOpen(token); // just does the same (for now...?)
     }
 
     private void OnOpen(Token token)
@@ -568,8 +573,11 @@ public class ParserImpl : IParser
         if (oper is null)
             throw ParserError($"No matching: {Tokens.PAREN_OPEN}");
 
-        if (operatorStack.TryPeek(out var maybeFunction) && maybeFunction.Type == TokenType.MathFunction)
-            output.Add(operatorStack.Pop().Token);
+        if (operatorStack.TryPeek(out var maybeFunction) && maybeFunction.IsFunction())
+        {
+            Operator fun = operatorStack.Pop();
+            output.Add(fun.Token);
+        }
     }
 
     private static bool CheckUnary(List<Token> output, Token token, Token? prev)
