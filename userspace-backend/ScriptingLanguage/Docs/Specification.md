@@ -30,13 +30,6 @@ Proposed file name extension for custom scripts = `.ras` (RawAccelScript)
 
 Documentation (like this document).
 
-### Common
-
-Common elements.
-Contains:
-
-- Helper classes (used throughout the stages of generation)
-
 ### Script
 
 Models elements of .ras source code.
@@ -48,51 +41,55 @@ Contains:
 - Callbacks, the callbacks a script can define to augment its behavior.
 - Helper classes (collections of the above etc.)
 
-### Serialization
+### Compiler
 
-Contains classes to Serialize/Deserialize with.
+Compiler namespace.
+Contains:
 
-### Lexing
+- CompilerContext, keeps track of general compiler state.
+- Phases of the compiler (each in a sub-namespace).
+
+#### Tokenizer
 
 Lexical Analysis namespace.
 Contains:
 
 - ILexer, the public API for lexing.
-- Lexer (a.k.a. Tokenizer)
+- LexerImpl (a.k.a. Tokenizer)
 	- Does lexical analysis on a string (the user-made script).
 	- Produces a LexingResult object that contains the comments as a string and the tokens in lexical order.
 - Helper classes
 
-### Parsing
+#### Parser
 
-Syntactic Analysis + Semantic Analysis namespace.
+Syntactic Analysis (+ Semantic Analysis) namespace.
 Contains:
 
 - IParser, the public API for parsing.
-- Parser
+- ParserImpl
 	- Does syntactic analysis on a list of tokens (produced by the lexer).
 	- Produces a ParsingResult object that contains the script description, parameters, variables, callback implementations.
 - Helper classes
 
-### Generation
+#### CodeGen
 
 Code Generation namespace.
 Contains:
 
 - Addresses, contains different types of addresses.
-- Emitter
-	- Generates code based on the AST and the tokens that make up its expressions.
 - IEmitter, the public API for generating/emitting code (including the Program class).
+- EmitterImpl
+	- Generates code based on the AST and the tokens that make up its expressions.
 - Instructions, contains instruction and memory data structures.
 - Helper classes
 
-### Interpretation
+### Interpreter
 
-Code Execution namespace.
+Interpreter namespace.
 Contains:
 
 - IInterpreter, the public API for interpreting parsed scripts and controlling an interpreter.
-- Interpreter
+- InterpreterImpl
 	- Runs Programs, keeps track of parameters and variables.
 
 ## Scripting language specification

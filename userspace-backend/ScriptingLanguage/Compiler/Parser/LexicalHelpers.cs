@@ -10,6 +10,14 @@ internal record Operator(Token Token, int Precedence)
     internal bool HasHigherPrecedence(Operator other, bool left)
         => Type.HasPrecedence() &&
             (Precedence > other.Precedence || left && Precedence == other.Precedence);
+
+    internal bool IsFunction() => Type switch
+    {
+        TokenType.Function => true,
+        TokenType.MathFunction => true,
+
+        _ => false
+    };
 }
 
 /// <summary>
@@ -27,7 +35,7 @@ public static class LexicalHelpers
         TokenType.Arithmetic => true,
         TokenType.Comparison => true,
 
-        _ => false,
+        _ => false
     };
 
     /// <summary>

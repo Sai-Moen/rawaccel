@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using userspace_backend.ScriptingLanguage.Compiler;
 using userspace_backend.ScriptingLanguage.Compiler.CodeGen;
 using userspace_backend.ScriptingLanguage.Compiler.Parser;
