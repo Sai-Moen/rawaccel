@@ -1,6 +1,7 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using userspace_backend.ScriptingLanguage;
 using userspace_backend.ScriptingLanguage.Interpreter;
 using userspace_backend.ScriptingLanguage.Script;
@@ -45,13 +46,7 @@ public class ArcAccel
 
     public double[] Arc(double[] xs)
     {
-        int len = xs.Length;
-        double[] ys = new double[len];
-        for (int i = 0; i < len; i++)
-        {
-            ys[i] = Arc(xs[i]);
-        }
-        return ys;
+        return xs.Select(Arc).ToArray();
     }
 }
 
@@ -76,9 +71,7 @@ public class ArcTests
 
         double[] xs = new double[cap];
         for (int i = 0; i < cap; i++)
-        {
             xs[i] = i + 1;
-        }
 
         foreach (ArcAccel arc in arcs)
         {
@@ -86,6 +79,9 @@ public class ArcTests
             parameters[1].Value = arc.Limit;
             parameters[2].Value = arc.Midpoint;
 
+            // somehow there are no floating point errors here
+            // maybe look up if there is a method to include epsilon in the comparison or something
+            // if this ever desyncs, change it to a for-loop with an epsilon
             CollectionAssert.AreEqual(arc.Arc(xs), callbacks.Calculate(xs));
         }
     }
