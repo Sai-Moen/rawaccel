@@ -37,7 +37,6 @@ public static class Builtins
         }
         """;
 
-    // TODO: implement
     /// <summary>
     /// Preservation of RawAccel v1.6.1 Motivity.
     /// </summary>
@@ -60,11 +59,25 @@ public static class Builtins
             const midpoint := log(Midpoint);
             const constant := -motivity / 2;
 
+            var denom := zero;
+
+            # x is already accessible, unlike in accel-motivity.hpp
+            fn operator()
+            {
+                denom := e ^ (accel * (midpoint - log(x))) + 1;
+                y := e ^ (motivity / denom + constant);
+            }
+
         {
+
+            y := operator();
+
+            # TODO implement Gain motivity
+            # Might also expose some pain points of the language, so it should be a goal
+
         }
 
-        distribution
-        {
-        }
+        # TODO we kind of want to implement the distribution, but only for Gain.
+        # There may be a bit of a shortcoming here (maybe the default distribution can be callable with a built-in function?).
         """;
 }
