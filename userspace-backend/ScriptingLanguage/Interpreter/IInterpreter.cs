@@ -52,19 +52,10 @@ public interface IInterpreter
     void Stabilize();
 
     /// <summary>
-    /// Executes a program with the interpreter's own stack. Clears stack after use.
+    /// Executes a program.
     /// </summary>
     /// <param name="program">The program.</param>
-    /// <returns>The remainder of the stack as an array.</returns>
-    Number[] ExecuteProgram(Program program);
-
-    /// <summary>
-    /// Executes a program with the given stack. Clears stack after use.
-    /// </summary>
-    /// <param name="program">The program.</param>
-    /// <param name="stack">The stack.</param>
-    /// <returns>The remainder of the stack as an array.</returns>
-    Number[] ExecuteProgram(Program program, Stack<Number> stack);
+    void ExecuteProgram(Program program);
 }
 
 /// <summary>

@@ -21,6 +21,7 @@ public interface IParser
 /// <summary>
 /// The result of parsing a list of lexical tokens.
 /// </summary>
+/// <param name="Context">The compiler context.</param>
 /// <param name="Description">The description of the script (usually derived from the 'comments' section in lexical analysis).</param>
 /// <param name="Parameters">The user-controlled parameters.</param>
 /// <param name="Declarations">The declarations used by the script.</param>
@@ -66,7 +67,7 @@ public struct ASTUnion
 public record ASTAssign(Token Identifier, Token Operator, Token[] Initializer);
 public record ASTIf(Token[] Condition, ASTNode[] If, ASTNode[] Else);
 public record ASTWhile(Token[] Condition, ASTNode[] While);
-public record ASTFunction(Token Identifier, ASTNode[] Code);
+public record ASTFunction(Token Identifier, Token[] Args, ASTNode[] Code);
 public record ASTReturn();
 
 /// <summary>

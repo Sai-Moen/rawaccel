@@ -256,6 +256,7 @@ public class ParserImpl : IParser
         ASTUnion union;
         if (type == TokenType.Function)
         {
+            List<Token> args = [];
             if (Accept(TokenType.ParenOpen) && !Accept(TokenType.ParenClose))
             {
                 do
@@ -264,6 +265,7 @@ public class ParserImpl : IParser
                         throw ParserError("User-defined functions can only have identifier arguments.");
 
                     functionLocalNames.Add(context.GetSymbol(previousToken));
+                    args.Add(previousToken);
                 }
                 while (Accept(TokenType.ArgumentSeparator));
                 Discard(TokenType.ParenClose);
@@ -275,7 +277,7 @@ public class ParserImpl : IParser
             tag = ASTTag.Function;
             union = new()
             {
-                astFunction = new(identifier, [.. code])
+                astFunction = new(identifier, [.. args], [.. code])
             };
         }
         else

@@ -26,7 +26,10 @@ public class InterpreterImpl : IInterpreter
     private readonly Dictionary<string, MemoryAddress> functionAddresses = [];
     private readonly Program[] functions;
 
-    private readonly Stack<Number> stack = new();
+    private StackAddress stackPointer;
+    private readonly ProgramStack stack = [];
+
+    private int depth;
 
     #endregion
 
@@ -63,10 +66,11 @@ public class InterpreterImpl : IInterpreter
         Debug.Assert(numDeclarations <= Constants.MAX_DECLARATIONS);
         foreach (ASTNode ast in declarations)
         {
+            ASTUnion union = ast.Union;
             switch (ast.Tag)
             {
                 case ASTTag.Assign:
-                    ASTAssign assignment = ast.Union.astAssign;
+                    ASTAssign assignment = union.astAssign;
                     {
                         Token identifier = assignment.Identifier;
                         MemoryAddress address = identifier.Type switch
@@ -82,13 +86,13 @@ public class InterpreterImpl : IInterpreter
                     }
                     break;
                 case ASTTag.Function:
-                    ASTFunction function = ast.Union.astFunction;
+                    ASTFunction function = union.astFunction;
                     {
                         Token identifier = function.Identifier;
                         MemoryAddress address = (MemoryAddress)numFunctions++;
                         functionAddresses.Add(context.GetSymbol(identifier), address);
 
-                        functionsList.Add(emitter.Emit(function.Code));
+                        functionsList.Add(emitter.EmitFunction(function.Args, function.Code));
                     }
                     break;
                 default:
@@ -142,10 +146,8 @@ public class InterpreterImpl : IInterpreter
         unstable.CopyAllFrom(stable);
 
         foreach (Program program in assignments)
-        {
-            Number[] remainder = ExecuteProgram(program);
-            Debug.Assert(remainder.Length == 0, "Startup stack was not empty?");
-        }
+            ExecuteProgram(program);
+
         stable.CopyAllFrom(unstable);
         Y = Number.DEFAULT_Y;
     }
@@ -155,12 +157,7 @@ public class InterpreterImpl : IInterpreter
         unstable.CopyFrom(stable);
     }
 
-    public Number[] ExecuteProgram(Program program)
-    {
-        return ExecuteProgram(program, stack);
-    }
-
-    public Number[] ExecuteProgram(Program program, Stack<Number> stack)
+    public void ExecuteProgram(Program program)
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void Fn1(Func<Number, Number> func)
@@ -183,6 +180,13 @@ public class InterpreterImpl : IInterpreter
             stack.Push(func(stack.Pop(), stack.Pop(), stack.Pop()));
         }
 
+        if (stackPointer.Address > Constants.MAX_STACK_DEPTH)
+            throw InterpreterError("Stack overflow protection tripped! (stack pointer too high)");
+
+        if (++depth > Constants.MAX_RECURSION_DEPTH)
+            throw InterpreterError("Stack overflow protection tripped! (exceeded max depth)");
+        // defer --depth;
+
         for (CodeAddress c = 0; c < program.Length; c++)
         {
             switch ((InstructionType)program[c])
@@ -195,9 +199,27 @@ public class InterpreterImpl : IInterpreter
 
                     goto case InstructionType.Return;
                 case InstructionType.Return:
-                    Number[] rem = [.. stack];
-                    stack.Clear();
-                    return rem;
+                    if (stackPointer != stack.Count - program.Arity)
+                        throw InterpreterError("Bad stack pointer value!");
+
+                    --depth;
+                    return;
+                case InstructionType.LoadIn:
+                    stack.Push(X);
+                    break;
+                case InstructionType.StoreIn:
+                    X = stack.Pop();
+                    break;
+                case InstructionType.LoadOut:
+                    stack.Push(Y);
+                    break;
+                case InstructionType.StoreOut:
+                    Y = stack.Pop();
+                    break;
+                case InstructionType.LoadNumber:
+                    DataAddress dAddress = (DataAddress)program.ExtractAddress(ref c);
+                    stack.Push(program[dAddress]);
+                    break;
                 case InstructionType.LoadPersistent:
                     {
                         MemoryAddress loadAddress = (MemoryAddress)program.ExtractAddress(ref c);
@@ -222,36 +244,25 @@ public class InterpreterImpl : IInterpreter
                         unstable.SetImpersistent(storeAddress, stack.Pop());
                     }
                     break;
-                case InstructionType.LoadIn:
-                    stack.Push(X);
+                case InstructionType.LoadStack:
+                    {
+                        StackAddress loadAddress = (StackAddress)program.ExtractAddress(ref c);
+                        stack.Push(stack[stackPointer + loadAddress]);
+                    }
                     break;
-                case InstructionType.StoreIn:
-                    X = stack.Pop();
-                    break;
-                case InstructionType.LoadOut:
-                    stack.Push(Y);
-                    break;
-                case InstructionType.StoreOut:
-                    Y = stack.Pop();
-                    break;
-                case InstructionType.LoadNumber:
-                    DataAddress dAddress = (DataAddress)program.ExtractAddress(ref c);
-                    stack.Push(program[dAddress]);
+                case InstructionType.StoreStack:
+                    {
+                        StackAddress storeAddress = (StackAddress)program.ExtractAddress(ref c);
+                        stack[stackPointer + storeAddress] = stack.Pop();
+                    }
                     break;
                 case InstructionType.Swap:
+                    Debug.Assert(stack.Count >= 2);
+
                     Number swap1 = stack.Pop();
                     Number swap2 = stack.Pop();
                     stack.Push(swap1);
                     stack.Push(swap2);
-                    break;
-                case InstructionType.Jmp:
-                    CodeAddress jmpAddress = (CodeAddress)program.ExtractAddress(ref c);
-                    c = jmpAddress;
-                    break;
-                case InstructionType.Jz:
-                    CodeAddress jzAddress = (CodeAddress)program.ExtractAddress(ref c);
-                    if (!stack.Pop())
-                        c = jzAddress;
                     break;
                 case InstructionType.LoadZero:
                     stack.Push(Number.ZERO);
@@ -268,10 +279,27 @@ public class InterpreterImpl : IInterpreter
                 case InstructionType.LoadCapacity:
                     stack.Push(Constants.LUT_POINTS_CAPACITY);
                     break;
+                case InstructionType.Jmp:
+                    CodeAddress jmpAddress = (CodeAddress)program.ExtractAddress(ref c);
+                    c = jmpAddress;
+                    break;
+                case InstructionType.Jz:
+                    CodeAddress jzAddress = (CodeAddress)program.ExtractAddress(ref c);
+                    if (!stack.Pop())
+                        c = jzAddress;
+                    break;
                 case InstructionType.Call:
                     MemoryAddress functionAddress = (MemoryAddress)program.ExtractAddress(ref c);
+                    Program function = functions[functionAddress];
+
                     Number y = Y;
-                    ExecuteProgram(functions[functionAddress], new());
+                    StackAddress tempStackPointer = stackPointer;
+                    stackPointer = stack.Count - function.Arity;
+
+                    ExecuteProgram(function);
+
+                    stack.RemoveRange(stackPointer.Address, function.Arity);
+                    stackPointer = tempStackPointer;
                     stack.Push(Y);
                     Y = y;
                     break;
@@ -430,7 +458,7 @@ public class InterpreterImpl : IInterpreter
             }
         }
 
-        throw InterpreterError("Unreachable: program loop exited without returning!");
+        throw InterpreterError("Program loop exited without returning!");
     }
 
     #endregion
