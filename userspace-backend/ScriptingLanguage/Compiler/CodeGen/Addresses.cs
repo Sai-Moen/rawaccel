@@ -42,6 +42,26 @@ public readonly record struct DataAddress(ushort Address)
 }
 
 /// <summary>
+/// Represents an address into the stack.
+/// </summary>
+/// <param name="Address">Stack address.</param>
+public readonly record struct StackAddress(int Address)
+{
+    public const int SIZE = sizeof(int);
+
+    public const int MAX_VALUE = int.MaxValue;
+    public const long CAPACITY = MAX_VALUE + 1L;
+
+    public static implicit operator StackAddress(int pointer) => new(pointer);
+    public static explicit operator StackAddress(ReadOnlySpan<byte> pointer) => BitConverter.ToInt32(pointer);
+
+    public static implicit operator Index(StackAddress address) => address.Address;
+    public static explicit operator byte[](StackAddress address) => BitConverter.GetBytes(address.Address);
+
+    public static StackAddress operator +(StackAddress left, StackAddress right) => left.Address + right.Address;
+}
+
+/// <summary>
 /// Represents an Instruction address in the Program in which it is present.
 /// </summary>
 /// <param name="Address">Instruction address.</param>

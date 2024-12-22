@@ -16,6 +16,7 @@ public interface IEmitter
     /// </summary>
     /// <param name="code">Code as expression.</param>
     /// <returns>A Program instance.</returns>
+    /// <exception cref="EmitException"/>
     Program Emit(IList<Token> code);
 
     /// <summary>
@@ -25,6 +26,15 @@ public interface IEmitter
     /// <returns>A Program instance.</returns>
     /// <exception cref="EmitException"/>
     Program Emit(IList<ASTNode> code);
+
+    /// <summary>
+    /// Runs the emitter, produces the program for a user-defined function.
+    /// </summary>
+    /// <param name="args">The argument(s) list.</param>
+    /// <param name="code">The function body code.</param>
+    /// <returns>A Program instance.</returns>
+    /// <exception cref="EmitException"/>
+    Program EmitFunction(IList<Token> args, IList<ASTNode> code);
 }
 
 /// <summary>
@@ -33,6 +43,7 @@ public interface IEmitter
 public record Program(byte[] ByteCode, StaticData Data)
 {
     public int Length => ByteCode.Length;
+    public int Arity { get; set; } = 0;
 
     public byte this[CodeAddress index] => ByteCode[index];
     public Number this[DataAddress index] => Data[index];

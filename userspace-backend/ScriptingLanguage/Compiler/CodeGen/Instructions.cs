@@ -13,10 +13,11 @@ public enum InstructionType : byte
 
     // Load/Store (TOS = Top Of Stack)
     LoadNumber,                          // Loads a number from data.
-    LoadIn, StoreIn,                     // Gets or Sets the input register (x), to/from TOS.
-    LoadOut, StoreOut,                   // Gets or Sets the output register (y), to/from TOS.
-    LoadPersistent, StorePersistent,     // Gets or Sets an address in persistent memory, to/from TOS.
-    LoadImpersistent, StoreImpersistent, // Gets or Sets an address in impersistent memory, to/from TOS.
+    LoadIn, StoreIn,                     // Gets/Sets the input register (x), to/from TOS.
+    LoadOut, StoreOut,                   // Gets/Sets the output register (y), to/from TOS.
+    LoadPersistent, StorePersistent,     // Gets/Sets an address in persistent memory, to/from TOS.
+    LoadImpersistent, StoreImpersistent, // Gets/Sets an address in impersistent memory, to/from TOS.
+    LoadStack, StoreStack,               // Gets/Sets a certain index of the stack.
     Swap,                                // Swaps the top two stack elements.
 
     // Constant,
@@ -82,6 +83,9 @@ public static class Instructions
 
         InstructionType.LoadNumber => DataAddress.SIZE,
 
+        InstructionType.LoadStack => StackAddress.SIZE,
+        InstructionType.StoreStack => StackAddress.SIZE,
+
         InstructionType.Jmp => CodeAddress.SIZE,
         InstructionType.Jz => CodeAddress.SIZE,
 
@@ -99,19 +103,6 @@ public static class Instructions
         InstructionType.Jz => true,
 
         _ => false
-    };
-
-    /// <summary>
-    /// Looks up if this instruction is an inline assignment (i.e. 'composite' assignment).
-    /// </summary>
-    /// <param name="type">The type of the instruction.</param>
-    /// <returns>Whether this instruction is an inline assignment operation.</returns>
-    public static bool IsInline(this InstructionType type) => type switch
-    {
-        InstructionType.StorePersistent => false,
-        InstructionType.StoreImpersistent => false,
-
-        _ => true
     };
 
     /// <summary>

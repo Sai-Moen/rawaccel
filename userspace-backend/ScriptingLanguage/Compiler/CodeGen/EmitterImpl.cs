@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using userspace_backend.ScriptingLanguage.Compiler.Parser;
 using userspace_backend.ScriptingLanguage.Compiler.Tokenizer;
 using userspace_backend.ScriptingLanguage.Script;
@@ -10,6 +11,7 @@ namespace userspace_backend.ScriptingLanguage.Compiler.CodeGen;
 /// <summary>
 /// Emits AST(s) into programs, which the interpreter can execute.
 /// </summary>
+[SuppressMessage("Style", "IDE0290:Use primary constructor", Justification = "Makes it unreadable")]
 public class EmitterImpl : IEmitter
 {
     private List<byte> byteCode = [];
@@ -18,7 +20,8 @@ public class EmitterImpl : IEmitter
     private readonly IDictionary<string, MemoryAddress> assignmentAddresses;
     private readonly IDictionary<string, MemoryAddress> functionAddresses;
 
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE0290:Use primary constructor", Justification = "Makes it unreadable")]
+    private readonly Dictionary<string, StackAddress> tempFunctionArgs = [];
+
     public EmitterImpl(CompilerContext ctx, IDictionary<string, MemoryAddress> assignmentAddrs, IDictionary<string, MemoryAddress> functionAddrs)
     {
         context = ctx;
@@ -39,6 +42,20 @@ public class EmitterImpl : IEmitter
     public Program Emit(IList<ASTNode> code)
     {
         return EmitWithCallback(() => EmitBlock(code), code.Count);
+    }
+
+    public Program EmitFunction(IList<Token> args, IList<ASTNode> code)
+    {
+        int arity = 0;
+        foreach (Token arg in args)
+        {
+            bool success = tempFunctionArgs.TryAdd(context.GetSymbol(arg), arity++);
+            Debug.Assert(success, "Parser didn't check for duplicate function local names?");
+        }
+        Program program = Emit(code);
+        program.Arity = arity;
+        tempFunctionArgs.Clear();
+        return program;
     }
 
     private Program EmitWithCallback(Action callback, int estimatedAmount)
@@ -85,34 +102,34 @@ public class EmitterImpl : IEmitter
 
                     Token identifier = ast.Identifier;
                     TokenType type = identifier.Type;
-                    if (type == TokenType.Input)
+                    switch (type)
                     {
-                        EmitRegisterAssignment(isCompound, InstructionType.LoadIn, modify, InstructionType.StoreIn);
-                    }
-                    else if (type == TokenType.Output)
-                    {
-                        EmitRegisterAssignment(isCompound, InstructionType.LoadOut, modify, InstructionType.StoreOut);
-                    }
-                    else
-                    {
-                        MemoryAddress address = assignmentAddresses[context.GetSymbol(identifier)];
-                        if (isCompound)
-                        {
-                            InstructionType load = type.MapToLoad();
-                            if (load == InstructionType.NoOp)
-                            {
-                                throw EmitError("Cannot map identifier's type to Load instruction!", identifier);
-                            }
-
-                            AddInstruction(load, (byte[])address);
-                            AddInstruction(InstructionType.Swap);
-                            AddInstruction(modify);
-                        }
-                        InstructionType store = type.MapToStore();
-                        if (store == InstructionType.NoOp)
-                            throw EmitError("Cannot map identifier's type to Store instruction!", identifier);
-
-                        AddInstruction(store, (byte[])address);
+                        case TokenType.Input:
+                            EmitRegisterAssignment(isCompound, InstructionType.LoadIn, modify, InstructionType.StoreIn);
+                            break;
+                        case TokenType.Output:
+                            EmitRegisterAssignment(isCompound, InstructionType.LoadOut, modify, InstructionType.StoreOut);
+                            break;
+                        case TokenType.Parameter:
+                        case TokenType.Immutable:
+                        case TokenType.Persistent:
+                            EmitMemoryAssignment(
+                                (byte[])assignmentAddresses[context.GetSymbol(identifier)],
+                                isCompound, InstructionType.LoadPersistent, modify, InstructionType.StorePersistent);
+                            break;
+                        case TokenType.Impersistent:
+                            EmitMemoryAssignment(
+                                (byte[])assignmentAddresses[context.GetSymbol(identifier)],
+                                isCompound, InstructionType.LoadImpersistent, modify, InstructionType.StoreImpersistent);
+                            break;
+                        case TokenType.FunctionLocal:
+                            EmitMemoryAssignment(
+                                (byte[])tempFunctionArgs[context.GetSymbol(identifier)],
+                                isCompound, InstructionType.LoadStack, modify, InstructionType.StoreStack);
+                            break;
+                        default:
+                            Debug.Fail("Unreachable: parser shouldn't allow this TokenType?");
+                            break;
                     }
                 }
                 break;
@@ -124,6 +141,7 @@ public class EmitterImpl : IEmitter
 
                     CodeAddress ifJumpTargetIndex = AddDefaultJump(InstructionType.Jz);
                     EmitBlock(ast.If);
+
                     CodeAddress ifJumpTarget;
                     if (ast.Else.Length == 0)
                     {
@@ -157,6 +175,9 @@ public class EmitterImpl : IEmitter
                 break;
             case ASTTag.Return:
                 AddInstruction(InstructionType.Return);
+                break;
+            default:
+                Debug.Fail("Unreachable: passed wacky AST tag into this function?");
                 break;
         }
     }
@@ -220,6 +241,10 @@ public class EmitterImpl : IEmitter
                 MemoryAddress functionAddress = functionAddresses[context.GetSymbol(token)];
                 AddInstruction(InstructionType.Call, (byte[])functionAddress);
                 break;
+            case TokenType.FunctionLocal:
+                StackAddress stackAddress = tempFunctionArgs[context.GetSymbol(token)];
+                AddInstruction(InstructionType.LoadStack, (byte[])stackAddress);
+                break;
             case TokenType.MathFunction:
                 AddInstruction(EmitMathFunction(token));
                 break;
@@ -276,6 +301,17 @@ public class EmitterImpl : IEmitter
             AddInstruction(modify);
         }
         AddInstruction(store);
+    }
+
+    private void EmitMemoryAssignment(byte[] address, bool isCompound, InstructionType load, InstructionType modify, InstructionType store)
+    {
+        if (isCompound)
+        {
+            AddInstruction(load, address);
+            AddInstruction(InstructionType.Swap);
+            AddInstruction(modify);
+        }
+        AddInstruction(store, address);
     }
 
     private static InstructionType EmitConstant(Token token)

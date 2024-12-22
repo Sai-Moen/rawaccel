@@ -17,4 +17,5 @@ public static class Constants
     public const int MAX_DECLARATIONS = CAPACITY - MAX_PARAMETERS;
 
     public const int MAX_RECURSION_DEPTH = 0x1000;
+    public const int MAX_STACK_DEPTH = 0x10000;
 }
