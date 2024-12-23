@@ -29,7 +29,7 @@ public static class Builtins
 
         {
 
-            if (x <= Input_Offset) { ret; }
+            if (x <= Input_Offset) { return; }
 
             x -= Input_Offset;
             y += (pLimit / x) * (x - Midpoint * atan(x / Midpoint));
@@ -54,7 +54,7 @@ public static class Builtins
 
         ]
 
-            const accel := e ^ Growth_Rate;
+            const accel    := e ^ Growth_Rate;
             const motivity := 2 * log(Motivity);
             const midpoint := log(Midpoint);
             const constant := -motivity / 2;
@@ -62,22 +62,25 @@ public static class Builtins
             var denom := zero;
 
             # x is already accessible, unlike in accel-motivity.hpp
-            fn operator()
+            fn legacy()
             {
                 denom := e ^ (accel * (midpoint - log(x))) + 1;
-                y := e ^ (motivity / denom + constant);
+                return e ^ (motivity / denom + constant);
             }
 
         {
 
-            y := operator();
+            if (!Gain) {
+                return legacy();
+            }
 
             # TODO implement Gain motivity
             # Might also expose some pain points of the language, so it should be a goal
+            y := legacy();
 
         }
 
         # TODO we kind of want to implement the distribution, but only for Gain.
-        # There may be a bit of a shortcoming here (maybe the default distribution can be callable with a built-in function?).
+        # There could be a bit of a shortcoming here (maybe the default distribution can be callable with a built-in function?).
         """;
 }

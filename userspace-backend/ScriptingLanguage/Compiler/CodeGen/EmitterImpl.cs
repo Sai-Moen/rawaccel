@@ -174,7 +174,18 @@ public class EmitterImpl : IEmitter
                 }
                 break;
             case ASTTag.Return:
-                AddInstruction(InstructionType.Return);
+                {
+                    ASTReturn ast = union.astReturn;
+
+                    Token[] expression = ast.Expression;
+                    if (expression.Length > 0)
+                    {
+                        EmitExpression(expression);
+                        AddInstruction(InstructionType.StoreOut);
+                    }
+
+                    AddInstruction(InstructionType.Return);
+                }
                 break;
             default:
                 Debug.Fail("Unreachable: passed wacky AST tag into this function?");

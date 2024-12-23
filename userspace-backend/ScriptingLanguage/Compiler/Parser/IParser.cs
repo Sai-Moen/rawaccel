@@ -68,7 +68,7 @@ public record ASTAssign(Token Identifier, Token Operator, Token[] Initializer);
 public record ASTIf(Token[] Condition, ASTNode[] If, ASTNode[] Else);
 public record ASTWhile(Token[] Condition, ASTNode[] While);
 public record ASTFunction(Token Identifier, Token[] Args, ASTNode[] Code);
-public record ASTReturn();
+public record ASTReturn(Token[] Expression);
 
 /// <summary>
 /// Represents a callback that has been parsed but not yet validated and emitted.

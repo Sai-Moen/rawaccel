@@ -25,7 +25,7 @@ public class LinearTests
 
         {
 
-            if (x <= Input_Offset) { ret; }
+            if (x <= Input_Offset) { return; }
 
             base := Acceleration * (x - Input_Offset) ^ 2 / x;
             y += min(base, Output_Cap);
