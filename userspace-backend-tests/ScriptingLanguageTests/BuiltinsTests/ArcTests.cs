@@ -10,30 +10,27 @@ namespace userspace_backend_tests.ScriptingLanguageTests.BuiltinsTests;
 
 public class ArcAccel
 {
-    public const double DEFAULT_INPUT_OFFSET = 0;
-    public const double DEFAULT_LIMIT = 4;
-    public const double DEFAULT_MIDPOINT = 16;
+    private double pLimit;
 
-    private readonly double pLimit;
+    private void Init()
+    {
+        pLimit = Limit - 1;
+    }
 
-    public ArcAccel()
-        : this(DEFAULT_INPUT_OFFSET, DEFAULT_LIMIT, DEFAULT_MIDPOINT)
-    { }
-
-    public ArcAccel(double inputOffset, double limit, double midpoint)
+    public ArcAccel(double inputOffset = 0, double limit = 4, double midpoint = 16)
     {
         InputOffset = inputOffset;
         Limit = limit;
         Midpoint = midpoint;
 
-        pLimit = Limit - 1;
+        Init();
     }
 
     public double InputOffset { get; }
     public double Limit { get; }
     public double Midpoint { get; }
 
-    public double Arc(double x)
+    public double Call(double x)
     {
         double y = 1;
         if (x > InputOffset)
@@ -42,11 +39,6 @@ public class ArcAccel
             y += pLimit / x * (x - Midpoint * Math.Atan(x / Midpoint));
         }
         return y;
-    }
-
-    public double[] Arc(double[] xs)
-    {
-        return xs.Select(Arc).ToArray();
     }
 }
 
@@ -82,7 +74,7 @@ public class ArcTests
             // somehow there are no floating point errors here
             // maybe look up if there is a method to include epsilon in the comparison or something
             // if this ever desyncs, change it to a for-loop with an epsilon
-            CollectionAssert.AreEqual(arc.Arc(xs), callbacks.Calculate(xs));
+            CollectionAssert.AreEqual(xs.Select(arc.Call).ToArray(), callbacks.Calculate(xs));
         }
     }
 }

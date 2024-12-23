@@ -7,7 +7,8 @@ namespace userspace_backend.ScriptingLanguage;
 /// </summary>
 public static class Constants
 {
-    public const int LUT_POINTS_CAPACITY = 257;
+    public const int LUT_RAW_DATA_CAPACITY = 514;
+    public const int LUT_POINTS_CAPACITY = LUT_RAW_DATA_CAPACITY / 2;
 
     public const int MAX_IDENTIFIER_LEN = 0x20;
     public const int MAX_NUMBER_LEN = 0x40;
