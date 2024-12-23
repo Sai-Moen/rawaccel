@@ -175,7 +175,7 @@ By combining these elements, you can represent many formulas.
 ```
 {
 
-	if (x <= Input_Offset) { ret; }
+	if (x <= Input_Offset) { return; }
 
 	x -= Input_Offset;
 	y += (pLimit / x) * (x - Midpoint * atan(x / Midpoint));
@@ -204,7 +204,7 @@ Arc mode by SaiMoen.
 
 {
 
-	if (x <= Input_Offset) { ret; }
+	if (x <= Input_Offset) { return; }
 
 	x -= Input_Offset;
 	y += (pLimit / x) * (x - Midpoint * atan(x / Midpoint));

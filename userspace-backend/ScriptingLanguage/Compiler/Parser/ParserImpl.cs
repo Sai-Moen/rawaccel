@@ -21,7 +21,7 @@ public class ParserImpl : IParser
     private Token previousToken = default;
     private Token currentToken;
 
-    private readonly Dictionary<string, TokenType> declarationNames = new(Constants.CAPACITY);
+    private readonly Dictionary<string, TokenType> declarationNames = new(Constants.MAX_MEM_CAP);
     private readonly HashSet<string> functionLocalNames = [];
 
     // keeps track of amount of recursion, could also consider using explicit stack
@@ -452,12 +452,16 @@ public class ParserImpl : IParser
         }
         else if (Accept(TokenType.Return))
         {
-            Discard(TokenType.Terminator);
+            List<Token> expression;
+            if (Accept(TokenType.Terminator))
+                expression = [];
+            else
+                expression = Expression(TokenType.Terminator);
 
             tag = ASTTag.Return;
             union = new()
             {
-                astReturn = new()
+                astReturn = new([.. expression])
             };
         }
         else
