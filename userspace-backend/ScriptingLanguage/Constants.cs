@@ -7,6 +7,9 @@ namespace userspace_backend.ScriptingLanguage;
 /// </summary>
 public static class Constants
 {
+    public const bool LEGACY = false;
+    public const bool GAIN = true;
+
     public const int LUT_RAW_DATA_CAPACITY = 514;
     public const int LUT_POINTS_CAPACITY = LUT_RAW_DATA_CAPACITY / 2;
 

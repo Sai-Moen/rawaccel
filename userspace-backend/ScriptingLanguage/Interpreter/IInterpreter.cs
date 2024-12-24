@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using userspace_backend.ScriptingLanguage.Compiler.CodeGen;
+﻿using userspace_backend.ScriptingLanguage.Compiler.CodeGen;
 using userspace_backend.ScriptingLanguage.Script;
 
 namespace userspace_backend.ScriptingLanguage.Interpreter;
@@ -56,6 +55,13 @@ public interface IInterpreter
     /// </summary>
     /// <param name="program">The program.</param>
     void ExecuteProgram(Program program);
+
+    /// <summary>
+    /// Executes a program with a stack given by the user.
+    /// </summary>
+    /// <param name="program">The program.</param>
+    /// <param name="stack">The given stack.</param>
+    void ExecuteProgram(Program program, ProgramStack stack);
 }
 
 /// <summary>

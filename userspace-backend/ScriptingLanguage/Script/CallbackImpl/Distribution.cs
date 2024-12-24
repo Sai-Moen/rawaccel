@@ -1,5 +1,4 @@
 ﻿using System.Diagnostics;
-using userspace_backend.ScriptingLanguage.Compiler;
 using userspace_backend.ScriptingLanguage.Compiler.CodeGen;
 using userspace_backend.ScriptingLanguage.Compiler.Parser;
 using userspace_backend.ScriptingLanguage.Compiler.Tokenizer;
@@ -12,36 +11,21 @@ namespace userspace_backend.ScriptingLanguage.Script.CallbackImpl
     {
         internal const string NAME = "distribution";
 
-        private readonly int amount;
+        private readonly Program argsProgram;
         private readonly Program program;
 
         internal Distribution(ParsedCallback parsed, EmitterImpl emitter)
         {
             Debug.Assert(parsed.Name == NAME);
 
-            CompilerContext context = emitter.Context;
-
             Token[] args = parsed.Args;
-            switch (args.Length)
+            if (args.Length == 0)
             {
-                case 0:
-                    amount = Constants.LUT_POINTS_CAPACITY;
-                    break;
-                case 1:
-                    {
-                        Token first = args[0];
-                        amount = (int)Number.Parse(context.GetSymbol(first), first);
-                    }
-
-                    if (amount <= 0 || amount > Constants.LUT_POINTS_CAPACITY)
-                    {
-                        throw new CompilationException($"Amount argument out of range! range: [1, {Constants.LUT_POINTS_CAPACITY}]");
-                    }
-                    break;
-                default:
-                    throw new CompilationException(
-                        $"Distribution Callback only has an optional 'amount' argument, but {args.Length} were given.");
+                // bit hacky, but it will work for now
+                args = [Tokens.GetReserved(Tokens.CONST_CAPACITY)];
             }
+            argsProgram = emitter.Emit(args);
+            argsProgram.Arity = 1;
 
             program = emitter.Emit(parsed.Code);
         }
@@ -50,6 +34,15 @@ namespace userspace_backend.ScriptingLanguage.Script.CallbackImpl
         {
             interpreter.Init();
             interpreter.X = 0;
+
+            ProgramStack stack = [];
+            interpreter.ExecuteProgram(argsProgram, stack);
+            Debug.Assert(stack.Count == 1, "Bug in InterpreterImpl that allows for 'Count != Arity'?");
+
+            int amount = (int)stack[0];
+            if (amount < 1 || amount > Constants.LUT_POINTS_CAPACITY)
+                throw new InterpreterException(
+                    $"Amount argument out of range! range: [1, {Constants.LUT_POINTS_CAPACITY}]");
 
             double[] inputs = new double[amount];
             for (int i = 0; i < amount; i++)
