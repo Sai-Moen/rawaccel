@@ -52,14 +52,14 @@ public record FpRepRange(int Start, int Stop, int Num)
         // for some reason e starts at 0 in the header file, this is better imo
         for (int e = Start; e < Stop; e++)
         {
-            double expScale = double.Exp2(e);
+            double expScale = Math.ScaleB(1, e) / Num;
             for (int i = 0; i < Num; i++)
             {
                 fn((i + Num) * expScale);
             }
         }
 
-        fn(double.Exp2(Stop));
+        fn(Math.ScaleB(1, Stop));
     }
 
     public int Size()
@@ -73,19 +73,22 @@ public class GainMotivityAccel
     private const int capacity = Constants.LUT_RAW_DATA_CAPACITY;
     private readonly float[] data = new float[capacity];
 
-    // the velocity field is always true in the original implementation
-    // hardcoding with this assumption made some stuff a bit simpler
+    // the velocity field is always true in the original implementation.
+    // in this case since the scripting language works based on sens rather than velocity,
+    // the opposite was hardcoded
+
+    private readonly LegacyMotivityAccel sig;
 
     private readonly FpRepRange range = new(-3, 9, 8);
-    private readonly double xStart;
+    //private readonly double xStart;
 
     public GainMotivityAccel(double growthRate = 1, double motivity = 1.5, double midpoint = 5)
     {
-        xStart = double.Exp2(range.Start);
+        //xStart = Math.ScaleB(1, range.Start);
 
         double sum = 0;
         double a = 0;
-        LegacyMotivityAccel sig = new(growthRate, motivity, midpoint);
+        sig = new(growthRate, motivity, midpoint);
         double SigmoidSum(double b)
         {
             const int partitions = 2;
@@ -100,8 +103,12 @@ public class GainMotivityAccel
         }
 
         int i = 0;
-        range.ForEach((x) => data[i++] = (float)SigmoidSum(x));
+        range.ForEach((x) => data[i++] = (float)(SigmoidSum(x) / x));
     }
+
+    public double GrowthRate { get => sig.GrowthRate; }
+    public double Motivity { get => sig.Motivity; }
+    public double Midpoint { get => sig.Midpoint; }
 
     public double Call(double x)
     {
@@ -115,11 +122,11 @@ public class GainMotivityAccel
             uint idx = (uint)Math.Min((int)idxF, range.Size() - 2);
             if (idx < capacity - 1)
             {
-                return Lerp(data[idx], data[idx + 1], idxF - idx) / x;
+                return Lerp(data[idx], data[idx + 1], idxF - idx);
             }
         }
 
-        return data[0] / xStart;
+        return data[0];
     }
 
     public static double Lerp(double a, double b, double t)
@@ -158,7 +165,47 @@ public class MotivityTests
 
         foreach (LegacyMotivityAccel mot in mots)
         {
-            // parameter[0] is Gain
+            parameters[0].Value = Constants.LEGACY;
+            parameters[1].Value = mot.GrowthRate;
+            parameters[2].Value = mot.Motivity;
+            parameters[3].Value = mot.Midpoint;
+
+            double[] actual = callbacks.Calculate(xs);
+            for (int i = 0; i < cap; i++)
+            {
+                double expected = mot.Call(xs[i]);
+                Assert.IsTrue(Math.Abs(actual[i] - expected) <= 1e-6);
+            }
+        }
+    }
+
+    // haven't yet figured out how to make gain motivity work in the scripting language
+    // we can't do the same as the header/test implementations, because those already have a lookup table to use in operator()
+    // presumably the header scales x because it's a log-log, hence x is logarithmic as well, but I will look up how to do it later
+    [Ignore]
+    [TestMethod]
+    public void TestGainImplementationsEqual()
+    {
+        const int cap = Constants.LUT_POINTS_CAPACITY;
+
+        IInterpreter interpreter = Wrapper.LoadScript(Builtins.MOTIVITY);
+        Parameters parameters = interpreter.Settings;
+        Callbacks callbacks = interpreter.Callbacks;
+
+        IEnumerable<GainMotivityAccel> mots =
+            [
+                new(),
+                new(2, 2, 32),
+                new(4, 4, 4),
+            ];
+
+        double[] xs = new double[cap];
+        for (int i = 0; i < cap; i++)
+            xs[i] = i + 1;
+
+        foreach (GainMotivityAccel mot in mots)
+        {
+            parameters[0].Value = Constants.GAIN;
             parameters[1].Value = mot.GrowthRate;
             parameters[2].Value = mot.Motivity;
             parameters[3].Value = mot.Midpoint;

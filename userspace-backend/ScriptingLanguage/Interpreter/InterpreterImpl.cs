@@ -159,6 +159,11 @@ public class InterpreterImpl : IInterpreter
 
     public void ExecuteProgram(Program program)
     {
+        ExecuteProgram(program, stack);
+    }
+
+    public void ExecuteProgram(Program program, ProgramStack stack)
+    {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void Fn1(Func<Number, Number> func)
         {

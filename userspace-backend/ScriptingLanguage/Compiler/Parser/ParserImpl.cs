@@ -51,6 +51,11 @@ public class ParserImpl : IParser
         if (maxIndex < 3)
             throw ParserError($"Script is too small (maximum index = {maxIndex}) to have required sections!");
 
+        // if the parser consumes exactly the correct amount of tokens, then currentToken will end up on this dummy token
+        // otherwise OoB happens, or more checks might have to happen
+        // this should happen after maxIndex is set
+        lexicalTokens.Add(default);
+
         currentToken = lexicalTokens[currentIndex];
         Debug.Assert(currentToken.Type == TokenType.SquareOpen);
     }
@@ -92,26 +97,14 @@ public class ParserImpl : IParser
             asts.Add(Statement());
         callbacks.Add(Calculation.NAME, new(Calculation.NAME, [], [.. asts]));
 
-        if (currentIndex == maxIndex)
-            return;
-
         // Optional Callbacks
         AdvanceToken();
-        while (Accept(TokenType.Identifier, out var identifier))
+        while (Accept(TokenType.Identifier, out Token identifier))
         {
             List<Token> args = [];
-            if (Accept(TokenType.ParenOpen) && !Accept(TokenType.ParenClose))
-            {
-                do
-                {
-                    if (!Accept(TokenType.Number))
-                        throw ParserError("Callbacks can only have numeric arguments.");
+            if (Accept(TokenType.ParenOpen))
+                args = Expression(TokenType.ParenClose, TokenType.CurlyOpen);
 
-                    args.Add(previousToken);
-                }
-                while (Accept(TokenType.ArgumentSeparator));
-                Discard(TokenType.ParenClose);
-            }
             Block code = ParseBlock();
 
             ParsedCallback callback = new(context.GetSymbol(identifier), [.. args], [.. code]);
@@ -261,11 +254,11 @@ public class ParserImpl : IParser
             {
                 do
                 {
-                    if (!Accept(TokenType.Identifier))
+                    if (!Accept(TokenType.Identifier, out Token arg))
                         throw ParserError("User-defined functions can only have identifier arguments.");
 
-                    functionLocalNames.Add(context.GetSymbol(previousToken));
-                    args.Add(previousToken);
+                    functionLocalNames.Add(context.GetSymbol(arg));
+                    args.Add(arg);
                 }
                 while (Accept(TokenType.ArgumentSeparator));
                 Discard(TokenType.ParenClose);
@@ -408,7 +401,8 @@ public class ParserImpl : IParser
                 target = target with { Type = type };
             }
 
-            Token assignment = Accept(TokenType.Assignment) ? previousToken : Expect(TokenType.Compound);
+            if (!Accept(TokenType.Assignment, out Token assignment))
+                assignment = Expect(TokenType.Compound);
 
             List<Token> initializer = Expression(TokenType.Terminator);
 
@@ -469,7 +463,7 @@ public class ParserImpl : IParser
             throw ParserError($"Expected statement!");
         }
 
-        return new ASTNode(tag, union);
+        return new(tag, union);
     }
 
     private List<Token> Expression(TokenType end, TokenType after = TokenType.None)
@@ -718,8 +712,9 @@ public class ParserImpl : IParser
 
     private void AdvanceToken()
     {
-        Debug.Assert(currentIndex <= maxIndex);
-        if (currentIndex == maxIndex)
+        // if currentIndex == maxIndex,
+        // currentToken will index into the last element of the list, which is a dummy token
+        if (currentIndex > maxIndex)
             throw ParserError("End reached unexpectedly!");
 
         previousToken = currentToken;

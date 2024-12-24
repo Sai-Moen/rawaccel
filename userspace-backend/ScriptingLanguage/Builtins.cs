@@ -59,28 +59,73 @@ public static class Builtins
             const midpoint := log(Midpoint);
             const constant := -motivity / 2;
 
-            var denom := zero;
+            var denom := 0;
 
-            # x is already accessible, unlike in accel-motivity.hpp
-            fn legacy()
+            fn legacy(speed)
             {
-                denom := e ^ (accel * (midpoint - log(x))) + 1;
-                return e ^ (motivity / denom + constant);
+                denom := e ^ (accel * (midpoint - log(speed))) + 1;
+                y := e ^ (motivity / denom + constant);
             }
+
+            # calculation stuff
+            let sum := 0;
+            let a := 0;
+            const partitions := 2;
+            var interval := 0;
+            var partition := 1;
+            fn sigmoidSum(b)
+            {
+                interval := (b - a) / partitions;
+                while (partition <= partitions)
+                {
+                    sum += legacy(a + partition * interval) * interval;
+                    partition += 1;
+                }
+                a := b;
+                y := sum;
+            }
+
+            # distribution stuff
+            const rangeStart := -3;
+            const rangeStop := 9;
+            const rangeNum := 8;
+            const rangeSize := (rangeStop - rangeStart) * rangeNum + 1;
+
+            let inner := 0;
+            let ep := rangeStart;
+            let expScale := scaleb(1, ep) / rangeNum;
 
         {
 
             if (!Gain) {
-                return legacy();
+                return legacy(x);
             }
 
-            # TODO implement Gain motivity
-            # Might also expose some pain points of the language, so it should be a goal
-            y := legacy();
+            # still need to scale x because of log-log, not sure how?
+            y := sigmoidSum(x) / x;
 
         }
 
-        # TODO we kind of want to implement the distribution, but only for Gain.
-        # There could be a bit of a shortcoming here (maybe the default distribution can be callable with a built-in function?).
+        distribution(rangeSize)
+        {
+
+            if (ep < rangeStop)
+            {
+                if (inner < rangeNum)
+                {
+                    x := (inner + rangeNum) * expScale;
+                    inner += 1;
+                    return;
+                }
+
+                inner := 0;
+
+                ep += 1;
+                expScale := scaleb(1, ep) / rangeNum;
+            }
+
+            x := scaleb(1, ep);
+
+        }
         """;
 }
