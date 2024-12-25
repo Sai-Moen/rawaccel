@@ -5,6 +5,7 @@
 #pragma comment(lib, "User32.lib")
 
 #include <string_view>
+#include <string>
 #include <vector>
 
 #include <Windows.h>

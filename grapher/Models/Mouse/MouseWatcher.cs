@@ -802,7 +802,6 @@ namespace grapher.Models.Mouse
                 MouseData.Set(rawInput.Data.Mouse.LastX, rawInput.Data.Mouse.LastY);
                 AccelCharts.MakeDots(x, y, time);
             }
-
         }
 
         #endregion Methods

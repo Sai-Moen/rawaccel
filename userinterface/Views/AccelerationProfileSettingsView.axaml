@@ -1,0 +1,32 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:userinterface.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="userinterface.Views.AccelerationProfileSettingsView"
+             x:DataType="vm:AccelerationProfileSettingsViewModel">
+  <Expander VerticalAlignment="Top"
+            Header="Acceleration"
+            HorizontalAlignment="Center">
+    <StackPanel Orientation="Vertical">
+      <StackPanel
+        Orientation="Horizontal">
+        <TextBlock
+          Text="Acceleration:"/>
+        <ComboBox
+          ItemsSource="{Binding DefinitionTypesLocal}"
+          SelectedItem="{Binding AccelerationBE.DefinitionType.InterfaceValue}"
+          />
+      </StackPanel>
+		<Carousel
+			SelectedIndex="{Binding AccelerationBE.DefinitionType.CurrentValidatedValue}">
+		<Panel IsVisible="False"/>
+	    <UserControl Content="{Binding AccelerationFormulaSettings}" />
+	    <UserControl Content="{Binding AccelerationLUTSettings}" />
+      </Carousel>
+      <UserControl Content="{Binding AnisotropySettings}" IsVisible="{Binding AreAccelSettingsVisible}"/>
+      <UserControl Content="{Binding CoalescionSettings}" IsVisible="{Binding AreAccelSettingsVisible}"/>
+    </StackPanel>
+  </Expander>
+</UserControl>
