@@ -16,12 +16,13 @@ namespace userinterface.ViewModels
                 Enum.GetValues(typeof(BEData.AccelerationDefinitionType)).Cast<BEData.AccelerationDefinitionType>());
 
         [ObservableProperty]
-        public bool areFormulaSettingsVisible;
+        public bool areAccelSettingsVisible;
 
         public AccelerationProfileSettingsViewModel(BE.AccelerationModel accelerationBE)
         {
             AccelerationBE = accelerationBE;
             AccelerationFormulaSettings = new AccelerationFormulaSettingsViewModel(accelerationBE.FormulaAccel);
+            AccelerationLUTSettings = new AccelerationLUTSettingsViewModel(accelerationBE.LookupTableAccel);
             AnisotropySettings = new AnisotropyProfileSettingsViewModel(accelerationBE.Anisotropy);
             CoalescionSettings = new CoalescionProfileSettingsViewModel(accelerationBE.Coalescion);
             AccelerationBE.DefinitionType.AutoUpdateFromInterface = true;
@@ -34,15 +35,17 @@ namespace userinterface.ViewModels
 
         public AccelerationFormulaSettingsViewModel AccelerationFormulaSettings { get; }
 
-        public AnisotropyProfileSettingsViewModel AnisotropySettings { get; set; }
+        public AccelerationLUTSettingsViewModel AccelerationLUTSettings { get; }
 
-        public CoalescionProfileSettingsViewModel CoalescionSettings { get; set; }
+        public AnisotropyProfileSettingsViewModel AnisotropySettings { get; }
+
+        public CoalescionProfileSettingsViewModel CoalescionSettings { get; }
 
         private void OnDefinitionTypeChanged(object? sender, PropertyChangedEventArgs e)
         {
             if (e.PropertyName == nameof(AccelerationBE.DefinitionType.CurrentValidatedValue))
             {
-                AreFormulaSettingsVisible = AccelerationBE.DefinitionType.ModelValue != BEData.AccelerationDefinitionType.None;
+                AreAccelSettingsVisible = AccelerationBE.DefinitionType.ModelValue != BEData.AccelerationDefinitionType.None;
             }
         }
 

@@ -19,9 +19,14 @@
           SelectedItem="{Binding AccelerationBE.DefinitionType.InterfaceValue}"
           />
       </StackPanel>
-      <UserControl Content="{Binding AccelerationFormulaSettings}" IsVisible="{Binding AreFormulaSettingsVisible}"/>
-      <UserControl Content="{Binding AnisotropySettings}"/>
-      <UserControl Content="{Binding CoalescionSettings}"/>
+		<Carousel
+			SelectedIndex="{Binding AccelerationBE.DefinitionType.CurrentValidatedValue}">
+		<Panel IsVisible="False"/>
+	    <UserControl Content="{Binding AccelerationFormulaSettings}" />
+	    <UserControl Content="{Binding AccelerationLUTSettings}" />
+      </Carousel>
+      <UserControl Content="{Binding AnisotropySettings}" IsVisible="{Binding AreAccelSettingsVisible}"/>
+      <UserControl Content="{Binding CoalescionSettings}" IsVisible="{Binding AreAccelSettingsVisible}"/>
     </StackPanel>
   </Expander>
 </UserControl>

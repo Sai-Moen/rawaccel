@@ -3,7 +3,7 @@
   "OutputDPI": 1200,
   "YXRatio": 1.3333,
   "Acceleration": {
-    "Type": 0,
+    "Type": "None",
     "Anisotropy": {
       "Domain": {
         "X": 1,

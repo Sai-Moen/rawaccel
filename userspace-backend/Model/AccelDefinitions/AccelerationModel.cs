@@ -24,6 +24,8 @@ namespace userspace_backend.Model.AccelDefinitions
 
         public FormulaAccelModel FormulaAccel { get => DefinitionModels[AccelerationDefinitionType.Formula] as FormulaAccelModel; }
 
+        public LookupTableDefinitionModel LookupTableAccel { get => DefinitionModels[AccelerationDefinitionType.LookupTable] as LookupTableDefinitionModel; }
+
         public override Acceleration MapToData()
         {
             return DefinitionModels[DefinitionType.ModelValue].MapToData();

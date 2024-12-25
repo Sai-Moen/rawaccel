@@ -10,6 +10,10 @@ namespace userspace_backend.IO
         {
             WriteIndented = true,
             DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+            Converters =
+            {
+                new JsonStringEnumConverter(),
+            }
         };
 
         protected override string FileType => "Profile";
