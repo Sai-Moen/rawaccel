@@ -1,10 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.Collections.Specialized;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Diagnostics;
 using BE = userspace_backend.Model;
 
 namespace userinterface.ViewModels
@@ -29,8 +25,14 @@ namespace userinterface.ViewModels
 
             foreach(BE.MappingModel mappingBE in MappingsBE.Mappings)
             {
-                MappingViews.Add(new MappingViewHolder(mappingBE));
+                MappingViews.Add(new MappingViewHolder(this, mappingBE));
             }
+        }
+
+        public void DeleteMapping(BE.MappingModel mapping)
+        {
+            bool success = MappingsBE.Mappings.Remove(mapping);
+            Debug.Assert(success);
         }
 
         private void MappingsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
@@ -41,11 +43,21 @@ namespace userinterface.ViewModels
 
     public class MappingViewHolder
     {
-        public MappingViewHolder(BE.MappingModel mapping)
+        private readonly MappingsPageViewModel parent;
+        private readonly BE.MappingModel mapping;
+
+        public MappingViewHolder(MappingsPageViewModel parent, BE.MappingModel mapping)
         {
+            this.parent = parent;
+            this.mapping = mapping;
             MappingView = new MappingViewModel(mapping);
         }
 
         public MappingViewModel MappingView { get; }
+
+        public void DeleteSelf()
+        {
+            parent.DeleteMapping(mapping);
+        }
     }
 }

@@ -1,13 +1,8 @@
-﻿using System;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
-using LiveChartsCore;
-using LiveChartsCore.SkiaSharpView;
+using System.Diagnostics;
 using userspace_backend.Model;
 using BE = userspace_backend.Model;
 
@@ -27,6 +22,12 @@ namespace userinterface.ViewModels
         public ObservableCollection<BE.ProfileModel> Profiles { get; }
 
         public Action SelectionChangeAction { get; }
+
+        public void RemoveSelectedProfile()
+        {
+            bool success = Profiles.Remove(CurrentSelectedProfile);
+            Debug.Assert(success);
+        }
 
         partial void OnCurrentSelectedProfileChanged(ProfileModel value)
         {

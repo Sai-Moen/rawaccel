@@ -8,6 +8,7 @@
              x:DataType="vm:ProfileListViewModel">
 
   <DockPanel>
+
     <TextBlock
       DockPanel.Dock="Top"
       HorizontalAlignment="Left"
@@ -16,10 +17,8 @@
       Margin="10,10,10,10">
       Saved Profiles
     </TextBlock>
-    <Button
-      DockPanel.Dock="Bottom"
-      Content="Add Profile"/>
-    <StackPanel Orientation="Vertical">
+
+    <StackPanel DockPanel.Dock="Top" Orientation="Vertical">
       <ListBox
         ItemsSource="{Binding Profiles}"
         SelectionChanged="OnSelectionChanged">
@@ -32,5 +31,15 @@
         </ListBox.ItemTemplate>
       </ListBox>
     </StackPanel>
+
+    <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal">
+      <Button>
+        Add Profile
+      </Button>
+      <Button Command="{Binding RemoveSelectedProfile}">
+        Delete Selected Profile
+      </Button>
+    </StackPanel>
+
   </DockPanel>
 </UserControl>
