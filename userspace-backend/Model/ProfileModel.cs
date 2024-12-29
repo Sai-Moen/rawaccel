@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 using DATA = userspace_backend.Data;
 using userspace_backend.Model.AccelDefinitions;
 using userspace_backend.Model.EditableSettings;
@@ -15,6 +11,7 @@ namespace userspace_backend.Model
         public ProfileModel(DATA.Profile dataObject, IModelValueValidator<string> nameValidator) : base(dataObject)
         {
             NameValidator = nameValidator;
+            UpdateCurrentValidatedDriverProfile();
         }
 
         public string CurrentNameForDisplay => Name.CurrentValidatedValue;
@@ -27,9 +24,9 @@ namespace userspace_backend.Model
 
         public AccelerationModel Acceleration { get; set; }
 
-        public AnisotropyModel Anisotropy { get; set; }
-
         public HiddenModel Hidden { get; set; }
+
+        public Profile CurrentValidatedDriverProfile { get; protected set; }
 
         protected IModelValueValidator<string> NameValidator { get; }
 
@@ -45,6 +42,51 @@ namespace userspace_backend.Model
             };
         }
 
+        public Profile MapToDriver()
+        {
+            return new Profile()
+            {
+                outputDPI = OutputDPI.ModelValue,
+                yxOutputDPIRatio = YXRatio.ModelValue,
+                argsX = Acceleration.MapToDriver(),
+                domainXY = new Vec2<double>
+                {
+                    x = Acceleration.Anisotropy.DomainX.ModelValue,
+                    y = Acceleration.Anisotropy.DomainY.ModelValue,
+                },
+                rangeXY = new Vec2<double>
+                {
+                    x = Acceleration.Anisotropy.RangeX.ModelValue,
+                    y = Acceleration.Anisotropy.RangeY.ModelValue,
+                },
+                rotation = Hidden.RotationDegrees.ModelValue,
+                lrOutputDPIRatio = Hidden.LeftRightRatio.ModelValue,
+                udOutputDPIRatio = Hidden.UpDownRatio.ModelValue,
+                snap = Hidden.AngleSnappingDegrees.ModelValue,
+                maximumSpeed = Hidden.SpeedCap.ModelValue,
+                minimumSpeed = 0,
+                inputSpeedArgs = new SpeedArgs
+                {
+                    combineMagnitudes = Acceleration.Anisotropy.CombineXYComponents.ModelValue,
+                    lpNorm = Acceleration.Anisotropy.LPNorm.ModelValue,
+                    outputSmoothHalflife = Hidden.OutputSmoothingHalfLife.ModelValue,
+                    inputSmoothHalflife = Acceleration.Coalescion.InputSmoothingHalfLife.ModelValue,
+                    scaleSmoothHalflife = Acceleration.Coalescion.ScaleSmoothingHalfLife.ModelValue,
+                }
+            };
+        }
+
+        // TODO: check if driver profile can be made disposable to avoid garbage collection
+        protected void UpdateCurrentValidatedDriverProfile()
+        {
+            CurrentValidatedDriverProfile = MapToDriver();
+        }
+
+        protected void UpdateCurvePreview()
+        {
+            UpdateCurrentValidatedDriverProfile();
+        }
+
         protected override IEnumerable<IEditableSetting> EnumerateEditableSettings()
         {
             return [Name, OutputDPI, YXRatio];
@@ -52,7 +94,7 @@ namespace userspace_backend.Model
 
         protected override IEnumerable<IEditableSettingsCollection> EnumerateEditableSettingsCollections()
         {
-            return [Acceleration, Anisotropy, Hidden];
+            return [Acceleration, Hidden];
         }
 
         protected override void InitEditableSettingsAndCollections(DATA.Profile dataObject)

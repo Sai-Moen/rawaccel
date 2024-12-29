@@ -43,6 +43,7 @@ namespace userspace_backend_tests.IOTests
                             Y = 1,
                         },
                         LPNorm = 1,
+                        CombineXYComponents = false,
                     },
                 },
             };

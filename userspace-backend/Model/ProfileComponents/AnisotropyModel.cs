@@ -73,6 +73,11 @@ namespace userspace_backend.Model.ProfileComponents
                 initialValue: dataObject?.LPNorm ?? 1,
                 parser: UserInputParsers.DoubleParser,
                 validator: ModelValueValidators.DefaultDoubleValidator);
+            CombineXYComponents = new EditableSetting<bool>(
+                displayName: "Combine X and Y Components",
+                initialValue: dataObject?.CombineXYComponents ?? false,
+                parser: UserInputParsers.BoolParser,
+                validator: ModelValueValidators.DefaultBoolValidator);
         }
     }
 }

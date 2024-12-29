@@ -13,7 +13,8 @@
         "X": 1,
         "Y": 1
       },
-      "LPNorm": 1
+      "LPNorm": 1,
+      "CombineXYComponents": false
     }
   }
 }

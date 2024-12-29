@@ -113,7 +113,7 @@ namespace userspace_backend
         protected IEnumerable<Profile> MapToDriverProfiles(MappingModel mapping)
         {
             IEnumerable<ProfileModel> ProfilesToMap = mapping.IndividualMappings.Select(m => m.Profile).Distinct();
-            return ProfilesToMap.Select(MapToDriverProfile);
+            return ProfilesToMap.Select(p => p.MapToDriver());
         }
 
         protected IEnumerable<DeviceSettings> MapToDriverDevices(DeviceGroupModel dg, string profileName)
@@ -138,40 +138,6 @@ namespace userspace_backend
                     setExtraInfo = false,
                     maximumTime = 200,
                     minimumTime = 0.1,
-                }
-            };
-        }
-
-        protected Profile MapToDriverProfile(ProfileModel profileModel)
-        {
-            return new Profile()
-            {
-                outputDPI = profileModel.OutputDPI.ModelValue,
-                yxOutputDPIRatio = profileModel.YXRatio.ModelValue,
-                argsX = profileModel.Acceleration.MapToDriver(),
-                domainXY = new Vec2<double>
-                {
-                    x = profileModel.Anisotropy.DomainX.ModelValue,
-                    y = profileModel.Anisotropy.DomainY.ModelValue,
-                },
-                rangeXY = new Vec2<double>
-                {
-                    x = profileModel.Anisotropy.RangeX.ModelValue,
-                    y = profileModel.Anisotropy.RangeY.ModelValue,
-                },
-                rotation = profileModel.Hidden.RotationDegrees.ModelValue,
-                lrOutputDPIRatio = profileModel.Hidden.LeftRightRatio.ModelValue,
-                udOutputDPIRatio = profileModel.Hidden.UpDownRatio.ModelValue,
-                snap = profileModel.Hidden.AngleSnappingDegrees.ModelValue,
-                maximumSpeed = profileModel.Hidden.SpeedCap.ModelValue,
-                minimumSpeed = 0,
-                inputSpeedArgs = new SpeedArgs
-                {
-                    combineMagnitudes = profileModel.Anisotropy.CombineXYComponents.ModelValue,
-                    lpNorm = profileModel.Anisotropy.LPNorm.ModelValue,
-                    outputSmoothHalflife = profileModel.Hidden.OutputSmoothingHalfLife.ModelValue,
-                    inputSmoothHalflife = profileModel.Acceleration.Coalescion.InputSmoothingHalfLife.ModelValue,
-                    scaleSmoothHalflife = profileModel.Acceleration.Coalescion.ScaleSmoothingHalfLife.ModelValue,
                 }
             };
         }
