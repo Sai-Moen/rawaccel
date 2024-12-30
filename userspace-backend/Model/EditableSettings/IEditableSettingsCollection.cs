@@ -9,5 +9,7 @@ namespace userspace_backend.Model.EditableSettings
     public interface IEditableSettingsCollection
     {
         bool HasChanged { get; }
+
+        EventHandler AnySettingChanged { get; set; }
     }
 }

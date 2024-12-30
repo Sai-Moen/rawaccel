@@ -1,10 +1,12 @@
-﻿using System;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
+using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 
 namespace userspace_backend.Model.EditableSettings
 {
-    public abstract class EditableSettingsCollection<T> : IEditableSettingsCollection
+    public abstract class EditableSettingsCollection<T> : ObservableObject, IEditableSettingsCollection
     {
         public EditableSettingsCollection(T dataObject)
         {
@@ -12,6 +14,8 @@ namespace userspace_backend.Model.EditableSettings
             GatherEditableSettings();
             GatherEditableSettingsCollections();
         }
+
+        public EventHandler AnySettingChanged { get; set; }
 
         public IEnumerable<IEditableSetting> AllContainedEditableSettings { get; set; }
 
@@ -35,10 +39,44 @@ namespace userspace_backend.Model.EditableSettings
         public void GatherEditableSettings()
         {
             AllContainedEditableSettings = EnumerateEditableSettings();
+
+            foreach (var setting in AllContainedEditableSettings)
+            {
+                // TODO: revisit settings composition so that this null check is unnecessary
+                if (setting != null)
+                {
+                    setting.PropertyChanged += EditableSettingChangedEventHandler;
+                }
+            }
         }
         public void GatherEditableSettingsCollections()
         {
             AllContainedEditableSettingsCollections = EnumerateEditableSettingsCollections();
+
+            // TODO: separate "All" and "currently selected" settings collections
+            // so that incorrect assignment is not done here for collections that alter this through use
+            foreach (var settingsCollection in AllContainedEditableSettingsCollections)
+            {
+                settingsCollection.AnySettingChanged += EditableSettingsCollectionChangedEventHandler;
+            }
+        }
+
+        protected void EditableSettingChangedEventHandler(object? sender, PropertyChangedEventArgs e)
+        {
+            if (string.Equals(e.PropertyName, nameof(EditableSetting<string>.CurrentValidatedValue)))
+            {
+                OnAnySettingChanged();
+            }
+        }
+
+        protected void EditableSettingsCollectionChangedEventHandler(object? sender, EventArgs e)
+        {
+            OnAnySettingChanged();
+        }
+
+        protected void OnAnySettingChanged()
+        {
+            AnySettingChanged?.Invoke(this, new EventArgs());
         }
 
         protected abstract void InitEditableSettingsAndCollections(T dataObject);

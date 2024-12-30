@@ -3,6 +3,9 @@ using DATA = userspace_backend.Data;
 using userspace_backend.Model.AccelDefinitions;
 using userspace_backend.Model.EditableSettings;
 using userspace_backend.Model.ProfileComponents;
+using System;
+using System.ComponentModel;
+using userspace_backend.Common;
 
 namespace userspace_backend.Model
 {
@@ -11,7 +14,6 @@ namespace userspace_backend.Model
         public ProfileModel(DATA.Profile dataObject, IModelValueValidator<string> nameValidator) : base(dataObject)
         {
             NameValidator = nameValidator;
-            UpdateCurrentValidatedDriverProfile();
         }
 
         public string CurrentNameForDisplay => Name.CurrentValidatedValue;
@@ -42,49 +44,37 @@ namespace userspace_backend.Model
             };
         }
 
-        public Profile MapToDriver()
+        protected void AnyNonPreviewPropertyChangedEventHandler(object? send, PropertyChangedEventArgs e)
         {
-            return new Profile()
+            if (string.Equals(e.PropertyName, nameof(EditableSetting<string>.CurrentValidatedValue)))
             {
-                outputDPI = OutputDPI.ModelValue,
-                yxOutputDPIRatio = YXRatio.ModelValue,
-                argsX = Acceleration.MapToDriver(),
-                domainXY = new Vec2<double>
-                {
-                    x = Acceleration.Anisotropy.DomainX.ModelValue,
-                    y = Acceleration.Anisotropy.DomainY.ModelValue,
-                },
-                rangeXY = new Vec2<double>
-                {
-                    x = Acceleration.Anisotropy.RangeX.ModelValue,
-                    y = Acceleration.Anisotropy.RangeY.ModelValue,
-                },
-                rotation = Hidden.RotationDegrees.ModelValue,
-                lrOutputDPIRatio = Hidden.LeftRightRatio.ModelValue,
-                udOutputDPIRatio = Hidden.UpDownRatio.ModelValue,
-                snap = Hidden.AngleSnappingDegrees.ModelValue,
-                maximumSpeed = Hidden.SpeedCap.ModelValue,
-                minimumSpeed = 0,
-                inputSpeedArgs = new SpeedArgs
-                {
-                    combineMagnitudes = Acceleration.Anisotropy.CombineXYComponents.ModelValue,
-                    lpNorm = Acceleration.Anisotropy.LPNorm.ModelValue,
-                    outputSmoothHalflife = Hidden.OutputSmoothingHalfLife.ModelValue,
-                    inputSmoothHalflife = Acceleration.Coalescion.InputSmoothingHalfLife.ModelValue,
-                    scaleSmoothHalflife = Acceleration.Coalescion.ScaleSmoothingHalfLife.ModelValue,
-                }
-            };
+                RecalculateDriverData();
+            }
         }
 
-        // TODO: check if driver profile can be made disposable to avoid garbage collection
-        protected void UpdateCurrentValidatedDriverProfile()
+        protected void AnyCurvePreviewPropertyChangedEventHandler(object? send, PropertyChangedEventArgs e)
         {
-            CurrentValidatedDriverProfile = MapToDriver();
+            if (string.Equals(e.PropertyName, nameof(EditableSetting<string>.CurrentValidatedValue)))
+            {
+                RecalculateDriverDataAndCurvePreview();
+            }
         }
 
-        protected void UpdateCurvePreview()
+        protected void AnyCurveSettingCollectionChangedEventHandler(object? sender, EventArgs e)
         {
-            UpdateCurrentValidatedDriverProfile();
+            // All settings collections currently require curve preview to be re-generated
+            RecalculateDriverDataAndCurvePreview();
+        }
+
+        protected void RecalculateDriverData()
+        {
+            CurrentValidatedDriverProfile = DriverHelpers.MapProfileModelToDriver(this);
+        }
+
+        protected void RecalculateDriverDataAndCurvePreview()
+        {
+            RecalculateDriverData();
+            // TODO: add curve preview points generation
         }
 
         protected override IEnumerable<IEditableSetting> EnumerateEditableSettings()
@@ -116,6 +106,15 @@ namespace userspace_backend.Model
                 validator: ModelValueValidators.DefaultDoubleValidator);
             Acceleration = new AccelerationModel(dataObject.Acceleration);
             Hidden = new HiddenModel(dataObject.Hidden);
+
+            // Name and Output DPI do not need to generate a new curve preview
+            Name.PropertyChanged += AnyNonPreviewPropertyChangedEventHandler;
+            OutputDPI.PropertyChanged += AnyNonPreviewPropertyChangedEventHandler;
+
+            // The rest of settings should generate a new curve preview
+            YXRatio.PropertyChanged += AnyCurvePreviewPropertyChangedEventHandler;
+            Acceleration.AnySettingChanged += AnyCurveSettingCollectionChangedEventHandler;
+            Hidden.AnySettingChanged += AnyCurveSettingCollectionChangedEventHandler;
         }
     }
 }

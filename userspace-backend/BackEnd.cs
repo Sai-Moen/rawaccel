@@ -89,6 +89,7 @@ namespace userspace_backend
             }
             catch(Exception ex)
             {
+                // Log this once logging is added
             }
         }
 
@@ -113,7 +114,7 @@ namespace userspace_backend
         protected IEnumerable<Profile> MapToDriverProfiles(MappingModel mapping)
         {
             IEnumerable<ProfileModel> ProfilesToMap = mapping.IndividualMappings.Select(m => m.Profile).Distinct();
-            return ProfilesToMap.Select(p => p.MapToDriver());
+            return ProfilesToMap.Select(p => p.CurrentValidatedDriverProfile);
         }
 
         protected IEnumerable<DeviceSettings> MapToDriverDevices(DeviceGroupModel dg, string profileName)

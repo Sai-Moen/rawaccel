@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using userspace_backend.Data.Profiles;
 using userspace_backend.Data.Profiles.Accel;
 using userspace_backend.Model.EditableSettings;
@@ -12,6 +13,7 @@ namespace userspace_backend.Model.AccelDefinitions
     {
         public AccelerationModel(Acceleration dataObject) : base(dataObject)
         {
+            DefinitionType.PropertyChanged += DefinitionTypeChangedEventHandler;
         }
 
         public EditableSetting<AccelerationDefinitionType> DefinitionType { get; set; }
@@ -22,9 +24,31 @@ namespace userspace_backend.Model.AccelDefinitions
 
         public CoalescionModel Coalescion { get; set; }
 
-        public FormulaAccelModel FormulaAccel { get => DefinitionModels[AccelerationDefinitionType.Formula] as FormulaAccelModel; }
+        public FormulaAccelModel FormulaAccel
+        {
+            get   
+            {
+                if (DefinitionModels.TryGetValue(AccelerationDefinitionType.Formula, out IAccelDefinitionModel value))
+                {
+                    return value as FormulaAccelModel;
+                }
 
-        public LookupTableDefinitionModel LookupTableAccel { get => DefinitionModels[AccelerationDefinitionType.LookupTable] as LookupTableDefinitionModel; }
+                return null;
+            }
+        }
+
+        public LookupTableDefinitionModel LookupTableAccel
+        {
+            get   
+            {
+                if (DefinitionModels.TryGetValue(AccelerationDefinitionType.LookupTable, out IAccelDefinitionModel value))
+                {
+                    return value as LookupTableDefinitionModel;
+                }
+
+                return null;
+            }
+        }
 
         public override Acceleration MapToData()
         {
@@ -34,6 +58,15 @@ namespace userspace_backend.Model.AccelDefinitions
         public AccelArgs MapToDriver()
         {
             return DefinitionModels[DefinitionType.ModelValue].MapToDriver();
+        }
+
+        protected void DefinitionTypeChangedEventHandler(object? sender, PropertyChangedEventArgs e)
+        {
+            // When the definition type changes, contained editable settings collections need to correspond to new type
+            if (string.Equals(e.PropertyName, nameof(DefinitionType.CurrentValidatedValue)))
+            {
+                GatherEditableSettingsCollections();
+            }
         }
 
         protected override IEnumerable<IEditableSetting> EnumerateEditableSettings()
@@ -52,9 +85,7 @@ namespace userspace_backend.Model.AccelDefinitions
                 displayName: "Definition Type",
                 initialValue: dataObject?.Type ?? AccelerationDefinitionType.None,
                 parser: UserInputParsers.AccelerationDefinitionTypeParser,
-                validator: ModelValueValidators.DefaultAccelerationTypeValidator,
-                // When the definition type changes, contained editable settings collections need to correspond to new type
-                setCallback: GatherEditableSettingsCollections);
+                validator: ModelValueValidators.DefaultAccelerationTypeValidator);
 
             DefinitionModels = new Dictionary<AccelerationDefinitionType, IAccelDefinitionModel>();
             foreach (AccelerationDefinitionType defnType in Enum.GetValues(typeof(AccelerationDefinitionType)))

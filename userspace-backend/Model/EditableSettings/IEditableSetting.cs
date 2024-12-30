@@ -1,12 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.ComponentModel;
 
 namespace userspace_backend.Model.EditableSettings
 {
-    public interface IEditableSetting
+    public interface IEditableSetting : INotifyPropertyChanged
     {
         string DisplayName { get; }
 

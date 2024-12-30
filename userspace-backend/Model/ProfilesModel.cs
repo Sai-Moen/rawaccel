@@ -79,6 +79,8 @@ namespace userspace_backend.Model
             return new DATA.Profile()
             {
                 Name = name,
+                OutputDPI = 1000,
+                YXRatio = 1,
             };
         }
     }
