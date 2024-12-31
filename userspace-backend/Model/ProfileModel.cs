@@ -6,6 +6,9 @@ using userspace_backend.Model.ProfileComponents;
 using System;
 using System.ComponentModel;
 using userspace_backend.Common;
+using System.Collections.ObjectModel;
+using CommunityToolkit.Mvvm.ComponentModel;
+using userspace_backend.Display;
 
 namespace userspace_backend.Model
 {
@@ -14,6 +17,8 @@ namespace userspace_backend.Model
         public ProfileModel(DATA.Profile dataObject, IModelValueValidator<string> nameValidator) : base(dataObject)
         {
             NameValidator = nameValidator;
+            CurvePreview = new CurvePreview();
+            RecalculateDriverDataAndCurvePreview();
         }
 
         public string CurrentNameForDisplay => Name.CurrentValidatedValue;
@@ -29,6 +34,8 @@ namespace userspace_backend.Model
         public HiddenModel Hidden { get; set; }
 
         public Profile CurrentValidatedDriverProfile { get; protected set; }
+
+        public ICurvePreview CurvePreview { get; protected set; }
 
         protected IModelValueValidator<string> NameValidator { get; }
 
@@ -74,7 +81,7 @@ namespace userspace_backend.Model
         protected void RecalculateDriverDataAndCurvePreview()
         {
             RecalculateDriverData();
-            // TODO: add curve preview points generation
+            CurvePreview.GeneratePoints(CurrentValidatedDriverProfile);
         }
 
         protected override IEnumerable<IEditableSetting> EnumerateEditableSettings()

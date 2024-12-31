@@ -479,12 +479,9 @@ public:
         return gcnew ManagedAccel(profile);
     }
 
-    Tuple<double, double>^ Accelerate(int x, int y, double dpi_factor, double time)
+    Tuple<double, double>^ Accelerate(double x, double y, double dpi_factor, double time)
     {
-        vec2d in_out_vec = {
-            (double)x,
-            (double)y
-        };
+        vec2d in_out_vec = { x, y };
 
         instance->mod.modify(in_out_vec, speed_instance->speed_calculator, instance->settings, dpi_factor, time);
 
