@@ -1,13 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
+using System;
 using System.Collections.ObjectModel;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
-using LiveChartsCore;
-using LiveChartsCore.SkiaSharpView;
 using userspace_backend.Model;
 using BE = userspace_backend.Model;
 
@@ -18,15 +11,23 @@ namespace userinterface.ViewModels
         [ObservableProperty]
         public BE.ProfileModel currentSelectedProfile;
 
-        public ProfileListViewModel(IEnumerable<BE.ProfileModel> profilesBE, Action selectionChangeAction)
+        private readonly BE.ProfilesModel profilesModel;
+
+        public ProfileListViewModel(BE.ProfilesModel profiles, Action selectionChangeAction)
         {
-            Profiles = new ObservableCollection<BE.ProfileModel>(profilesBE);
+            profilesModel = profiles;
             SelectionChangeAction = selectionChangeAction;
         }
 
-        public ObservableCollection<BE.ProfileModel> Profiles { get; }
+        public ObservableCollection<BE.ProfileModel> Profiles => profilesModel.Profiles;
 
         public Action SelectionChangeAction { get; }
+
+        public void RemoveSelectedProfile()
+        {
+            // pressing delete multiple times without re-selecting just does nothing
+            _ = profilesModel.RemoveProfile(CurrentSelectedProfile);
+        }
 
         partial void OnCurrentSelectedProfileChanged(ProfileModel value)
         {

@@ -1,6 +1,6 @@
-﻿using System.Collections.Generic;
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.Collections.Specialized;
+using System.Diagnostics;
 using BE = userspace_backend.Model;
 
 namespace userinterface.ViewModels
@@ -27,7 +27,7 @@ namespace userinterface.ViewModels
 
             foreach (BE.DeviceModel device in DevicesBE.Devices)
             {
-                ListViews.Add(new DeviceViewHolder(device, DevicesBE.DeviceGroups));
+                ListViews.Add(new DeviceViewHolder(device, DevicesBE));
             }
         }
 
@@ -39,11 +39,22 @@ namespace userinterface.ViewModels
 
     public class DeviceViewHolder
     {
-        public DeviceViewHolder(BE.DeviceModel device, BE.DeviceGroups groups)
+        private readonly BE.DeviceModel device;
+        private readonly BE.DevicesModel devices;
+
+        public DeviceViewHolder(BE.DeviceModel device, BE.DevicesModel devices)
         {
-            DeviceView = new DeviceViewModel(device, groups);
+            this.devices = devices;
+            this.device = device;
+            DeviceView = new DeviceViewModel(device, devices.DeviceGroups);
         }
 
         public DeviceViewModel DeviceView { get; set; }
+
+        public void DeleteSelf()
+        {
+            bool success = devices.RemoveDevice(device);
+            Debug.Assert(success);
+        }
     }
 }

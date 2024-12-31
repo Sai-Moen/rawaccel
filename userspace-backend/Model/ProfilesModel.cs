@@ -2,8 +2,8 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using DATA = userspace_backend.Data;
 using userspace_backend.Model.EditableSettings;
+using DATA = userspace_backend.Data;
 
 namespace userspace_backend.Model
 {
@@ -72,6 +72,11 @@ namespace userspace_backend.Model
             ProfileModel profileModel = new ProfileModel(profileToAdd, NameValidator);
             Profiles.Add(profileModel);
             return true;
+        }
+
+        public bool RemoveProfile(ProfileModel profile)
+        {
+            return Profiles.Remove(profile);
         }
 
         protected static DATA.Profile GenerateNewDefaultProfile(string name)

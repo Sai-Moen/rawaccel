@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using userspace_backend.Model.EditableSettings;
 
 namespace userspace_backend.Model
@@ -59,6 +57,11 @@ namespace userspace_backend.Model
                 g => string.Equals(g.ModelValue, name, StringComparison.InvariantCultureIgnoreCase));
 
             return deviceGroup != null;
+        }
+
+        public bool RemoveDeviceGroup(DeviceGroupModel deviceGroup)
+        {
+            return DeviceGroupModels.Remove(deviceGroup);
         }
 
         protected override IEnumerable<IEditableSetting> EnumerateEditableSettings()

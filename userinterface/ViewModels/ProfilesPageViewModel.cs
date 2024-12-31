@@ -1,11 +1,8 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using BE = userspace_backend.Model;
 
 namespace userinterface.ViewModels
@@ -21,7 +18,7 @@ namespace userinterface.ViewModels
             ProfileViewModels = new ObservableCollection<ProfileViewModel>();
             UpdatedProfileViewModels();
             SelectedProfileView = ProfileViewModels.FirstOrDefault();
-            ProfileListView = new ProfileListViewModel(ProfileModels, UpdateSelectedProfileView);
+            ProfileListView = new ProfileListViewModel(profileModels, UpdateSelectedProfileView);
             ActiveProfilesListView = new ActiveProfilesListViewModel();
         }
 
