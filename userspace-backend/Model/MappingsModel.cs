@@ -2,11 +2,8 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using DATA = userspace_backend.Data;
 using userspace_backend.Model.EditableSettings;
-using CommunityToolkit.Mvvm.ComponentModel;
+using DATA = userspace_backend.Data;
 
 namespace userspace_backend.Model
 {
@@ -52,6 +49,11 @@ namespace userspace_backend.Model
             MappingModel mapping = new MappingModel(mappingToAdd, NameValidator, DeviceGroups, Profiles);
             Mappings.Add(mapping);
             return true;
+        }
+
+        public bool RemoveMapping(MappingModel mapping)
+        {
+            return Mappings.Remove(mapping);
         }
 
         public override DATA.MappingSet MapToData()

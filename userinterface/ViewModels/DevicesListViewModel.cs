@@ -27,14 +27,8 @@ namespace userinterface.ViewModels
 
             foreach (BE.DeviceModel device in DevicesBE.Devices)
             {
-                ListViews.Add(new DeviceViewHolder(this, device, DevicesBE.DeviceGroups));
+                ListViews.Add(new DeviceViewHolder(device, DevicesBE));
             }
-        }
-
-        public void DeleteDevice(BE.DeviceModel device)
-        {
-            bool success = DevicesBE.Devices.Remove(device);
-            Debug.Assert(success);
         }
 
         private void DevicesCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
@@ -45,21 +39,22 @@ namespace userinterface.ViewModels
 
     public class DeviceViewHolder
     {
-        private readonly DevicesListViewModel parent;
         private readonly BE.DeviceModel device;
+        private readonly BE.DevicesModel devices;
 
-        public DeviceViewHolder(DevicesListViewModel parent, BE.DeviceModel device, BE.DeviceGroups groups)
+        public DeviceViewHolder(BE.DeviceModel device, BE.DevicesModel devices)
         {
-            this.parent = parent;
+            this.devices = devices;
             this.device = device;
-            DeviceView = new DeviceViewModel(device, groups);
+            DeviceView = new DeviceViewModel(device, devices.DeviceGroups);
         }
 
         public DeviceViewModel DeviceView { get; set; }
 
         public void DeleteSelf()
         {
-            parent.DeleteDevice(device);
+            bool success = devices.RemoveDevice(device);
+            Debug.Assert(success);
         }
     }
 }

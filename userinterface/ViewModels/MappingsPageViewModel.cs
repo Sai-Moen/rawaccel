@@ -25,14 +25,8 @@ namespace userinterface.ViewModels
 
             foreach(BE.MappingModel mappingBE in MappingsBE.Mappings)
             {
-                MappingViews.Add(new MappingViewHolder(this, mappingBE));
+                MappingViews.Add(new MappingViewHolder(mappingBE, MappingsBE));
             }
-        }
-
-        public void DeleteMapping(BE.MappingModel mapping)
-        {
-            bool success = MappingsBE.Mappings.Remove(mapping);
-            Debug.Assert(success);
         }
 
         private void MappingsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
@@ -43,12 +37,12 @@ namespace userinterface.ViewModels
 
     public class MappingViewHolder
     {
-        private readonly MappingsPageViewModel parent;
         private readonly BE.MappingModel mapping;
+        private readonly BE.MappingsModel mappings;
 
-        public MappingViewHolder(MappingsPageViewModel parent, BE.MappingModel mapping)
+        public MappingViewHolder(BE.MappingModel mapping, BE.MappingsModel mappings)
         {
-            this.parent = parent;
+            this.mappings = mappings;
             this.mapping = mapping;
             MappingView = new MappingViewModel(mapping);
         }
@@ -57,7 +51,8 @@ namespace userinterface.ViewModels
 
         public void DeleteSelf()
         {
-            parent.DeleteMapping(mapping);
+            bool success = mappings.RemoveMapping(mapping);
+            Debug.Assert(success);
         }
     }
 }

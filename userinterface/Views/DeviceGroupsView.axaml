@@ -6,9 +6,11 @@
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="userinterface.Views.DeviceGroupsView"
              x:DataType="vm:DeviceGroupsViewModel">
+
   <StackPanel
     Orientation="Vertical"
     VerticalAlignment="Stretch">
+
     <TextBlock
       HorizontalAlignment="Left"
       FontSize="18"
@@ -16,8 +18,9 @@
       Margin="10,10,10,10">
       Device Groups
     </TextBlock>
+
     <ItemsRepeater
-      ItemsSource="{Binding DeviceGroups}">
+      ItemsSource="{Binding ListViews}">
       <ItemsRepeater.Layout>
         <WrapLayout
           Orientation="Horizontal"/>
@@ -28,14 +31,17 @@
             CornerRadius="5"
             BorderBrush="Gray" BorderThickness="1"
             Padding="5">
-            <TextBox
-              KeyDown="TextBox_KeyDown"
-              LostFocus="LostFocusHandler"
-              Text="{Binding InterfaceValue, Mode=TwoWay}"/>
+            <StackPanel Orientation="Horizontal">
+              <Button Command="{Binding DeleteSelf}">
+                <PathIcon Data="{StaticResource delete_regular}"/>
+              </Button>
+              <ContentControl Content="{Binding DeviceGroupView}"/>
+            </StackPanel>
           </Border>
         </DataTemplate>
       </ItemsRepeater.ItemTemplate>
     </ItemsRepeater>
+
     <Button
       HorizontalAlignment="Center"
       VerticalAlignment="Bottom"
@@ -43,5 +49,6 @@
       Click="ClickHandler">
       Add Device Group
     </Button>
+
   </StackPanel>
 </UserControl>

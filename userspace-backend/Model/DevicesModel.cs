@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using userspace_backend.Data;
 using userspace_backend.Model.EditableSettings;
 
@@ -45,6 +43,11 @@ namespace userspace_backend.Model
             Devices.Add(deviceModel);
 
             return true;
+        }
+
+        public bool RemoveDevice(DeviceModel device)
+        {
+            return Devices.Remove(device);
         }
 
         public bool DoesDeviceAlreadyExist(string name, string hwid)
