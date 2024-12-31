@@ -50,8 +50,31 @@ public partial class App : Application
 
             ProfilesToLoad =
             [
-                new DATA.Profile() { Name = "Favorite", OutputDPI = 1600, YXRatio = 1.333 },
-                new DATA.Profile() { Name = "Test", OutputDPI = 1200, YXRatio = 1.0, Hidden = new DATA.Profiles.Hidden() { RotationDegrees = 8, }, },
+                new DATA.Profile()
+                {
+                    Name = "Favorite", OutputDPI = 1600,
+                    YXRatio = 1.333,
+                    Acceleration = new DATA.Profiles.Accel.Formula.SynchronousAccel()
+                    {
+                        SyncSpeed = 25.85,
+                        Motivity = 1.1333,
+                        Gamma = 0.063,
+                        Smoothness = 0.5,
+                        Anisotropy = new DATA.Profiles.Anisotropy()
+                        {
+                            CombineXYComponents = false,
+                            Domain = new DATA.Profiles.Vector2() { X = 1, Y = 4 },
+                            Range = new DATA.Profiles.Vector2() { X = 1, Y = 1 },
+                            LPNorm = 2,
+                        },
+                        Coalescion = new DATA.Profiles.Coalescion()
+                        {
+                            InputSmoothingHalfLife = 10,
+                            ScaleSmoothingHalfLife = 0,
+                        },
+                    },
+                    Hidden = new DATA.Profiles.Hidden() { RotationDegrees = 8, }, },
+                new DATA.Profile() { Name = "Favorite", OutputDPI = 1200, YXRatio = 1.0 },
                 new DATA.Profile() { Name = "SpecificGame", OutputDPI = 3200, YXRatio = 1.333 },
             ],
 

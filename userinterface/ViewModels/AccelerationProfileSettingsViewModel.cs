@@ -11,9 +11,10 @@ namespace userinterface.ViewModels
 {
     public partial class AccelerationProfileSettingsViewModel : ViewModelBase
     {
-        public static ObservableCollection<BEData.AccelerationDefinitionType> DefinitionTypes =
-            new ObservableCollection<BEData.AccelerationDefinitionType>(
-                Enum.GetValues(typeof(BEData.AccelerationDefinitionType)).Cast<BEData.AccelerationDefinitionType>());
+        public static ObservableCollection<string> DefinitionTypes =
+            new ObservableCollection<string>(
+                Enum.GetValues(typeof(BEData.AccelerationDefinitionType)).Cast<BEData.AccelerationDefinitionType>()
+                .Select(d => d.ToString()));
 
         [ObservableProperty]
         public bool areAccelSettingsVisible;
@@ -31,7 +32,7 @@ namespace userinterface.ViewModels
 
         public BE.AccelerationModel AccelerationBE { get; }
 
-        public ObservableCollection<BEData.AccelerationDefinitionType> DefinitionTypesLocal => DefinitionTypes;
+        public ObservableCollection<string> DefinitionTypesLocal => DefinitionTypes;
 
         public AccelerationFormulaSettingsViewModel AccelerationFormulaSettings { get; }
 

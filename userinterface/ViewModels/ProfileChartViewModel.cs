@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using LiveChartsCore;
+﻿using LiveChartsCore;
 using LiveChartsCore.SkiaSharpView;
 using userspace_backend.Display;
 
@@ -12,6 +6,8 @@ namespace userinterface.ViewModels
 {
     public partial class ProfileChartViewModel : ViewModelBase
     {
+        public static System.TimeSpan AnimationsTime = new System.TimeSpan(days: 0, hours: 0, minutes: 0, seconds: 0, milliseconds: 200);
+
         public ProfileChartViewModel(ICurvePreview curvePreview)
         {
             Series =
@@ -21,6 +17,10 @@ namespace userinterface.ViewModels
                     Values = curvePreview.Points,
                     Fill = null,
                     Mapping = (curvePoint, index) => new LiveChartsCore.Kernel.Coordinate(x: curvePoint.MouseSpeed, y: curvePoint.Output),
+                    GeometrySize = 0,
+                    GeometryStroke = null,
+                    GeometryFill = null,
+                    AnimationsSpeed = AnimationsTime,
                 }
             ];
             YAxes =
@@ -29,6 +29,7 @@ namespace userinterface.ViewModels
                 {
                     MinZoomDelta = 1,
                     MinLimit = 0,
+                    AnimationsSpeed = AnimationsTime,
                 }
             ];
         }
