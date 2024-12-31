@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -15,7 +16,9 @@ namespace userspace_backend.Model.AccelDefinitions
     {
         public FormulaAccelModel(Acceleration dataObject) : base(dataObject)
         {
+            FormulaType.PropertyChanged += FormulaTypeChangedEventHandler;
         }
+
 
         public EditableSetting<FormulaAccel.AccelerationFormulaType> FormulaType { get; set; }
 
@@ -38,6 +41,15 @@ namespace userspace_backend.Model.AccelDefinitions
             return FormulaModels[formulaType];
         }
 
+        protected void FormulaTypeChangedEventHandler(object? sender, PropertyChangedEventArgs e)
+        {
+            // When the formula type changes, contained editable settings collections need to correspond to new type
+            if (string.Equals(e.PropertyName, nameof(FormulaType.CurrentValidatedValue)))
+            {
+                GatherEditableSettingsCollections();
+            }
+        }
+
         protected override IEnumerable<IEditableSetting> EnumerateEditableSettings()
         {
             return [ FormulaType ];
@@ -45,9 +57,7 @@ namespace userspace_backend.Model.AccelDefinitions
 
         protected override IEnumerable<IEditableSettingsCollection> EnumerateEditableSettingsCollections()
         {
-            // TODO: uncomment once formula models set up
-            //return [ FormulaModels[FormulaType.ModelValue] ];
-            return [];
+            return [ FormulaModels[FormulaType.ModelValue] ];
         }
 
         protected override FormulaAccel GenerateDefaultDataObject()
@@ -66,9 +76,7 @@ namespace userspace_backend.Model.AccelDefinitions
                 displayName: "Formula Type",
                 initialValue: dataObject.FormulaType,
                 parser: UserInputParsers.AccelerationFormulaTypeParser,
-                // When the definition type changes, contained editable settings collections need to correspond to new type
                 validator: ModelValueValidators.DefaultAccelerationFormulaTypeValidator,
-                setCallback: GatherEditableSettingsCollections,
                 autoUpdateFromInterface: true);
 
             FormulaModels = new Dictionary<FormulaAccel.AccelerationFormulaType, IAccelDefinitionModel>();

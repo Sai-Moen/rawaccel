@@ -70,9 +70,14 @@ namespace userspace_backend.Model.ProfileComponents
                 validator: ModelValueValidators.DefaultDoubleValidator);
             LPNorm = new EditableSetting<double>(
                 displayName: "LP Norm",
-                initialValue: dataObject?.LPNorm ?? 1,
+                initialValue: dataObject?.LPNorm ?? 2,
                 parser: UserInputParsers.DoubleParser,
                 validator: ModelValueValidators.DefaultDoubleValidator);
+            CombineXYComponents = new EditableSetting<bool>(
+                displayName: "Combine X and Y Components",
+                initialValue: dataObject?.CombineXYComponents ?? false,
+                parser: UserInputParsers.BoolParser,
+                validator: ModelValueValidators.DefaultBoolValidator);
         }
     }
 }

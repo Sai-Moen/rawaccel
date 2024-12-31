@@ -1,9 +1,5 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace userspace_backend.Model.EditableSettings
 {
@@ -32,13 +28,11 @@ namespace userspace_backend.Model.EditableSettings
             T initialValue,
             IUserInputParser<T> parser,
             IModelValueValidator<T> validator,
-            Action setCallback = null,
             bool autoUpdateFromInterface = false)
         {
             DisplayName = displayName;
             LastWrittenValue = initialValue;
             Parser = parser;
-            SetCallback = setCallback;
             Validator = validator;
             UpdateModelValueFromLastKnown();
             UpdateInterfaceValue();
@@ -61,8 +55,6 @@ namespace userspace_backend.Model.EditableSettings
         /// instead of cases where new value arrives in parts (typing)
         /// </summary>
         public bool AutoUpdateFromInterface { get; set; }
-
-        protected Action? SetCallback { get; }
 
         private IUserInputParser<T> Parser { get; }
 
@@ -97,7 +89,6 @@ namespace userspace_backend.Model.EditableSettings
             }
 
             UpdatedModeValue(parsedValue);
-            SetCallback?.Invoke();
             return true;
         }
 

@@ -8,9 +8,10 @@ namespace userinterface.ViewModels
 {
     public class AccelerationFormulaSettingsViewModel : ViewModelBase
     {
-        public static ObservableCollection<BEData.AccelerationFormulaType> FormulaTypes =
-            new ObservableCollection<BEData.AccelerationFormulaType>(
-                Enum.GetValues(typeof(BEData.AccelerationFormulaType)).Cast<BEData.AccelerationFormulaType>());
+        public static ObservableCollection<string> FormulaTypes =
+            new ObservableCollection<string>(
+                Enum.GetValues(typeof(BEData.AccelerationFormulaType)).Cast<BEData.AccelerationFormulaType>()
+                .Select(d => d.ToString()));
         public AccelerationFormulaSettingsViewModel(BE.FormulaAccelModel formulaAccel)
         {
             FormulaAccelBE = formulaAccel;
@@ -24,7 +25,7 @@ namespace userinterface.ViewModels
 
         public BE.FormulaAccelModel FormulaAccelBE { get; }
 
-        public ObservableCollection<BEData.AccelerationFormulaType> FormulaTypesLocal => FormulaTypes;
+        public ObservableCollection<string> FormulaTypesLocal => FormulaTypes;
 
         public SynchronousSettings SynchronousSettings { get; }
 

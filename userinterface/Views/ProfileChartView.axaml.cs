@@ -10,6 +10,5 @@ public partial class ProfileChartView : UserControl
     public ProfileChartView()
     {
         InitializeComponent();
-        this.DataContext = new ProfileChartViewModel();
     }
 }

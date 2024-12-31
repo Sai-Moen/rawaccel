@@ -15,7 +15,7 @@ namespace userinterface.ViewModels
         {
             ProfileModelBE = profileBE;
             Settings = new ProfileSettingsViewModel(profileBE);
-            Chart = new ProfileChartViewModel();
+            Chart = new ProfileChartViewModel(profileBE.CurvePreview);
         }
 
         protected BE.ProfileModel ProfileModelBE { get; }

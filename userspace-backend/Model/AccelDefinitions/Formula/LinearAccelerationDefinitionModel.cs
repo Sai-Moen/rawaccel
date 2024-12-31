@@ -26,8 +26,11 @@ namespace userspace_backend.Model.AccelDefinitions.Formula
             return new AccelArgs
             {
                 mode = AccelMode.classic,
+                acceleration = Acceleration.ModelValue,
+                exponentClassic = 2,
                 inputOffset = Offset.ModelValue,
                 cap = new Vec2<double> { x = 0, y = Cap.ModelValue },
+                capMode = CapMode.output,
             };
         }
 

@@ -9,5 +9,6 @@
              x:DataType="vm:ProfileChartViewModel">
              
   <lvc:CartesianChart
-               Series="{Binding Series}"/>
+               Series="{Binding Series}"
+               YAxes="{Binding YAxes}"/>
 </UserControl>

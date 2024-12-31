@@ -1,12 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 using DATA = userspace_backend.Data;
 using userspace_backend.Model.AccelDefinitions;
 using userspace_backend.Model.EditableSettings;
 using userspace_backend.Model.ProfileComponents;
+using System;
+using System.ComponentModel;
+using userspace_backend.Common;
+using System.Collections.ObjectModel;
+using CommunityToolkit.Mvvm.ComponentModel;
+using userspace_backend.Display;
 
 namespace userspace_backend.Model
 {
@@ -15,6 +17,8 @@ namespace userspace_backend.Model
         public ProfileModel(DATA.Profile dataObject, IModelValueValidator<string> nameValidator) : base(dataObject)
         {
             NameValidator = nameValidator;
+            CurvePreview = new CurvePreview();
+            RecalculateDriverDataAndCurvePreview();
         }
 
         public string CurrentNameForDisplay => Name.CurrentValidatedValue;
@@ -27,9 +31,11 @@ namespace userspace_backend.Model
 
         public AccelerationModel Acceleration { get; set; }
 
-        public AnisotropyModel Anisotropy { get; set; }
-
         public HiddenModel Hidden { get; set; }
+
+        public Profile CurrentValidatedDriverProfile { get; protected set; }
+
+        public ICurvePreview CurvePreview { get; protected set; }
 
         protected IModelValueValidator<string> NameValidator { get; }
 
@@ -45,6 +51,39 @@ namespace userspace_backend.Model
             };
         }
 
+        protected void AnyNonPreviewPropertyChangedEventHandler(object? send, PropertyChangedEventArgs e)
+        {
+            if (string.Equals(e.PropertyName, nameof(EditableSetting<string>.CurrentValidatedValue)))
+            {
+                RecalculateDriverData();
+            }
+        }
+
+        protected void AnyCurvePreviewPropertyChangedEventHandler(object? send, PropertyChangedEventArgs e)
+        {
+            if (string.Equals(e.PropertyName, nameof(EditableSetting<string>.CurrentValidatedValue)))
+            {
+                RecalculateDriverDataAndCurvePreview();
+            }
+        }
+
+        protected void AnyCurveSettingCollectionChangedEventHandler(object? sender, EventArgs e)
+        {
+            // All settings collections currently require curve preview to be re-generated
+            RecalculateDriverDataAndCurvePreview();
+        }
+
+        protected void RecalculateDriverData()
+        {
+            CurrentValidatedDriverProfile = DriverHelpers.MapProfileModelToDriver(this);
+        }
+
+        protected void RecalculateDriverDataAndCurvePreview()
+        {
+            RecalculateDriverData();
+            CurvePreview.GeneratePoints(CurrentValidatedDriverProfile);
+        }
+
         protected override IEnumerable<IEditableSetting> EnumerateEditableSettings()
         {
             return [Name, OutputDPI, YXRatio];
@@ -52,7 +91,7 @@ namespace userspace_backend.Model
 
         protected override IEnumerable<IEditableSettingsCollection> EnumerateEditableSettingsCollections()
         {
-            return [Acceleration, Anisotropy, Hidden];
+            return [Acceleration, Hidden];
         }
 
         protected override void InitEditableSettingsAndCollections(DATA.Profile dataObject)
@@ -74,6 +113,15 @@ namespace userspace_backend.Model
                 validator: ModelValueValidators.DefaultDoubleValidator);
             Acceleration = new AccelerationModel(dataObject.Acceleration);
             Hidden = new HiddenModel(dataObject.Hidden);
+
+            // Name and Output DPI do not need to generate a new curve preview
+            Name.PropertyChanged += AnyNonPreviewPropertyChangedEventHandler;
+            OutputDPI.PropertyChanged += AnyNonPreviewPropertyChangedEventHandler;
+
+            // The rest of settings should generate a new curve preview
+            YXRatio.PropertyChanged += AnyCurvePreviewPropertyChangedEventHandler;
+            Acceleration.AnySettingChanged += AnyCurveSettingCollectionChangedEventHandler;
+            Hidden.AnySettingChanged += AnyCurveSettingCollectionChangedEventHandler;
         }
     }
 }

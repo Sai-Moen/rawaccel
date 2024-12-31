@@ -73,7 +73,7 @@ namespace userspace_backend.Model.ProfileComponents
                 validator: ModelValueValidators.DefaultDoubleValidator);
             SpeedCap = new EditableSetting<double>(
                 displayName: "Speed Cap",
-                initialValue: dataObject?.SpeedCap ?? 1,
+                initialValue: dataObject?.SpeedCap ?? 0,
                 parser: UserInputParsers.DoubleParser,
                 validator: ModelValueValidators.DefaultDoubleValidator);
             OutputSmoothingHalfLife = new EditableSetting<double>(

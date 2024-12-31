@@ -13,5 +13,7 @@ namespace userspace_backend.Data.Profiles
         public Vector2 Range { get; set; }
 
         public double LPNorm { get; set; }
+
+        public bool CombineXYComponents { get; set; }
     }
 }
