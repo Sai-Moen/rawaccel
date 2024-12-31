@@ -32,6 +32,7 @@ namespace userspace_backend.Model.AccelDefinitions.Formula
                 exponentClassic = Exponent.ModelValue,
                 inputOffset = Offset.ModelValue,
                 cap = new Vec2<double> { x = 0, y = Cap.ModelValue },
+                capMode = CapMode.output
             };
         }
 

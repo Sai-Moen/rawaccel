@@ -1,6 +1,5 @@
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
-using Avalonia.Data.Core;
 using Avalonia.Data.Core.Plugins;
 using Avalonia.Markup.Xaml;
 using userinterface.ViewModels;
@@ -74,7 +73,7 @@ public partial class App : Application
                         },
                     },
                     Hidden = new DATA.Profiles.Hidden() { RotationDegrees = 8, }, },
-                new DATA.Profile() { Name = "Favorite", OutputDPI = 1200, YXRatio = 1.0 },
+                new DATA.Profile() { Name = "Test", OutputDPI = 1200, YXRatio = 1.0 },
                 new DATA.Profile() { Name = "SpecificGame", OutputDPI = 3200, YXRatio = 1.333 },
             ],
 

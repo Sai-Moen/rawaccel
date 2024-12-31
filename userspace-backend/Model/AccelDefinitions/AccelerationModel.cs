@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using userspace_backend.Data.Profiles;
-using userspace_backend.Data.Profiles.Accel;
 using userspace_backend.Model.EditableSettings;
 using userspace_backend.Model.ProfileComponents;
 using static userspace_backend.Data.Profiles.Acceleration;

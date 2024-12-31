@@ -22,10 +22,14 @@ namespace userspace_backend.Model.AccelDefinitions
 
         public override AccelArgs MapToDriver()
         {
+            // data in driver profile must be predefined length for marshalling purposes
+            var accelArgsData = new float[AccelArgs.MaxLutPoints*2];
+            Data.ModelValue.Data.Select(Convert.ToSingle).ToArray().CopyTo(accelArgsData, 0);
+
             return new AccelArgs
             {
                 mode = AccelMode.lut,
-                data = Data.ModelValue.Data.Select(Convert.ToSingle).ToArray(),
+                data = accelArgsData,
                 length = Data.ModelValue.Data.Length,
             };
         }
