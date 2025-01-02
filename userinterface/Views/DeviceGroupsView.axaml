@@ -46,7 +46,7 @@
       HorizontalAlignment="Center"
       VerticalAlignment="Bottom"
       Margin="10,10,10,10"
-      Click="ClickHandler">
+      Click="AddDeviceGroup">
       Add Device Group
     </Button>
 

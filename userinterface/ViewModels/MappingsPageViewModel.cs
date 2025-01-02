@@ -2,6 +2,7 @@
 using System.Collections.Specialized;
 using System.Diagnostics;
 using BE = userspace_backend.Model;
+using DATA = userspace_backend.Data;
 
 namespace userinterface.ViewModels
 {
@@ -19,19 +20,37 @@ namespace userinterface.ViewModels
 
         public ObservableCollection<MappingViewHolder> MappingViews { get; }
 
+        private void MappingsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+        {
+            UpdateMappingViews();
+        }
+
         public void UpdateMappingViews()
         {
             MappingViews.Clear();
-
             foreach(BE.MappingModel mappingBE in MappingsBE.Mappings)
             {
                 MappingViews.Add(new MappingViewHolder(mappingBE, MappingsBE));
             }
         }
 
-        private void MappingsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+        public bool TryAddNewMapping()
         {
-            UpdateMappingViews();
+            for (int i = 0; i < 10; i++)
+            {
+                DATA.Mapping mapping = new()
+                {
+                    Name = $"Mapping{i}",
+                    GroupsToProfiles = [],
+                };
+
+                if (MappingsBE.TryAddMapping(mapping))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
     }
 
@@ -42,8 +61,8 @@ namespace userinterface.ViewModels
 
         public MappingViewHolder(BE.MappingModel mapping, BE.MappingsModel mappings)
         {
-            this.mappings = mappings;
             this.mapping = mapping;
+            this.mappings = mappings;
             MappingView = new MappingViewModel(mapping);
         }
 

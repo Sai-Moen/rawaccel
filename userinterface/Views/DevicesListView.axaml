@@ -34,7 +34,10 @@
       </ListBox.ItemTemplate>
     </ListBox>
 
-    <Button HorizontalAlignment="Center" Margin="10,10,10,10">
+    <Button
+      HorizontalAlignment="Center"
+      Margin="10,10,10,10"
+      Click="AddDevice">
       Add Device
     </Button>
 

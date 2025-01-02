@@ -41,7 +41,8 @@
     <Button
       HorizontalAlignment="Center"
       VerticalAlignment="Bottom"
-      Margin="10,10,10,10">
+      Margin="10,10,10,10"
+      Click="AddMapping">
       Add Mapping
     </Button>
 

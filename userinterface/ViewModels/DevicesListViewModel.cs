@@ -2,6 +2,7 @@
 using System.Collections.Specialized;
 using System.Diagnostics;
 using BE = userspace_backend.Model;
+using DATA = userspace_backend.Data;
 
 namespace userinterface.ViewModels
 {
@@ -21,19 +22,40 @@ namespace userinterface.ViewModels
 
         public ObservableCollection<DeviceViewHolder> ListViews { get; }
 
+        private void DevicesCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+        {
+            UpdateListViews();
+        }
+
         public void UpdateListViews()
         {
             ListViews.Clear();
-
             foreach (BE.DeviceModel device in DevicesBE.Devices)
             {
                 ListViews.Add(new DeviceViewHolder(device, DevicesBE));
             }
         }
 
-        private void DevicesCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+        public bool TryAddDevice()
         {
-            UpdateListViews();
+            for (int i = 0; i < 10; i++)
+            {
+                DATA.Device device = new()
+                {
+                    Name = $"Device{i}",
+                    HWID = $"{i}",
+                    DPI = 1600,
+                    PollingRate = 1000,
+                    DeviceGroup = "Default",
+                };
+
+                if (DevicesBE.TryAddDevice(device))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
     }
 
@@ -44,8 +66,8 @@ namespace userinterface.ViewModels
 
         public DeviceViewHolder(BE.DeviceModel device, BE.DevicesModel devices)
         {
-            this.devices = devices;
             this.device = device;
+            this.devices = devices;
             DeviceView = new DeviceViewModel(device, devices.DeviceGroups);
         }
 

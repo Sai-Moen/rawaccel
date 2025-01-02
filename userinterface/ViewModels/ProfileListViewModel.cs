@@ -23,15 +23,30 @@ namespace userinterface.ViewModels
 
         public Action SelectionChangeAction { get; }
 
+        partial void OnCurrentSelectedProfileChanged(ProfileModel value)
+        {
+            SelectionChangeAction.Invoke();
+        }
+
+        public bool TryAddProfile()
+        {
+            for (int i = 0; i < 10; i++)
+            {
+                string newProfileName = $"Profile{i}";
+
+                if (profilesModel.TryAddNewDefaultProfile(newProfileName))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         public void RemoveSelectedProfile()
         {
             // pressing delete multiple times without re-selecting just does nothing
             _ = profilesModel.RemoveProfile(CurrentSelectedProfile);
-        }
-
-        partial void OnCurrentSelectedProfileChanged(ProfileModel value)
-        {
-            SelectionChangeAction.Invoke();
         }
     }
 }

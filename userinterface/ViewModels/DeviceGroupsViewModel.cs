@@ -20,16 +20,18 @@ namespace userinterface.ViewModels
         public ObservableCollection<BE.DeviceGroupModel> DeviceGroups => DeviceGroupsBE.DeviceGroupModels;
         public ObservableCollection<DeviceGroupViewHolder> ListViews { get; }
 
+        private void DeviceGroupsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+        {
+            UpdateListViews();
+        }
+
         public void UpdateListViews()
         {
             ListViews.Clear();
             foreach (BE.DeviceGroupModel deviceGroup in DeviceGroupsBE.DeviceGroupModels)
+            {
                 ListViews.Add(new(deviceGroup, DeviceGroupsBE));
-        }
-
-        private void DeviceGroupsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
-        {
-            UpdateListViews();
+            }
         }
 
         public bool TryAddNewDeviceGroup()
