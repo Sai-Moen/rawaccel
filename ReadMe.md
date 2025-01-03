@@ -1,26 +1,28 @@
-# Raw Accel
+# Raw Accel - User Inteface Working Branch
 
-Raw Accel is a Windows 10 & Windows 11 x86-64 driver which allows for the acceleration of mouse input in the raw input stream. It started as a replacement for [InterAccel](https://github.com/KovaaK/InterAccel) and has been extended with more acceleration types, charts, and other features.
+This branch will contain work to create a modern user interface for the Raw Accel driver using Avalonia.
 
-## Anti-Cheat Friendly
+## Why use a working branch?
+Only code which is ready to be released will be merged to master. This branch will be merged to master once we are satisfied with the new UI.
 
-[Releases](https://github.com/a1xd/rawaccel/releases/latest) of the Raw Accel driver are signed and run in system space. Raw Accel only modifies mouse input by a constant set of formulas, and adds a one-second delay when changing settings in order to mitigate its abuse.
+## ReadMe
 
-## Getting Help
+This ReadMe will contain information on how to contribute to the working branch. It will be updated back to the standard Raw Accel readme on final merge to master before release.
 
-For an overview of everything Raw Accel has to offer, please see the [guide](doc/Guide.md). For questions, see the [FAQ](doc/FAQ.md) first.
+## Building
 
-## Development
+To build the solution for RA with the new user interface, you need the same prerequisites as master, and one additional:
+- .NET VS installations -4.7.2, 8.0
+- Desktop development with C++ (VS installer component package)
+- Windows SDK for your Windows installation version
+- Windows Driver Development Kit (WDK) for your Windows installation version
+- [Avalonia Templates and VSIX](https://avaloniaui.net/gettingstarted#installation)
 
-Development of Raw Accel is ongoing at https://github.com/a1xd/rawaccel. Bug reports and pull requests are always welcome.  Join [our Discord server](https://discord.gg/7pQh8zH) if you want to stay updated with releases or say hello.
+## Project Planning
 
-## External Websites
-The latest version of Raw Accel is always hosted [here on github](https://github.com/a1xd/rawaccel/releases). There is no other site or mirror where you can be sure get official versions of Raw Accel.   
-Raw Accel is not affiliated with any external websites, such as rawaccel.net or rawaccel.com. If Raw Accel ever were to be affiliated with an external site, it would be mentioned here on github first.
+The GitHub Project used to plan this work can be found here: [User Interface 2.0 with Avalonia](https://github.com/orgs/RawAccelOfficial/projects/2)  
+That project has a ReadMe with additional info.
 
-## Credits
-simon - Driver & Acceleration Logic  
-\_m00se\_ - GUI, Gain features, Acceleration types  
-Sidiouth  - Primary tester and sounding board  
-TauntyArmordillo - Originator of the alternate curve ideas (Natural and Motivity types)  
-Kovaak - Brought us together
+## Contributing
+
+We welcome contributions from anyone! If you want, you can join [our Discord server](https://discord.gg/7pQh8zH) to help coordinate work.
