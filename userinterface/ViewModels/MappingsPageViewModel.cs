@@ -2,7 +2,6 @@
 using System.Collections.Specialized;
 using System.Diagnostics;
 using BE = userspace_backend.Model;
-using DATA = userspace_backend.Data;
 
 namespace userinterface.ViewModels
 {
@@ -36,21 +35,7 @@ namespace userinterface.ViewModels
 
         public bool TryAddNewMapping()
         {
-            for (int i = 0; i < 10; i++)
-            {
-                DATA.Mapping mapping = new()
-                {
-                    Name = $"Mapping{i}",
-                    GroupsToProfiles = [],
-                };
-
-                if (MappingsBE.TryAddMapping(mapping))
-                {
-                    return true;
-                }
-            }
-
-            return false;
+            return MappingsBE.TryAddMapping();
         }
     }
 

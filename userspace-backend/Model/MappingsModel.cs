@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using userspace_backend.Model.EditableSettings;
 using DATA = userspace_backend.Data;
@@ -36,12 +37,44 @@ namespace userspace_backend.Model
             mapping = Mappings.FirstOrDefault(
                 m => string.Equals(m.Name.ModelValue, name, StringComparison.InvariantCultureIgnoreCase));
 
-            return mapping != null;
+            return mapping is not null;
         }
 
-        public bool TryAddMapping(DATA.Mapping mappingToAdd)
+        protected bool TryGetDefaultMapping([MaybeNullWhen(false)] out DATA.Mapping defaultMapping)
         {
-            if (TryGetMapping(mappingToAdd.Name, out _))
+            for (int i = 0; i < 10; i++)
+            {
+                string mappingNameToAdd = $"Mapping{i}";
+                if (TryGetMapping(mappingNameToAdd, out _))
+                {
+                    continue;
+                }
+
+                defaultMapping = new()
+                {
+                    Name = mappingNameToAdd,
+                    GroupsToProfiles = [],
+                };
+
+                return true;
+            }
+
+            defaultMapping = null;
+            return false;
+        }
+
+        public bool TryAddMapping(DATA.Mapping? mappingToAdd = null)
+        {
+            if (mappingToAdd is null)
+            {
+                if (!TryGetDefaultMapping(out var defaultMapping))
+                {
+                    return false;
+                }
+
+                mappingToAdd = defaultMapping;
+            }
+            else if (TryGetMapping(mappingToAdd.Name, out _))
             {
                 return false;
             }

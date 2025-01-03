@@ -36,17 +36,7 @@ namespace userinterface.ViewModels
 
         public bool TryAddNewDeviceGroup()
         {
-            for (int i = 1; i < 10; i++)
-            {
-                string newGroupName = $"DeviceGroup{i}";
-
-                if (DeviceGroupsBE.TryAddDeviceGroup(newGroupName))
-                {
-                    return true;
-                }
-            }
-
-            return false;
+            return DeviceGroupsBE.TryAddDeviceGroup();
         }
     }
 

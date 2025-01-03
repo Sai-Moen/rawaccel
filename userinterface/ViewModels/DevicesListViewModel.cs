@@ -2,7 +2,6 @@
 using System.Collections.Specialized;
 using System.Diagnostics;
 using BE = userspace_backend.Model;
-using DATA = userspace_backend.Data;
 
 namespace userinterface.ViewModels
 {
@@ -38,24 +37,7 @@ namespace userinterface.ViewModels
 
         public bool TryAddDevice()
         {
-            for (int i = 0; i < 10; i++)
-            {
-                DATA.Device device = new()
-                {
-                    Name = $"Device{i}",
-                    HWID = $"{i}",
-                    DPI = 1600,
-                    PollingRate = 1000,
-                    DeviceGroup = "Default",
-                };
-
-                if (DevicesBE.TryAddDevice(device))
-                {
-                    return true;
-                }
-            }
-
-            return false;
+            return DevicesBE.TryAddDevice();
         }
     }
 
