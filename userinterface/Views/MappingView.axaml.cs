@@ -1,6 +1,5 @@
-using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Markup.Xaml;
+using Avalonia.Interactivity;
 using System.Linq;
 using userinterface.ViewModels;
 using userspace_backend.Model;
@@ -14,14 +13,22 @@ public partial class MappingView : UserControl
         InitializeComponent();
     }
 
+    public void DeleteSelf(object sender, RoutedEventArgs args)
+    {
+        if (DataContext is MappingViewModel viewModel)
+        {
+            viewModel.DeleteSelf();
+        }
+    }
+
     public void AddMappingSelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (e.AddedItems.Count > 0
-            && this.DataContext is MappingViewModel viewModel)
+            && DataContext is MappingViewModel viewModel)
         {
-            this.DeviceGroupSelectorToAddMapping.ItemsSource = Enumerable.Empty<DeviceGroupModel>();
+            DeviceGroupSelectorToAddMapping.ItemsSource = Enumerable.Empty<DeviceGroupModel>();
             viewModel.HandleAddMappingSelection(e);
-            this.DeviceGroupSelectorToAddMapping.ItemsSource = viewModel.MappingBE.DeviceGroupsStillUnmapped;
+            DeviceGroupSelectorToAddMapping.ItemsSource = viewModel.MappingBE.DeviceGroupsStillUnmapped;
         }
     }
 }

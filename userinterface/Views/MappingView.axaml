@@ -6,11 +6,20 @@
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="userinterface.Views.MappingView"
              x:DataType="vm:MappingViewModel">
+
   <DockPanel>
+
     <TextBlock
       DockPanel.Dock="Top"
       HorizontalAlignment="Left"
       Text="{Binding MappingBE.Name.CurrentValidatedValue}"/>
+
+    <Button
+      DockPanel.Dock="Left"
+      Click="DeleteSelf">
+      <PathIcon Data="{StaticResource delete_regular}"/>
+    </Button>
+
     <Button
       DockPanel.Dock="Bottom"
       HorizontalAlignment="Center"
@@ -30,6 +39,7 @@
         </Flyout>
       </Button.Flyout>
     </Button>
+
     <ListBox
       ItemsSource="{Binding IndividualMappings}">
       <ListBox.ItemTemplate>
@@ -65,5 +75,6 @@
         </DataTemplate>
       </ListBox.ItemTemplate>
     </ListBox>
+
   </DockPanel>
 </UserControl>

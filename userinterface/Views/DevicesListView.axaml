@@ -21,18 +21,7 @@
     <ListBox
       Background="Black"
       Name="DevicesListInView"
-      ItemsSource="{Binding ListViews}">
-      <ListBox.ItemTemplate>
-        <DataTemplate>
-          <StackPanel Orientation="Horizontal">
-            <Button Command="{Binding DeleteSelf}">
-              <PathIcon Data="{StaticResource delete_regular}"/>
-            </Button>
-            <ContentControl Content="{Binding DeviceView}"/>
-          </StackPanel>
-        </DataTemplate>
-      </ListBox.ItemTemplate>
-    </ListBox>
+      ItemsSource="{Binding DeviceViews}"/>
 
     <Button
       HorizontalAlignment="Center"
