@@ -18,7 +18,9 @@
       Saved Profiles
     </TextBlock>
 
-    <StackPanel DockPanel.Dock="Top" Orientation="Vertical">
+    <StackPanel
+      DockPanel.Dock="Top"
+      Orientation="Vertical">
       <ListBox
         ItemsSource="{Binding Profiles}"
         SelectionChanged="OnSelectionChanged">
@@ -32,11 +34,15 @@
       </ListBox>
     </StackPanel>
 
-    <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal">
-      <Button>
+    <StackPanel
+      DockPanel.Dock="Bottom"
+      Orientation="Horizontal">
+      <Button
+        Click="AddProfile">
         Add Profile
       </Button>
-      <Button Command="{Binding RemoveSelectedProfile}">
+      <Button
+        Click="RemoveProfile">
         Delete Selected Profile
       </Button>
     </StackPanel>

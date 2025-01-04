@@ -19,34 +19,20 @@
       Device Groups
     </TextBlock>
 
-    <ItemsRepeater
-      ItemsSource="{Binding ListViews}">
-      <ItemsRepeater.Layout>
-        <WrapLayout
-          Orientation="Horizontal"/>
-      </ItemsRepeater.Layout>
-      <ItemsRepeater.ItemTemplate>
-        <DataTemplate>
-          <Border Margin="10,10,10,10"
-            CornerRadius="5"
-            BorderBrush="Gray" BorderThickness="1"
-            Padding="5">
-            <StackPanel Orientation="Horizontal">
-              <Button Command="{Binding DeleteSelf}">
-                <PathIcon Data="{StaticResource delete_regular}"/>
-              </Button>
-              <ContentControl Content="{Binding DeviceGroupView}"/>
-            </StackPanel>
-          </Border>
-        </DataTemplate>
-      </ItemsRepeater.ItemTemplate>
-    </ItemsRepeater>
+    <ItemsControl
+      ItemsSource="{Binding DeviceGroupViews}">
+      <ItemsControl.ItemsPanel>
+        <ItemsPanelTemplate>
+          <StackPanel Orientation="Horizontal"/>
+        </ItemsPanelTemplate>
+      </ItemsControl.ItemsPanel>
+    </ItemsControl>
 
     <Button
       HorizontalAlignment="Center"
       VerticalAlignment="Bottom"
       Margin="10,10,10,10"
-      Click="ClickHandler">
+      Click="AddDeviceGroup">
       Add Device Group
     </Button>
 

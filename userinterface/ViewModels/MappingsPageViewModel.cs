@@ -1,6 +1,5 @@
 ﻿using System.Collections.ObjectModel;
 using System.Collections.Specialized;
-using System.Diagnostics;
 using BE = userspace_backend.Model;
 
 namespace userinterface.ViewModels
@@ -10,49 +9,32 @@ namespace userinterface.ViewModels
         public MappingsPageViewModel(BE.MappingsModel mappingsBE)
         {
             MappingsBE = mappingsBE;
-            MappingViews = new ObservableCollection<MappingViewHolder>();
+            MappingViews = new ObservableCollection<MappingViewModel>();
             UpdateMappingViews();
             MappingsBE.Mappings.CollectionChanged += MappingsCollectionChanged;
         }
 
         public BE.MappingsModel MappingsBE { get; }
 
-        public ObservableCollection<MappingViewHolder> MappingViews { get; }
-
-        public void UpdateMappingViews()
-        {
-            MappingViews.Clear();
-
-            foreach(BE.MappingModel mappingBE in MappingsBE.Mappings)
-            {
-                MappingViews.Add(new MappingViewHolder(mappingBE, MappingsBE));
-            }
-        }
+        public ObservableCollection<MappingViewModel> MappingViews { get; }
 
         private void MappingsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
         {
             UpdateMappingViews();
         }
-    }
 
-    public class MappingViewHolder
-    {
-        private readonly BE.MappingModel mapping;
-        private readonly BE.MappingsModel mappings;
-
-        public MappingViewHolder(BE.MappingModel mapping, BE.MappingsModel mappings)
+        public void UpdateMappingViews()
         {
-            this.mappings = mappings;
-            this.mapping = mapping;
-            MappingView = new MappingViewModel(mapping);
+            MappingViews.Clear();
+            foreach(BE.MappingModel mappingBE in MappingsBE.Mappings)
+            {
+                MappingViews.Add(new MappingViewModel(mappingBE, MappingsBE));
+            }
         }
 
-        public MappingViewModel MappingView { get; }
-
-        public void DeleteSelf()
+        public bool TryAddNewMapping()
         {
-            bool success = mappings.RemoveMapping(mapping);
-            Debug.Assert(success);
+            return MappingsBE.TryAddMapping();
         }
     }
 }

@@ -1,26 +1,26 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Diagnostics;
 using BE = userspace_backend.Model;
 
 namespace userinterface.ViewModels
 {
     public partial class DeviceViewModel : ViewModelBase
     {
-        public DeviceViewModel(BE.DeviceModel deviceBE, BE.DeviceGroups deviceGroupsBE)
+        public DeviceViewModel(BE.DeviceModel deviceBE, BE.DevicesModel devicesBE)
         {
             DeviceBE = deviceBE;
+            DevicesBE = devicesBE;
+
             NameField = new NamedEditableFieldViewModel(DeviceBE.Name);
             HWIDField = new NamedEditableFieldViewModel(DeviceBE.HardwareID);
             DPIField = new NamedEditableFieldViewModel(DeviceBE.DPI);
             PollRateField = new NamedEditableFieldViewModel(DeviceBE.PollRate);
             IgnoreBool = new EditableBoolViewModel(DeviceBE.Ignore);
-            DeviceGroup = new DeviceGroupSelectorViewModel(DeviceBE, deviceGroupsBE); ;
+            DeviceGroup = new DeviceGroupSelectorViewModel(DeviceBE, DevicesBE.DeviceGroups);
         }
 
         protected BE.DeviceModel DeviceBE { get; }
+
+        protected BE.DevicesModel DevicesBE { get; }
 
         public NamedEditableFieldViewModel NameField { get; set; }
 
@@ -33,5 +33,11 @@ namespace userinterface.ViewModels
         public EditableBoolViewModel IgnoreBool { get; set; }
 
         public DeviceGroupSelectorViewModel DeviceGroup { get; set; }
+
+        public void DeleteSelf()
+        {
+            bool success = DevicesBE.RemoveDevice(DeviceBE);
+            Debug.Assert(success);
+        }
     }
 }

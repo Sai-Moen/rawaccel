@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using userspace_backend.Model.EditableSettings;
 
@@ -21,6 +22,14 @@ namespace userspace_backend.Model
 
         protected DeviceGroupValidator GroupNameChangeValidator { get; set; }
 
+        public bool TryGetDeviceGroup(string name, out DeviceGroupModel? deviceGroup)
+        {
+            deviceGroup = DeviceGroupModels.FirstOrDefault(
+                g => string.Equals(g.ModelValue, name, StringComparison.InvariantCultureIgnoreCase));
+
+            return deviceGroup is not null;
+        }
+
         public DeviceGroupModel AddOrGetDeviceGroup(string deviceGroupName)
         {
             if (!TryGetDeviceGroup(deviceGroupName, out DeviceGroupModel? deviceGroup))
@@ -32,36 +41,53 @@ namespace userspace_backend.Model
             return deviceGroup;
         }
 
-        public override IEnumerable<string> MapToData()
+        protected bool TryGetDefaultDeviceGroup([MaybeNullWhen(false)] out string defaultName)
         {
-            return DeviceGroupModels.Select(g => g.ModelValue);
+            for (int i = 0; i < 10; i++)
+            {
+                string nameToAdd = $"DeviceGroup{i}";
+                if (TryGetDeviceGroup(nameToAdd, out _))
+                {
+                    continue;
+                }
+
+                defaultName = nameToAdd;
+                return true;
+            }
+
+            defaultName = null;
+            return false;
         }
 
-        public bool TryAddDeviceGroup(string deviceGroupName)
+        public bool TryAddDeviceGroup(string? deviceGroupName = null)
         {
-            // Do not add group if one already exists
-            if (TryGetDeviceGroup(deviceGroupName, out _))
+            if (deviceGroupName is null)
+            {
+                if (!TryGetDefaultDeviceGroup(out var defaultName))
+                {
+                    return false;
+                }
+
+                deviceGroupName = defaultName;
+            }
+            else if (TryGetDeviceGroup(deviceGroupName, out _))
             {
                 return false;
             }
 
             DeviceGroupModel deviceGroup = new DeviceGroupModel(deviceGroupName, GroupNameChangeValidator);
             DeviceGroupModels.Add(deviceGroup);
-
             return true;
-        }
-
-        public bool TryGetDeviceGroup(string name, out DeviceGroupModel? deviceGroup)
-        {
-            deviceGroup = DeviceGroupModels.FirstOrDefault(
-                g => string.Equals(g.ModelValue, name, StringComparison.InvariantCultureIgnoreCase));
-
-            return deviceGroup != null;
         }
 
         public bool RemoveDeviceGroup(DeviceGroupModel deviceGroup)
         {
             return DeviceGroupModels.Remove(deviceGroup);
+        }
+
+        public override IEnumerable<string> MapToData()
+        {
+            return DeviceGroupModels.Select(g => g.ModelValue);
         }
 
         protected override IEnumerable<IEditableSetting> EnumerateEditableSettings()

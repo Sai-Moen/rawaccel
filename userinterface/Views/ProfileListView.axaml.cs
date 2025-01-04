@@ -1,7 +1,5 @@
-using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Markup.Xaml;
-using System.Linq;
+using Avalonia.Interactivity;
 using userinterface.ViewModels;
 using BE = userspace_backend.Model;
 
@@ -14,9 +12,25 @@ public partial class ProfileListView : UserControl
         InitializeComponent();
     }
 
+    public void AddProfile(object sender, RoutedEventArgs args)
+    {
+        if (DataContext is ProfileListViewModel viewModel)
+        {
+            _ = viewModel.TryAddProfile();
+        }
+    }
+
+    public void RemoveProfile(object sender, RoutedEventArgs args)
+    {
+        if (DataContext is ProfileListViewModel viewModel)
+        {
+            viewModel.RemoveSelectedProfile();
+        }
+    }
+
     public void OnSelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        if (this.DataContext is ProfileListViewModel viewModel
+        if (DataContext is ProfileListViewModel viewModel
             && e.AddedItems.Count > 0
             && e.AddedItems[0] is BE.ProfileModel selectedProfile)
         {

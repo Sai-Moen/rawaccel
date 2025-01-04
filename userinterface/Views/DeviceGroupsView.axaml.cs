@@ -11,11 +11,11 @@ public partial class DeviceGroupsView : UserControl
         InitializeComponent();
     }
 
-    public void ClickHandler(object sender, RoutedEventArgs args)
+    public void AddDeviceGroup(object sender, RoutedEventArgs args)
     {
-        if (this.DataContext is DeviceGroupsViewModel viewModel)
+        if (DataContext is DeviceGroupsViewModel viewModel)
         {
-            viewModel.TryAddNewDeviceGroup();
+            _ = viewModel.TryAddNewDeviceGroup();
         }
     }
 }

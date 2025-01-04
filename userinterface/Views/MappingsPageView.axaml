@@ -19,21 +19,16 @@
       </ItemsRepeater.Layout>
       <ItemsRepeater.ItemTemplate>
         <DataTemplate>
-          <StackPanel Orientation="Vertical">
-            <Button Command="{Binding DeleteSelf}">
-              <PathIcon Data="{StaticResource delete_regular}"/>
-            </Button>
-            <Border Margin="10,10,10,10"
-              CornerRadius="5"
-              BorderBrush="Gray" BorderThickness="1"
-              Padding="5">
-              <Panel
-                Width="300"
-                Height="300">
-                <ContentControl Content="{Binding MappingView}"/>
-              </Panel>
-            </Border>
-          </StackPanel>
+          <Border Margin="10,10,10,10"
+            CornerRadius="5"
+            BorderBrush="Gray" BorderThickness="1"
+            Padding="5">
+            <Panel
+              Width="300"
+              Height="300">
+              <ContentControl Content="{Binding}"/>
+            </Panel>
+          </Border>
         </DataTemplate>
       </ItemsRepeater.ItemTemplate>
     </ItemsRepeater>
@@ -41,7 +36,8 @@
     <Button
       HorizontalAlignment="Center"
       VerticalAlignment="Bottom"
-      Margin="10,10,10,10">
+      Margin="10,10,10,10"
+      Click="AddMapping">
       Add Mapping
     </Button>
 
