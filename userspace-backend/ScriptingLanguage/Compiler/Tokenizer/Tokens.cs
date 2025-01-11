@@ -5,7 +5,7 @@ namespace userspace_backend.ScriptingLanguage.Compiler.Tokenizer;
 /// <summary>
 /// Enumerates all possible Token types.
 /// </summary>
-public enum TokenType
+public enum TokenType : byte
 {
     None, // Doesn't mean invalid right away, depends on if you expect a certain symbol
 
@@ -26,27 +26,34 @@ public enum TokenType
 /// A lexical token.
 /// </summary>
 /// <param name="Type">Type of token.</param>
-/// <param name="Position">Starting position (byte index in script) of the symbol, can be used to determine the line/character in case of an error.</param>
+/// <param name="Position">
+/// Starting position (byte index in script) of the symbol, can be used to determine the line/character in case of an error.
+/// </param>
 /// <param name="SymbolIndex">Index of the identifier's symbol (or .Invalid if no runtime symbol).</param>
 /// <param name="ExtraIndex">
-/// For some TokenTypes it's convenient to test if they are broadly a certain type (e.g. MathFunction), but they then need to be subdivided.
+/// For some TokenTypes it's convenient to test if they are broadly a certain type (e.g. MathFunction),
+/// but they then need to be subdivided.
 /// This property stores any extra information needed to determine the exact subtype that this token represents.
 /// </param>
-public readonly record struct Token(TokenType Type = TokenType.None, int Position = -1, SymbolIndex SymbolIndex = SymbolIndex.Invalid, uint ExtraIndex = 0);
+public readonly record struct Token(
+    TokenType Type = TokenType.None,
+    int Position = -1,
+    SymbolIndex SymbolIndex = SymbolIndex.Invalid,
+    byte ExtraIndex = 0);
 
 #region ExtraIndices
 
-public enum ExtraIndexSpecial : uint
+public enum ExtraIndexSpecial : byte
 {
     Underscore, EqualsSign,
 }
 
-public enum ExtraIndexConstant : uint
+public enum ExtraIndexConstant : byte
 {
     Zero, E, Pi, Tau, Capacity,
 }
 
-public enum ExtraIndexCompound : uint
+public enum ExtraIndexCompound : byte
 {
     Add, Sub,
     Mul, Div, Mod,
@@ -54,14 +61,14 @@ public enum ExtraIndexCompound : uint
 }
 // it's possible that non-arithmetic compound operators can be added, keep separate from arithmetic from now
 
-public enum ExtraIndexArithmetic : uint
+public enum ExtraIndexArithmetic : byte
 {
     Add, Sub,
     Mul, Div, Mod,
     Pow,
 }
 
-public enum ExtraIndexComparison : uint
+public enum ExtraIndexComparison : byte
 {
     Not,
     LessThan, GreaterThan, LessThanOrEqual, GreaterThanOrEqual,
@@ -69,7 +76,7 @@ public enum ExtraIndexComparison : uint
     And, Or,
 }
 
-public enum ExtraIndexMathFunction : uint
+public enum ExtraIndexMathFunction : byte
 {
     Abs, Sign, CopySign,
     Round, Trunc, Floor, Ceil, Clamp,
@@ -235,17 +242,17 @@ public static class Tokens
 
     private static readonly Dictionary<string, Token> reservedMap = new()
     {
-        [UNDERSCORE]  = new(TokenType.None, ExtraIndex: (uint)ExtraIndexSpecial.Underscore),
-        [EQUALS_SIGN] = new(TokenType.None, ExtraIndex: (uint)ExtraIndexSpecial.EqualsSign),
+        [UNDERSCORE]  = new(TokenType.None, ExtraIndex: (byte)ExtraIndexSpecial.Underscore),
+        [EQUALS_SIGN] = new(TokenType.None, ExtraIndex: (byte)ExtraIndexSpecial.EqualsSign),
 
         [INPUT]  = new(TokenType.Input),
         [OUTPUT] = new(TokenType.Output),
 
-        [ZERO]           = new(TokenType.Constant, ExtraIndex: (uint)ExtraIndexConstant.Zero),
-        [CONST_E]        = new(TokenType.Constant, ExtraIndex: (uint)ExtraIndexConstant.E),
-        [CONST_PI]       = new(TokenType.Constant, ExtraIndex: (uint)ExtraIndexConstant.Pi),
-        [CONST_TAU]      = new(TokenType.Constant, ExtraIndex: (uint)ExtraIndexConstant.Tau),
-        [CONST_CAPACITY] = new(TokenType.Constant, ExtraIndex: (uint)ExtraIndexConstant.Capacity),
+        [ZERO]           = new(TokenType.Constant, ExtraIndex: (byte)ExtraIndexConstant.Zero),
+        [CONST_E]        = new(TokenType.Constant, ExtraIndex: (byte)ExtraIndexConstant.E),
+        [CONST_PI]       = new(TokenType.Constant, ExtraIndex: (byte)ExtraIndexConstant.Pi),
+        [CONST_TAU]      = new(TokenType.Constant, ExtraIndex: (byte)ExtraIndexConstant.Tau),
+        [CONST_CAPACITY] = new(TokenType.Constant, ExtraIndex: (byte)ExtraIndexConstant.Capacity),
 
         [FALSE] = new(TokenType.Bool, ExtraIndex: 0),
         [TRUE]  = new(TokenType.Bool, ExtraIndex: 1),
@@ -269,64 +276,64 @@ public static class Tokens
         [CURLY_CLOSE]  = new(TokenType.CurlyClose),
         [ASSIGN]       = new(TokenType.Assignment),
 
-        [C_ADD] = new(TokenType.Compound, ExtraIndex: (uint)ExtraIndexCompound.Add),
-        [C_SUB] = new(TokenType.Compound, ExtraIndex: (uint)ExtraIndexCompound.Sub),
-        [C_MUL] = new(TokenType.Compound, ExtraIndex: (uint)ExtraIndexCompound.Mul),
-        [C_DIV] = new(TokenType.Compound, ExtraIndex: (uint)ExtraIndexCompound.Div),
-        [C_MOD] = new(TokenType.Compound, ExtraIndex: (uint)ExtraIndexCompound.Mod),
-        [C_POW] = new(TokenType.Compound, ExtraIndex: (uint)ExtraIndexCompound.Pow),
+        [C_ADD] = new(TokenType.Compound, ExtraIndex: (byte)ExtraIndexCompound.Add),
+        [C_SUB] = new(TokenType.Compound, ExtraIndex: (byte)ExtraIndexCompound.Sub),
+        [C_MUL] = new(TokenType.Compound, ExtraIndex: (byte)ExtraIndexCompound.Mul),
+        [C_DIV] = new(TokenType.Compound, ExtraIndex: (byte)ExtraIndexCompound.Div),
+        [C_MOD] = new(TokenType.Compound, ExtraIndex: (byte)ExtraIndexCompound.Mod),
+        [C_POW] = new(TokenType.Compound, ExtraIndex: (byte)ExtraIndexCompound.Pow),
 
-        [ADD] = new(TokenType.Arithmetic, ExtraIndex: (uint)ExtraIndexArithmetic.Add),
-        [SUB] = new(TokenType.Arithmetic, ExtraIndex: (uint)ExtraIndexArithmetic.Sub),
-        [MUL] = new(TokenType.Arithmetic, ExtraIndex: (uint)ExtraIndexArithmetic.Mul),
-        [DIV] = new(TokenType.Arithmetic, ExtraIndex: (uint)ExtraIndexArithmetic.Div),
-        [MOD] = new(TokenType.Arithmetic, ExtraIndex: (uint)ExtraIndexArithmetic.Mod),
-        [POW] = new(TokenType.Arithmetic, ExtraIndex: (uint)ExtraIndexArithmetic.Pow),
+        [ADD] = new(TokenType.Arithmetic, ExtraIndex: (byte)ExtraIndexArithmetic.Add),
+        [SUB] = new(TokenType.Arithmetic, ExtraIndex: (byte)ExtraIndexArithmetic.Sub),
+        [MUL] = new(TokenType.Arithmetic, ExtraIndex: (byte)ExtraIndexArithmetic.Mul),
+        [DIV] = new(TokenType.Arithmetic, ExtraIndex: (byte)ExtraIndexArithmetic.Div),
+        [MOD] = new(TokenType.Arithmetic, ExtraIndex: (byte)ExtraIndexArithmetic.Mod),
+        [POW] = new(TokenType.Arithmetic, ExtraIndex: (byte)ExtraIndexArithmetic.Pow),
 
-        [NOT] = new(TokenType.Comparison, ExtraIndex: (uint)ExtraIndexComparison.Not),
-        [AND] = new(TokenType.Comparison, ExtraIndex: (uint)ExtraIndexComparison.And),
-        [OR]  = new(TokenType.Comparison, ExtraIndex: (uint)ExtraIndexComparison.Or),
-        [LT]  = new(TokenType.Comparison, ExtraIndex: (uint)ExtraIndexComparison.LessThan),
-        [GT]  = new(TokenType.Comparison, ExtraIndex: (uint)ExtraIndexComparison.GreaterThan),
-        [LE]  = new(TokenType.Comparison, ExtraIndex: (uint)ExtraIndexComparison.LessThanOrEqual),
-        [GE]  = new(TokenType.Comparison, ExtraIndex: (uint)ExtraIndexComparison.GreaterThanOrEqual),
-        [EQ]  = new(TokenType.Comparison, ExtraIndex: (uint)ExtraIndexComparison.Equal),
-        [NE]  = new(TokenType.Comparison, ExtraIndex: (uint)ExtraIndexComparison.NotEqual),
+        [NOT] = new(TokenType.Comparison, ExtraIndex: (byte)ExtraIndexComparison.Not),
+        [AND] = new(TokenType.Comparison, ExtraIndex: (byte)ExtraIndexComparison.And),
+        [OR]  = new(TokenType.Comparison, ExtraIndex: (byte)ExtraIndexComparison.Or),
+        [LT]  = new(TokenType.Comparison, ExtraIndex: (byte)ExtraIndexComparison.LessThan),
+        [GT]  = new(TokenType.Comparison, ExtraIndex: (byte)ExtraIndexComparison.GreaterThan),
+        [LE]  = new(TokenType.Comparison, ExtraIndex: (byte)ExtraIndexComparison.LessThanOrEqual),
+        [GE]  = new(TokenType.Comparison, ExtraIndex: (byte)ExtraIndexComparison.GreaterThanOrEqual),
+        [EQ]  = new(TokenType.Comparison, ExtraIndex: (byte)ExtraIndexComparison.Equal),
+        [NE]  = new(TokenType.Comparison, ExtraIndex: (byte)ExtraIndexComparison.NotEqual),
 
-        [ABS]                = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.Abs),
-        [SIGN]               = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.Sign),
-        [COPY_SIGN]          = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.CopySign),
-        [ROUND]              = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.Round),
-        [TRUNC]              = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.Trunc),
-        [FLOOR]              = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.Floor),
-        [CEIL]               = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.Ceil),
-        [CLAMP]              = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.Clamp),
-        [MIN]                = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.Min),
-        [MAX]                = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.Max),
-        [MIN_MAGNITUDE]      = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.MinMagnitude),
-        [MAX_MAGNITUDE]      = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.MaxMagnitude),
-        [SQRT]               = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.Sqrt),
-        [CBRT]               = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.Cbrt),
-        [LOG]                = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.Log),
-        [LOG_2]              = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.Log2),
-        [LOG_10]             = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.Log10),
-        [LOG_B]              = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.LogB),
-        [ILOG_B]             = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.ILogB),
-        [SIN]                = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.Sin),
-        [SINH]               = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.Sinh),
-        [ASIN]               = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.Asin),
-        [ASINH]              = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.Asinh),
-        [COS]                = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.Cos),
-        [COSH]               = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.Cosh),
-        [ACOS]               = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.Acos),
-        [ACOSH]              = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.Acosh),
-        [TAN]                = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.Tan),
-        [TANH]               = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.Tanh),
-        [ATAN]               = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.Atan),
-        [ATANH]              = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.Atanh),
-        [ATAN2]              = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.Atan2),
-        [FUSED_MULTIPLY_ADD] = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.FusedMultiplyAdd),
-        [SCALE_B]            = new(TokenType.MathFunction, ExtraIndex: (uint)ExtraIndexMathFunction.ScaleB),
+        [ABS]                = new(TokenType.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.Abs),
+        [SIGN]               = new(TokenType.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.Sign),
+        [COPY_SIGN]          = new(TokenType.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.CopySign),
+        [ROUND]              = new(TokenType.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.Round),
+        [TRUNC]              = new(TokenType.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.Trunc),
+        [FLOOR]              = new(TokenType.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.Floor),
+        [CEIL]               = new(TokenType.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.Ceil),
+        [CLAMP]              = new(TokenType.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.Clamp),
+        [MIN]                = new(TokenType.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.Min),
+        [MAX]                = new(TokenType.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.Max),
+        [MIN_MAGNITUDE]      = new(TokenType.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.MinMagnitude),
+        [MAX_MAGNITUDE]      = new(TokenType.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.MaxMagnitude),
+        [SQRT]               = new(TokenType.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.Sqrt),
+        [CBRT]               = new(TokenType.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.Cbrt),
+        [LOG]                = new(TokenType.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.Log),
+        [LOG_2]              = new(TokenType.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.Log2),
+        [LOG_10]             = new(TokenType.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.Log10),
+        [LOG_B]              = new(TokenType.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.LogB),
+        [ILOG_B]             = new(TokenType.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.ILogB),
+        [SIN]                = new(TokenType.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.Sin),
+        [SINH]               = new(TokenType.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.Sinh),
+        [ASIN]               = new(TokenType.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.Asin),
+        [ASINH]              = new(TokenType.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.Asinh),
+        [COS]                = new(TokenType.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.Cos),
+        [COSH]               = new(TokenType.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.Cosh),
+        [ACOS]               = new(TokenType.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.Acos),
+        [ACOSH]              = new(TokenType.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.Acosh),
+        [TAN]                = new(TokenType.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.Tan),
+        [TANH]               = new(TokenType.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.Tanh),
+        [ATAN]               = new(TokenType.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.Atan),
+        [ATANH]              = new(TokenType.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.Atanh),
+        [ATAN2]              = new(TokenType.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.Atan2),
+        [FUSED_MULTIPLY_ADD] = new(TokenType.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.FusedMultiplyAdd),
+        [SCALE_B]            = new(TokenType.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.ScaleB),
     };
 
     public static string Normalize(string s) => s.Replace(UNDERSCORE, SPACE);
