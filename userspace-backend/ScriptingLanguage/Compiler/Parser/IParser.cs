@@ -11,23 +11,25 @@ namespace userspace_backend.ScriptingLanguage.Compiler.Parser;
 public interface IParser
 {
     /// <summary>
-    /// Makes the parser begin parsing (single-use only).
+    /// Parse from the given context and lexer.
     /// </summary>
     /// <returns>Result of parsing.</returns>
-    /// <exception cref="ParserException"/>
     ParsingResult Parse();
+
+    /// <summary>
+    /// Reset the lexer and parser.
+    /// </summary>
+    void Reset();
 }
 
 /// <summary>
 /// The result of parsing a list of lexical tokens.
 /// </summary>
-/// <param name="Context">The compiler context.</param>
-/// <param name="Description">The description of the script (usually derived from the 'comments' section in lexical analysis).</param>
+/// <param name="Description">The description of the script.</param>
 /// <param name="Parameters">The user-controlled parameters.</param>
 /// <param name="Declarations">The declarations used by the script.</param>
 /// <param name="Callbacks">The callbacks parsed from the script.</param>
 public record ParsingResult(
-    CompilerContext Context,
     string Description,
     Parameters Parameters,
     IList<ASTNode> Declarations,

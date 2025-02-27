@@ -49,16 +49,10 @@ public enum ParameterType
 /// </summary>
 public class Parameter
 {
-    #region Fields
-
     private Number _value;
 
     private readonly ParameterValidation min;
     private readonly ParameterValidation max;
-
-    #endregion
-
-    #region Constructors
 
     internal Parameter(CompilerContext context, Token name, Token value, ParameterValidation minval, ParameterValidation maxval)
     {
@@ -104,10 +98,6 @@ public class Parameter
         max = old.max;
     }
 
-    #endregion
-
-    #region Properties
-
     /// <summary>
     /// Name of this Parameter (/\w+/ with underscores normalized to spaces).
     /// </summary>
@@ -141,10 +131,6 @@ public class Parameter
         }
     }
 
-    #endregion
-
-    #region Methods
-
     /// <summary>
     /// Validates the given value according to the Parameter's indicated bounds.
     /// </summary>
@@ -163,8 +149,6 @@ public class Parameter
     {
         return (Parameter)MemberwiseClone();
     }
-
-    #endregion
 }
 
 /// <summary>

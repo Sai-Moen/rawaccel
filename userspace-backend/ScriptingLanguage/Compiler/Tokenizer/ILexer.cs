@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-namespace userspace_backend.ScriptingLanguage.Compiler.Tokenizer;
+﻿namespace userspace_backend.ScriptingLanguage.Compiler.Tokenizer;
 
 /// <summary>
 /// Defines the API of a RawAccelScript lexer.
@@ -8,20 +6,19 @@ namespace userspace_backend.ScriptingLanguage.Compiler.Tokenizer;
 public interface ILexer
 {
     /// <summary>
-    /// Makes the lexer begin tokenizing (single-use only).
+    /// Advances the lexer by a token.
     /// </summary>
-    /// <returns>Result of tokenizing.</returns>
-    /// <exception cref="LexerException"/>
-    LexingResult Tokenize();
-}
+    /// <returns>
+    /// The next token, or Tokens.DUMMY on out-of-bounds.
+    /// It is up to the parser to decide if a particular token was reached at the wrong time.
+    /// </returns>
+    Token Advance();
 
-/// <summary>
-/// The result of tokenizing a script.
-/// </summary>
-/// <param name="Context">The compiler's context.</param>
-/// <param name="Description">The description of the script.</param>
-/// <param name="Tokens">The tokens after the description.</param>
-public record LexingResult(CompilerContext Context, string Description, IList<Token> Tokens);
+    /// <summary>
+    /// Sets the state of the lexer to be back at the start of the script.
+    /// </summary>
+    void Reset();
+}
 
 /// <summary>
 /// Exception for tokenizing-specific errors.

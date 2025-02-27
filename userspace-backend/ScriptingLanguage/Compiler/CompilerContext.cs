@@ -1,6 +1,7 @@
-﻿using System.Collections.Generic;
-using System.Collections.Immutable;
+﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using userspace_backend.ScriptingLanguage.Compiler.Tokenizer;
 
 namespace userspace_backend.ScriptingLanguage.Compiler;
@@ -16,33 +17,87 @@ public enum SymbolIndex : int
     Invalid = -1
 }
 
-public class CompilerContext
-{
-    private readonly ImmutableArray<string> symbolSideTable;
+public readonly record struct FilePosition(int Line, int Column);
 
-    public CompilerContext(IList<string> sideTable)
+public class CompilerContext(string script)
+{
+    private readonly List<ReadOnlyMemory<char>> symbolSideTable = [];
+
+    public string Script { get; } = script;
+
+    public void Reset()
     {
-        symbolSideTable = [.. sideTable];
+        symbolSideTable.Clear();
     }
 
-    public CompilerContext(List<string> sideTable)
+    public SymbolIndex AddSymbol(ReadOnlyMemory<char> charView)
     {
-        symbolSideTable = [.. sideTable];
+        SymbolIndex index = (SymbolIndex)symbolSideTable.Count;
+        symbolSideTable.Add(charView);
+        return index;
+    }
+
+    public SymbolIndex AddSymbol(int start, int length)
+    {
+        // AsMemory throws for most of these but additionally the lexer shouldn't be able to produce 0 length tokens
+        Debug.Assert(length > 0, "Length must be positive (most likely a lexer bug).");
+
+        return AddSymbol(Script.AsMemory(start, length));
+    }
+
+    public string GetSymbol(SymbolIndex symbolIndex)
+    {
+        bool ok = TryGetSymbol(symbolIndex, out string symbol);
+        Debug.Assert(ok);
+        return symbol;
     }
 
     public string GetSymbol(Token token)
     {
-        SymbolIndex symbolIndex = token.SymbolIndex;
+        return GetSymbol(token.SymbolIndex);
+    }
+
+    public bool TryGetSymbol(SymbolIndex symbolIndex, out string symbol)
+    {
         Debug.Assert(symbolIndex != SymbolIndex.Invalid, "You probably called this with a token that has a compile-time known symbol.");
 
         int index = (int)symbolIndex;
-        if (index < 0)
-            throw new CompilationException($"Invalid SymbolIndex: {index}", token);
+        if (index < 0 || index >= symbolSideTable.Count)
+        {
+            // not sure if we want to do something better
+            symbol = string.Empty;
+            return false;
+        }
 
-        int len = symbolSideTable.Length;
-        if (index >= len)
-            throw new CompilationException($"SymbolIndex out of bounds: {index} >= {len}", token);
+        symbol = symbolSideTable[index].ToString();
+        return true;
+    }
 
-        return symbolSideTable[index];
+    public bool TryGetSymbol(Token token, out string symbol)
+    {
+        return TryGetSymbol(token.SymbolIndex, out symbol);
+    }
+
+    public FilePosition FilePositionFromBytePosition(int bytePosition)
+    {
+        Debug.Assert(bytePosition < Script.Length);
+
+        int line = 1;
+        int column = 1;
+        for (int i = 0; i < bytePosition; i++)
+        {
+            if (Script[i] == '\n')
+            {
+                ++line;
+                column = 0;
+            }
+            ++column;
+        }
+        return new(line, column);
+    }
+
+    public FilePosition FilePositionFromToken(Token token)
+    {
+        return FilePositionFromBytePosition(token.BytePosition);
     }
 }

@@ -16,8 +16,6 @@ namespace userspace_backend.ScriptingLanguage.Interpreter;
 /// </summary>
 public class InterpreterImpl : IInterpreter
 {
-    #region Fields
-
     private readonly Dictionary<string, MemoryAddress> assignmentAddresses = [];
     private readonly Program[] assignments;
     private readonly MemoryHeap stable = new();
@@ -31,18 +29,13 @@ public class InterpreterImpl : IInterpreter
 
     private int depth;
 
-    #endregion
-
-    #region Constructors
-
     /// <summary>
     /// Initializes the script and its default settings.
     /// </summary>
     /// <param name="parsed">Result of parsing.</param>
     /// <exception cref="InterpreterException"/>
-    public InterpreterImpl(ParsingResult parsed)
+    public InterpreterImpl(CompilerContext context, ParsingResult parsed)
     {
-        CompilerContext context = parsed.Context;
         Description = parsed.Description;
 
         EmitterImpl emitter = new(context, assignmentAddresses, functionAddresses);
@@ -118,10 +111,6 @@ public class InterpreterImpl : IInterpreter
         Settings = parameters.Clone();
     }
 
-    #endregion
-
-    #region Properties
-
     public string Description { get; }
 
     public ReadOnlyParameters Defaults { get; }
@@ -131,8 +120,6 @@ public class InterpreterImpl : IInterpreter
 
     public Number X { get; set; } = Number.DEFAULT_X;
     public Number Y { get; set; } = Number.DEFAULT_Y;
-
-    #endregion
 
     #region Methods
 

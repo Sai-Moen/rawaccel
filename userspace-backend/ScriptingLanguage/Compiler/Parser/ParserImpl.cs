@@ -6,19 +6,14 @@ using userspace_backend.ScriptingLanguage.Script;
 namespace userspace_backend.ScriptingLanguage.Compiler.Parser;
 
 /// <summary>
-/// Can parse a list of Tokens.
+/// Parses a stream of tokens.
 /// </summary>
-public class ParserImpl : IParser
+public class ParserImpl(CompilerContext context, ILexer lexer) : IParser
 {
-    #region Fields
+    private readonly CompilerContext context = context;
+    private readonly ILexer lexer = lexer;
 
-    private readonly CompilerContext context;
-    private readonly IList<Token> lexicalTokens;
-
-    private int currentIndex;
-    private readonly int maxIndex;
-
-    private Token previousToken = default;
+    private Token previousToken;
     private Token currentToken;
 
     private readonly Dictionary<string, TokenType> declarationNames = new(Constants.MAX_MEM_CAP);
@@ -28,77 +23,32 @@ public class ParserImpl : IParser
     private int depth;
     private readonly Stack<Operator> operatorStack = new();
 
-    private readonly string description;
     private readonly Parameters parameters = [];
     private readonly Block declarations = [];
     private readonly Dictionary<string, ParsedCallback> callbacks = [];
 
-    #endregion
-
-    #region Constructors
-
-    /// <summary>
-    /// Parses the input list of Tokens.
-    /// </summary>
-    /// <param name="tokens">List of tokens from the script.</param>
-    public ParserImpl(LexingResult tokens)
-    {
-        context = tokens.Context;
-        description = tokens.Description;
-        lexicalTokens = tokens.Tokens;
-
-        maxIndex = lexicalTokens.Count - 1;
-        if (maxIndex < 3)
-            throw ParserError($"Script is too small (maximum index = {maxIndex}) to have required sections!");
-
-        // if the parser consumes exactly the correct amount of tokens, then currentToken will end up on this dummy token
-        // otherwise OoB happens, or more checks might have to happen
-        // this should happen after maxIndex is set
-        lexicalTokens.Add(default);
-
-        currentToken = lexicalTokens[currentIndex];
-        Debug.Assert(currentToken.Type == TokenType.SquareOpen);
-    }
-
-    #endregion
-
-    #region Methods
-
     public ParsingResult Parse()
     {
-        ParseTokens();
-
-        if (parameters.Count > Constants.MAX_PARAMETERS)
-            throw ParserError($"Too many parameters! Expected at most {Constants.MAX_PARAMETERS}, got {parameters.Count}.");
-
-        // this can be expanded a bit more since persistent and impersistent are separated, but for now it'll work
-        if (declarations.Count > Constants.MAX_DECLARATIONS)
-            throw ParserError($"Too many declarations! Expected at most {Constants.MAX_DECLARATIONS}, got {declarations.Count}.");
-
-        return new(context, description, parameters, declarations, [.. callbacks.Values]);
-    }
-
-    private void ParseTokens()
-    {
-        // Parameters
+        // init currentToken
         AdvanceToken();
+
+        string description = context.GetSymbol(Expect(TokenType.Description));
+
+        Discard(TokenType.SquareOpen);
         while (currentToken.Type != TokenType.SquareClose)
             ParseParameter();
+        Discard(TokenType.SquareClose);
 
-        // Declarations
-        AdvanceToken();
         while (currentToken.Type != TokenType.CurlyOpen)
             ParseDeclaration();
 
-        // Calculation
-        AdvanceToken();
+        Discard(TokenType.CurlyOpen);
         Block asts = [];
         while (currentToken.Type != TokenType.CurlyClose)
             asts.Add(Statement());
         callbacks.Add(Calculation.NAME, new(Calculation.NAME, [], [.. asts]));
+        Discard(TokenType.CurlyClose);
 
-        // Optional Callbacks
-        AdvanceToken();
         while (Accept(TokenType.Identifier, out Token identifier))
         {
             List<Token> args = [];
@@ -107,15 +57,44 @@ public class ParserImpl : IParser
 
             Block code = ParseBlock();
 
-            ParsedCallback callback = new(context.GetSymbol(identifier), [.. args], [.. code]);
+            string symbol = context.GetSymbol(identifier);
+            ParsedCallback callback = new(symbol, [.. args], [.. code]);
             if (callbacks.ContainsKey(callback.Name))
                 throw ParserError("Duplicate callbacks detected!");
 
             callbacks[callback.Name] = callback;
         }
+
+        if (parameters.Count > Constants.MAX_PARAMETERS)
+            throw ParserError(
+                $"Too many parameters! Expected at most {Constants.MAX_PARAMETERS}, got {parameters.Count}.");
+
+        // this can be expanded a bit more since persistent and impersistent are separated, but for now it'll work
+        if (declarations.Count > Constants.MAX_DECLARATIONS)
+            throw ParserError(
+                $"Too many declarations! Expected at most {Constants.MAX_DECLARATIONS}, got {declarations.Count}.");
+
+        return new(description, parameters, declarations, [.. callbacks.Values]);
     }
 
-    #endregion
+    public void Reset()
+    {
+        context.Reset();
+        lexer.Reset();
+
+        previousToken = default;
+        currentToken = default;
+
+        declarationNames.Clear();
+        functionLocalNames.Clear();
+
+        depth = 0;
+        operatorStack.Clear();
+
+        parameters.Clear();
+        declarations.Clear();
+        callbacks.Clear();
+    }
 
     #region Parameter Parsing
 
@@ -598,7 +577,7 @@ public class ParserImpl : IParser
                 return false;
         }
 
-        output.Add(Tokens.GetReserved(Tokens.ZERO, token.Position));
+        output.Add(Tokens.GetReserved(Tokens.ZERO, token.BytePosition));
         return true;
     }
 
@@ -712,13 +691,8 @@ public class ParserImpl : IParser
 
     private void AdvanceToken()
     {
-        // if currentIndex == maxIndex,
-        // currentToken will index into the last element of the list, which is a dummy token
-        if (currentIndex > maxIndex)
-            throw ParserError("End reached unexpectedly!");
-
         previousToken = currentToken;
-        currentToken = lexicalTokens[++currentIndex];
+        currentToken = lexer.Advance();
     }
 
     #endregion

@@ -20,6 +20,6 @@ public static class Constants
     public const int MAX_MEM_CAP = MemoryAddress.CAPACITY;
     public const int MAX_DECLARATIONS = MAX_MEM_CAP - MAX_PARAMETERS;
 
-    public const int MAX_RECURSION_DEPTH = 0x100;
-    public const int MAX_STACK_DEPTH = 0x10000;
+    public const int MAX_RECURSION_DEPTH = 0xff;
+    public const int MAX_STACK_DEPTH = 0xffff;
 }

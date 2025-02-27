@@ -1,13 +1,12 @@
-﻿using System.Collections.Generic;
+﻿using System;
 using System.Diagnostics;
-using System.Text;
 
 namespace userspace_backend.ScriptingLanguage.Compiler.Tokenizer;
 
 /// <summary>
-/// Automatically attempts to Tokenize when given an input script.
+/// Tokenizes an input script.
 /// </summary>
-public class LexerImpl : ILexer
+public class LexerImpl(CompilerContext context) : ILexer
 {
     protected enum LexerAction
     {
@@ -21,8 +20,10 @@ public class LexerImpl : ILexer
         Count
     }
 
-    protected enum CharBufferState
+    protected enum CharViewState
     {
+        Description, // must be the default value
+
         Idle,
         CommentLine,
         Identifier,
@@ -32,29 +33,14 @@ public class LexerImpl : ILexer
         Count
     }
 
-    private CharBufferState bufferState = CharBufferState.Idle;
-    private readonly StringBuilder charBuffer = new();
-    private readonly List<TokenType> delimiterStack = [];
+    private readonly CompilerContext context = context;
 
-    private int baseIndex = -1;
+    private CharViewState charViewState;
+
+    private int tokenBegin;
     private int currentIndex;
-    private readonly int maxIndex;
 
-    private readonly string script;
-
-    private string description = string.Empty;
-    private readonly List<Token> lexicalTokens = [];
-    private readonly List<string> symbolSideTable = [];
-
-    /// <summary>
-    /// Processes and tokenizes the input script.
-    /// </summary>
-    /// <param name="script">The input script.</param>
-    public LexerImpl(string script)
-    {
-        this.script = script;
-        maxIndex = this.script.Length - 1;
-    }
+    private string Script => context.Script;
 
     private static bool CmpCharStr(char c, string s) => c == s[0];
 
@@ -66,40 +52,67 @@ public class LexerImpl : ILexer
 
     private static bool IsNewline(char c) => c == '\n';
 
-    public LexingResult Tokenize()
+    public Token Advance()
     {
-        for (currentIndex = 0; currentIndex <= maxIndex; currentIndex++)
-        {
-            if (CmpCharStr(script[currentIndex], Tokens.SQUARE_OPEN))
-                break;
-        }
-        description = script[..currentIndex].Trim();
+        Debug.Assert(currentIndex >= 0);
+        if (currentIndex >= Script.Length)
+            return Tokens.DUMMY;
 
-        baseIndex = currentIndex;
-        if (currentIndex > maxIndex || !CmpCharStr(script[currentIndex], Tokens.SQUARE_OPEN))
+        int tokenLength = 0;
+        if (charViewState == CharViewState.Description)
         {
-            throw LexerError("Parameters not found!");
+            int tokenEnd = 0;
+            for (; currentIndex < Script.Length; currentIndex++)
+            {
+                char currentChar = Script[currentIndex];
+                if (CmpCharStr(currentChar, Tokens.SQUARE_OPEN))
+                    goto params_found;
+
+                if (!char.IsWhiteSpace(currentChar))
+                {
+                    tokenBegin = currentIndex;
+                    tokenEnd = currentIndex;
+                    break;
+                }
+            }
+
+            for (; currentIndex < Script.Length; currentIndex++)
+            {
+                char currentChar = Script[currentIndex];
+                if (CmpCharStr(currentChar, Tokens.SQUARE_OPEN))
+                    goto params_found;
+
+                if (!char.IsWhiteSpace(currentChar))
+                    tokenEnd = currentIndex;
+            }
+
+            throw LexerError("Could not find parameters!");
+
+        params_found:
+            tokenLength = tokenEnd - tokenBegin + 1;
+            SymbolIndex symbolIndex = context.AddSymbol(ConsumeBuffer(tokenLength));
+            return new(TokenType.Description, tokenBegin, symbolIndex);
         }
 
-        for (; currentIndex <= maxIndex; currentIndex++)
+        for (; currentIndex < Script.Length; currentIndex++)
         {
-            char currentChar = script[currentIndex];
+            char currentChar = Script[currentIndex];
 
             LexerAction action;
             if (IsNewline(currentChar))
             {
-                if (bufferState == CharBufferState.CommentLine)
-                    bufferState = CharBufferState.Idle;
+                if (charViewState == CharViewState.CommentLine)
+                    charViewState = CharViewState.Idle;
 
                 action = LexerAction.None;
             }
-            else if (bufferState == CharBufferState.CommentLine)
+            else if (charViewState == CharViewState.CommentLine)
             {
                 action = LexerAction.None;
             }
             else if (CmpCharStr(currentChar, Tokens.COMMENT_LINE))
             {
-                bufferState = CharBufferState.CommentLine;
+                charViewState = CharViewState.CommentLine;
                 action = LexerAction.Whitespace;
             }
             else if (IsAlphabeticCharacter(currentChar))
@@ -124,223 +137,154 @@ public class LexerImpl : ILexer
                 case LexerAction.None:
                     break;
                 case LexerAction.Alphabetical:
-                    charBuffer.Append(currentChar);
-                    switch (bufferState)
+                    ++tokenLength;
+                    switch (charViewState)
                     {
-                        case CharBufferState.Idle:
-                            bufferState = CharBufferState.Identifier;
-                            baseIndex = currentIndex;
+                        case CharViewState.Idle:
+                            charViewState = CharViewState.Identifier;
+                            tokenBegin = currentIndex;
                             break;
-                        case CharBufferState.Identifier:
-                            CapIdentifierLength();
+                        case CharViewState.Identifier:
+                            CapIdentifierLength(tokenLength);
                             break;
-                        case CharBufferState.Number:
+                        case CharViewState.Number:
                             throw LexerError("Letter detected inside number!");
                         default:
                             goto error;
                     }
                     break;
                 case LexerAction.Numerical:
-                    charBuffer.Append(currentChar);
-                    switch (bufferState)
+                    ++tokenLength;
+                    switch (charViewState)
                     {
-                        case CharBufferState.Idle:
-                            bufferState = CharBufferState.Number;
-                            baseIndex = currentIndex;
+                        case CharViewState.Idle:
+                            charViewState = CharViewState.Number;
+                            tokenBegin = currentIndex;
                             break;
-                        case CharBufferState.Identifier:
-                            CapIdentifierLength();
+                        case CharViewState.Identifier:
+                            CapIdentifierLength(tokenLength);
                             break;
-                        case CharBufferState.Number:
-                            CapNumberLength();
+                        case CharViewState.Number:
+                            CapNumberLength(tokenLength);
                             break;
                         default:
                             goto error;
                     }
                     break;
                 case LexerAction.Whitespace:
-                    switch (bufferState)
+                    switch (charViewState)
                     {
-                        case CharBufferState.Idle:
-                        case CharBufferState.CommentLine:
-                            goto skip_whitespace;
-                        case CharBufferState.Identifier:
-                            AddBufferedPossiblyReservedSymbol();
+                        case CharViewState.Idle:
+                        case CharViewState.CommentLine:
                             break;
-                        case CharBufferState.Number:
-                            AddBufferedNumber();
-                            break;
+                        case CharViewState.Identifier:
+                            return ConsumeBufferedSymbol(tokenLength);
+                        case CharViewState.Number:
+                            return ConsumeBufferedNumber(tokenLength);
                         default:
                             goto error;
                     }
-                    
-                    bufferState = CharBufferState.Idle;
-
-                skip_whitespace:
                     break;
                 case LexerAction.Special:
-                    switch (bufferState)
+                    switch (charViewState)
                     {
-                        case CharBufferState.Idle:
+                        case CharViewState.Idle:
+                            tokenBegin = currentIndex;
                             break;
-                        case CharBufferState.Identifier:
-                            AddBufferedPossiblyReservedSymbol();
-                            break;
-                        case CharBufferState.Number:
-                            AddBufferedNumber();
-                            break;
-                        case CharBufferState.Special:
+                        case CharViewState.Identifier:
+                            return ConsumeBufferedSymbol(tokenLength);
+                        case CharViewState.Number:
+                            return ConsumeBufferedNumber(tokenLength);
+                        case CharViewState.Special:
                             Debug.Assert(CmpCharStr(currentChar, Tokens.EQUALS_SIGN));
-
-                            charBuffer.Append(currentChar);
-                            AddBufferedPossiblyReservedSymbol();
-                            goto skip_special;
+                            break;
                         default:
                             goto error;
                     }
 
-                    charBuffer.Append(currentChar);
-                    if (PeekNext(out char c2) && CmpCharStr(c2, Tokens.EQUALS_SIGN))
+                    ++tokenLength;
+                    if (charViewState != CharViewState.Special && PeekNext(out char c2) && CmpCharStr(c2, Tokens.EQUALS_SIGN))
                     {
-                        bufferState = CharBufferState.Special;
-                        baseIndex = currentIndex;
-                        goto skip_special;
+                        charViewState = CharViewState.Special;
+                    }
+                    else
+                    {
+                        ++currentIndex; // force increment because return skips it otherwise
+                        return ConsumeBufferedSymbol(tokenLength);
                     }
 
-                    AddBufferedPossiblyReservedSymbol();
-
-                    TokenType lastType = lexicalTokens[^1].Type;
-                    if (delimiterStack.Count > 0)
-                    {
-                        // the special handling here is because the parameters section uses delimiters to denote bounds
-                        TokenType bottom = delimiterStack[0];
-                        if (bottom == TokenType.SquareOpen)
-                        {
-                            if (lastType == TokenType.SquareClose)
-                                delimiterStack.RemoveAt(delimiterStack.Count - 1);
-
-                            goto skip_special;
-                        }
-                    }
-
-                    TokenType opposite;
-                    switch (lastType)
-                    {
-                        case TokenType.ParenOpen:
-                        case TokenType.SquareOpen:
-                        case TokenType.CurlyOpen:
-                            delimiterStack.Add(lastType);
-                            goto skip_special;
-                        case TokenType.ParenClose:
-                            opposite = TokenType.ParenOpen;
-                            break;
-                        case TokenType.SquareClose:
-                            opposite = TokenType.SquareOpen;
-                            break;
-                        case TokenType.CurlyClose:
-                            opposite = TokenType.CurlyOpen;
-                            break;
-                        default:
-                            goto skip_special;
-                    }
-
-                    if (delimiterStack.Count == 0 || delimiterStack[^1] != opposite)
-                        throw LexerError("Unbalanced delimiters! Too many closing.");
-
-                    delimiterStack.RemoveAt(delimiterStack.Count - 1);
-
-                skip_special:
                     break;
                 default:
                     goto error;
             }
-
-            continue;
-
-        error:
-            throw LexerError("Undefined state!");
         }
 
-        if (delimiterStack.Count > 0)
-            throw LexerError("Unbalanced delimiters! Too many opening.");
-
-        CompilerContext context = new(symbolSideTable);
-        return new(context, description, lexicalTokens);
+    error:
+        throw LexerError("Undefined state!");
     }
 
-    #region Helper Methods
-
-    private void AddBufferedPossiblyReservedSymbol()
+    public void Reset()
     {
-        string symbol = ConsumeBuffer();
+        context.Reset();
+
+        charViewState = CharViewState.Description;
+
+        tokenBegin = 0;
+        currentIndex = 0;
+    }
+
+    private Token ConsumeBufferedSymbol(int tokenLength)
+    {
+        ReadOnlyMemory<char> charView = ConsumeBuffer(tokenLength);
 
         Token token;
-        if (Tokens.IsReserved(symbol))
+        if (Tokens.IsReserved(charView.Span))
         {
-            token = Tokens.GetReserved(symbol, baseIndex);
+            token = Tokens.GetReserved(charView.Span, tokenBegin);
         }
         else
         {
-            SymbolIndex symbolIndex = AddSymbolToSideTable(Tokens.Normalize(symbol));
-            token = new(TokenType.Identifier, baseIndex, symbolIndex);
+            SymbolIndex symbolIndex = context.AddSymbol(charView);
+            token = new(TokenType.Identifier, tokenBegin, symbolIndex);
         }
-        AddToken(token);
+        return token;
     }
 
-    private void AddBufferedNumber()
+    private Token ConsumeBufferedNumber(int tokenLength)
     {
-        SymbolIndex symbolIndex = AddSymbolToSideTable(ConsumeBuffer());
-        AddToken(new(TokenType.Number, baseIndex, symbolIndex));
+        SymbolIndex symbolIndex = context.AddSymbol(ConsumeBuffer(tokenLength));
+        return new(TokenType.Number, tokenBegin, symbolIndex);
     }
 
-    private string ConsumeBuffer()
+    private ReadOnlyMemory<char> ConsumeBuffer(int tokenLength)
     {
-        string s = charBuffer.ToString();
-        charBuffer.Clear();
-        return s;
+        ReadOnlyMemory<char> charView = Script.AsMemory(tokenBegin, tokenLength);
+        charViewState = CharViewState.Idle;
+        return charView;
     }
 
-    private SymbolIndex AddSymbolToSideTable(string symbol)
+    private void CapIdentifierLength(int tokenLength)
     {
-        SymbolIndex symbolIndex = (SymbolIndex)symbolSideTable.Count;
-        symbolSideTable.Add(symbol);
-        return symbolIndex;
-    }
-
-    private void AddToken(Token token)
-    {
-        lexicalTokens.Add(token);
-        bufferState = CharBufferState.Idle;
-    }
-
-    private void CapIdentifierLength()
-    {
-        if (charBuffer.Length > Constants.MAX_IDENTIFIER_LEN)
+        if (tokenLength > Constants.MAX_IDENTIFIER_LEN)
             throw LexerError($"Identifier name too long! (max {Constants.MAX_IDENTIFIER_LEN} characters)");
     }
 
-    private void CapNumberLength()
+    private void CapNumberLength(int tokenLength)
     {
-        if (charBuffer.Length > Constants.MAX_NUMBER_LEN)
+        if (tokenLength > Constants.MAX_NUMBER_LEN)
             throw LexerError($"Number too long! (max {Constants.MAX_NUMBER_LEN} characters)");
     }
 
     private bool PeekNext(out char c)
     {
-        if (currentIndex < maxIndex)
-        {
-            c = script[currentIndex + 1];
-            return true;
-        }
-
-        c = char.MinValue;
-        return false;
+        int nextIndex = currentIndex + 1;
+        bool ok = nextIndex < Script.Length;
+        c = ok ? Script[nextIndex] : '\0';
+        return ok;
     }
-
-    #endregion
 
     private LexerException LexerError(string error)
     {
-        return new LexerException(error, Tokens.DUMMY with { Position = baseIndex });
+        return new LexerException(error, Tokens.DUMMY with { BytePosition = tokenBegin });
     }
 }

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace userspace_backend.ScriptingLanguage.Compiler.Tokenizer;
 
@@ -9,6 +10,7 @@ public enum TokenType : byte
 {
     None, // Doesn't mean invalid right away, depends on if you expect a certain symbol
 
+    Description,
     Number, Bool, Constant,
     Input, Output, Identifier, Parameter,
     Immutable, Persistent, Impersistent,
@@ -26,7 +28,7 @@ public enum TokenType : byte
 /// A lexical token.
 /// </summary>
 /// <param name="Type">Type of token.</param>
-/// <param name="Position">
+/// <param name="BytePosition">
 /// Starting position (byte index in script) of the symbol, can be used to determine the line/character in case of an error.
 /// </param>
 /// <param name="SymbolIndex">Index of the identifier's symbol (or .Invalid if no runtime symbol).</param>
@@ -37,7 +39,7 @@ public enum TokenType : byte
 /// </param>
 public readonly record struct Token(
     TokenType Type = TokenType.None,
-    int Position = -1,
+    int BytePosition = -1,
     SymbolIndex SymbolIndex = SymbolIndex.Invalid,
     byte ExtraIndex = 0);
 
@@ -336,11 +338,11 @@ public static class Tokens
         [SCALE_B]            = new(TokenType.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.ScaleB),
     };
 
-    public static string Normalize(string s) => s.Replace(UNDERSCORE, SPACE);
-
-    public static bool IsReserved(char c) => IsReserved(c.ToString());
     public static bool IsReserved(string symbol) => reservedMap.ContainsKey(symbol);
+    public static bool IsReserved(ReadOnlySpan<char> charView) => IsReserved(charView.ToString());
 
     public static Token GetReserved(string symbol) => reservedMap[symbol];
-    public static Token GetReserved(string symbol, int position) => GetReserved(symbol) with { Position = position };
+    public static Token GetReserved(string symbol, int bytePosition) => GetReserved(symbol) with { BytePosition = bytePosition };
+    public static Token GetReserved(ReadOnlySpan<char> charView) => GetReserved(charView.ToString());
+    public static Token GetReserved(ReadOnlySpan<char> charView, int bytePosition) => GetReserved(charView.ToString(), bytePosition);
 }

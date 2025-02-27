@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using userspace_backend.ScriptingLanguage.Compiler;
 using userspace_backend.ScriptingLanguage.Compiler.Parser;
 using userspace_backend.ScriptingLanguage.Compiler.Tokenizer;
 using userspace_backend.ScriptingLanguage.Interpreter;
@@ -46,24 +47,14 @@ public static class Wrapper
     }
 
     /// <summary>
-    /// Compiles a script only up to and including the Lexer phase.
-    /// </summary>
-    /// <param name="script">Script to compile.</param>
-    /// <returns>Result of lexing.</returns>
-    public static LexingResult CompileToLexingResult(string script)
-    {
-        LexerImpl lexer = new(script);
-        return lexer.Tokenize();
-    }
-
-    /// <summary>
     /// Compiles a script only up to and including the Parser phase.
     /// </summary>
     /// <param name="script">Script to compile.</param>
     /// <returns>Result of parsing.</returns>
     public static ParsingResult CompileToParsingResult(string script)
     {
-        ParserImpl parser = new(CompileToLexingResult(script));
+        CompilerContext context = new(script);
+        ParserImpl parser = new(context, new LexerImpl(context));
         return parser.Parse();
     }
 
@@ -75,7 +66,9 @@ public static class Wrapper
     /// <returns>Concrete Interpreter instance.</returns>
     public static InterpreterImpl CompileToInterpreter(string script)
     {
-        InterpreterImpl interpreter = new(CompileToParsingResult(script));
+        CompilerContext context = new(script);
+        ParserImpl parser = new(context, new LexerImpl(context));
+        InterpreterImpl interpreter = new(context, parser.Parse());
         return interpreter;
     }
 
@@ -143,7 +136,7 @@ public class CompilationException : ScriptException
 
     /// <summary>
     /// The token suspected of causing this exception.
-    /// Use the <see cref="Token.Position"/> property to scan through the source code,
+    /// Use the <see cref="Token.BytePosition"/> property to scan through the source code,
     /// to determine the location in (Line, Char) coordinates.
     /// <br/>
     /// Make sure to check whether this is a valid token when using it directly.
