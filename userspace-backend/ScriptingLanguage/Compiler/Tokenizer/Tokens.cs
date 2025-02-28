@@ -38,7 +38,7 @@ public enum TokenType : byte
 /// This property stores any extra information needed to determine the exact subtype that this token represents.
 /// </param>
 public readonly record struct Token(
-    TokenType Type = TokenType.None,
+    TokenType Type = default,
     int BytePosition = -1,
     SymbolIndex SymbolIndex = SymbolIndex.Invalid,
     byte ExtraIndex = 0);

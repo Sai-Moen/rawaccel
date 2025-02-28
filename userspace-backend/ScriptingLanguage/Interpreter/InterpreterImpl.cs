@@ -34,7 +34,7 @@ public class InterpreterImpl : IInterpreter
     /// </summary>
     /// <param name="parsed">Result of parsing.</param>
     /// <exception cref="InterpreterException"/>
-    public InterpreterImpl(CompilerContext context, ParsingResult parsed)
+    public InterpreterImpl(CompilerContext context, AST parsed)
     {
         Description = parsed.Description;
 

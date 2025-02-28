@@ -51,7 +51,7 @@ public static class Wrapper
     /// </summary>
     /// <param name="script">Script to compile.</param>
     /// <returns>Result of parsing.</returns>
-    public static ParsingResult CompileToParsingResult(string script)
+    public static AST CompileToParsingResult(string script)
     {
         CompilerContext context = new(script);
         ParserImpl parser = new(context, new LexerImpl(context));

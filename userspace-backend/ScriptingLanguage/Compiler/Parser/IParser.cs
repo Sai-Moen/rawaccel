@@ -14,7 +14,7 @@ public interface IParser
     /// Parse from the given context and lexer.
     /// </summary>
     /// <returns>Result of parsing.</returns>
-    ParsingResult Parse();
+    AST Parse();
 
     /// <summary>
     /// Reset the lexer and parser.
@@ -23,13 +23,13 @@ public interface IParser
 }
 
 /// <summary>
-/// The result of parsing a list of lexical tokens.
+/// The root AST node.
 /// </summary>
 /// <param name="Description">The description of the script.</param>
 /// <param name="Parameters">The user-controlled parameters.</param>
 /// <param name="Declarations">The declarations used by the script.</param>
 /// <param name="Callbacks">The callbacks parsed from the script.</param>
-public record ParsingResult(
+public record AST(
     string Description,
     Parameters Parameters,
     IList<ASTNode> Declarations,

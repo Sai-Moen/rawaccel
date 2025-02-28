@@ -3,21 +3,13 @@ using userspace_backend.ScriptingLanguage.Compiler.Tokenizer;
 
 namespace userspace_backend.ScriptingLanguage.Compiler.Parser;
 
-internal record Operator(Token Token, int Precedence)
+internal readonly record struct Operator(Token Token, int Precedence)
 {
     internal TokenType Type => Token.Type;
 
     internal bool HasHigherPrecedence(Operator other, bool left)
         => Type.HasPrecedence() &&
             (Precedence > other.Precedence || left && Precedence == other.Precedence);
-
-    internal bool IsFunction() => Type switch
-    {
-        TokenType.Function => true,
-        TokenType.MathFunction => true,
-
-        _ => false
-    };
 }
 
 /// <summary>
@@ -25,19 +17,6 @@ internal record Operator(Token Token, int Precedence)
 /// </summary>
 public static class LexicalHelpers
 {
-    /// <summary>
-    /// Looks up if the given token type can be considered to have precedence.
-    /// </summary>
-    /// <param name="type">Type of the token.</param>
-    /// <returns>Whether the token type has precedence.</returns>
-    public static bool HasPrecedence(this TokenType type) => type switch
-    {
-        TokenType.Arithmetic => true,
-        TokenType.Comparison => true,
-
-        _ => false
-    };
-
     /// <summary>
     /// Maps a token to the type that the identifier will have.
     /// The type in this case refers to mutability and persistence.
@@ -61,9 +40,36 @@ public static class LexicalHelpers
     /// <returns>Whether the token is left-associative.</returns>
     public static bool LeftAssociative(this Token token)
     {
-        Debug.Assert(token.Type.HasPrecedence());
-        return token.Type == TokenType.Arithmetic && (ExtraIndexArithmetic)token.ExtraIndex != ExtraIndexArithmetic.Pow;
+        TokenType type = token.Type;
+        Debug.Assert(type.HasPrecedence());
+        return type == TokenType.Arithmetic && (ExtraIndexArithmetic)token.ExtraIndex != ExtraIndexArithmetic.Pow;
     }
+
+    /// <summary>
+    /// Looks up whether the given token type is a function.
+    /// </summary>
+    /// <param name="type">Type of the token.</param>
+    /// <returns>Whether the token type is a function.</returns>
+    public static bool IsFunction(this TokenType type) => type switch
+    {
+        TokenType.Function or
+        TokenType.MathFunction => true,
+
+        _ => false
+    };
+
+    /// <summary>
+    /// Looks up if the given token type can be considered to have precedence.
+    /// </summary>
+    /// <param name="type">Type of the token.</param>
+    /// <returns>Whether the token type has precedence.</returns>
+    public static bool HasPrecedence(this TokenType type) => type switch
+    {
+        TokenType.Arithmetic or
+        TokenType.Comparison => true,
+
+        _ => false
+    };
 
     /// <summary>
     /// Gets the precedence level of the given token.

@@ -21,13 +21,12 @@ public class ParserImpl(CompilerContext context, ILexer lexer) : IParser
 
     // keeps track of amount of recursion, could also consider using explicit stack
     private int depth;
-    private readonly Stack<Operator> operatorStack = new();
 
     private readonly Parameters parameters = [];
     private readonly Block declarations = [];
     private readonly Dictionary<string, ParsedCallback> callbacks = [];
 
-    public ParsingResult Parse()
+    public AST Parse()
     {
         // init currentToken
         AdvanceToken();
@@ -89,14 +88,11 @@ public class ParserImpl(CompilerContext context, ILexer lexer) : IParser
         functionLocalNames.Clear();
 
         depth = 0;
-        operatorStack.Clear();
 
         parameters.Clear();
         declarations.Clear();
         callbacks.Clear();
     }
-
-    #region Parameter Parsing
 
     private void ParseParameter()
     {
@@ -205,10 +201,6 @@ public class ParserImpl(CompilerContext context, ILexer lexer) : IParser
         }
     }
 
-    #endregion
-
-    #region Declaration Parsing
-
     private void ParseDeclaration()
     {
         Token declarer = currentToken;
@@ -256,7 +248,7 @@ public class ParserImpl(CompilerContext context, ILexer lexer) : IParser
         {
             Token eq = Expect(TokenType.Assignment);
 
-            List<Token> output = ExprVar();
+            List<Token> output = Expression(before: TokenType.Terminator);
 
             tag = ASTTag.Assign;
             union = new()
@@ -269,66 +261,6 @@ public class ParserImpl(CompilerContext context, ILexer lexer) : IParser
         // this is done last to avoid having to check for circular dependencies on this variable
         declarationNames.Add(symbol, type);
     }
-
-    private List<Token> ExprVar()
-    {
-        Queue<Token> input = new();
-        while (!Accept(TokenType.Terminator))
-        {
-            if (Accept(TokenType.CurlyOpen))
-                throw ParserError("Calculation block reached unexpectedly!");
-
-            input.Enqueue(currentToken);
-            AdvanceToken();
-        }
-
-        Debug.Assert(operatorStack.Count == 0);
-
-        // Shunting Yard Algorithm (RPN)
-        List<Token> output = new(input.Count);
-
-        Token? prev = null;
-        foreach (Token token in input)
-        {
-            switch (token.Type)
-            {
-                case TokenType.Number:
-                case TokenType.Bool:
-                case TokenType.Constant:
-                    output.Add(token);
-                    break;
-                case TokenType.Identifier:
-                    OnIdentifier(output, token);
-                    break;
-                case TokenType.Arithmetic:
-                    bool unary = CheckUnary(output, token, prev);
-                    OnPrecedence(output, token, unary);
-                    break;
-                case TokenType.ArgumentSeparator:
-                    OnSeparator(output);
-                    break;
-                case TokenType.MathFunction:
-                    OnFunction(token);
-                    break;
-                case TokenType.ParenOpen:
-                    OnOpen(token);
-                    break;
-                case TokenType.ParenClose:
-                    OnClose(output);
-                    break;
-                default:
-                    throw ParserError("Unexpected expression token!");
-            }
-            prev = token;
-        }
-        OnEmptyQueue(output);
-
-        return output;
-    }
-
-    #endregion
-
-    #region Block Parsing
 
     private Block ParseBlock()
     {
@@ -383,7 +315,7 @@ public class ParserImpl(CompilerContext context, ILexer lexer) : IParser
             if (!Accept(TokenType.Assignment, out Token assignment))
                 assignment = Expect(TokenType.Compound);
 
-            List<Token> initializer = Expression(TokenType.Terminator);
+            List<Token> initializer = Expression(before: TokenType.Terminator);
 
             tag = ASTTag.Assign;
             union = new()
@@ -393,8 +325,7 @@ public class ParserImpl(CompilerContext context, ILexer lexer) : IParser
         }
         else if (Accept(TokenType.If))
         {
-            Discard(TokenType.ParenOpen);
-            List<Token> condition = Expression(TokenType.ParenClose, TokenType.CurlyOpen);
+            List<Token> condition = Expression(after: TokenType.CurlyOpen);
 
             Block ifBlock = ParseBlock();
 
@@ -412,8 +343,7 @@ public class ParserImpl(CompilerContext context, ILexer lexer) : IParser
         }
         else if (Accept(TokenType.While))
         {
-            Discard(TokenType.ParenOpen);
-            List<Token> condition = Expression(TokenType.ParenClose, TokenType.CurlyOpen);
+            List<Token> condition = Expression(after: TokenType.CurlyOpen);
 
             Block whileBlock = ParseBlock();
 
@@ -429,7 +359,7 @@ public class ParserImpl(CompilerContext context, ILexer lexer) : IParser
             if (Accept(TokenType.Terminator))
                 expression = [];
             else
-                expression = Expression(TokenType.Terminator);
+                expression = Expression(before: TokenType.Terminator);
 
             tag = ASTTag.Return;
             union = new()
@@ -445,34 +375,50 @@ public class ParserImpl(CompilerContext context, ILexer lexer) : IParser
         return new(tag, union);
     }
 
-    private List<Token> Expression(TokenType end, TokenType after = TokenType.None)
+    /// <summary>
+    /// Possible ways to call it:
+    /// <br/>
+    /// 1. Only set 'before'
+    /// <br/>
+    ///     This causes the parser to parse an expression up to, but not including the given type.
+    ///     The token that made it stop will be in previousToken (so it automatically gets Discarded).
+    /// <br/>
+    /// 2. Only set 'after'
+    /// <br/>
+    ///     This causes the parser to parse an expression up to, but not including the given type.
+    ///     The token that made it stop will be in currentToken (so it can be used with Accept/Expect).
+    /// <br/>
+    /// 3. Set both arguments
+    /// <br/>
+    ///     This causes the parser to parse an expression until it sees both given types consecutively.
+    ///     The tokens corresponding to 'before' and 'after' will be in previousToken and currentToken, respectively.
+    ///     This is useful for e.g. when a closing parenthesis is not part of an expression,
+    ///     but you want the curly brace after it to end up in currentToken, instead of the parenthesis.
+    /// </summary>
+    private List<Token> Expression(TokenType before = TokenType.None, TokenType after = TokenType.None)
     {
-        bool noAfter = after == TokenType.None;
+        bool ignoreBefore = before == TokenType.None;
+        bool ignoreAfter  = after  == TokenType.None;
+        Debug.Assert(
+            !(ignoreBefore && ignoreAfter),
+            $"Expression must receive at least {nameof(before)} or {nameof(after)} in order to know when to stop.");
 
-        Queue<Token> input = new();
-        while (true)
+        Stack<Operator> operatorStack = [];
+        List<Token> expression = [];
+
+        // initializing prev as default, since it's the previous token in the expression, not the whole parser
+        // the condition is just an extreme case failsafe where all tokens are somehow exhausted (otherwise infinite loop)
+        for (Token prev = default; previousToken.Type != TokenType.None; prev = previousToken)
         {
-            Token current = currentToken;
-            TokenType currentType = current.Type;
-            if (currentType == TokenType.CurlyClose)
-                throw ParserError("Block end reached unexpectedly!");
-
+            Token token = currentToken;
             AdvanceToken();
-            TokenType nextType = currentToken.Type;
-            bool nextIsExpected = noAfter || after == nextType;
-            if (currentType == end && nextIsExpected)
+
+            bool matchesBefore = before == previousToken.Type;
+            bool matchesAfter  = after  == currentToken.Type;
+
+            if (matchesBefore && (ignoreAfter || matchesAfter))
                 break;
 
-            input.Enqueue(current);
-        }
-        Debug.Assert(operatorStack.Count == 0);
-
-        // Shunting Yard Algorithm (RPN)
-        List<Token> output = new(input.Count);
-
-        Token? prev = null;
-        foreach (Token token in input)
-        {
             switch (token.Type)
             {
                 case TokenType.Number:
@@ -480,108 +426,116 @@ public class ParserImpl(CompilerContext context, ILexer lexer) : IParser
                 case TokenType.Constant:
                 case TokenType.Input:
                 case TokenType.Output:
-                    output.Add(token);
+                    expression.Add(token);
                     break;
                 case TokenType.Identifier:
-                    OnIdentifier(output, token);
+                    {
+                        string name = context.GetSymbol(token);
+                        if (!ResolveIdentifier(name, out TokenType type))
+                            throw ParserError($"Could not resolve name! (name was: {name})", token);
+
+                        Token resolved = token with { Type = type };
+                        if (type == TokenType.Function)
+                            operatorStack.Push(new(resolved, -1));
+                        else
+                            expression.Add(resolved);
+                    }
                     break;
                 case TokenType.Arithmetic:
-                    bool unary = CheckUnary(output, token, prev);
-                    OnPrecedence(output, token, unary);
+                    {
+                        bool unary;
+                        switch (prev.Type)
+                        {
+                            case TokenType.Number:
+                            case TokenType.Bool:
+                            case TokenType.Constant:
+                            case TokenType.Identifier:
+                            case TokenType.Parameter:
+                            case TokenType.Immutable:
+                            case TokenType.Persistent:
+                            case TokenType.Impersistent:
+                            case TokenType.Input:
+                            case TokenType.Output:
+                            case TokenType.ParenClose:
+                                unary = false;
+                                break;
+                            default:
+                                // cursed way to handle unary operators
+                                expression.Add(Tokens.GetReserved(Tokens.ZERO, token.BytePosition));
+                                unary = true;
+                                break;
+                        }
+                        HandlePrecedences(operatorStack, expression, token, unary);
+                    }
                     break;
                 case TokenType.Comparison:
-                    OnPrecedence(output, token);
+                    HandlePrecedences(operatorStack, expression, token);
                     break;
                 case TokenType.ArgumentSeparator:
-                    OnSeparator(output);
+                    while (operatorStack.TryPop(out var oper))
+                    {
+                        if (oper.Type == TokenType.ParenOpen)
+                        {
+                            operatorStack.Push(oper);
+                            goto found_paren_open;
+                        }
+
+                        expression.Add(oper.Token);
+                    }
+
+                    // if popping fails, this was just a random separator
+                    throw ParserError($"Unexpected: {Tokens.ARG_SEP}", token);
+
+                found_paren_open:
                     break;
                 case TokenType.MathFunction:
-                    OnFunction(token);
+                    operatorStack.Push(new(token, -1));
                     break;
                 case TokenType.ParenOpen:
-                    OnOpen(token);
+                    operatorStack.Push(new(token, -1));
                     break;
                 case TokenType.ParenClose:
-                    OnClose(output);
+                    {
+                        Operator oper;
+                        while (operatorStack.TryPop(out oper) && oper.Type != TokenType.ParenOpen)
+                            expression.Add(oper.Token);
+                        // the parenthesis is discarded intentionally (if the operator is not null)
+
+                        // if popping fails, there was no matching opening parenthesis before the bottom of the stack
+                        if (oper.Type == TokenType.None)
+                            throw ParserError($"No matching: {Tokens.PAREN_OPEN}", token);
+
+                        if (operatorStack.TryPeek(out var maybeFunction) && maybeFunction.Type.IsFunction())
+                        {
+                            Operator fun = operatorStack.Pop();
+                            expression.Add(fun.Token);
+                        }
+                    }
                     break;
                 default:
-                    throw ParserError("Unexpected expression token!");
+                    throw ParserError("Unexpected expression token!", token);
             }
-            prev = token;
+
+            if (matchesAfter && (ignoreBefore || matchesBefore))
+                break;
         }
-        OnEmptyQueue(output);
 
-        return output;
-    }
-
-    #endregion
-
-    #region Expression Helpers
-
-    private void OnIdentifier(List<Token> output, Token token)
-    {
-        string name = context.GetSymbol(token);
-        if (!ResolveIdentifier(name, out TokenType type))
-            throw ParserError($"Could not resolve name! (name was: {name})");
-
-        Token resolved = token with { Type = type };
-        if (resolved.Type == TokenType.Function)
-            OnFunction(resolved);
-        else
-            output.Add(resolved);
-    }
-
-    private void OnFunction(Token token)
-    {
-        OnOpen(token); // just does the same (for now...?)
-    }
-
-    private void OnOpen(Token token)
-    {
-        operatorStack.Push(new(token, -1));
-    }
-
-    private void OnClose(List<Token> output)
-    {
-        Operator? oper;
-        while (operatorStack.TryPop(out oper) && oper.Type != TokenType.ParenOpen)
-            output.Add(oper.Token);
-        // the parenthesis is discarded intentionally (if the operator is not null)
-
-        // if popping fails, there was no matching opening parenthesis before the bottom of the stack
-        if (oper is null)
-            throw ParserError($"No matching: {Tokens.PAREN_OPEN}");
-
-        if (operatorStack.TryPeek(out var maybeFunction) && maybeFunction.IsFunction())
+        while (operatorStack.TryPop(out var oper))
         {
-            Operator fun = operatorStack.Pop();
-            output.Add(fun.Token);
-        }
-    }
+            Token token = oper.Token;
+            if (token.Type == TokenType.ParenOpen)
+                throw ParserError($"No matching: {Tokens.PAREN_CLOSE}", token);
 
-    private static bool CheckUnary(List<Token> output, Token token, Token? prev)
-    {
-        switch ((prev ?? default).Type)
-        {
-            case TokenType.Number:
-            case TokenType.Bool:
-            case TokenType.Constant:
-            case TokenType.Identifier:
-            case TokenType.Parameter:
-            case TokenType.Immutable:
-            case TokenType.Persistent:
-            case TokenType.Impersistent:
-            case TokenType.Input:
-            case TokenType.Output:
-            case TokenType.ParenClose:
-                return false;
+            expression.Add(token);
         }
 
-        output.Add(Tokens.GetReserved(Tokens.ZERO, token.BytePosition));
-        return true;
+        if (expression.Count == 0)
+            throw ParserError("Empty expression!");
+
+        return expression;
     }
 
-    private void OnPrecedence(List<Token> output, Token token, bool unary = false)
+    private static void HandlePrecedences(Stack<Operator> operatorStack, List<Token> expression, Token token, bool unary = false)
     {
         Operator tokenOperator = new(token, token.Precedence(unary));
         bool left = token.LeftAssociative();
@@ -589,7 +543,7 @@ public class ParserImpl(CompilerContext context, ILexer lexer) : IParser
         {
             if (oper.HasHigherPrecedence(tokenOperator, left))
             {
-                output.Add(oper.Token);
+                expression.Add(oper.Token);
             }
             else
             {
@@ -600,63 +554,21 @@ public class ParserImpl(CompilerContext context, ILexer lexer) : IParser
         operatorStack.Push(tokenOperator);
     }
 
-    private void OnSeparator(List<Token> output)
-    {
-        while (operatorStack.TryPop(out var oper))
-        {
-            if (oper.Type == TokenType.ParenOpen)
-            {
-                // the opening parenthesis should be discarded by a closing one
-
-                // analysis -> loop(TryPop) then Push vs loop(TryPeek then Pop):
-                // where n is the amount of elements up to and including the goal,
-                // or the total length of the stack if the goal is not present
-                // n+1 vs 2n-1 if the parenthesis is there
-                // n vs 2n if the parenthesis is not there
-                // so we use the former, same logic applies in OnPrecedence
-                operatorStack.Push(oper);
-                return;
-            }
-
-            output.Add(oper.Token);
-        }
-
-        // if popping fails, this was just a random separator
-        throw ParserError($"Unexpected: {Tokens.ARG_SEP}");
-    }
-
-    private void OnEmptyQueue(List<Token> output)
-    {
-        while (operatorStack.TryPop(out var oper))
-        {
-            Token token = oper.Token;
-            if (token.Type == TokenType.ParenOpen)
-                throw ParserError($"No matching: {Tokens.PAREN_CLOSE}");
-
-            output.Add(token);
-        }
-
-        if (output.Count == 0)
-            throw ParserError("Empty expression!");
-    }
-
-    #endregion
-
     #region Helpers
 
     private bool ResolveIdentifier(string name, out TokenType type)
     {
-        bool resolved = false;
+        bool ok;
         if (functionLocalNames.Contains(name))
         {
             type = TokenType.FunctionLocal;
-            resolved = true;
+            ok = true;
         }
-        else if (declarationNames.TryGetValue(name, out type))
+        else
         {
-            resolved = true;
+            ok = declarationNames.TryGetValue(name, out type);
         }
-        return resolved;
+        return ok;
     }
 
     private Token Expect(TokenType type)
@@ -673,20 +585,17 @@ public class ParserImpl(CompilerContext context, ILexer lexer) : IParser
 
     private bool Accept(TokenType type)
     {
-        bool success = type == currentToken.Type;
-        if (success)
+        bool ok = type == currentToken.Type;
+        if (ok)
             AdvanceToken();
-        return success;
+        return ok;
     }
 
     private bool Accept(TokenType type, out Token token)
     {
-        bool success = Accept(type);
-        if (success)
-            token = previousToken;
-        else
-            token = default;
-        return success;
+        bool ok = Accept(type);
+        token = ok ? previousToken : default;
+        return ok;
     }
 
     private void AdvanceToken()
@@ -699,6 +608,11 @@ public class ParserImpl(CompilerContext context, ILexer lexer) : IParser
 
     private ParserException ParserError(string error)
     {
-        return new ParserException(error, currentToken);
+        return ParserError(error, currentToken);
+    }
+
+    private static ParserException ParserError(string error, Token suspect)
+    {
+        return new ParserException(error, suspect);
     }
 }
