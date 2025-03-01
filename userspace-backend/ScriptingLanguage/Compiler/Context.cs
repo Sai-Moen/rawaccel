@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
-using userspace_backend.ScriptingLanguage.Compiler.Tokenizer;
 
 namespace userspace_backend.ScriptingLanguage.Compiler;
 
@@ -19,7 +17,7 @@ public enum SymbolIndex : int
 
 public readonly record struct FilePosition(int Line, int Column);
 
-public class CompilerContext(string script)
+public class Context(string script)
 {
     private readonly List<ReadOnlyMemory<char>> symbolSideTable = [];
 

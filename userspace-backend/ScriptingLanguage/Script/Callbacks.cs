@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
-using userspace_backend.ScriptingLanguage.Compiler.CodeGen;
-using userspace_backend.ScriptingLanguage.Compiler.Parser;
+using userspace_backend.ScriptingLanguage.Compiler;
 using userspace_backend.ScriptingLanguage.Interpreter;
 using userspace_backend.ScriptingLanguage.Script.CallbackImpl;
 
@@ -11,7 +10,7 @@ public partial class Callbacks
     private readonly IInterpreter interpreter;
     private readonly Dictionary<string, object> callbacks = [];
 
-    internal Callbacks(InterpreterImpl interpreter, ParsedCallback calculation, EmitterImpl emitter)
+    internal Callbacks(InterpreterImpl interpreter, ParsedCallback calculation, Emitter emitter)
     {
         this.interpreter = interpreter;
         Calculation = new(emitter.Emit(calculation.Code));
@@ -29,14 +28,14 @@ public partial class Callbacks
         return Calculation.Calculate(interpreter, xs);
     }
 
-    internal void Add(ParsedCallback parsed, EmitterImpl emitter)
+    internal void Add(ParsedCallback parsed, Emitter emitter)
     {
         string name = parsed.Name;
         if (name != Calculation.NAME)
             callbacks.Add(name, CreateCallback(parsed, emitter));
     }
 
-    internal static object CreateCallback(ParsedCallback parsed, EmitterImpl emitter) => parsed.Name switch
+    internal static object CreateCallback(ParsedCallback parsed, Emitter emitter) => parsed.Name switch
     {
         Distribution.NAME => new Distribution(parsed, emitter),
 

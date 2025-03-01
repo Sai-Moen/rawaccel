@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 
-namespace userspace_backend.ScriptingLanguage.Compiler.Tokenizer;
+namespace userspace_backend.ScriptingLanguage.Compiler;
 
 /// <summary>
 /// Exception for tokenizing-specific errors.
@@ -13,7 +13,7 @@ public sealed class LexerException(string message, Token suspect)
 /// <summary>
 /// Tokenizes an input script.
 /// </summary>
-public class LexerImpl(CompilerContext context)
+public class Lexer(Context context)
 {
     protected enum LexerAction
     {
@@ -40,7 +40,7 @@ public class LexerImpl(CompilerContext context)
         Count
     }
 
-    private readonly CompilerContext context = context;
+    private readonly Context context = context;
 
     private CharViewState charViewState;
 

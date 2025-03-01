@@ -2,11 +2,9 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using userspace_backend.ScriptingLanguage.Compiler.Parser;
-using userspace_backend.ScriptingLanguage.Compiler.Tokenizer;
 using userspace_backend.ScriptingLanguage.Script;
 
-namespace userspace_backend.ScriptingLanguage.Compiler.CodeGen;
+namespace userspace_backend.ScriptingLanguage.Compiler;
 
 /// <summary>
 /// Exception for errors related to emitting bytecode into a program.
@@ -26,7 +24,7 @@ public sealed class EmitException : CompilationException
 /// Emits AST(s) into programs, which the interpreter can execute.
 /// </summary>
 [SuppressMessage("Style", "IDE0290:Use primary constructor", Justification = "Makes it unreadable")]
-public class EmitterImpl
+public class Emitter
 {
     private List<byte> byteCode = [];
     private Dictionary<Number, DataAddress> numberMap = [];
@@ -36,15 +34,15 @@ public class EmitterImpl
 
     private readonly Dictionary<string, StackAddress> tempFunctionArgs = [];
 
-    public EmitterImpl(CompilerContext ctx, IDictionary<string, MemoryAddress> assignmentAddrs, IDictionary<string, MemoryAddress> functionAddrs)
+    public Emitter(Context ctx, IDictionary<string, MemoryAddress> assignmentAddrs, IDictionary<string, MemoryAddress> functionAddrs)
     {
         context = ctx;
         assignmentAddresses = assignmentAddrs;
         functionAddresses = functionAddrs;
     }
 
-    private readonly CompilerContext context;
-    internal CompilerContext Context { get => context; }
+    private readonly Context context;
+    internal Context Context { get => context; }
 
     #region Methods
 

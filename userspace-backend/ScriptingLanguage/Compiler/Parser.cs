@@ -1,9 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.Diagnostics;
-using userspace_backend.ScriptingLanguage.Compiler.Tokenizer;
 using userspace_backend.ScriptingLanguage.Script;
 
-namespace userspace_backend.ScriptingLanguage.Compiler.Parser;
+namespace userspace_backend.ScriptingLanguage.Compiler;
 
 /// <summary>
 /// Exception for parsing-related errors.
@@ -12,13 +11,22 @@ public sealed class ParserException(string message, Token suspect)
     : CompilationException(message, suspect)
 { }
 
+internal readonly record struct Operator(Token Token, int Precedence)
+{
+    internal TokenType Type => Token.Type;
+
+    internal bool HasHigherPrecedence(Operator other, bool left)
+        => Type.HasPrecedence() &&
+            (Precedence > other.Precedence || left && Precedence == other.Precedence);
+}
+
 /// <summary>
 /// Parses a stream of tokens.
 /// </summary>
-public class ParserImpl(CompilerContext context, LexerImpl lexer)
+public class Parser(Context context, Lexer lexer)
 {
-    private readonly CompilerContext context = context;
-    private readonly LexerImpl lexer = lexer;
+    private readonly Context context = context;
+    private readonly Lexer lexer = lexer;
 
     private Token previousToken;
     private Token currentToken;

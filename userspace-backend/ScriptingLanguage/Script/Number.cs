@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Globalization;
-using userspace_backend.ScriptingLanguage.Compiler.Tokenizer;
+using userspace_backend.ScriptingLanguage.Compiler;
 
 namespace userspace_backend.ScriptingLanguage.Script;
 

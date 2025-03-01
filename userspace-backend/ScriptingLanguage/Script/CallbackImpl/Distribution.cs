@@ -1,7 +1,5 @@
 ﻿using System.Diagnostics;
-using userspace_backend.ScriptingLanguage.Compiler.CodeGen;
-using userspace_backend.ScriptingLanguage.Compiler.Parser;
-using userspace_backend.ScriptingLanguage.Compiler.Tokenizer;
+using userspace_backend.ScriptingLanguage.Compiler;
 using userspace_backend.ScriptingLanguage.Interpreter;
 using userspace_backend.ScriptingLanguage.Script.CallbackImpl;
 
@@ -14,7 +12,7 @@ namespace userspace_backend.ScriptingLanguage.Script.CallbackImpl
         private readonly Program argsProgram;
         private readonly Program program;
 
-        internal Distribution(ParsedCallback parsed, EmitterImpl emitter)
+        internal Distribution(ParsedCallback parsed, Emitter emitter)
         {
             Debug.Assert(parsed.Name == NAME);
 

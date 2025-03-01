@@ -1,9 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.Runtime.InteropServices;
-using userspace_backend.ScriptingLanguage.Compiler.Tokenizer;
 using userspace_backend.ScriptingLanguage.Script;
 
-namespace userspace_backend.ScriptingLanguage.Compiler.Parser;
+namespace userspace_backend.ScriptingLanguage.Compiler;
 
 /// <summary>
 /// The root AST node.

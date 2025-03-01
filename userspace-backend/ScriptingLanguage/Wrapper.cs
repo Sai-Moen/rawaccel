@@ -1,8 +1,6 @@
 ﻿using System;
 using System.IO;
 using userspace_backend.ScriptingLanguage.Compiler;
-using userspace_backend.ScriptingLanguage.Compiler.Parser;
-using userspace_backend.ScriptingLanguage.Compiler.Tokenizer;
 using userspace_backend.ScriptingLanguage.Interpreter;
 using userspace_backend.ScriptingLanguage.Script;
 
@@ -53,8 +51,8 @@ public static class Wrapper
     /// <returns>Result of parsing.</returns>
     public static AST CompileToParsingResult(string script)
     {
-        CompilerContext context = new(script);
-        ParserImpl parser = new(context, new LexerImpl(context));
+        Context context = new(script);
+        Parser parser = new(context, new Lexer(context));
         return parser.Parse();
     }
 
@@ -66,8 +64,8 @@ public static class Wrapper
     /// <returns>Concrete Interpreter instance.</returns>
     public static InterpreterImpl CompileToInterpreter(string script)
     {
-        CompilerContext context = new(script);
-        ParserImpl parser = new(context, new LexerImpl(context));
+        Context context = new(script);
+        Parser parser = new(context, new Lexer(context));
         InterpreterImpl interpreter = new(context, parser.Parse());
         return interpreter;
     }

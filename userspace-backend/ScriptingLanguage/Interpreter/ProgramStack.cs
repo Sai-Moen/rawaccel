@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using userspace_backend.ScriptingLanguage.Compiler.CodeGen;
+using userspace_backend.ScriptingLanguage.Compiler;
 using userspace_backend.ScriptingLanguage.Script;
 
 namespace userspace_backend.ScriptingLanguage.Interpreter;

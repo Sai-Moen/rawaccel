@@ -3,9 +3,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using userspace_backend.ScriptingLanguage.Compiler;
-using userspace_backend.ScriptingLanguage.Compiler.CodeGen;
-using userspace_backend.ScriptingLanguage.Compiler.Parser;
-using userspace_backend.ScriptingLanguage.Compiler.Tokenizer;
 using userspace_backend.ScriptingLanguage.Script;
 using static System.Math;
 
@@ -34,11 +31,11 @@ public class InterpreterImpl : IInterpreter
     /// </summary>
     /// <param name="parsed">Result of parsing.</param>
     /// <exception cref="InterpreterException"/>
-    public InterpreterImpl(CompilerContext context, AST parsed)
+    public InterpreterImpl(Context context, AST parsed)
     {
         Description = parsed.Description;
 
-        EmitterImpl emitter = new(context, assignmentAddresses, functionAddresses);
+        Emitter emitter = new(context, assignmentAddresses, functionAddresses);
         int numPersistent = 0;
         int numImpersistent = 0;
 

@@ -1,7 +1,7 @@
 ﻿using System;
 using userspace_backend.ScriptingLanguage.Script;
 
-namespace userspace_backend.ScriptingLanguage.Compiler.CodeGen;
+namespace userspace_backend.ScriptingLanguage.Compiler;
 
 /// <summary>
 /// Represents a program consisting of executable Instructions.

@@ -1,6 +1,5 @@
 ﻿using System.Diagnostics;
 using userspace_backend.ScriptingLanguage.Compiler;
-using userspace_backend.ScriptingLanguage.Compiler.Tokenizer;
 
 namespace userspace_backend.ScriptingLanguage.Script;
 
@@ -54,7 +53,7 @@ public class Parameter
     private readonly ParameterValidation min;
     private readonly ParameterValidation max;
 
-    internal Parameter(CompilerContext context, Token name, Token value, ParameterValidation minval, ParameterValidation maxval)
+    internal Parameter(Context context, Token name, Token value, ParameterValidation minval, ParameterValidation maxval)
     {
         Debug.Assert(name.Type == TokenType.Parameter);
 
