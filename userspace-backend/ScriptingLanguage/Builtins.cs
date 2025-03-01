@@ -29,7 +29,7 @@ public static class Builtins
 
         {
 
-            if (x <= Input_Offset) { return; }
+            if x <= Input_Offset { return; }
 
             x -= Input_Offset;
             y += (pLimit / x) * (x - Midpoint * atan(x / Midpoint));
@@ -76,7 +76,7 @@ public static class Builtins
             fn sigmoidSum(b)
             {
                 interval := (b - a) / partitions;
-                while (partition <= partitions)
+                while partition <= partitions
                 {
                     sum += legacy(a + partition * interval) * interval;
                     partition += 1;
@@ -97,7 +97,7 @@ public static class Builtins
 
         {
 
-            if (!Gain) {
+            if !Gain {
                 return legacy(x);
             }
 
@@ -109,9 +109,9 @@ public static class Builtins
         distribution(rangeSize)
         {
 
-            if (ep < rangeStop)
+            if ep < rangeStop
             {
-                if (inner < rangeNum)
+                if inner < rangeNum
                 {
                     x := (inner + rangeNum) * expScale;
                     inner += 1;

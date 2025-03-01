@@ -34,7 +34,7 @@ public class ControlFlowTests
 
             {
 
-                if (x > 16) {
+                if x > 16 {
                     y += x;
                 } else {
                     y *= x;
@@ -104,16 +104,16 @@ public class ControlFlowTests
 
             {
 
-                if (a > 1)
+                if a > 1
                 {
                     y += 1;
-                    if (b > 4)
+                    if b > 4
                     {
                         y += 2;
-                        if (c > 8)
+                        if c > 8
                         {
                             y += 4;
-                            if (d > 64)
+                            if d > 64
                             {
                                 y += 8;
                             }

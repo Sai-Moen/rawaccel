@@ -27,14 +27,14 @@ public class PowerTests
 
         {
 
-            if (x <= offset_x) {
+            if x <= offset_x {
                 y := Offset;
             }
-            if (x > offset_x) {
+            else {
                 y := (Scale * x) ^ Exponent + constant / x;
             }
 
-            if (Cap) {
+            if Cap {
                 y := min(y, Cap);
             }
 
