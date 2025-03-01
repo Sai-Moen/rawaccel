@@ -6,23 +6,6 @@ using userspace_backend.ScriptingLanguage.Script;
 namespace userspace_backend.ScriptingLanguage.Compiler.Parser;
 
 /// <summary>
-/// Defines the API of a RawAccelScript parser.
-/// </summary>
-public interface IParser
-{
-    /// <summary>
-    /// Parse from the given context and lexer.
-    /// </summary>
-    /// <returns>Result of parsing.</returns>
-    AST Parse();
-
-    /// <summary>
-    /// Reset the lexer and parser.
-    /// </summary>
-    void Reset();
-}
-
-/// <summary>
 /// The root AST node.
 /// </summary>
 /// <param name="Description">The description of the script.</param>
@@ -79,10 +62,3 @@ public record ASTReturn(Token[] Expression);
 /// <param name="Args">Arguments.</param>
 /// <param name="Code">Code (as an AST).</param>
 public record ParsedCallback(string Name, Token[] Args, ASTNode[] Code);
-
-/// <summary>
-/// Exception for parsing-related errors.
-/// </summary>
-public sealed class ParserException(string message, Token suspect)
-    : CompilationException(message, suspect)
-{ }

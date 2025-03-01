@@ -4,9 +4,16 @@ using System.Diagnostics;
 namespace userspace_backend.ScriptingLanguage.Compiler.Tokenizer;
 
 /// <summary>
+/// Exception for tokenizing-specific errors.
+/// </summary>
+public sealed class LexerException(string message, Token suspect)
+    : CompilationException(message, suspect)
+{ }
+
+/// <summary>
 /// Tokenizes an input script.
 /// </summary>
-public class LexerImpl(CompilerContext context) : ILexer
+public class LexerImpl(CompilerContext context)
 {
     protected enum LexerAction
     {

@@ -6,12 +6,19 @@ using userspace_backend.ScriptingLanguage.Script;
 namespace userspace_backend.ScriptingLanguage.Compiler.Parser;
 
 /// <summary>
+/// Exception for parsing-related errors.
+/// </summary>
+public sealed class ParserException(string message, Token suspect)
+    : CompilationException(message, suspect)
+{ }
+
+/// <summary>
 /// Parses a stream of tokens.
 /// </summary>
-public class ParserImpl(CompilerContext context, ILexer lexer) : IParser
+public class ParserImpl(CompilerContext context, LexerImpl lexer)
 {
     private readonly CompilerContext context = context;
-    private readonly ILexer lexer = lexer;
+    private readonly LexerImpl lexer = lexer;
 
     private Token previousToken;
     private Token currentToken;
@@ -29,24 +36,166 @@ public class ParserImpl(CompilerContext context, ILexer lexer) : IParser
     public AST Parse()
     {
         // init currentToken
-        AdvanceToken();
+        Advance();
 
         string description = context.GetSymbol(Expect(TokenType.Description));
 
+        #region Parse Parameters
+
         Discard(TokenType.SquareOpen);
-        while (currentToken.Type != TokenType.SquareClose)
-            ParseParameter();
-        Discard(TokenType.SquareClose);
+        while (!Accept(TokenType.SquareClose))
+        {
+            Token identifier = Expect(TokenType.Identifier) with { Type = TokenType.Parameter };
+            string symbol = context.GetSymbol(identifier);
+            if (!declarationNames.TryAdd(symbol, TokenType.Parameter))
+                throw ParserError($"Name collision! Name {symbol} already exists.");
 
-        while (currentToken.Type != TokenType.CurlyOpen)
-            ParseDeclaration();
+            Discard(TokenType.Assignment);
 
-        Discard(TokenType.CurlyOpen);
-        Block asts = [];
-        while (currentToken.Type != TokenType.CurlyClose)
-            asts.Add(Statement());
+            Token value = currentToken;
+            ParameterValidation minval = default, maxval = default;
+            switch (value.Type)
+            {
+                case TokenType.Bool:
+                    Advance();
+                    break;
+                case TokenType.Number:
+                    Advance();
+
+                    bool boundsParsed = false;
+
+                    Token lower;
+                    switch (currentToken.Type)
+                    {
+                        case TokenType.ParenOpen:
+                            Advance();
+                            lower = Expect(TokenType.Number);
+                            minval = new(Bound.LowerExcl, Number.Parse(context.GetSymbol(lower), lower));
+                            break;
+                        case TokenType.SquareOpen:
+                            Advance();
+                            lower = Expect(TokenType.Number);
+                            minval = new(Bound.LowerIncl, Number.Parse(context.GetSymbol(lower), lower));
+                            break;
+                        case TokenType.CurlyOpen:
+                            Advance();
+                            break;
+                        default:
+                            boundsParsed = true;
+                            break;
+                    }
+
+                    if (boundsParsed || Accept(TokenType.CurlyClose))
+                        break;
+
+                    if (Accept(TokenType.ArgumentSeparator))
+                    {
+                        if (minval.Type == Bound.None)
+                            throw ParserError($"Number between '{Tokens.CURLY_OPEN}' and '{Tokens.ARG_SEP}'!");
+                    }
+                    else
+                    {
+                        if (minval.Type != Bound.None)
+                            throw ParserError("Expected a separator and number for upper bound!");
+                    }
+
+                    Token upper = Expect(TokenType.Number);
+                    switch (currentToken.Type)
+                    {
+                        case TokenType.ParenClose:
+                            Advance();
+                            maxval = new(Bound.UpperIncl, Number.Parse(context.GetSymbol(upper), upper));
+                            break;
+                        case TokenType.SquareClose:
+                            Advance();
+                            maxval = new(Bound.UpperExcl, Number.Parse(context.GetSymbol(upper), upper));
+                            break;
+                        case TokenType.CurlyClose:
+                            throw ParserError($"Unexpected number attached to infinite upper bound!");
+                        default:
+                            throw ParserError($"Unexpected upper bound token!");
+                    }
+
+                    break;
+                default:
+                    throw ParserError("Expected either a boolean or numeric value for the parameter!");
+            }
+
+            Discard(TokenType.Terminator);
+            parameters.Add(new(context, identifier, value, minval, maxval));
+        }
+
+        #endregion
+
+        #region Parse Declarations
+
+        while (!Peek(TokenType.CurlyOpen))
+        {
+            Token declarer = currentToken;
+            TokenType type = declarer.MapDeclarer();
+            if (type == TokenType.None)
+                throw ParserError("Unknown declarer!");
+        
+            // couldn't use Expect due to mapping, so we have to advance manually
+            Advance();
+
+            Token identifier = Expect(TokenType.Identifier) with { Type = type };
+            string symbol = context.GetSymbol(identifier);
+            if (declarationNames.ContainsKey(symbol))
+                throw ParserError($"Name collision! Name {symbol} already exists.");
+
+            ASTTag tag;
+            ASTUnion union;
+            if (type == TokenType.Function)
+            {
+                List<Token> args = [];
+                if (Accept(TokenType.ParenOpen) && !Accept(TokenType.ParenClose))
+                {
+                    do
+                    {
+                        if (!Accept(TokenType.Identifier, out Token arg))
+                            throw ParserError("User-defined functions can only have identifier arguments.");
+
+                        functionLocalNames.Add(context.GetSymbol(arg));
+                        args.Add(arg);
+                    }
+                    while (Accept(TokenType.ArgumentSeparator));
+                    Discard(TokenType.ParenClose);
+                }
+
+                Block code = ParseBlock();
+                functionLocalNames.Clear();
+
+                tag = ASTTag.Function;
+                union = new()
+                {
+                    astFunction = new(identifier, [.. args], [.. code])
+                };
+            }
+            else
+            {
+                Token eq = Expect(TokenType.Assignment);
+
+                List<Token> output = Expression(before: TokenType.Terminator);
+
+                tag = ASTTag.Assign;
+                union = new()
+                {
+                    astAssign = new(identifier, eq, [.. output])
+                };
+            }
+            declarations.Add(new ASTNode(tag, union));
+
+            // this is done last to avoid having to check for circular dependencies on this variable
+            declarationNames.Add(symbol, type);
+        }
+
+        #endregion
+
+        #region Parse Callbacks
+
+        Block asts = ParseBlock();
         callbacks.Add(Calculation.NAME, new(Calculation.NAME, [], [.. asts]));
-        Discard(TokenType.CurlyClose);
 
         while (Accept(TokenType.Identifier, out Token identifier))
         {
@@ -64,6 +213,10 @@ public class ParserImpl(CompilerContext context, ILexer lexer) : IParser
             callbacks[callback.Name] = callback;
         }
 
+        #endregion
+
+        #region Checks
+
         if (parameters.Count > Constants.MAX_PARAMETERS)
             throw ParserError(
                 $"Too many parameters! Expected at most {Constants.MAX_PARAMETERS}, got {parameters.Count}.");
@@ -72,6 +225,27 @@ public class ParserImpl(CompilerContext context, ILexer lexer) : IParser
         if (declarations.Count > Constants.MAX_DECLARATIONS)
             throw ParserError(
                 $"Too many declarations! Expected at most {Constants.MAX_DECLARATIONS}, got {declarations.Count}.");
+
+        foreach (ASTNode node in declarations)
+        {
+            if (node.Tag != ASTTag.Assign)
+                continue;
+
+            foreach (Token token in node.Union.astAssign.Initializer)
+            {
+                switch (token.Type)
+                {
+                    case TokenType.Input:
+                        throw ParserError($"Cannot use '{Tokens.INPUT}' outside of functions!", token);
+                    case TokenType.Output:
+                        throw ParserError($"Cannot use '{Tokens.OUTPUT}' outside of functions!", token);
+                    case TokenType.Comparison:
+                        throw ParserError("Cannot use comparison operators outside of conditions!", token);
+                }
+            }
+        }
+
+        #endregion
 
         return new(description, parameters, declarations, [.. callbacks.Values]);
     }
@@ -92,174 +266,6 @@ public class ParserImpl(CompilerContext context, ILexer lexer) : IParser
         parameters.Clear();
         declarations.Clear();
         callbacks.Clear();
-    }
-
-    private void ParseParameter()
-    {
-        Token identifier = Expect(TokenType.Identifier) with { Type = TokenType.Parameter };
-        string symbol = context.GetSymbol(identifier);
-        if (!declarationNames.TryAdd(symbol, TokenType.Parameter))
-            throw ParserError($"Name collision! Name {symbol} already exists.");
-
-        Discard(TokenType.Assignment);
-        // yawn
-#pragma warning disable IDE0018 // Inline variable declaration
-        Token value;
-#pragma warning restore IDE0018 // Inline variable declaration
-        ParameterValidation minval, maxval;
-        if (Accept(TokenType.Bool, out value))
-        {
-            minval = default;
-            maxval = default;
-        }
-        else if (Accept(TokenType.Number, out value))
-        {
-            ParseBounds(out minval, out maxval);
-        }
-        else
-        {
-            throw ParserError("Expected either a boolean or numeric value for the parameter!");
-        }
-
-        Discard(TokenType.Terminator);
-        parameters.Add(new(context, identifier, value, minval, maxval));
-    }
-
-    private void ParseBounds(out ParameterValidation minval, out ParameterValidation maxval)
-    {
-        bool hasBounds =
-            Accept(TokenType.SquareOpen) ||
-            Accept(TokenType.ParenOpen) ||
-            Accept(TokenType.CurlyOpen);
-        if (!hasBounds)
-        {
-            minval = new();
-            maxval = new();
-            return;
-        }
-
-        Token lower;
-        TokenType open = previousToken.Type;
-        switch (open)
-        {
-            case TokenType.SquareOpen:
-                lower = Expect(TokenType.Number);
-                minval = new(Bound.LowerIncl, Number.Parse(context.GetSymbol(lower), lower));
-                break;
-            case TokenType.ParenOpen:
-                lower = Expect(TokenType.Number);
-                minval = new(Bound.LowerExcl, Number.Parse(context.GetSymbol(lower), lower));
-                break;
-            case TokenType.CurlyOpen:
-                minval = new();
-                break;
-            default:
-                throw ParserError("Undefined state reached after attempting to parse bounds!");
-        }
-
-        // the edge case {} is technically not considered here
-        // if someone wants to explicitly denote 'no bounds' we let them
-        if (Accept(TokenType.CurlyClose))
-        {
-            maxval = new();
-            return;
-        }
-
-        Token upper;
-        bool noLowerBound = minval.Type == Bound.None;
-        if (Accept(TokenType.ArgumentSeparator))
-        {
-            if (noLowerBound)
-                throw ParserError($"Number between '{Tokens.CURLY_OPEN}' and '{Tokens.ARG_SEP}'!");
-
-            upper = Expect(TokenType.Number);
-        }
-        else if (!noLowerBound)
-        {
-            throw ParserError("Expected a separator and number for upper bound!");
-        }
-        else
-        {
-            upper = Expect(TokenType.Number);
-        }
-
-        if (Accept(TokenType.SquareClose))
-        {
-            maxval = new(Bound.UpperIncl, Number.Parse(context.GetSymbol(upper), upper));
-        }
-        else if (Accept(TokenType.ParenClose))
-        {
-            maxval = new(Bound.UpperExcl, Number.Parse(context.GetSymbol(upper), upper));
-        }
-        else if (Accept(TokenType.CurlyClose))
-        {
-            throw ParserError($"Unexpected number attached to infinite upper bound!");
-        }
-        else
-        {
-            throw ParserError($"Unknown upper bound symbol: '{context.GetSymbol(currentToken)}'!");
-        }
-    }
-
-    private void ParseDeclaration()
-    {
-        Token declarer = currentToken;
-        TokenType type = declarer.MapDeclarer();
-        if (type == TokenType.None)
-            throw ParserError("Unknown declarer!");
-        
-        // couldn't use Expect due to mapping, so we have to advance manually
-        AdvanceToken();
-
-        Token identifier = Expect(TokenType.Identifier) with { Type = type };
-        string symbol = context.GetSymbol(identifier);
-        if (declarationNames.ContainsKey(symbol))
-            throw ParserError($"Name collision! Name {symbol} already exists.");
-
-        ASTTag tag;
-        ASTUnion union;
-        if (type == TokenType.Function)
-        {
-            List<Token> args = [];
-            if (Accept(TokenType.ParenOpen) && !Accept(TokenType.ParenClose))
-            {
-                do
-                {
-                    if (!Accept(TokenType.Identifier, out Token arg))
-                        throw ParserError("User-defined functions can only have identifier arguments.");
-
-                    functionLocalNames.Add(context.GetSymbol(arg));
-                    args.Add(arg);
-                }
-                while (Accept(TokenType.ArgumentSeparator));
-                Discard(TokenType.ParenClose);
-            }
-
-            Block code = ParseBlock();
-            functionLocalNames.Clear();
-
-            tag = ASTTag.Function;
-            union = new()
-            {
-                astFunction = new(identifier, [.. args], [.. code])
-            };
-        }
-        else
-        {
-            Token eq = Expect(TokenType.Assignment);
-
-            List<Token> output = Expression(before: TokenType.Terminator);
-
-            tag = ASTTag.Assign;
-            union = new()
-            {
-                astAssign = new(identifier, eq, [.. output])
-            };
-        }
-        declarations.Add(new ASTNode(tag, union));
-
-        // this is done last to avoid having to check for circular dependencies on this variable
-        declarationNames.Add(symbol, type);
     }
 
     private Block ParseBlock()
@@ -411,7 +417,7 @@ public class ParserImpl(CompilerContext context, ILexer lexer) : IParser
         for (Token prev = default; previousToken.Type != TokenType.None; prev = previousToken)
         {
             Token token = currentToken;
-            AdvanceToken();
+            Advance();
 
             bool matchesBefore = before == previousToken.Type;
             bool matchesAfter  = after  == currentToken.Type;
@@ -585,9 +591,9 @@ public class ParserImpl(CompilerContext context, ILexer lexer) : IParser
 
     private bool Accept(TokenType type)
     {
-        bool ok = type == currentToken.Type;
+        bool ok = Peek(type);
         if (ok)
-            AdvanceToken();
+            Advance();
         return ok;
     }
 
@@ -598,7 +604,12 @@ public class ParserImpl(CompilerContext context, ILexer lexer) : IParser
         return ok;
     }
 
-    private void AdvanceToken()
+    private bool Peek(TokenType type)
+    {
+        return type == currentToken.Type;
+    }
+
+    private void Advance()
     {
         previousToken = currentToken;
         currentToken = lexer.Advance();

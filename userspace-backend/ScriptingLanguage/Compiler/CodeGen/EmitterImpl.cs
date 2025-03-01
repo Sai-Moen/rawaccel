@@ -9,10 +9,24 @@ using userspace_backend.ScriptingLanguage.Script;
 namespace userspace_backend.ScriptingLanguage.Compiler.CodeGen;
 
 /// <summary>
+/// Exception for errors related to emitting bytecode into a program.
+/// </summary>
+public sealed class EmitException : CompilationException
+{
+    public EmitException(string message)
+        : base(message)
+    { }
+
+    public EmitException(string message, Token suspect)
+        : base(message, suspect)
+    { }
+}
+
+/// <summary>
 /// Emits AST(s) into programs, which the interpreter can execute.
 /// </summary>
 [SuppressMessage("Style", "IDE0290:Use primary constructor", Justification = "Makes it unreadable")]
-public class EmitterImpl : IEmitter
+public class EmitterImpl
 {
     private List<byte> byteCode = [];
     private Dictionary<Number, DataAddress> numberMap = [];
