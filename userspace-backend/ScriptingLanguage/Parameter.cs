@@ -1,7 +1,7 @@
 ﻿using System.Diagnostics;
 using userspace_backend.ScriptingLanguage.Compiler;
 
-namespace userspace_backend.ScriptingLanguage.Script;
+namespace userspace_backend.ScriptingLanguage;
 
 internal enum Bound
 {

@@ -1,7 +1,5 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using userspace_backend.ScriptingLanguage;
-using userspace_backend.ScriptingLanguage.Interpreter;
-using userspace_backend.ScriptingLanguage.Script;
 
 namespace userspace_backend_tests.ScriptingLanguageTests.SystemTests;
 
@@ -25,9 +23,7 @@ public class FunctionTests
             }
             """;
 
-        IInterpreter interpreter = Wrapper.LoadScript(script);
-        Callbacks callbacks = interpreter.Callbacks;
-
-        Assert.AreEqual(3.0, callbacks.Calculate(0));
+        IScriptFile scriptFile = Wrapper.LoadScript(script);
+        Assert.AreEqual(3.0, scriptFile.Calculate([0])[0]);
     }
 }

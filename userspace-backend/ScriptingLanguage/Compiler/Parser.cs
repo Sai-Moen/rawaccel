@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.Diagnostics;
-using userspace_backend.ScriptingLanguage.Script;
 
 namespace userspace_backend.ScriptingLanguage.Compiler;
 

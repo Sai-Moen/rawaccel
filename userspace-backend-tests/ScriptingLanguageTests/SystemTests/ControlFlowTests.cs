@@ -1,8 +1,6 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using userspace_backend.ScriptingLanguage;
-using userspace_backend.ScriptingLanguage.Interpreter;
-using userspace_backend.ScriptingLanguage.Script;
 
 namespace userspace_backend_tests.ScriptingLanguageTests.SystemTests;
 
@@ -43,11 +41,10 @@ public class ControlFlowTests
             }
             """;
 
-        IInterpreter interpreter = Wrapper.LoadScript(script);
-        Callbacks callbacks = interpreter.Callbacks;
+        IScriptFile scriptFile = Wrapper.LoadScript(script);
         for (int x = 1; x <= 32; x++)
         {
-            Assert.AreEqual(EmulateScript(x), callbacks.Calculate(x));
+            Assert.AreEqual(EmulateScript(x), scriptFile.Calculate([x])[0]);
         }
     }
 
@@ -124,11 +121,10 @@ public class ControlFlowTests
             }
             """;
 
-        IInterpreter interpreter = Wrapper.LoadScript(script);
-        Callbacks callbacks = interpreter.Callbacks;
-        Parameters parameters = interpreter.Settings;
+        IScriptFile scriptFile = Wrapper.LoadScript(script);
+        Parameters parameters = scriptFile.Settings;
         parameters[0].Value = value;
 
-        Assert.AreEqual(EmulateScript(), callbacks.Calculate(0));
+        Assert.AreEqual(EmulateScript(), scriptFile.Calculate([0])[0]);
     }
 }

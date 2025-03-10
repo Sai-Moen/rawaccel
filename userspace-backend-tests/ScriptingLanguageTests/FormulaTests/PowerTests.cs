@@ -1,8 +1,6 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using userspace_backend.ScriptingLanguage;
-using userspace_backend.ScriptingLanguage.Interpreter;
-using userspace_backend.ScriptingLanguage.Script;
 
 namespace userspace_backend_tests.ScriptingLanguageTests.FormulaTests;
 
@@ -41,7 +39,7 @@ public class PowerTests
         }
         """;
 
-    private readonly IInterpreter interpreter = Wrapper.LoadScript(POWER);
+    private readonly IScriptFile scriptFile = Wrapper.LoadScript(POWER);
 
     private readonly double scale = 1;
     private readonly double cap = 0;
@@ -83,10 +81,9 @@ public class PowerTests
     {
         const double n = 0x1000;
 
-        Callbacks callbacks = interpreter.Callbacks;
         for (int x = 1; x <= n; x++)
         {
-            Assert.AreEqual(Power(x), callbacks.Calculate(x));
+            Assert.AreEqual(Power(x), scriptFile.Calculate([x])[0]);
         }
     }
 }

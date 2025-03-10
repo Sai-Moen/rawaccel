@@ -2,8 +2,6 @@
 using System;
 using System.Collections.Generic;
 using userspace_backend.ScriptingLanguage;
-using userspace_backend.ScriptingLanguage.Interpreter;
-using userspace_backend.ScriptingLanguage.Script;
 
 namespace userspace_backend_tests.ScriptingLanguageTests.BuiltinsTests;
 
@@ -148,9 +146,8 @@ public class MotivityTests
     {
         const int cap = Constants.LUT_POINTS_CAPACITY;
 
-        IInterpreter interpreter = Wrapper.LoadScript(Builtins.MOTIVITY);
-        Parameters parameters = interpreter.Settings;
-        Callbacks callbacks = interpreter.Callbacks;
+        IScriptFile scriptFile = Wrapper.LoadScript(Builtins.MOTIVITY);
+        Parameters parameters = scriptFile.Settings;
 
         IEnumerable<LegacyMotivityAccel> mots =
             [
@@ -170,7 +167,7 @@ public class MotivityTests
             parameters[2].Value = mot.Motivity;
             parameters[3].Value = mot.Midpoint;
 
-            double[] actual = callbacks.Calculate(xs);
+            double[] actual = scriptFile.Calculate(xs);
             for (int i = 0; i < cap; i++)
             {
                 double expected = mot.Call(xs[i]);
@@ -188,9 +185,8 @@ public class MotivityTests
     {
         const int cap = Constants.LUT_POINTS_CAPACITY;
 
-        IInterpreter interpreter = Wrapper.LoadScript(Builtins.MOTIVITY);
-        Parameters parameters = interpreter.Settings;
-        Callbacks callbacks = interpreter.Callbacks;
+        IScriptFile scriptFile = Wrapper.LoadScript(Builtins.MOTIVITY);
+        Parameters parameters = scriptFile.Settings;
 
         IEnumerable<GainMotivityAccel> mots =
             [
@@ -210,7 +206,7 @@ public class MotivityTests
             parameters[2].Value = mot.Motivity;
             parameters[3].Value = mot.Midpoint;
 
-            double[] actual = callbacks.Calculate(xs);
+            double[] actual = scriptFile.Calculate(xs);
             for (int i = 0; i < cap; i++)
             {
                 double expected = mot.Call(xs[i]);

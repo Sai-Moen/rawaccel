@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Diagnostics;
-using userspace_backend.ScriptingLanguage.Interpreter;
-using userspace_backend.ScriptingLanguage.Script;
 
 namespace userspace_backend.ScriptingLanguage.Compiler;
 

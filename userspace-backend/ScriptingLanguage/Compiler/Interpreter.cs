@@ -2,23 +2,26 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using userspace_backend.ScriptingLanguage.Compiler;
-using userspace_backend.ScriptingLanguage.Script;
 using static System.Math;
 
-namespace userspace_backend.ScriptingLanguage.Interpreter;
+namespace userspace_backend.ScriptingLanguage.Compiler;
+
+/// <summary>
+/// Exception for interpretation-related errors.
+/// </summary>
+public sealed class InterpreterException(string message)
+    : ScriptException(message)
+{ }
 
 /// <summary>
 /// Executes Programs.
 /// </summary>
-public class InterpreterImpl : IInterpreter
+public class Interpreter
 {
-    private readonly Dictionary<string, MemoryAddress> assignmentAddresses = [];
     private readonly Program[] assignments;
     private readonly MemoryHeap stable = new();
     private readonly MemoryHeap unstable = new();
 
-    private readonly Dictionary<string, MemoryAddress> functionAddresses = [];
     private readonly Program[] functions;
 
     private StackAddress stackPointer;
@@ -26,62 +29,35 @@ public class InterpreterImpl : IInterpreter
 
     private int depth;
 
-    /// <summary>
-    /// Initializes the script and its default settings.
-    /// </summary>
-    /// <param name="parsed">Result of parsing.</param>
-    /// <exception cref="InterpreterException"/>
-    public InterpreterImpl(Context context, AST parsed)
+    public Interpreter(AST ast, Emitter emitter)
     {
-        Description = parsed.Description;
-
-        Emitter emitter = new(context, assignmentAddresses, functionAddresses);
-        int numPersistent = 0;
-        int numImpersistent = 0;
-
-        Parameters parameters = parsed.Parameters;
-        int numParameters = parameters.Count;
-
-        Debug.Assert(numParameters <= Constants.MAX_PARAMETERS);
+        Parameters parameters = ast.Parameters;
+        Debug.Assert(parameters.Count <= Constants.MAX_PARAMETERS);
         foreach (Parameter parameter in parameters)
-            assignmentAddresses.Add(parameter.Name, (MemoryAddress)numPersistent++);
+            emitter.AddParameter(parameter.Name);
 
-        IList<ASTNode> declarations = parsed.Declarations;
+        IList<ASTNode> declarations = ast.Declarations;
         int numDeclarations = declarations.Count;
+        Debug.Assert(numDeclarations <= Constants.MAX_DECLARATIONS);
 
         List<Program> assignmentsList = new(numDeclarations);
         List<Program> functionsList = new(numDeclarations);
-        int numFunctions = 0;
-
-        Debug.Assert(numDeclarations <= Constants.MAX_DECLARATIONS);
-        foreach (ASTNode ast in declarations)
+        foreach (ASTNode node in declarations)
         {
-            ASTUnion union = ast.Union;
-            switch (ast.Tag)
+            ASTUnion union = node.Union;
+            switch (node.Tag)
             {
                 case ASTTag.Assign:
-                    ASTAssign assignment = union.astAssign;
                     {
-                        Token identifier = assignment.Identifier;
-                        MemoryAddress address = identifier.Type switch
-                        {
-                            TokenType.Immutable or TokenType.Persistent => (MemoryAddress)numPersistent++,
-                            TokenType.Impersistent => (MemoryAddress)numImpersistent++,
-
-                            _ => throw InterpreterError("Identifier does not have the correct type for a variable!")
-                        };
-                        assignmentAddresses.Add(context.GetSymbol(identifier), address);
-
-                        assignmentsList.Add(emitter.Emit([ast]));
+                        ASTAssign assignment = union.astAssign;
+                        emitter.AddAssign(assignment.Identifier);
+                        assignmentsList.Add(emitter.Emit([node]));
                     }
                     break;
                 case ASTTag.Function:
-                    ASTFunction function = union.astFunction;
                     {
-                        Token identifier = function.Identifier;
-                        MemoryAddress address = (MemoryAddress)numFunctions++;
-                        functionAddresses.Add(context.GetSymbol(identifier), address);
-
+                        ASTFunction function = union.astFunction;
+                        emitter.AddFunction(function.Identifier);
                         functionsList.Add(emitter.EmitFunction(function.Args, function.Code));
                     }
                     break;
@@ -93,46 +69,31 @@ public class InterpreterImpl : IInterpreter
         assignments = [.. assignmentsList];
         functions = [.. functionsList];
 
-        stable.EnsureSizes(numPersistent, numImpersistent);
-        unstable.EnsureSizes(numPersistent, numImpersistent);
-
-        IList<ParsedCallback> callbacks = parsed.Callbacks;
-        Debug.Assert(callbacks.Count > 0);
-
-        Callbacks = new(this, callbacks[0], emitter);
-        foreach (ParsedCallback cb in callbacks)
-            Callbacks.Add(cb, emitter);
+        stable.EnsureSizes(emitter.PersistentCount, emitter.ImpersistentCount);
+        unstable.EnsureSizes(emitter.PersistentCount, emitter.ImpersistentCount);
 
         // responsibility to change settings from script defaults to saved settings is on the caller
         Defaults = new(parameters);
         Settings = parameters.Clone();
     }
 
-    public string Description { get; }
-
     public ReadOnlyParameters Defaults { get; }
     public Parameters Settings { get; }
-
-    public Callbacks Callbacks { get; }
 
     public Number X { get; set; } = Number.DEFAULT_X;
     public Number Y { get; set; } = Number.DEFAULT_Y;
 
-    #region Methods
-
     public void Init()
     {
+        int index = 0;
         foreach (Parameter parameter in Settings)
-        {
-            // most cache-friendly operation
-            stable.SetPersistent(assignmentAddresses[parameter.Name], parameter.Value);
-        }
+            stable.SetPersistent((MemoryAddress)index++, parameter.Value);
         unstable.CopyAllFrom(stable);
 
         foreach (Program program in assignments)
             ExecuteProgram(program);
-
         stable.CopyAllFrom(unstable);
+
         Y = Number.DEFAULT_Y;
     }
 
@@ -449,8 +410,6 @@ public class InterpreterImpl : IInterpreter
 
         throw InterpreterError("Program loop exited without returning!");
     }
-
-    #endregion
 
     private static InterpreterException InterpreterError(string error)
     {

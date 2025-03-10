@@ -10,7 +10,8 @@ public class ParserTests
 {
     private static ASTNode[] GetCalculationASTs(string script)
     {
-        return Wrapper.CompileToParsingResult(script).Callbacks[0].Code;
+        (Context _, AST ast) = Wrapper.CompileToAST(script);
+        return ast.Callbacks[0].Code;
     }
 
     [TestMethod]

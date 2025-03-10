@@ -1,7 +1,5 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using userspace_backend.ScriptingLanguage;
-using userspace_backend.ScriptingLanguage.Interpreter;
-using userspace_backend.ScriptingLanguage.Script;
 
 namespace userspace_backend_tests.ScriptingLanguageTests.BuiltinsTests;
 
@@ -18,9 +16,7 @@ public class NoAccelTests
     [TestMethod]
     public void TestImplementationsEqual()
     {
-        IInterpreter interpreter = Wrapper.LoadScript(Builtins.NO_ACCEL);
-        Callbacks callbacks = interpreter.Callbacks;
-
-        Assert.AreEqual(NoAccel(), callbacks.Calculate(0));
+        IScriptFile scriptFile = Wrapper.LoadScript(Builtins.NO_ACCEL);
+        Assert.AreEqual(NoAccel(), scriptFile.Calculate([0])[0]);
     }
 }

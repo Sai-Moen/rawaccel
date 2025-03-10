@@ -2,7 +2,7 @@
 using System.Collections.ObjectModel;
 using System.Diagnostics.CodeAnalysis;
 
-namespace userspace_backend.ScriptingLanguage.Script;
+namespace userspace_backend.ScriptingLanguage;
 
 /// <summary>
 /// Collection of <see cref="Parameter"/> declarations.
@@ -13,10 +13,6 @@ public class Parameters : List<Parameter>, IList<Parameter>
         : base(Constants.MAX_PARAMETERS)
     { }
 
-    private Parameters(Parameters parameters)
-        : base(parameters)
-    { }
-
     public bool TryFindByName(string name, [MaybeNullWhen(false)] out Parameter p)
     {
         p = Find(match => match.Name == name);
@@ -25,7 +21,7 @@ public class Parameters : List<Parameter>, IList<Parameter>
 
     internal Parameters Clone()
     {
-        Parameters clone = new(this);
+        Parameters clone = [.. this];
         for (int i = 0; i < clone.Count; i++)
             clone[i] = clone[i].Clone();
         return clone;
@@ -35,7 +31,7 @@ public class Parameters : List<Parameter>, IList<Parameter>
 /// <summary>
 /// Read-Only collection of <see cref="ReadOnlyParameter"/>.
 /// </summary>
-public class ReadOnlyParameters : ReadOnlyCollection<ReadOnlyParameter>, IList<ReadOnlyParameter>
+public class ReadOnlyParameters : ReadOnlyCollection<ReadOnlyParameter>, IReadOnlyList<ReadOnlyParameter>
 {
     internal ReadOnlyParameters(IList<Parameter> parameters)
         : base(Wrap(parameters))

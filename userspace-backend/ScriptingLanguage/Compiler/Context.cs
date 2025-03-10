@@ -5,6 +5,31 @@ using System.Diagnostics;
 namespace userspace_backend.ScriptingLanguage.Compiler;
 
 /// <summary>
+/// Base Exception used for errors in all stages of compilation.
+/// </summary>
+public class CompilationException : ScriptException
+{
+    public CompilationException(string message)
+        : base(message)
+    { }
+
+    public CompilationException(string message, Token suspect)
+        : base(message)
+    {
+        Suspect = suspect;
+    }
+
+    /// <summary>
+    /// The token suspected of causing this exception.
+    /// Use the <see cref="Token.BytePosition"/> property to scan through the source code,
+    /// to determine the location in (Line, Char) coordinates.
+    /// <br/>
+    /// Make sure to check whether this is a valid token when using it directly.
+    /// </summary>
+    public Token Suspect { get; private set; }
+}
+
+/// <summary>
 /// Index of an identifier.
 /// The lexer must maintain a side table with the symbols that the indices correspond to.
 /// The reasoning for this is that punctuation and keywords don't need their textual representation to be stored (instead of potentially many times).

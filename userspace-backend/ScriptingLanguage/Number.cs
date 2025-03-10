@@ -3,7 +3,7 @@ using System.Diagnostics;
 using System.Globalization;
 using userspace_backend.ScriptingLanguage.Compiler;
 
-namespace userspace_backend.ScriptingLanguage.Script;
+namespace userspace_backend.ScriptingLanguage;
 
 /// <summary>
 /// Represents a number or boolean in the script.

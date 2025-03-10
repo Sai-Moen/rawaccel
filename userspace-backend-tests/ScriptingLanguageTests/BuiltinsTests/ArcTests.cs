@@ -3,8 +3,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using userspace_backend.ScriptingLanguage;
-using userspace_backend.ScriptingLanguage.Interpreter;
-using userspace_backend.ScriptingLanguage.Script;
 
 namespace userspace_backend_tests.ScriptingLanguageTests.BuiltinsTests;
 
@@ -50,9 +48,8 @@ public class ArcTests
     {
         const int cap = Constants.LUT_POINTS_CAPACITY;
 
-        IInterpreter interpreter = Wrapper.LoadScript(Builtins.ARC);
-        Parameters parameters = interpreter.Settings;
-        Callbacks callbacks = interpreter.Callbacks;
+        IScriptFile scriptFile = Wrapper.LoadScript(Builtins.ARC);
+        Parameters parameters = scriptFile.Settings;
 
         IEnumerable<ArcAccel> arcs =
             [
@@ -74,7 +71,7 @@ public class ArcTests
             // somehow there are no floating point errors here
             // maybe look up if there is a method to include epsilon in the comparison or something
             // if this ever desyncs, change it to a for-loop with an epsilon
-            CollectionAssert.AreEqual(xs.Select(arc.Call).ToArray(), callbacks.Calculate(xs));
+            CollectionAssert.AreEqual(xs.Select(arc.Call).ToArray(), scriptFile.Calculate(xs));
         }
     }
 }

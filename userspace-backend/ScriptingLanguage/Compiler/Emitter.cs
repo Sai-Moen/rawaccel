@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
-using userspace_backend.ScriptingLanguage.Script;
 
 namespace userspace_backend.ScriptingLanguage.Compiler;
 
@@ -23,28 +21,43 @@ public sealed class EmitException : CompilationException
 /// <summary>
 /// Emits AST(s) into programs, which the interpreter can execute.
 /// </summary>
-[SuppressMessage("Style", "IDE0290:Use primary constructor", Justification = "Makes it unreadable")]
-public class Emitter
+public class Emitter(Context context)
 {
+    private readonly Context context = context;
     private List<byte> byteCode = [];
     private Dictionary<Number, DataAddress> numberMap = [];
 
-    private readonly IDictionary<string, MemoryAddress> assignmentAddresses;
-    private readonly IDictionary<string, MemoryAddress> functionAddresses;
+    private readonly Dictionary<string, MemoryAddress> persistentAddresses = [];
+    private readonly Dictionary<string, MemoryAddress> impersistentAddresses = [];
+    private readonly Dictionary<string, MemoryAddress> functionAddresses = [];
 
     private readonly Dictionary<string, StackAddress> tempFunctionArgs = [];
 
-    public Emitter(Context ctx, IDictionary<string, MemoryAddress> assignmentAddrs, IDictionary<string, MemoryAddress> functionAddrs)
+    public int PersistentCount => persistentAddresses.Count;
+    public int ImpersistentCount => impersistentAddresses.Count;
+
+    public void AddParameter(string symbol)
     {
-        context = ctx;
-        assignmentAddresses = assignmentAddrs;
-        functionAddresses = functionAddrs;
+        persistentAddresses.Add(symbol, (MemoryAddress)persistentAddresses.Count);
     }
 
-    private readonly Context context;
-    internal Context Context { get => context; }
+    public void AddAssign(Token assign)
+    {
+        Dictionary<string, MemoryAddress> assignAddresses = assign.Type switch
+        {
+            TokenType.Immutable or
+            TokenType.Persistent => persistentAddresses,
+            TokenType.Impersistent => impersistentAddresses,
 
-    #region Methods
+            _ => throw EmitError("Cannot determine assignment mapping!", assign),
+        };
+        assignAddresses.Add(context.GetSymbol(assign), (MemoryAddress)assignAddresses.Count);
+    }
+
+    public void AddFunction(Token function)
+    {
+        functionAddresses.Add(context.GetSymbol(function), (MemoryAddress)functionAddresses.Count);
+    }
 
     public Program Emit(IList<Token> code)
     {
@@ -126,12 +139,12 @@ public class Emitter
                         case TokenType.Immutable:
                         case TokenType.Persistent:
                             EmitMemoryAssignment(
-                                (byte[])assignmentAddresses[context.GetSymbol(identifier)],
+                                (byte[])persistentAddresses[context.GetSymbol(identifier)],
                                 isCompound, InstructionType.LoadPersistent, modify, InstructionType.StorePersistent);
                             break;
                         case TokenType.Impersistent:
                             EmitMemoryAssignment(
-                                (byte[])assignmentAddresses[context.GetSymbol(identifier)],
+                                (byte[])impersistentAddresses[context.GetSymbol(identifier)],
                                 isCompound, InstructionType.LoadImpersistent, modify, InstructionType.StoreImpersistent);
                             break;
                         case TokenType.FunctionLocal:
@@ -228,9 +241,12 @@ public class Emitter
             case TokenType.Parameter:
             case TokenType.Immutable:
             case TokenType.Persistent:
+                MemoryAddress persistentAddress = persistentAddresses[context.GetSymbol(token)];
+                AddInstruction(InstructionType.LoadPersistent, (byte[])persistentAddress);
+                break;
             case TokenType.Impersistent:
-                MemoryAddress mAddress = assignmentAddresses[context.GetSymbol(token)];
-                AddInstruction(type.MapToLoad(), (byte[])mAddress);
+                MemoryAddress impersistentAddress = impersistentAddresses[context.GetSymbol(token)];
+                AddInstruction(InstructionType.LoadImpersistent, (byte[])impersistentAddress);
                 break;
             case TokenType.Input:
                 AddInstruction(InstructionType.LoadIn);
@@ -275,8 +291,6 @@ public class Emitter
                 throw EmitError("Cannot emit token!", token);
         }
     }
-
-    #endregion
 
     #region ByteCode Helpers
 

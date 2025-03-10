@@ -102,34 +102,4 @@ public static class Instructions
 
         _ => false
     };
-
-    /// <summary>
-    /// Maps a token type to an instruction type, specifically a Load instruction.
-    /// </summary>
-    /// <param name="type">Type of the token.</param>
-    /// <returns>Load instruction, or NoOp if the token type cannot be mapped from.</returns>
-    public static InstructionType MapToLoad(this TokenType type) => type switch
-    {
-        TokenType.Parameter or
-        TokenType.Immutable or
-        TokenType.Persistent => InstructionType.LoadPersistent,
-        TokenType.Impersistent => InstructionType.LoadImpersistent,
-
-        _ => InstructionType.NoOp
-    };
-
-    /// <summary>
-    /// Maps a token type to an instruction type, specifically a Store instruction.
-    /// </summary>
-    /// <param name="type">Type of the token.</param>
-    /// <returns>Store instruction, or NoOp if the token type cannot be mapped from.</returns>
-    public static InstructionType MapToStore(this TokenType type) => type switch
-    {
-        TokenType.Parameter or
-        TokenType.Immutable or
-        TokenType.Persistent => InstructionType.StorePersistent,
-        TokenType.Impersistent => InstructionType.StoreImpersistent,
-
-        _ => InstructionType.NoOp
-    };
 }

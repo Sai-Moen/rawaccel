@@ -1,7 +1,5 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using userspace_backend.ScriptingLanguage;
-using userspace_backend.ScriptingLanguage.Interpreter;
-using userspace_backend.ScriptingLanguage.Script;
 
 namespace userspace_backend_tests.ScriptingLanguageTests.SystemTests;
 
@@ -34,15 +32,14 @@ public class DeclarationTests
             }
             """;
 
-        IInterpreter interpreter = Wrapper.LoadScript(script);
-        Parameters parameters = interpreter.Settings;
+        IScriptFile scriptFile = Wrapper.LoadScript(script);
+        Parameters parameters = scriptFile.Settings;
         parameters[0].Value = value;
 
         // a + (a + 1) + (a + 1 + 1) + (a + 1 + 1 + 1) = 4a + 6
         double expected = value * 4 + 6;
 
-        Callbacks callbacks = interpreter.Callbacks;
-        double actual = callbacks.Calculate(0);
+        double actual = scriptFile.Calculate([0])[0];
 
         Assert.AreEqual(expected, actual);
     }

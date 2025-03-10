@@ -1,8 +1,6 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using userspace_backend.ScriptingLanguage;
-using userspace_backend.ScriptingLanguage.Interpreter;
-using userspace_backend.ScriptingLanguage.Script;
 
 namespace userspace_backend_tests.ScriptingLanguageTests.FormulaTests;
 
@@ -33,7 +31,7 @@ public class LinearTests
         }
         """;
 
-    private readonly IInterpreter interpreter = Wrapper.LoadScript(LINEAR);
+    private readonly IScriptFile scriptFile = Wrapper.LoadScript(LINEAR);
 
     private readonly double acceleration = 0.005;
     private readonly double cap = 2;
@@ -60,10 +58,9 @@ public class LinearTests
     {
         const double n = 0x1000;
 
-        Callbacks callbacks = interpreter.Callbacks;
         for (int x = 1; x <= n; x++)
         {
-            Assert.AreEqual(Linear(x), callbacks.Calculate(x));
+            Assert.AreEqual(Linear(x), scriptFile.Calculate([x])[0]);
         }
     }
 }
