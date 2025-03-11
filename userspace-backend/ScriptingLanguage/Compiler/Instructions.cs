@@ -1,9 +1,9 @@
 ﻿namespace userspace_backend.ScriptingLanguage.Compiler;
 
 /// <summary>
-/// Enumerates all types of instructions (for a stack machine).
+/// Enumerates all kinds of instructions (for a stack machine).
 /// </summary>
-public enum InstructionType : byte
+public enum InstructionKind : byte
 {
     NoOp,
     Start, End, // Helps with jumps not going out of bounds (in an otherwise correct program)
@@ -68,24 +68,24 @@ public static class Instructions
     /// <summary>
     /// Gets the length of the address that follows this instruction.
     /// </summary>
-    /// <param name="type">The type of the instruction.</param>
+    /// <param name="kind">The kind of instruction.</param>
     /// <returns>Length of subsequent address in bytes.</returns>
-    public static int AddressLength(this InstructionType type) => type switch
+    public static int AddressLength(this InstructionKind kind) => kind switch
     {
-        InstructionType.LoadPersistent => MemoryAddress.SIZE,
-        InstructionType.StorePersistent => MemoryAddress.SIZE,
-        InstructionType.LoadImpersistent => MemoryAddress.SIZE,
-        InstructionType.StoreImpersistent => MemoryAddress.SIZE,
+        InstructionKind.LoadPersistent => MemoryAddress.SIZE,
+        InstructionKind.StorePersistent => MemoryAddress.SIZE,
+        InstructionKind.LoadImpersistent => MemoryAddress.SIZE,
+        InstructionKind.StoreImpersistent => MemoryAddress.SIZE,
 
-        InstructionType.Call => MemoryAddress.SIZE,
+        InstructionKind.Call => MemoryAddress.SIZE,
 
-        InstructionType.LoadNumber => DataAddress.SIZE,
+        InstructionKind.LoadNumber => DataAddress.SIZE,
 
-        InstructionType.LoadStack => StackAddress.SIZE,
-        InstructionType.StoreStack => StackAddress.SIZE,
+        InstructionKind.LoadStack => StackAddress.SIZE,
+        InstructionKind.StoreStack => StackAddress.SIZE,
 
-        InstructionType.Jmp => CodeAddress.SIZE,
-        InstructionType.Jz => CodeAddress.SIZE,
+        InstructionKind.Jmp => CodeAddress.SIZE,
+        InstructionKind.Jz => CodeAddress.SIZE,
 
         _ => 0
     };
@@ -93,12 +93,12 @@ public static class Instructions
     /// <summary>
     /// Looks up if this instruction is a branch/jump instruction.
     /// </summary>
-    /// <param name="type">The type of the instruction.</param>
+    /// <param name="kind">The kind of instruction.</param>
     /// <returns>Whether this instruction is a jump.</returns>
-    public static bool IsBranch(this InstructionType type) => type switch
+    public static bool IsBranch(this InstructionKind kind) => kind switch
     {
-        InstructionType.Jmp => true,
-        InstructionType.Jz => true,
+        InstructionKind.Jmp => true,
+        InstructionKind.Jz => true,
 
         _ => false
     };

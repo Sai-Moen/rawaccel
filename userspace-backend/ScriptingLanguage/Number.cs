@@ -42,7 +42,7 @@ public readonly record struct Number(double Value)
 
     public static Number FromBooleanLiteral(Token token)
     {
-        Debug.Assert(token.Type == TokenType.Bool);
+        Debug.Assert(token.Kind == TokenKind.Bool);
         return token.ExtraIndex switch
         {
             0 => FALSE,

@@ -16,7 +16,7 @@ public record Program(byte[] ByteCode, StaticData Data)
 
     public ReadOnlySpan<byte> ExtractAddress(ref CodeAddress c)
     {
-        int addressLength = ((InstructionType)this[c]).AddressLength();
+        int addressLength = ((InstructionKind)this[c]).AddressLength();
         ReadOnlySpan<byte> address = new(ByteCode, c.Address + 1, addressLength);
         c += addressLength;
         return address;

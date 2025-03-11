@@ -5,9 +5,9 @@ using System.Diagnostics;
 namespace userspace_backend.ScriptingLanguage.Compiler;
 
 /// <summary>
-/// Enumerates all possible Token types.
+/// Enumerates all possible kinds of Token.
 /// </summary>
-public enum TokenType : byte
+public enum TokenKind : byte
 {
     None, // Doesn't mean invalid right away, depends on if you expect a certain symbol
 
@@ -28,18 +28,18 @@ public enum TokenType : byte
 /// <summary>
 /// A lexical token.
 /// </summary>
-/// <param name="Type">Type of token.</param>
+/// <param name="Kind">The kind of token.</param>
 /// <param name="BytePosition">
 /// Starting position (byte index in script) of the symbol, can be used to determine the line/character in case of an error.
 /// </param>
 /// <param name="SymbolIndex">Index of the identifier's symbol (or .Invalid if no runtime symbol).</param>
 /// <param name="ExtraIndex">
-/// For some TokenTypes it's convenient to test if they are broadly a certain type (e.g. MathFunction),
+/// For some TokenKinds it's convenient to test if they are broadly a certain kind (e.g. MathFunction),
 /// but they then need to be subdivided.
-/// This property stores any extra information needed to determine the exact subtype that this token represents.
+/// This property stores any extra information needed to determine the exact 'subtype' that this token represents.
 /// </param>
 public readonly record struct Token(
-    TokenType Type = default,
+    TokenKind Kind = default,
     int BytePosition = -1,
     SymbolIndex SymbolIndex = SymbolIndex.Invalid,
     byte ExtraIndex = 0);
@@ -245,98 +245,98 @@ public static class Tokens
 
     private static readonly Dictionary<string, Token> reservedMap = new()
     {
-        [UNDERSCORE]  = new(TokenType.None, ExtraIndex: (byte)ExtraIndexSpecial.Underscore),
-        [EQUALS_SIGN] = new(TokenType.None, ExtraIndex: (byte)ExtraIndexSpecial.EqualsSign),
+        [UNDERSCORE]  = new(TokenKind.None, ExtraIndex: (byte)ExtraIndexSpecial.Underscore),
+        [EQUALS_SIGN] = new(TokenKind.None, ExtraIndex: (byte)ExtraIndexSpecial.EqualsSign),
 
-        [INPUT]  = new(TokenType.Input),
-        [OUTPUT] = new(TokenType.Output),
+        [INPUT]  = new(TokenKind.Input),
+        [OUTPUT] = new(TokenKind.Output),
 
-        [ZERO]           = new(TokenType.Constant, ExtraIndex: (byte)ExtraIndexConstant.Zero),
-        [CONST_E]        = new(TokenType.Constant, ExtraIndex: (byte)ExtraIndexConstant.E),
-        [CONST_PI]       = new(TokenType.Constant, ExtraIndex: (byte)ExtraIndexConstant.Pi),
-        [CONST_TAU]      = new(TokenType.Constant, ExtraIndex: (byte)ExtraIndexConstant.Tau),
-        [CONST_CAPACITY] = new(TokenType.Constant, ExtraIndex: (byte)ExtraIndexConstant.Capacity),
+        [ZERO]           = new(TokenKind.Constant, ExtraIndex: (byte)ExtraIndexConstant.Zero),
+        [CONST_E]        = new(TokenKind.Constant, ExtraIndex: (byte)ExtraIndexConstant.E),
+        [CONST_PI]       = new(TokenKind.Constant, ExtraIndex: (byte)ExtraIndexConstant.Pi),
+        [CONST_TAU]      = new(TokenKind.Constant, ExtraIndex: (byte)ExtraIndexConstant.Tau),
+        [CONST_CAPACITY] = new(TokenKind.Constant, ExtraIndex: (byte)ExtraIndexConstant.Capacity),
 
-        [FALSE] = new(TokenType.Bool, ExtraIndex: 0),
-        [TRUE]  = new(TokenType.Bool, ExtraIndex: 1),
+        [FALSE] = new(TokenKind.Bool, ExtraIndex: 0),
+        [TRUE]  = new(TokenKind.Bool, ExtraIndex: 1),
 
-        [DECL_CONST]   = new(TokenType.Const),
-        [DECL_LET]     = new(TokenType.Let),
-        [DECL_VAR]     = new(TokenType.Var),
-        [DECL_FN]      = new(TokenType.Fn),
-        [RETURN]       = new(TokenType.Return),
-        [BRANCH_IF]    = new(TokenType.If),
-        [BRANCH_ELSE]  = new(TokenType.Else),
-        [BRANCH_WHILE] = new(TokenType.While),
-        [ARG_SEP]      = new(TokenType.ArgumentSeparator),
-        [FPOINT]       = new(TokenType.Number),
-        [TERMINATOR]   = new(TokenType.Terminator),
-        [PAREN_OPEN]   = new(TokenType.ParenOpen),
-        [PAREN_CLOSE]  = new(TokenType.ParenClose),
-        [SQUARE_OPEN]  = new(TokenType.SquareOpen),
-        [SQUARE_CLOSE] = new(TokenType.SquareClose),
-        [CURLY_OPEN]   = new(TokenType.CurlyOpen),
-        [CURLY_CLOSE]  = new(TokenType.CurlyClose),
-        [ASSIGN]       = new(TokenType.Assignment),
+        [DECL_CONST]   = new(TokenKind.Const),
+        [DECL_LET]     = new(TokenKind.Let),
+        [DECL_VAR]     = new(TokenKind.Var),
+        [DECL_FN]      = new(TokenKind.Fn),
+        [RETURN]       = new(TokenKind.Return),
+        [BRANCH_IF]    = new(TokenKind.If),
+        [BRANCH_ELSE]  = new(TokenKind.Else),
+        [BRANCH_WHILE] = new(TokenKind.While),
+        [ARG_SEP]      = new(TokenKind.ArgumentSeparator),
+        [FPOINT]       = new(TokenKind.Number),
+        [TERMINATOR]   = new(TokenKind.Terminator),
+        [PAREN_OPEN]   = new(TokenKind.ParenOpen),
+        [PAREN_CLOSE]  = new(TokenKind.ParenClose),
+        [SQUARE_OPEN]  = new(TokenKind.SquareOpen),
+        [SQUARE_CLOSE] = new(TokenKind.SquareClose),
+        [CURLY_OPEN]   = new(TokenKind.CurlyOpen),
+        [CURLY_CLOSE]  = new(TokenKind.CurlyClose),
+        [ASSIGN]       = new(TokenKind.Assignment),
 
-        [C_ADD] = new(TokenType.Compound, ExtraIndex: (byte)ExtraIndexCompound.Add),
-        [C_SUB] = new(TokenType.Compound, ExtraIndex: (byte)ExtraIndexCompound.Sub),
-        [C_MUL] = new(TokenType.Compound, ExtraIndex: (byte)ExtraIndexCompound.Mul),
-        [C_DIV] = new(TokenType.Compound, ExtraIndex: (byte)ExtraIndexCompound.Div),
-        [C_MOD] = new(TokenType.Compound, ExtraIndex: (byte)ExtraIndexCompound.Mod),
-        [C_POW] = new(TokenType.Compound, ExtraIndex: (byte)ExtraIndexCompound.Pow),
+        [C_ADD] = new(TokenKind.Compound, ExtraIndex: (byte)ExtraIndexCompound.Add),
+        [C_SUB] = new(TokenKind.Compound, ExtraIndex: (byte)ExtraIndexCompound.Sub),
+        [C_MUL] = new(TokenKind.Compound, ExtraIndex: (byte)ExtraIndexCompound.Mul),
+        [C_DIV] = new(TokenKind.Compound, ExtraIndex: (byte)ExtraIndexCompound.Div),
+        [C_MOD] = new(TokenKind.Compound, ExtraIndex: (byte)ExtraIndexCompound.Mod),
+        [C_POW] = new(TokenKind.Compound, ExtraIndex: (byte)ExtraIndexCompound.Pow),
 
-        [ADD] = new(TokenType.Arithmetic, ExtraIndex: (byte)ExtraIndexArithmetic.Add),
-        [SUB] = new(TokenType.Arithmetic, ExtraIndex: (byte)ExtraIndexArithmetic.Sub),
-        [MUL] = new(TokenType.Arithmetic, ExtraIndex: (byte)ExtraIndexArithmetic.Mul),
-        [DIV] = new(TokenType.Arithmetic, ExtraIndex: (byte)ExtraIndexArithmetic.Div),
-        [MOD] = new(TokenType.Arithmetic, ExtraIndex: (byte)ExtraIndexArithmetic.Mod),
-        [POW] = new(TokenType.Arithmetic, ExtraIndex: (byte)ExtraIndexArithmetic.Pow),
+        [ADD] = new(TokenKind.Arithmetic, ExtraIndex: (byte)ExtraIndexArithmetic.Add),
+        [SUB] = new(TokenKind.Arithmetic, ExtraIndex: (byte)ExtraIndexArithmetic.Sub),
+        [MUL] = new(TokenKind.Arithmetic, ExtraIndex: (byte)ExtraIndexArithmetic.Mul),
+        [DIV] = new(TokenKind.Arithmetic, ExtraIndex: (byte)ExtraIndexArithmetic.Div),
+        [MOD] = new(TokenKind.Arithmetic, ExtraIndex: (byte)ExtraIndexArithmetic.Mod),
+        [POW] = new(TokenKind.Arithmetic, ExtraIndex: (byte)ExtraIndexArithmetic.Pow),
 
-        [NOT] = new(TokenType.Comparison, ExtraIndex: (byte)ExtraIndexComparison.Not),
-        [AND] = new(TokenType.Comparison, ExtraIndex: (byte)ExtraIndexComparison.And),
-        [OR]  = new(TokenType.Comparison, ExtraIndex: (byte)ExtraIndexComparison.Or),
-        [LT]  = new(TokenType.Comparison, ExtraIndex: (byte)ExtraIndexComparison.LessThan),
-        [GT]  = new(TokenType.Comparison, ExtraIndex: (byte)ExtraIndexComparison.GreaterThan),
-        [LE]  = new(TokenType.Comparison, ExtraIndex: (byte)ExtraIndexComparison.LessThanOrEqual),
-        [GE]  = new(TokenType.Comparison, ExtraIndex: (byte)ExtraIndexComparison.GreaterThanOrEqual),
-        [EQ]  = new(TokenType.Comparison, ExtraIndex: (byte)ExtraIndexComparison.Equal),
-        [NE]  = new(TokenType.Comparison, ExtraIndex: (byte)ExtraIndexComparison.NotEqual),
+        [NOT] = new(TokenKind.Comparison, ExtraIndex: (byte)ExtraIndexComparison.Not),
+        [AND] = new(TokenKind.Comparison, ExtraIndex: (byte)ExtraIndexComparison.And),
+        [OR]  = new(TokenKind.Comparison, ExtraIndex: (byte)ExtraIndexComparison.Or),
+        [LT]  = new(TokenKind.Comparison, ExtraIndex: (byte)ExtraIndexComparison.LessThan),
+        [GT]  = new(TokenKind.Comparison, ExtraIndex: (byte)ExtraIndexComparison.GreaterThan),
+        [LE]  = new(TokenKind.Comparison, ExtraIndex: (byte)ExtraIndexComparison.LessThanOrEqual),
+        [GE]  = new(TokenKind.Comparison, ExtraIndex: (byte)ExtraIndexComparison.GreaterThanOrEqual),
+        [EQ]  = new(TokenKind.Comparison, ExtraIndex: (byte)ExtraIndexComparison.Equal),
+        [NE]  = new(TokenKind.Comparison, ExtraIndex: (byte)ExtraIndexComparison.NotEqual),
 
-        [ABS]                = new(TokenType.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.Abs),
-        [SIGN]               = new(TokenType.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.Sign),
-        [COPY_SIGN]          = new(TokenType.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.CopySign),
-        [ROUND]              = new(TokenType.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.Round),
-        [TRUNC]              = new(TokenType.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.Trunc),
-        [FLOOR]              = new(TokenType.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.Floor),
-        [CEIL]               = new(TokenType.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.Ceil),
-        [CLAMP]              = new(TokenType.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.Clamp),
-        [MIN]                = new(TokenType.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.Min),
-        [MAX]                = new(TokenType.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.Max),
-        [MIN_MAGNITUDE]      = new(TokenType.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.MinMagnitude),
-        [MAX_MAGNITUDE]      = new(TokenType.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.MaxMagnitude),
-        [SQRT]               = new(TokenType.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.Sqrt),
-        [CBRT]               = new(TokenType.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.Cbrt),
-        [LOG]                = new(TokenType.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.Log),
-        [LOG_2]              = new(TokenType.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.Log2),
-        [LOG_10]             = new(TokenType.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.Log10),
-        [LOG_B]              = new(TokenType.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.LogB),
-        [ILOG_B]             = new(TokenType.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.ILogB),
-        [SIN]                = new(TokenType.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.Sin),
-        [SINH]               = new(TokenType.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.Sinh),
-        [ASIN]               = new(TokenType.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.Asin),
-        [ASINH]              = new(TokenType.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.Asinh),
-        [COS]                = new(TokenType.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.Cos),
-        [COSH]               = new(TokenType.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.Cosh),
-        [ACOS]               = new(TokenType.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.Acos),
-        [ACOSH]              = new(TokenType.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.Acosh),
-        [TAN]                = new(TokenType.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.Tan),
-        [TANH]               = new(TokenType.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.Tanh),
-        [ATAN]               = new(TokenType.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.Atan),
-        [ATANH]              = new(TokenType.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.Atanh),
-        [ATAN2]              = new(TokenType.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.Atan2),
-        [FUSED_MULTIPLY_ADD] = new(TokenType.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.FusedMultiplyAdd),
-        [SCALE_B]            = new(TokenType.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.ScaleB),
+        [ABS]                = new(TokenKind.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.Abs),
+        [SIGN]               = new(TokenKind.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.Sign),
+        [COPY_SIGN]          = new(TokenKind.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.CopySign),
+        [ROUND]              = new(TokenKind.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.Round),
+        [TRUNC]              = new(TokenKind.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.Trunc),
+        [FLOOR]              = new(TokenKind.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.Floor),
+        [CEIL]               = new(TokenKind.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.Ceil),
+        [CLAMP]              = new(TokenKind.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.Clamp),
+        [MIN]                = new(TokenKind.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.Min),
+        [MAX]                = new(TokenKind.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.Max),
+        [MIN_MAGNITUDE]      = new(TokenKind.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.MinMagnitude),
+        [MAX_MAGNITUDE]      = new(TokenKind.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.MaxMagnitude),
+        [SQRT]               = new(TokenKind.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.Sqrt),
+        [CBRT]               = new(TokenKind.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.Cbrt),
+        [LOG]                = new(TokenKind.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.Log),
+        [LOG_2]              = new(TokenKind.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.Log2),
+        [LOG_10]             = new(TokenKind.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.Log10),
+        [LOG_B]              = new(TokenKind.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.LogB),
+        [ILOG_B]             = new(TokenKind.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.ILogB),
+        [SIN]                = new(TokenKind.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.Sin),
+        [SINH]               = new(TokenKind.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.Sinh),
+        [ASIN]               = new(TokenKind.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.Asin),
+        [ASINH]              = new(TokenKind.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.Asinh),
+        [COS]                = new(TokenKind.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.Cos),
+        [COSH]               = new(TokenKind.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.Cosh),
+        [ACOS]               = new(TokenKind.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.Acos),
+        [ACOSH]              = new(TokenKind.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.Acosh),
+        [TAN]                = new(TokenKind.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.Tan),
+        [TANH]               = new(TokenKind.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.Tanh),
+        [ATAN]               = new(TokenKind.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.Atan),
+        [ATANH]              = new(TokenKind.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.Atanh),
+        [ATAN2]              = new(TokenKind.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.Atan2),
+        [FUSED_MULTIPLY_ADD] = new(TokenKind.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.FusedMultiplyAdd),
+        [SCALE_B]            = new(TokenKind.MathFunction, ExtraIndex: (byte)ExtraIndexMathFunction.ScaleB),
     };
 
     public static bool IsReserved(string symbol) => reservedMap.ContainsKey(symbol);
@@ -355,14 +355,14 @@ public static class Tokens
     /// </summary>
     /// <param name="token">The declarer.</param>
     /// <returns>Type of the identifier.</returns>
-    public static TokenType MapDeclarer(this Token token) => token.Type switch
+    public static TokenKind MapDeclarer(this Token token) => token.Kind switch
     {
-        TokenType.Const => TokenType.Immutable,
-        TokenType.Let => TokenType.Persistent,
-        TokenType.Var => TokenType.Impersistent,
-        TokenType.Fn => TokenType.Function,
+        TokenKind.Const => TokenKind.Immutable,
+        TokenKind.Let => TokenKind.Persistent,
+        TokenKind.Var => TokenKind.Impersistent,
+        TokenKind.Fn => TokenKind.Function,
 
-        _ => TokenType.None
+        _ => TokenKind.None
     };
 
     /// <summary>
@@ -372,33 +372,33 @@ public static class Tokens
     /// <returns>Whether the token is left-associative.</returns>
     public static bool LeftAssociative(this Token token)
     {
-        TokenType type = token.Type;
-        Debug.Assert(type.HasPrecedence());
-        return type == TokenType.Arithmetic && (ExtraIndexArithmetic)token.ExtraIndex != ExtraIndexArithmetic.Pow;
+        TokenKind kind = token.Kind;
+        Debug.Assert(kind.HasPrecedence());
+        return kind == TokenKind.Arithmetic && (ExtraIndexArithmetic)token.ExtraIndex != ExtraIndexArithmetic.Pow;
     }
 
     /// <summary>
-    /// Looks up whether the given token type is a function.
+    /// Looks up whether the given token kind is a function.
     /// </summary>
-    /// <param name="type">Type of the token.</param>
-    /// <returns>Whether the token type is a function.</returns>
-    public static bool IsFunction(this TokenType type) => type switch
+    /// <param name="kind">The kind of token.</param>
+    /// <returns>Whether the token kind is a function.</returns>
+    public static bool IsFunction(this TokenKind kind) => kind switch
     {
-        TokenType.Function or
-        TokenType.MathFunction => true,
+        TokenKind.Function or
+        TokenKind.MathFunction => true,
 
         _ => false
     };
 
     /// <summary>
-    /// Looks up if the given token type can be considered to have precedence.
+    /// Looks up if the given token kind can be considered to have precedence.
     /// </summary>
-    /// <param name="type">Type of the token.</param>
-    /// <returns>Whether the token type has precedence.</returns>
-    public static bool HasPrecedence(this TokenType type) => type switch
+    /// <param name="kind">The kind of token.</param>
+    /// <returns>Whether the token kind has precedence.</returns>
+    public static bool HasPrecedence(this TokenKind kind) => kind switch
     {
-        TokenType.Arithmetic or
-        TokenType.Comparison => true,
+        TokenKind.Arithmetic or
+        TokenKind.Comparison => true,
 
         _ => false
     };
@@ -413,9 +413,9 @@ public static class Tokens
     /// <exception cref="ParserException"/>
     public static int Precedence(this Token token, bool unary = false)
     {
-        int prec = token.Type switch
+        int prec = token.Kind switch
         {
-            TokenType.Comparison => (ExtraIndexComparison)token.ExtraIndex switch
+            TokenKind.Comparison => (ExtraIndexComparison)token.ExtraIndex switch
             {
                 ExtraIndexComparison.Or => 0,
 
@@ -435,7 +435,7 @@ public static class Tokens
                 _ => throw new ParserException($"Unknown ExtraIndexComparison value: {token.ExtraIndex}", token)
             },
 
-            TokenType.Arithmetic => (ExtraIndexArithmetic)token.ExtraIndex switch
+            TokenKind.Arithmetic => (ExtraIndexArithmetic)token.ExtraIndex switch
             {
                 ExtraIndexArithmetic.Add => 4,
                 ExtraIndexArithmetic.Sub => 4,
@@ -449,7 +449,7 @@ public static class Tokens
                 _ => throw new ParserException($"Unknown ExtraIndexArithmetic value: {token.ExtraIndex}", token)
             },
 
-            _ => throw new ParserException($"Unexpected TokenType when determining precedence: {token.Type}", token)
+            _ => throw new ParserException($"Unexpected TokenKind when determining precedence: {token.Kind}", token)
         };
 
         if (unary)

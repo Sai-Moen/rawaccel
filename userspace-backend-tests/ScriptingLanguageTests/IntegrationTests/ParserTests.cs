@@ -46,7 +46,7 @@ public class ParserTests
         void AssertNextToken(Token expected)
         {
             Token actual = firstStatementInitializer[index++];
-            Assert.AreEqual(expected.Type, actual.Type);
+            Assert.AreEqual(expected.Kind, actual.Kind);
             Assert.AreEqual(expected.ExtraIndex, actual.ExtraIndex);
         }
 
@@ -54,7 +54,7 @@ public class ParserTests
         {
             AssertNextToken(Tokens.GetReserved(Tokens.ZERO));
         }
-        AssertNextToken(new(TokenType.Impersistent));
+        AssertNextToken(new(TokenKind.Impersistent));
         for (int i = 0; i <= depth; i++)
         {
             AssertNextToken(Tokens.GetReserved(Tokens.SUB));

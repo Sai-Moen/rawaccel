@@ -55,17 +55,17 @@ public class Parameter
 
     internal Parameter(Context context, Token name, Token value, ParameterValidation minval, ParameterValidation maxval)
     {
-        Debug.Assert(name.Type == TokenType.Parameter);
+        Debug.Assert(name.Kind == TokenKind.Parameter);
 
         Name = context.GetSymbol(name);
 
-        switch (value.Type)
+        switch (value.Kind)
         {
-            case TokenType.Number:
+            case TokenKind.Number:
                 Type = ParameterType.Real;
                 Value = Number.Parse(context.GetSymbol(value), value);
                 break;
-            case TokenType.Bool:
+            case TokenKind.Bool:
                 Type = ParameterType.Logical;
                 Value = Number.FromBooleanLiteral(value);
                 break;
@@ -90,7 +90,7 @@ public class Parameter
     {
         Name = old.Name;
 
-        Type = type; // gotta do this before to avoid a bad number for the type
+        Type = type;
         Value = value;
 
         min = old.min;

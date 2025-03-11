@@ -12,10 +12,10 @@ public sealed class ParserException(string message, Token suspect)
 
 internal readonly record struct Operator(Token Token, int Precedence)
 {
-    internal TokenType Type => Token.Type;
+    internal TokenKind Kind => Token.Kind;
 
     internal bool HasHigherPrecedence(Operator other, bool left)
-        => Type.HasPrecedence() &&
+        => Kind.HasPrecedence() &&
             (Precedence > other.Precedence || left && Precedence == other.Precedence);
 }
 
@@ -30,7 +30,7 @@ public class Parser(Context context, Lexer lexer)
     private Token previousToken;
     private Token currentToken;
 
-    private readonly Dictionary<string, TokenType> declarationNames = new(Constants.MAX_MEM_CAP);
+    private readonly Dictionary<string, TokenKind> declarationNames = new(Constants.MAX_MEM_CAP);
     private readonly HashSet<string> functionLocalNames = [];
 
     // keeps track of amount of recursion, could also consider using explicit stack
@@ -45,46 +45,46 @@ public class Parser(Context context, Lexer lexer)
         // init currentToken
         Advance();
 
-        string description = context.GetSymbol(Expect(TokenType.Description));
+        string description = context.GetSymbol(Expect(TokenKind.Description));
 
         #region Parse Parameters
 
-        Discard(TokenType.SquareOpen);
-        while (!Accept(TokenType.SquareClose))
+        Discard(TokenKind.SquareOpen);
+        while (!Accept(TokenKind.SquareClose))
         {
-            Token identifier = Expect(TokenType.Identifier) with { Type = TokenType.Parameter };
+            Token identifier = Expect(TokenKind.Identifier) with { Kind = TokenKind.Parameter };
             string symbol = context.GetSymbol(identifier);
-            if (!declarationNames.TryAdd(symbol, TokenType.Parameter))
+            if (!declarationNames.TryAdd(symbol, TokenKind.Parameter))
                 throw ParserError($"Name collision! Name {symbol} already exists.");
 
-            Discard(TokenType.Assignment);
+            Discard(TokenKind.Assignment);
 
             Token value = currentToken;
             ParameterValidation minval = default, maxval = default;
-            switch (value.Type)
+            switch (value.Kind)
             {
-                case TokenType.Bool:
+                case TokenKind.Bool:
                     Advance();
                     break;
-                case TokenType.Number:
+                case TokenKind.Number:
                     Advance();
 
                     bool boundsParsed = false;
 
                     Token lower;
-                    switch (currentToken.Type)
+                    switch (currentToken.Kind)
                     {
-                        case TokenType.ParenOpen:
+                        case TokenKind.ParenOpen:
                             Advance();
-                            lower = Expect(TokenType.Number);
+                            lower = Expect(TokenKind.Number);
                             minval = new(Bound.LowerExcl, Number.Parse(context.GetSymbol(lower), lower));
                             break;
-                        case TokenType.SquareOpen:
+                        case TokenKind.SquareOpen:
                             Advance();
-                            lower = Expect(TokenType.Number);
+                            lower = Expect(TokenKind.Number);
                             minval = new(Bound.LowerIncl, Number.Parse(context.GetSymbol(lower), lower));
                             break;
-                        case TokenType.CurlyOpen:
+                        case TokenKind.CurlyOpen:
                             Advance();
                             break;
                         default:
@@ -92,10 +92,10 @@ public class Parser(Context context, Lexer lexer)
                             break;
                     }
 
-                    if (boundsParsed || Accept(TokenType.CurlyClose))
+                    if (boundsParsed || Accept(TokenKind.CurlyClose))
                         break;
 
-                    if (Accept(TokenType.ArgumentSeparator))
+                    if (Accept(TokenKind.ArgumentSeparator))
                     {
                         if (minval.Type == Bound.None)
                             throw ParserError($"Number between '{Tokens.CURLY_OPEN}' and '{Tokens.ARG_SEP}'!");
@@ -106,18 +106,18 @@ public class Parser(Context context, Lexer lexer)
                             throw ParserError("Expected a separator and number for upper bound!");
                     }
 
-                    Token upper = Expect(TokenType.Number);
-                    switch (currentToken.Type)
+                    Token upper = Expect(TokenKind.Number);
+                    switch (currentToken.Kind)
                     {
-                        case TokenType.ParenClose:
+                        case TokenKind.ParenClose:
                             Advance();
                             maxval = new(Bound.UpperIncl, Number.Parse(context.GetSymbol(upper), upper));
                             break;
-                        case TokenType.SquareClose:
+                        case TokenKind.SquareClose:
                             Advance();
                             maxval = new(Bound.UpperExcl, Number.Parse(context.GetSymbol(upper), upper));
                             break;
-                        case TokenType.CurlyClose:
+                        case TokenKind.CurlyClose:
                             throw ParserError($"Unexpected number attached to infinite upper bound!");
                         default:
                             throw ParserError($"Unexpected upper bound token!");
@@ -128,7 +128,7 @@ public class Parser(Context context, Lexer lexer)
                     throw ParserError("Expected either a boolean or numeric value for the parameter!");
             }
 
-            Discard(TokenType.Terminator);
+            Discard(TokenKind.Terminator);
             parameters.Add(new(context, identifier, value, minval, maxval));
         }
 
@@ -136,38 +136,37 @@ public class Parser(Context context, Lexer lexer)
 
         #region Parse Declarations
 
-        while (!Peek(TokenType.CurlyOpen))
+        while (!Peek(TokenKind.CurlyOpen))
         {
-            Token declarer = currentToken;
-            TokenType type = declarer.MapDeclarer();
-            if (type == TokenType.None)
+            TokenKind kind = currentToken.MapDeclarer();
+            if (kind == TokenKind.None)
                 throw ParserError("Unknown declarer!");
         
             // couldn't use Expect due to mapping, so we have to advance manually
             Advance();
 
-            Token identifier = Expect(TokenType.Identifier) with { Type = type };
+            Token identifier = Expect(TokenKind.Identifier) with { Kind = kind };
             string symbol = context.GetSymbol(identifier);
             if (declarationNames.ContainsKey(symbol))
                 throw ParserError($"Name collision! Name {symbol} already exists.");
 
             ASTTag tag;
             ASTUnion union;
-            if (type == TokenType.Function)
+            if (kind == TokenKind.Function)
             {
                 List<Token> args = [];
-                if (Accept(TokenType.ParenOpen) && !Accept(TokenType.ParenClose))
+                if (Accept(TokenKind.ParenOpen) && !Accept(TokenKind.ParenClose))
                 {
                     do
                     {
-                        if (!Accept(TokenType.Identifier, out Token arg))
+                        if (!Accept(TokenKind.Identifier, out Token arg))
                             throw ParserError("User-defined functions can only have identifier arguments.");
 
                         functionLocalNames.Add(context.GetSymbol(arg));
                         args.Add(arg);
                     }
-                    while (Accept(TokenType.ArgumentSeparator));
-                    Discard(TokenType.ParenClose);
+                    while (Accept(TokenKind.ArgumentSeparator));
+                    Discard(TokenKind.ParenClose);
                 }
 
                 Block code = ParseBlock();
@@ -181,9 +180,9 @@ public class Parser(Context context, Lexer lexer)
             }
             else
             {
-                Token eq = Expect(TokenType.Assignment);
+                Token eq = Expect(TokenKind.Assignment);
 
-                List<Token> output = Expression(before: TokenType.Terminator);
+                List<Token> output = Expression(before: TokenKind.Terminator);
 
                 tag = ASTTag.Assign;
                 union = new()
@@ -194,7 +193,7 @@ public class Parser(Context context, Lexer lexer)
             declarations.Add(new ASTNode(tag, union));
 
             // this is done last to avoid having to check for circular dependencies on this variable
-            declarationNames.Add(symbol, type);
+            declarationNames.Add(symbol, kind);
         }
 
         #endregion
@@ -204,11 +203,11 @@ public class Parser(Context context, Lexer lexer)
         Block asts = ParseBlock();
         callbacks.Add(Calculation.NAME, new(Calculation.NAME, [], [.. asts]));
 
-        while (Accept(TokenType.Identifier, out Token identifier))
+        while (Accept(TokenKind.Identifier, out Token identifier))
         {
             List<Token> args = [];
-            if (Accept(TokenType.ParenOpen))
-                args = Expression(TokenType.ParenClose, TokenType.CurlyOpen);
+            if (Accept(TokenKind.ParenOpen))
+                args = Expression(TokenKind.ParenClose, TokenKind.CurlyOpen);
 
             Block code = ParseBlock();
 
@@ -240,13 +239,13 @@ public class Parser(Context context, Lexer lexer)
 
             foreach (Token token in node.Union.astAssign.Initializer)
             {
-                switch (token.Type)
+                switch (token.Kind)
                 {
-                    case TokenType.Input:
+                    case TokenKind.Input:
                         throw ParserError($"Cannot use '{Tokens.INPUT}' outside of functions!", token);
-                    case TokenType.Output:
+                    case TokenKind.Output:
                         throw ParserError($"Cannot use '{Tokens.OUTPUT}' outside of functions!", token);
-                    case TokenType.Comparison:
+                    case TokenKind.Comparison:
                         throw ParserError("Cannot use comparison operators outside of conditions!", token);
                 }
             }
@@ -281,8 +280,8 @@ public class Parser(Context context, Lexer lexer)
             throw ParserError("Exceeded Maximum Recursion Depth!");
 
         Block asts = [];
-        Discard(TokenType.CurlyOpen);
-        while (!Accept(TokenType.CurlyClose))
+        Discard(TokenKind.CurlyOpen);
+        while (!Accept(TokenKind.CurlyClose))
             asts.Add(Statement());
 
         --depth;
@@ -295,40 +294,40 @@ public class Parser(Context context, Lexer lexer)
         ASTUnion union;
 
         bool isAssignment =
-            Accept(TokenType.Identifier) ||
-            Accept(TokenType.Input) ||
-            Accept(TokenType.Output);
+            Accept(TokenKind.Identifier) ||
+            Accept(TokenKind.Input) ||
+            Accept(TokenKind.Output);
         if (isAssignment)
         {
             Token target = previousToken;
-            if (target.Type == TokenType.Identifier)
+            if (target.Kind == TokenKind.Identifier)
             {
                 string name = context.GetSymbol(target);
-                if (!ResolveIdentifier(name, out TokenType type))
+                if (!ResolveIdentifier(name, out TokenKind kind))
                     throw ParserError($"Unknown assignment target! {name} has not been declared.");
 
-                switch (type)
+                switch (kind)
                 {
-                    case TokenType.Parameter:
+                    case TokenKind.Parameter:
                         throw ParserError("Cannot assign to parameter!");
-                    case TokenType.Immutable:
+                    case TokenKind.Immutable:
                         throw ParserError("Cannot assign to immutable variable!");
-                    case TokenType.Persistent:
-                    case TokenType.Impersistent:
-                    case TokenType.FunctionLocal:
+                    case TokenKind.Persistent:
+                    case TokenKind.Impersistent:
+                    case TokenKind.FunctionLocal:
                         break;
                     default:
-                        Debug.Fail("Unreachable: got an unknown TokenType...");
+                        Debug.Fail("Unreachable: got an unknown TokenKind...");
                         break;
                 }
 
-                target = target with { Type = type };
+                target = target with { Kind = kind };
             }
 
-            if (!Accept(TokenType.Assignment, out Token assignment))
-                assignment = Expect(TokenType.Compound);
+            if (!Accept(TokenKind.Assignment, out Token assignment))
+                assignment = Expect(TokenKind.Compound);
 
-            List<Token> initializer = Expression(before: TokenType.Terminator);
+            List<Token> initializer = Expression(before: TokenKind.Terminator);
 
             tag = ASTTag.Assign;
             union = new()
@@ -336,14 +335,14 @@ public class Parser(Context context, Lexer lexer)
                 astAssign = new(target, assignment, [.. initializer])
             };
         }
-        else if (Accept(TokenType.If))
+        else if (Accept(TokenKind.If))
         {
-            List<Token> condition = Expression(after: TokenType.CurlyOpen);
+            List<Token> condition = Expression(after: TokenKind.CurlyOpen);
 
             Block ifBlock = ParseBlock();
 
             Block elseBlock;
-            if (Accept(TokenType.Else))
+            if (Accept(TokenKind.Else))
                 elseBlock = ParseBlock();
             else
                 elseBlock = [];
@@ -354,9 +353,9 @@ public class Parser(Context context, Lexer lexer)
                 astIf = new([.. condition], [.. ifBlock], [.. elseBlock])
             };
         }
-        else if (Accept(TokenType.While))
+        else if (Accept(TokenKind.While))
         {
-            List<Token> condition = Expression(after: TokenType.CurlyOpen);
+            List<Token> condition = Expression(after: TokenKind.CurlyOpen);
 
             Block whileBlock = ParseBlock();
 
@@ -366,13 +365,13 @@ public class Parser(Context context, Lexer lexer)
                 astWhile = new([.. condition], [.. whileBlock])
             };
         }
-        else if (Accept(TokenType.Return))
+        else if (Accept(TokenKind.Return))
         {
             List<Token> expression;
-            if (Accept(TokenType.Terminator))
+            if (Accept(TokenKind.Terminator))
                 expression = [];
             else
-                expression = Expression(before: TokenType.Terminator);
+                expression = Expression(before: TokenKind.Terminator);
 
             tag = ASTTag.Return;
             union = new()
@@ -393,25 +392,25 @@ public class Parser(Context context, Lexer lexer)
     /// <br/>
     /// 1. Only set 'before'
     /// <br/>
-    ///     This causes the parser to parse an expression up to, but not including the given type.
+    ///     This causes the parser to parse an expression up to, but not including the given kind.
     ///     The token that made it stop will be in previousToken (so it automatically gets Discarded).
     /// <br/>
     /// 2. Only set 'after'
     /// <br/>
-    ///     This causes the parser to parse an expression up to, but not including the given type.
+    ///     This causes the parser to parse an expression up to, but not including the given kind.
     ///     The token that made it stop will be in currentToken (so it can be used with Accept/Expect).
     /// <br/>
     /// 3. Set both arguments
     /// <br/>
-    ///     This causes the parser to parse an expression until it sees both given types consecutively.
+    ///     This causes the parser to parse an expression until it sees both given kinds consecutively.
     ///     The tokens corresponding to 'before' and 'after' will be in previousToken and currentToken, respectively.
     ///     This is useful for e.g. when a closing parenthesis is not part of an expression,
     ///     but you want the curly brace after it to end up in currentToken, instead of the parenthesis.
     /// </summary>
-    private List<Token> Expression(TokenType before = TokenType.None, TokenType after = TokenType.None)
+    private List<Token> Expression(TokenKind before = TokenKind.None, TokenKind after = TokenKind.None)
     {
-        bool ignoreBefore = before == TokenType.None;
-        bool ignoreAfter  = after  == TokenType.None;
+        bool ignoreBefore = before == TokenKind.None;
+        bool ignoreAfter  = after  == TokenKind.None;
         Debug.Assert(
             !(ignoreBefore && ignoreAfter),
             $"Expression must receive at least {nameof(before)} or {nameof(after)} in order to know when to stop.");
@@ -421,55 +420,55 @@ public class Parser(Context context, Lexer lexer)
 
         // initializing prev as default, since it's the previous token in the expression, not the whole parser
         // the condition is just an extreme case failsafe where all tokens are somehow exhausted (otherwise infinite loop)
-        for (Token prev = default; previousToken.Type != TokenType.None; prev = previousToken)
+        for (Token prev = default; previousToken.Kind != TokenKind.None; prev = previousToken)
         {
             Token token = currentToken;
             Advance();
 
-            bool matchesBefore = before == previousToken.Type;
-            bool matchesAfter  = after  == currentToken.Type;
+            bool matchesBefore = before == previousToken.Kind;
+            bool matchesAfter  = after  == currentToken.Kind;
 
             if (matchesBefore && (ignoreAfter || matchesAfter))
                 break;
 
-            switch (token.Type)
+            switch (token.Kind)
             {
-                case TokenType.Number:
-                case TokenType.Bool:
-                case TokenType.Constant:
-                case TokenType.Input:
-                case TokenType.Output:
+                case TokenKind.Number:
+                case TokenKind.Bool:
+                case TokenKind.Constant:
+                case TokenKind.Input:
+                case TokenKind.Output:
                     expression.Add(token);
                     break;
-                case TokenType.Identifier:
+                case TokenKind.Identifier:
                     {
                         string name = context.GetSymbol(token);
-                        if (!ResolveIdentifier(name, out TokenType type))
+                        if (!ResolveIdentifier(name, out TokenKind kind))
                             throw ParserError($"Could not resolve name! (name was: {name})", token);
 
-                        Token resolved = token with { Type = type };
-                        if (type == TokenType.Function)
+                        Token resolved = token with { Kind = kind };
+                        if (kind == TokenKind.Function)
                             operatorStack.Push(new(resolved, -1));
                         else
                             expression.Add(resolved);
                     }
                     break;
-                case TokenType.Arithmetic:
+                case TokenKind.Arithmetic:
                     {
                         bool unary;
-                        switch (prev.Type)
+                        switch (prev.Kind)
                         {
-                            case TokenType.Number:
-                            case TokenType.Bool:
-                            case TokenType.Constant:
-                            case TokenType.Identifier:
-                            case TokenType.Parameter:
-                            case TokenType.Immutable:
-                            case TokenType.Persistent:
-                            case TokenType.Impersistent:
-                            case TokenType.Input:
-                            case TokenType.Output:
-                            case TokenType.ParenClose:
+                            case TokenKind.Number:
+                            case TokenKind.Bool:
+                            case TokenKind.Constant:
+                            case TokenKind.Identifier:
+                            case TokenKind.Parameter:
+                            case TokenKind.Immutable:
+                            case TokenKind.Persistent:
+                            case TokenKind.Impersistent:
+                            case TokenKind.Input:
+                            case TokenKind.Output:
+                            case TokenKind.ParenClose:
                                 unary = false;
                                 break;
                             default:
@@ -481,13 +480,13 @@ public class Parser(Context context, Lexer lexer)
                         HandlePrecedences(operatorStack, expression, token, unary);
                     }
                     break;
-                case TokenType.Comparison:
+                case TokenKind.Comparison:
                     HandlePrecedences(operatorStack, expression, token);
                     break;
-                case TokenType.ArgumentSeparator:
+                case TokenKind.ArgumentSeparator:
                     while (operatorStack.TryPop(out var oper))
                     {
-                        if (oper.Type == TokenType.ParenOpen)
+                        if (oper.Kind == TokenKind.ParenOpen)
                         {
                             operatorStack.Push(oper);
                             goto found_paren_open;
@@ -501,24 +500,24 @@ public class Parser(Context context, Lexer lexer)
 
                 found_paren_open:
                     break;
-                case TokenType.MathFunction:
+                case TokenKind.MathFunction:
                     operatorStack.Push(new(token, -1));
                     break;
-                case TokenType.ParenOpen:
+                case TokenKind.ParenOpen:
                     operatorStack.Push(new(token, -1));
                     break;
-                case TokenType.ParenClose:
+                case TokenKind.ParenClose:
                     {
                         Operator oper;
-                        while (operatorStack.TryPop(out oper) && oper.Type != TokenType.ParenOpen)
+                        while (operatorStack.TryPop(out oper) && oper.Kind != TokenKind.ParenOpen)
                             expression.Add(oper.Token);
                         // the parenthesis is discarded intentionally (if the operator is not null)
 
                         // if popping fails, there was no matching opening parenthesis before the bottom of the stack
-                        if (oper.Type == TokenType.None)
+                        if (oper.Kind == TokenKind.None)
                             throw ParserError($"No matching: {Tokens.PAREN_OPEN}", token);
 
-                        if (operatorStack.TryPeek(out var maybeFunction) && maybeFunction.Type.IsFunction())
+                        if (operatorStack.TryPeek(out var maybeFunction) && maybeFunction.Kind.IsFunction())
                         {
                             Operator fun = operatorStack.Pop();
                             expression.Add(fun.Token);
@@ -536,7 +535,7 @@ public class Parser(Context context, Lexer lexer)
         while (operatorStack.TryPop(out var oper))
         {
             Token token = oper.Token;
-            if (token.Type == TokenType.ParenOpen)
+            if (token.Kind == TokenKind.ParenOpen)
                 throw ParserError($"No matching: {Tokens.PAREN_CLOSE}", token);
 
             expression.Add(token);
@@ -569,51 +568,51 @@ public class Parser(Context context, Lexer lexer)
 
     #region Helpers
 
-    private bool ResolveIdentifier(string name, out TokenType type)
+    private bool ResolveIdentifier(string name, out TokenKind kind)
     {
         bool ok;
         if (functionLocalNames.Contains(name))
         {
-            type = TokenType.FunctionLocal;
+            kind = TokenKind.FunctionLocal;
             ok = true;
         }
         else
         {
-            ok = declarationNames.TryGetValue(name, out type);
+            ok = declarationNames.TryGetValue(name, out kind);
         }
         return ok;
     }
 
-    private Token Expect(TokenType type)
+    private Token Expect(TokenKind kind)
     {
-        Discard(type);
+        Discard(kind);
         return previousToken;
     }
 
-    private void Discard(TokenType type)
+    private void Discard(TokenKind kind)
     {
-        if (!Accept(type))
+        if (!Accept(kind))
             throw ParserError("Unexpected token!");
     }
 
-    private bool Accept(TokenType type)
+    private bool Accept(TokenKind kind)
     {
-        bool ok = Peek(type);
+        bool ok = Peek(kind);
         if (ok)
             Advance();
         return ok;
     }
 
-    private bool Accept(TokenType type, out Token token)
+    private bool Accept(TokenKind kind, out Token token)
     {
-        bool ok = Accept(type);
+        bool ok = Accept(kind);
         token = ok ? previousToken : default;
         return ok;
     }
 
-    private bool Peek(TokenType type)
+    private bool Peek(TokenKind kind)
     {
-        return type == currentToken.Type;
+        return kind == currentToken.Kind;
     }
 
     private void Advance()

@@ -139,74 +139,74 @@ public class Interpreter
 
         for (CodeAddress c = 0; c < program.Length; c++)
         {
-            switch ((InstructionType)program[c])
+            switch ((InstructionKind)program[c])
             {
-                case InstructionType.Start:
+                case InstructionKind.Start:
                     break;
-                case InstructionType.End:
+                case InstructionKind.End:
                     if (c != program.Length - 1)
                         throw InterpreterError("Unexpected program end!");
 
-                    goto case InstructionType.Return;
-                case InstructionType.Return:
+                    goto case InstructionKind.Return;
+                case InstructionKind.Return:
                     if (stackPointer != stack.Count - program.Arity)
                         throw InterpreterError("Bad stack pointer value!");
 
                     --depth;
                     return;
-                case InstructionType.LoadIn:
+                case InstructionKind.LoadIn:
                     stack.Push(X);
                     break;
-                case InstructionType.StoreIn:
+                case InstructionKind.StoreIn:
                     X = stack.Pop();
                     break;
-                case InstructionType.LoadOut:
+                case InstructionKind.LoadOut:
                     stack.Push(Y);
                     break;
-                case InstructionType.StoreOut:
+                case InstructionKind.StoreOut:
                     Y = stack.Pop();
                     break;
-                case InstructionType.LoadNumber:
+                case InstructionKind.LoadNumber:
                     DataAddress dAddress = (DataAddress)program.ExtractAddress(ref c);
                     stack.Push(program[dAddress]);
                     break;
-                case InstructionType.LoadPersistent:
+                case InstructionKind.LoadPersistent:
                     {
                         MemoryAddress loadAddress = (MemoryAddress)program.ExtractAddress(ref c);
                         stack.Push(unstable.GetPersistent(loadAddress));
                     }
                     break;
-                case InstructionType.StorePersistent:
+                case InstructionKind.StorePersistent:
                     {
                         MemoryAddress storeAddress = (MemoryAddress)program.ExtractAddress(ref c);
                         unstable.SetPersistent(storeAddress, stack.Pop());
                     }
                     break;
-                case InstructionType.LoadImpersistent:
+                case InstructionKind.LoadImpersistent:
                     {
                         MemoryAddress loadAddress = (MemoryAddress)program.ExtractAddress(ref c);
                         stack.Push(unstable.GetImpersistent(loadAddress));
                     }
                     break;
-                case InstructionType.StoreImpersistent:
+                case InstructionKind.StoreImpersistent:
                     {
                         MemoryAddress storeAddress = (MemoryAddress)program.ExtractAddress(ref c);
                         unstable.SetImpersistent(storeAddress, stack.Pop());
                     }
                     break;
-                case InstructionType.LoadStack:
+                case InstructionKind.LoadStack:
                     {
                         StackAddress loadAddress = (StackAddress)program.ExtractAddress(ref c);
                         stack.Push(stack[stackPointer + loadAddress]);
                     }
                     break;
-                case InstructionType.StoreStack:
+                case InstructionKind.StoreStack:
                     {
                         StackAddress storeAddress = (StackAddress)program.ExtractAddress(ref c);
                         stack[stackPointer + storeAddress] = stack.Pop();
                     }
                     break;
-                case InstructionType.Swap:
+                case InstructionKind.Swap:
                     Debug.Assert(stack.Count >= 2);
 
                     Number swap1 = stack.Pop();
@@ -214,31 +214,31 @@ public class Interpreter
                     stack.Push(swap1);
                     stack.Push(swap2);
                     break;
-                case InstructionType.LoadZero:
+                case InstructionKind.LoadZero:
                     stack.Push(Number.ZERO);
                     break;
-                case InstructionType.LoadE:
+                case InstructionKind.LoadE:
                     stack.Push(E);
                     break;
-                case InstructionType.LoadPi:
+                case InstructionKind.LoadPi:
                     stack.Push(PI);
                     break;
-                case InstructionType.LoadTau:
+                case InstructionKind.LoadTau:
                     stack.Push(Tau);
                     break;
-                case InstructionType.LoadCapacity:
+                case InstructionKind.LoadCapacity:
                     stack.Push(Constants.LUT_POINTS_CAPACITY);
                     break;
-                case InstructionType.Jmp:
+                case InstructionKind.Jmp:
                     CodeAddress jmpAddress = (CodeAddress)program.ExtractAddress(ref c);
                     c = jmpAddress;
                     break;
-                case InstructionType.Jz:
+                case InstructionKind.Jz:
                     CodeAddress jzAddress = (CodeAddress)program.ExtractAddress(ref c);
                     if (!stack.Pop())
                         c = jzAddress;
                     break;
-                case InstructionType.Call:
+                case InstructionKind.Call:
                     MemoryAddress functionAddress = (MemoryAddress)program.ExtractAddress(ref c);
                     Program function = functions[functionAddress];
 
@@ -253,154 +253,154 @@ public class Interpreter
                     stack.Push(Y);
                     Y = y;
                     break;
-                case InstructionType.Add:
+                case InstructionKind.Add:
                     Fn2((y, x) => x + y);
                     break;
-                case InstructionType.Sub:
+                case InstructionKind.Sub:
                     Fn2((y, x) => x - y);
                     break;
-                case InstructionType.Mul:
+                case InstructionKind.Mul:
                     Fn2((y, x) => x * y);
                     break;
-                case InstructionType.Div:
+                case InstructionKind.Div:
                     Fn2((y, x) => x / y);
                     break;
-                case InstructionType.Mod:
+                case InstructionKind.Mod:
                     Fn2((y, x) => x % y);
                     break;
-                case InstructionType.Pow:
+                case InstructionKind.Pow:
                     Fn2((y, x) => Pow(x, y));
                     break;
-                case InstructionType.Exp: // implicit first argument
+                case InstructionKind.Exp: // implicit first argument
                     Fn1(a => Exp(a));
                     break;
-                case InstructionType.Or:
+                case InstructionKind.Or:
                     Fn2((y, x) => x | y);
                     break;
-                case InstructionType.And:
+                case InstructionKind.And:
                     Fn2((y, x) => x & y);
                     break;
-                case InstructionType.Lt:
+                case InstructionKind.Lt:
                     Fn2((y, x) => x < y);
                     break;
-                case InstructionType.Gt:
+                case InstructionKind.Gt:
                     Fn2((y, x) => x > y);
                     break;
-                case InstructionType.Le:
+                case InstructionKind.Le:
                     Fn2((y, x) => x <= y);
                     break;
-                case InstructionType.Ge:
+                case InstructionKind.Ge:
                     Fn2((y, x) => x >= y);
                     break;
-                case InstructionType.Eq:
+                case InstructionKind.Eq:
                     Fn2((y, x) => x == y);
                     break;
-                case InstructionType.Ne:
+                case InstructionKind.Ne:
                     Fn2((y, x) => x != y);
                     break;
-                case InstructionType.Not: // unary
+                case InstructionKind.Not: // unary
                     stack.Push(!stack.Pop());
                     break;
-                case InstructionType.Abs:
+                case InstructionKind.Abs:
                     Fn1(a => Abs(a));
                     break;
-                case InstructionType.Sign:
+                case InstructionKind.Sign:
                     Fn1(a => Sign(a));
                     break;
-                case InstructionType.CopySign:
+                case InstructionKind.CopySign:
                     Fn2((b, a) => CopySign(a, b));
                     break;
-                case InstructionType.Round:
+                case InstructionKind.Round:
                     Fn1(a => Round(a));
                     break;
-                case InstructionType.Trunc:
+                case InstructionKind.Trunc:
                     Fn1(a => Truncate(a));
                     break;
-                case InstructionType.Floor:
+                case InstructionKind.Floor:
                     Fn1(a => Floor(a));
                     break;
-                case InstructionType.Ceil:
+                case InstructionKind.Ceil:
                     Fn1(a => Ceiling(a));
                     break;
-                case InstructionType.Clamp:
+                case InstructionKind.Clamp:
                     Fn3((c, b, a) => Clamp(a, b, c));
                     break;
-                case InstructionType.Min:
+                case InstructionKind.Min:
                     Fn2((b, a) => Min(a, b));
                     break;
-                case InstructionType.Max:
+                case InstructionKind.Max:
                     Fn2((b, a) => Max(a, b));
                     break;
-                case InstructionType.MinM:
+                case InstructionKind.MinM:
                     Fn2((b, a) => MinMagnitude(a, b));
                     break;
-                case InstructionType.MaxM:
+                case InstructionKind.MaxM:
                     Fn2((b, a) => MaxMagnitude(a, b));
                     break;
-                case InstructionType.Sqrt:
+                case InstructionKind.Sqrt:
                     Fn1(a => Sqrt(a));
                     break;
-                case InstructionType.Cbrt:
+                case InstructionKind.Cbrt:
                     Fn1(a => Cbrt(a));
                     break;
-                case InstructionType.Log:
+                case InstructionKind.Log:
                     Fn1(a => Log(a));
                     break;
-                case InstructionType.Log2:
+                case InstructionKind.Log2:
                     Fn1(a => Log2(a));
                     break;
-                case InstructionType.Log10:
+                case InstructionKind.Log10:
                     Fn1(a => Log10(a));
                     break;
-                case InstructionType.LogB:
+                case InstructionKind.LogB:
                     Fn2((b, a) => Log(a, b));
                     break;
-                case InstructionType.ILogB:
+                case InstructionKind.ILogB:
                     Fn1(a => ILogB(a));
                     break;
-                case InstructionType.Sin:
+                case InstructionKind.Sin:
                     Fn1(a => Sin(a));
                     break;
-                case InstructionType.Sinh:
+                case InstructionKind.Sinh:
                     Fn1(a => Sinh(a));
                     break;
-                case InstructionType.Asin:
+                case InstructionKind.Asin:
                     Fn1(a => Asin(a));
                     break;
-                case InstructionType.Asinh:
+                case InstructionKind.Asinh:
                     Fn1(a => Asinh(a));
                     break;
-                case InstructionType.Cos:
+                case InstructionKind.Cos:
                     Fn1(a => Cos(a));
                     break;
-                case InstructionType.Cosh:
+                case InstructionKind.Cosh:
                     Fn1(a => Cosh(a));
                     break;
-                case InstructionType.Acos:
+                case InstructionKind.Acos:
                     Fn1(a => Acos(a));
                     break;
-                case InstructionType.Acosh:
+                case InstructionKind.Acosh:
                     Fn1(a => Acosh(a));
                     break;
-                case InstructionType.Tan:
+                case InstructionKind.Tan:
                     Fn1(a => Tan(a));
                     break;
-                case InstructionType.Tanh:
+                case InstructionKind.Tanh:
                     Fn1(a => Tanh(a));
                     break;
-                case InstructionType.Atan:
+                case InstructionKind.Atan:
                     Fn1(a => Atan(a));
                     break;
-                case InstructionType.Atanh:
+                case InstructionKind.Atanh:
                     Fn1(a => Atanh(a));
                     break;
-                case InstructionType.Atan2:
+                case InstructionKind.Atan2:
                     Fn2((b, a) => Atan2(a, b));
                     break;
-                case InstructionType.FusedMultiplyAdd:
+                case InstructionKind.FusedMultiplyAdd:
                     Fn3((c, b, a) => FusedMultiplyAdd(a, b, c));
                     break;
-                case InstructionType.ScaleB:
+                case InstructionKind.ScaleB:
                     Fn2((b, a) => ScaleB(a, (int)b)); // lol
                     break;
                 default:

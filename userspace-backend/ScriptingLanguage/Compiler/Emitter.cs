@@ -43,11 +43,11 @@ public class Emitter(Context context)
 
     public void AddAssign(Token assign)
     {
-        Dictionary<string, MemoryAddress> assignAddresses = assign.Type switch
+        Dictionary<string, MemoryAddress> assignAddresses = assign.Kind switch
         {
-            TokenType.Immutable or
-            TokenType.Persistent => persistentAddresses,
-            TokenType.Impersistent => impersistentAddresses,
+            TokenKind.Immutable or
+            TokenKind.Persistent => persistentAddresses,
+            TokenKind.Impersistent => impersistentAddresses,
 
             _ => throw EmitError("Cannot determine assignment mapping!", assign),
         };
@@ -86,13 +86,13 @@ public class Emitter(Context context)
     private Program EmitWithCallback(Action callback, int estimatedAmount)
     {
         byteCode = new(estimatedAmount);
-        AddInstruction(InstructionType.Start);
+        AddInstruction(InstructionKind.Start);
 
         numberMap = [];
 
         callback();
 
-        AddInstruction(InstructionType.End);
+        AddInstruction(InstructionKind.End);
         byte[] code = [.. byteCode];
         byteCode.Clear();
 
@@ -122,38 +122,37 @@ public class Emitter(Context context)
                     EmitExpression(ast.Initializer);
 
                     Token op = ast.Operator;
-                    bool isCompound = op.Type == TokenType.Compound;
-                    InstructionType modify = isCompound ? EmitCompoundAssignment(op) : default;
+                    bool isCompound = op.Kind == TokenKind.Compound;
+                    InstructionKind modify = isCompound ? EmitCompoundAssignment(op) : default;
 
                     Token identifier = ast.Identifier;
-                    TokenType type = identifier.Type;
-                    switch (type)
+                    switch (identifier.Kind)
                     {
-                        case TokenType.Input:
-                            EmitRegisterAssignment(isCompound, InstructionType.LoadIn, modify, InstructionType.StoreIn);
+                        case TokenKind.Input:
+                            EmitRegisterAssignment(isCompound, InstructionKind.LoadIn, modify, InstructionKind.StoreIn);
                             break;
-                        case TokenType.Output:
-                            EmitRegisterAssignment(isCompound, InstructionType.LoadOut, modify, InstructionType.StoreOut);
+                        case TokenKind.Output:
+                            EmitRegisterAssignment(isCompound, InstructionKind.LoadOut, modify, InstructionKind.StoreOut);
                             break;
-                        case TokenType.Parameter:
-                        case TokenType.Immutable:
-                        case TokenType.Persistent:
+                        case TokenKind.Parameter:
+                        case TokenKind.Immutable:
+                        case TokenKind.Persistent:
                             EmitMemoryAssignment(
                                 (byte[])persistentAddresses[context.GetSymbol(identifier)],
-                                isCompound, InstructionType.LoadPersistent, modify, InstructionType.StorePersistent);
+                                isCompound, InstructionKind.LoadPersistent, modify, InstructionKind.StorePersistent);
                             break;
-                        case TokenType.Impersistent:
+                        case TokenKind.Impersistent:
                             EmitMemoryAssignment(
                                 (byte[])impersistentAddresses[context.GetSymbol(identifier)],
-                                isCompound, InstructionType.LoadImpersistent, modify, InstructionType.StoreImpersistent);
+                                isCompound, InstructionKind.LoadImpersistent, modify, InstructionKind.StoreImpersistent);
                             break;
-                        case TokenType.FunctionLocal:
+                        case TokenKind.FunctionLocal:
                             EmitMemoryAssignment(
                                 (byte[])tempFunctionArgs[context.GetSymbol(identifier)],
-                                isCompound, InstructionType.LoadStack, modify, InstructionType.StoreStack);
+                                isCompound, InstructionKind.LoadStack, modify, InstructionKind.StoreStack);
                             break;
                         default:
-                            Debug.Fail("Unreachable: parser shouldn't allow this TokenType?");
+                            Debug.Fail("Unreachable: parser shouldn't allow this TokenKind?");
                             break;
                     }
                 }
@@ -164,7 +163,7 @@ public class Emitter(Context context)
 
                     EmitExpression(ast.Condition);
 
-                    CodeAddress ifJumpTargetIndex = AddDefaultJump(InstructionType.Jz);
+                    CodeAddress ifJumpTargetIndex = AddDefaultJump(InstructionKind.Jz);
                     EmitBlock(ast.If);
 
                     CodeAddress ifJumpTarget;
@@ -174,7 +173,7 @@ public class Emitter(Context context)
                     }
                     else
                     {
-                        CodeAddress elseJumpTargetIndex = AddDefaultJump(InstructionType.Jmp);
+                        CodeAddress elseJumpTargetIndex = AddDefaultJump(InstructionKind.Jmp);
                         ifJumpTarget = byteCode.Count - 1;
                         EmitBlock(ast.Else);
                         CodeAddress elseJumpTarget = byteCode.Count - 1;
@@ -190,10 +189,10 @@ public class Emitter(Context context)
                     CodeAddress loopJumpTarget = byteCode.Count - 1;
                     EmitExpression(ast.Condition);
 
-                    CodeAddress whileJumpTargetIndex = AddDefaultJump(InstructionType.Jz);
+                    CodeAddress whileJumpTargetIndex = AddDefaultJump(InstructionKind.Jz);
                     EmitBlock(ast.While);
 
-                    AddInstruction(InstructionType.Jmp, (byte[])loopJumpTarget);
+                    AddInstruction(InstructionKind.Jmp, (byte[])loopJumpTarget);
                     CodeAddress whileJumpTarget = byteCode.Count - 1;
                     SetAddress(whileJumpTargetIndex, (byte[])whileJumpTarget);
                 }
@@ -206,10 +205,10 @@ public class Emitter(Context context)
                     if (expression.Length > 0)
                     {
                         EmitExpression(expression);
-                        AddInstruction(InstructionType.StoreOut);
+                        AddInstruction(InstructionKind.StoreOut);
                     }
 
-                    AddInstruction(InstructionType.Return);
+                    AddInstruction(InstructionKind.Return);
                 }
                 break;
             default:
@@ -226,65 +225,64 @@ public class Emitter(Context context)
 
     private void EmitToken(Token token)
     {
-        TokenType type = token.Type;
-        switch (type)
+        switch (token.Kind)
         {
-            case TokenType.Number:
+            case TokenKind.Number:
                 Number number = Number.Parse(context.GetSymbol(token), token);
                 if (!numberMap.TryGetValue(number, out DataAddress dAddress))
                 {
                     dAddress = (DataAddress)numberMap.Count;
                     numberMap.Add(number, dAddress);
                 }
-                AddInstruction(InstructionType.LoadNumber, (byte[])dAddress);
+                AddInstruction(InstructionKind.LoadNumber, (byte[])dAddress);
                 break;
-            case TokenType.Parameter:
-            case TokenType.Immutable:
-            case TokenType.Persistent:
+            case TokenKind.Parameter:
+            case TokenKind.Immutable:
+            case TokenKind.Persistent:
                 MemoryAddress persistentAddress = persistentAddresses[context.GetSymbol(token)];
-                AddInstruction(InstructionType.LoadPersistent, (byte[])persistentAddress);
+                AddInstruction(InstructionKind.LoadPersistent, (byte[])persistentAddress);
                 break;
-            case TokenType.Impersistent:
+            case TokenKind.Impersistent:
                 MemoryAddress impersistentAddress = impersistentAddresses[context.GetSymbol(token)];
-                AddInstruction(InstructionType.LoadImpersistent, (byte[])impersistentAddress);
+                AddInstruction(InstructionKind.LoadImpersistent, (byte[])impersistentAddress);
                 break;
-            case TokenType.Input:
-                AddInstruction(InstructionType.LoadIn);
+            case TokenKind.Input:
+                AddInstruction(InstructionKind.LoadIn);
                 break;
-            case TokenType.Output:
-                AddInstruction(InstructionType.LoadOut);
+            case TokenKind.Output:
+                AddInstruction(InstructionKind.LoadOut);
                 break;
-            case TokenType.Constant:
+            case TokenKind.Constant:
                 AddInstruction(EmitConstant(token));
                 break;
-            case TokenType.Arithmetic:
-                InstructionType arithmetic = EmitArithmetic(token);
+            case TokenKind.Arithmetic:
+                InstructionKind arithmetic = EmitArithmetic(token);
 
                 // attempt to convert [...LoadE, Pow...] to [...Exp...]
-                if (arithmetic == InstructionType.Pow && byteCode.Count > 0)
+                if (arithmetic == InstructionKind.Pow && byteCode.Count > 0)
                 {
-                    InstructionType prev = (InstructionType)byteCode[^1];
-                    if (prev == InstructionType.LoadE)
+                    InstructionKind prev = (InstructionKind)byteCode[^1];
+                    if (prev == InstructionKind.LoadE)
                     {
-                        byteCode[^1] = (byte)InstructionType.Exp;
+                        byteCode[^1] = (byte)InstructionKind.Exp;
                         break;
                     }
                 }
 
                 AddInstruction(arithmetic);
                 break;
-            case TokenType.Comparison:
+            case TokenKind.Comparison:
                 AddInstruction(EmitComparison(token));
                 break;
-            case TokenType.Function:
+            case TokenKind.Function:
                 MemoryAddress functionAddress = functionAddresses[context.GetSymbol(token)];
-                AddInstruction(InstructionType.Call, (byte[])functionAddress);
+                AddInstruction(InstructionKind.Call, (byte[])functionAddress);
                 break;
-            case TokenType.FunctionLocal:
+            case TokenKind.FunctionLocal:
                 StackAddress stackAddress = tempFunctionArgs[context.GetSymbol(token)];
-                AddInstruction(InstructionType.LoadStack, (byte[])stackAddress);
+                AddInstruction(InstructionKind.LoadStack, (byte[])stackAddress);
                 break;
-            case TokenType.MathFunction:
+            case TokenKind.MathFunction:
                 AddInstruction(EmitMathFunction(token));
                 break;
             default:
@@ -294,18 +292,18 @@ public class Emitter(Context context)
 
     #region ByteCode Helpers
 
-    private void AddInstruction(InstructionType type)
+    private void AddInstruction(InstructionKind instructionKind)
     {
-        Debug.Assert(type.AddressLength() == 0);
+        Debug.Assert(instructionKind.AddressLength() == 0);
 
-        byteCode.Add((byte)type);
+        byteCode.Add((byte)instructionKind);
     }
 
-    private void AddInstruction(InstructionType type, byte[] address)
+    private void AddInstruction(InstructionKind instructionKind, byte[] address)
     {
-        Debug.Assert(type.AddressLength() == address.Length);
+        Debug.Assert(instructionKind.AddressLength() == address.Length);
 
-        byteCode.Add((byte)type);
+        byteCode.Add((byte)instructionKind);
         byteCode.AddRange(address);
     }
 
@@ -316,7 +314,7 @@ public class Emitter(Context context)
             byteCode[offset + i] = address[i];
     }
 
-    private CodeAddress AddDefaultJump(InstructionType jump)
+    private CodeAddress AddDefaultJump(InstructionKind jump)
     {
         Debug.Assert(jump.IsBranch());
 
@@ -329,141 +327,141 @@ public class Emitter(Context context)
 
     #region Emit Helpers
 
-    private void EmitRegisterAssignment(bool isCompound, InstructionType load, InstructionType modify, InstructionType store)
+    private void EmitRegisterAssignment(bool isCompound, InstructionKind load, InstructionKind modify, InstructionKind store)
     {
         if (isCompound)
         {
             AddInstruction(load);
-            AddInstruction(InstructionType.Swap);
+            AddInstruction(InstructionKind.Swap);
             AddInstruction(modify);
         }
         AddInstruction(store);
     }
 
-    private void EmitMemoryAssignment(byte[] address, bool isCompound, InstructionType load, InstructionType modify, InstructionType store)
+    private void EmitMemoryAssignment(byte[] address, bool isCompound, InstructionKind load, InstructionKind modify, InstructionKind store)
     {
         if (isCompound)
         {
             AddInstruction(load, address);
-            AddInstruction(InstructionType.Swap);
+            AddInstruction(InstructionKind.Swap);
             AddInstruction(modify);
         }
         AddInstruction(store, address);
     }
 
-    private static InstructionType EmitConstant(Token token)
+    private static InstructionKind EmitConstant(Token token)
     {
-        Debug.Assert(token.Type == TokenType.Constant);
+        Debug.Assert(token.Kind == TokenKind.Constant);
         return (ExtraIndexConstant)token.ExtraIndex switch
         {
-            ExtraIndexConstant.Zero => InstructionType.LoadZero,
-            ExtraIndexConstant.E => InstructionType.LoadE,
-            ExtraIndexConstant.Pi => InstructionType.LoadPi,
-            ExtraIndexConstant.Tau => InstructionType.LoadTau,
-            ExtraIndexConstant.Capacity => InstructionType.LoadCapacity,
+            ExtraIndexConstant.Zero => InstructionKind.LoadZero,
+            ExtraIndexConstant.E => InstructionKind.LoadE,
+            ExtraIndexConstant.Pi => InstructionKind.LoadPi,
+            ExtraIndexConstant.Tau => InstructionKind.LoadTau,
+            ExtraIndexConstant.Capacity => InstructionKind.LoadCapacity,
 
             _ => throw EmitError($"Unknown ExtraIndexConstant value: {token.ExtraIndex}", token)
         };
     }
 
-    private static InstructionType EmitCompoundAssignment(Token token)
+    private static InstructionKind EmitCompoundAssignment(Token token)
     {
-        Debug.Assert(token.Type == TokenType.Compound);
+        Debug.Assert(token.Kind == TokenKind.Compound);
         return (ExtraIndexCompound)token.ExtraIndex switch
         {
-            ExtraIndexCompound.Add => InstructionType.Add,
-            ExtraIndexCompound.Sub => InstructionType.Sub,
-            ExtraIndexCompound.Mul => InstructionType.Mul,
-            ExtraIndexCompound.Div => InstructionType.Div,
-            ExtraIndexCompound.Mod => InstructionType.Mod,
-            ExtraIndexCompound.Pow => InstructionType.Pow,
+            ExtraIndexCompound.Add => InstructionKind.Add,
+            ExtraIndexCompound.Sub => InstructionKind.Sub,
+            ExtraIndexCompound.Mul => InstructionKind.Mul,
+            ExtraIndexCompound.Div => InstructionKind.Div,
+            ExtraIndexCompound.Mod => InstructionKind.Mod,
+            ExtraIndexCompound.Pow => InstructionKind.Pow,
 
             _ => throw EmitError($"Unknown ExtraIndexCompound value: {token.ExtraIndex}", token)
         };
     }
 
-    private static InstructionType EmitArithmetic(Token token)
+    private static InstructionKind EmitArithmetic(Token token)
     {
-        Debug.Assert(token.Type == TokenType.Arithmetic);
+        Debug.Assert(token.Kind == TokenKind.Arithmetic);
         return (ExtraIndexArithmetic)token.ExtraIndex switch
         {
-            ExtraIndexArithmetic.Add => InstructionType.Add,
-            ExtraIndexArithmetic.Sub => InstructionType.Sub,
-            ExtraIndexArithmetic.Mul => InstructionType.Mul,
-            ExtraIndexArithmetic.Div => InstructionType.Div,
-            ExtraIndexArithmetic.Mod => InstructionType.Mod,
-            ExtraIndexArithmetic.Pow => InstructionType.Pow,
+            ExtraIndexArithmetic.Add => InstructionKind.Add,
+            ExtraIndexArithmetic.Sub => InstructionKind.Sub,
+            ExtraIndexArithmetic.Mul => InstructionKind.Mul,
+            ExtraIndexArithmetic.Div => InstructionKind.Div,
+            ExtraIndexArithmetic.Mod => InstructionKind.Mod,
+            ExtraIndexArithmetic.Pow => InstructionKind.Pow,
 
             _ => throw EmitError($"Unknown ExtraIndexArithmetic value: {token.ExtraIndex}", token)
         };
     }
 
-    private static InstructionType EmitComparison(Token token)
+    private static InstructionKind EmitComparison(Token token)
     {
-        Debug.Assert(token.Type == TokenType.Comparison);
+        Debug.Assert(token.Kind == TokenKind.Comparison);
         return (ExtraIndexComparison)token.ExtraIndex switch
         {
-            ExtraIndexComparison.Or => InstructionType.Or,
-            ExtraIndexComparison.And => InstructionType.And,
-            ExtraIndexComparison.LessThan => InstructionType.Lt,
-            ExtraIndexComparison.GreaterThan => InstructionType.Gt,
-            ExtraIndexComparison.LessThanOrEqual => InstructionType.Le,
-            ExtraIndexComparison.GreaterThanOrEqual => InstructionType.Ge,
-            ExtraIndexComparison.Equal => InstructionType.Eq,
-            ExtraIndexComparison.NotEqual => InstructionType.Ne,
-            ExtraIndexComparison.Not => InstructionType.Not,
+            ExtraIndexComparison.Or => InstructionKind.Or,
+            ExtraIndexComparison.And => InstructionKind.And,
+            ExtraIndexComparison.LessThan => InstructionKind.Lt,
+            ExtraIndexComparison.GreaterThan => InstructionKind.Gt,
+            ExtraIndexComparison.LessThanOrEqual => InstructionKind.Le,
+            ExtraIndexComparison.GreaterThanOrEqual => InstructionKind.Ge,
+            ExtraIndexComparison.Equal => InstructionKind.Eq,
+            ExtraIndexComparison.NotEqual => InstructionKind.Ne,
+            ExtraIndexComparison.Not => InstructionKind.Not,
 
             _ => throw EmitError($"Unknown ExtraIndexComparison value: {token.ExtraIndex}", token)
         };
     }
 
-    private static InstructionType EmitMathFunction(Token token)
+    private static InstructionKind EmitMathFunction(Token token)
     {
-        Debug.Assert(token.Type == TokenType.MathFunction);
+        Debug.Assert(token.Kind == TokenKind.MathFunction);
         return (ExtraIndexMathFunction)token.ExtraIndex switch
         {
-            ExtraIndexMathFunction.Abs => InstructionType.Abs,
-            ExtraIndexMathFunction.Sign => InstructionType.Sign,
-            ExtraIndexMathFunction.CopySign => InstructionType.CopySign,
+            ExtraIndexMathFunction.Abs => InstructionKind.Abs,
+            ExtraIndexMathFunction.Sign => InstructionKind.Sign,
+            ExtraIndexMathFunction.CopySign => InstructionKind.CopySign,
 
-            ExtraIndexMathFunction.Round => InstructionType.Round,
-            ExtraIndexMathFunction.Trunc => InstructionType.Trunc,
-            ExtraIndexMathFunction.Floor => InstructionType.Floor,
-            ExtraIndexMathFunction.Ceil => InstructionType.Ceil,
-            ExtraIndexMathFunction.Clamp => InstructionType.Clamp,
+            ExtraIndexMathFunction.Round => InstructionKind.Round,
+            ExtraIndexMathFunction.Trunc => InstructionKind.Trunc,
+            ExtraIndexMathFunction.Floor => InstructionKind.Floor,
+            ExtraIndexMathFunction.Ceil => InstructionKind.Ceil,
+            ExtraIndexMathFunction.Clamp => InstructionKind.Clamp,
 
-            ExtraIndexMathFunction.Min => InstructionType.Min,
-            ExtraIndexMathFunction.Max => InstructionType.Max,
-            ExtraIndexMathFunction.MinMagnitude => InstructionType.MinM,
-            ExtraIndexMathFunction.MaxMagnitude => InstructionType.MaxM,
+            ExtraIndexMathFunction.Min => InstructionKind.Min,
+            ExtraIndexMathFunction.Max => InstructionKind.Max,
+            ExtraIndexMathFunction.MinMagnitude => InstructionKind.MinM,
+            ExtraIndexMathFunction.MaxMagnitude => InstructionKind.MaxM,
 
-            ExtraIndexMathFunction.Sqrt => InstructionType.Sqrt,
-            ExtraIndexMathFunction.Cbrt => InstructionType.Cbrt,
+            ExtraIndexMathFunction.Sqrt => InstructionKind.Sqrt,
+            ExtraIndexMathFunction.Cbrt => InstructionKind.Cbrt,
 
-            ExtraIndexMathFunction.Log => InstructionType.Log,
-            ExtraIndexMathFunction.Log2 => InstructionType.Log2,
-            ExtraIndexMathFunction.Log10 => InstructionType.Log10,
-            ExtraIndexMathFunction.LogB => InstructionType.LogB,
-            ExtraIndexMathFunction.ILogB => InstructionType.ILogB,
+            ExtraIndexMathFunction.Log => InstructionKind.Log,
+            ExtraIndexMathFunction.Log2 => InstructionKind.Log2,
+            ExtraIndexMathFunction.Log10 => InstructionKind.Log10,
+            ExtraIndexMathFunction.LogB => InstructionKind.LogB,
+            ExtraIndexMathFunction.ILogB => InstructionKind.ILogB,
 
-            ExtraIndexMathFunction.Sin => InstructionType.Sin,
-            ExtraIndexMathFunction.Sinh => InstructionType.Sinh,
-            ExtraIndexMathFunction.Asin => InstructionType.Asin,
-            ExtraIndexMathFunction.Asinh => InstructionType.Asinh,
+            ExtraIndexMathFunction.Sin => InstructionKind.Sin,
+            ExtraIndexMathFunction.Sinh => InstructionKind.Sinh,
+            ExtraIndexMathFunction.Asin => InstructionKind.Asin,
+            ExtraIndexMathFunction.Asinh => InstructionKind.Asinh,
 
-            ExtraIndexMathFunction.Cos => InstructionType.Cos,
-            ExtraIndexMathFunction.Cosh => InstructionType.Cosh,
-            ExtraIndexMathFunction.Acos => InstructionType.Acos,
-            ExtraIndexMathFunction.Acosh => InstructionType.Acosh,
+            ExtraIndexMathFunction.Cos => InstructionKind.Cos,
+            ExtraIndexMathFunction.Cosh => InstructionKind.Cosh,
+            ExtraIndexMathFunction.Acos => InstructionKind.Acos,
+            ExtraIndexMathFunction.Acosh => InstructionKind.Acosh,
 
-            ExtraIndexMathFunction.Tan => InstructionType.Tan,
-            ExtraIndexMathFunction.Tanh => InstructionType.Tanh,
-            ExtraIndexMathFunction.Atan => InstructionType.Atan,
-            ExtraIndexMathFunction.Atanh => InstructionType.Atanh,
-            ExtraIndexMathFunction.Atan2 => InstructionType.Atan2,
+            ExtraIndexMathFunction.Tan => InstructionKind.Tan,
+            ExtraIndexMathFunction.Tanh => InstructionKind.Tanh,
+            ExtraIndexMathFunction.Atan => InstructionKind.Atan,
+            ExtraIndexMathFunction.Atanh => InstructionKind.Atanh,
+            ExtraIndexMathFunction.Atan2 => InstructionKind.Atan2,
 
-            ExtraIndexMathFunction.FusedMultiplyAdd => InstructionType.FusedMultiplyAdd,
-            ExtraIndexMathFunction.ScaleB => InstructionType.ScaleB,
+            ExtraIndexMathFunction.FusedMultiplyAdd => InstructionKind.FusedMultiplyAdd,
+            ExtraIndexMathFunction.ScaleB => InstructionKind.ScaleB,
 
             _ => throw EmitError($"Unknown ExtraIndexMathFunction value: {token.ExtraIndex}", token)
         };

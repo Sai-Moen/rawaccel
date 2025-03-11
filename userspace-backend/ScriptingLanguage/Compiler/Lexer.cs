@@ -98,7 +98,7 @@ public class Lexer(Context context)
         params_found:
             tokenLength = tokenEnd - tokenBegin + 1;
             SymbolIndex symbolIndex = context.AddSymbol(ConsumeBuffer(tokenLength));
-            return new(TokenType.Description, tokenBegin, symbolIndex);
+            return new(TokenKind.Description, tokenBegin, symbolIndex);
         }
 
         for (; currentIndex < Script.Length; currentIndex++)
@@ -252,7 +252,7 @@ public class Lexer(Context context)
         else
         {
             SymbolIndex symbolIndex = context.AddSymbol(charView);
-            token = new(TokenType.Identifier, tokenBegin, symbolIndex);
+            token = new(TokenKind.Identifier, tokenBegin, symbolIndex);
         }
         return token;
     }
@@ -260,7 +260,7 @@ public class Lexer(Context context)
     private Token ConsumeBufferedNumber(int tokenLength)
     {
         SymbolIndex symbolIndex = context.AddSymbol(ConsumeBuffer(tokenLength));
-        return new(TokenType.Number, tokenBegin, symbolIndex);
+        return new(TokenKind.Number, tokenBegin, symbolIndex);
     }
 
     private ReadOnlyMemory<char> ConsumeBuffer(int tokenLength)
