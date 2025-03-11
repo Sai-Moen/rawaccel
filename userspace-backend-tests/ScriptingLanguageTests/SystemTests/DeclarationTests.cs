@@ -21,10 +21,11 @@ public class DeclarationTests
 
             ]
 
-                const b := a + 1;
-                const c := b + 1;
-                const d := c + 1;
+            const b := a + 1;
+            const c := b + 1;
+            const d := c + 1;
 
+            callback calculation
             {
 
                 y := a + b + c + d;

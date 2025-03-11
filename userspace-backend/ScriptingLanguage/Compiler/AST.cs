@@ -9,12 +9,7 @@ namespace userspace_backend.ScriptingLanguage.Compiler;
 /// <param name="Description">The description of the script.</param>
 /// <param name="Parameters">The user-controlled parameters.</param>
 /// <param name="Declarations">The declarations used by the script.</param>
-/// <param name="Callbacks">The callbacks parsed from the script.</param>
-public record AST(
-    string Description,
-    Parameters Parameters,
-    IList<ASTNode> Declarations,
-    IList<ParsedCallback> Callbacks);
+public record AST(string Description, Parameters Parameters, IList<ASTNode> Declarations);
 
 /// <summary>
 /// Saves a statement as an AST node (tagged union).
@@ -31,7 +26,7 @@ public enum ASTTag : byte
     None,
     Assign,
     If, While,
-    Function, Return,
+    Return, Function, Callback,
 }
 
 /// <summary>
@@ -43,20 +38,14 @@ public struct ASTUnion
     [FieldOffset(0)] public ASTAssign astAssign;
     [FieldOffset(0)] public ASTIf astIf;
     [FieldOffset(0)] public ASTWhile astWhile;
-    [FieldOffset(0)] public ASTFunction astFunction;
     [FieldOffset(0)] public ASTReturn astReturn;
+    [FieldOffset(0)] public ASTFunction astFunction;
+    [FieldOffset(0)] public ASTCallback astCallback;
 }
 
 public record ASTAssign(Token Identifier, Token Operator, Token[] Initializer);
 public record ASTIf(Token[] Condition, ASTNode[] If, ASTNode[] Else);
 public record ASTWhile(Token[] Condition, ASTNode[] While);
-public record ASTFunction(Token Identifier, Token[] Args, ASTNode[] Code);
 public record ASTReturn(Token[] Expression);
-
-/// <summary>
-/// Represents a callback that has been parsed but not yet validated and emitted.
-/// </summary>
-/// <param name="Name">Name.</param>
-/// <param name="Args">Arguments.</param>
-/// <param name="Code">Code (as an AST).</param>
-public record ParsedCallback(string Name, Token[] Args, ASTNode[] Code);
+public record ASTFunction(Token Identifier, Token[] Args, ASTNode[] Code);
+public record ASTCallback(Token Identifier, Token[] Expressions, ASTNode[] Code);

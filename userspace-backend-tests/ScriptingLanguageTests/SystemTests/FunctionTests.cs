@@ -18,6 +18,7 @@ public class FunctionTests
                 y += testLocal;
             }
 
+            callback calculation
             {
                 y += testFunction(1);
             }

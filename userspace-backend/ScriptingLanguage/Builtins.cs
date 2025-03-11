@@ -8,7 +8,7 @@ public static class Builtins
     /// <summary>
     /// No Accel, but as a script.
     /// </summary>
-    public const string NO_ACCEL = "[]{}";
+    public const string NO_ACCEL = "[] callback calculation {}";
 
     /// <summary>
     /// Arc mode by SaiMoen.
@@ -25,8 +25,9 @@ public static class Builtins
 
         ]
 
-            const pLimit := Limit - 1;
+        const pLimit := Limit - 1;
 
+        callback calculation
         {
 
             if x <= Input_Offset { return; }
@@ -54,47 +55,48 @@ public static class Builtins
 
         ]
 
-            const accel    := e ^ Growth_Rate;
-            const motivity := 2 * log(Motivity);
-            const midpoint := log(Midpoint);
-            const constant := -motivity / 2;
+        const accel    := e ^ Growth_Rate;
+        const motivity := 2 * log(Motivity);
+        const midpoint := log(Midpoint);
+        const constant := -motivity / 2;
 
-            var denom := 0;
+        var denom := 0;
 
-            fn legacy(speed)
+        fn legacy(speed)
+        {
+            denom := e ^ (accel * (midpoint - log(speed))) + 1;
+            y := e ^ (motivity / denom + constant);
+        }
+
+        # calculation stuff
+        let sum := 0;
+        let a := 0;
+        const partitions := 2;
+        var interval := 0;
+        var partition := 1;
+        fn sigmoidSum(b)
+        {
+            interval := (b - a) / partitions;
+            while partition <= partitions
             {
-                denom := e ^ (accel * (midpoint - log(speed))) + 1;
-                y := e ^ (motivity / denom + constant);
+                sum += legacy(a + partition * interval) * interval;
+                partition += 1;
             }
+            a := b;
+            y := sum;
+        }
 
-            # calculation stuff
-            let sum := 0;
-            let a := 0;
-            const partitions := 2;
-            var interval := 0;
-            var partition := 1;
-            fn sigmoidSum(b)
-            {
-                interval := (b - a) / partitions;
-                while partition <= partitions
-                {
-                    sum += legacy(a + partition * interval) * interval;
-                    partition += 1;
-                }
-                a := b;
-                y := sum;
-            }
+        # distribution stuff
+        const rangeStart := -3;
+        const rangeStop := 9;
+        const rangeNum := 8;
+        const rangeSize := (rangeStop - rangeStart) * rangeNum + 1;
 
-            # distribution stuff
-            const rangeStart := -3;
-            const rangeStop := 9;
-            const rangeNum := 8;
-            const rangeSize := (rangeStop - rangeStart) * rangeNum + 1;
+        let inner := 0;
+        let ep := rangeStart;
+        let expScale := scaleb(1, ep) / rangeNum;
 
-            let inner := 0;
-            let ep := rangeStart;
-            let expScale := scaleb(1, ep) / rangeNum;
-
+        callback calculation
         {
 
             if !Gain {
@@ -106,7 +108,7 @@ public static class Builtins
 
         }
 
-        distribution(rangeSize)
+        callback distribution(rangeSize)
         {
 
             if ep < rangeStop

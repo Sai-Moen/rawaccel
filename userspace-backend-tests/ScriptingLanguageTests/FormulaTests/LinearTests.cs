@@ -19,8 +19,9 @@ public class LinearTests
 
         ]
 
-            var base := zero;
+        var base := zero;
 
+        callback calculation
         {
 
             if x <= Input_Offset { return; }

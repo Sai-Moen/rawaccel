@@ -1,4 +1,5 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.Diagnostics;
 using System.Text;
 using userspace_backend.ScriptingLanguage;
 using userspace_backend.ScriptingLanguage.Compiler;
@@ -11,7 +12,18 @@ public class ParserTests
     private static ASTNode[] GetCalculationASTs(string script)
     {
         (Context _, AST ast) = Wrapper.CompileToAST(script);
-        return ast.Callbacks[0].Code;
+        foreach (ASTNode node in ast.Declarations)
+        {
+            if (node.Tag != ASTTag.Callback)
+                continue;
+
+            ASTCallback callback = node.Union.astCallback;
+            if ((ExtraIndexCallback)callback.Identifier.ExtraIndex == ExtraIndexCallback.Calculation)
+                return callback.Code;
+        }
+
+        Debug.Fail("Unreachable: no calculation block without exception thrown?");
+        return [];
     }
 
     [TestMethod]
@@ -27,7 +39,7 @@ public class ParserTests
     {
         const string name = "um";
 
-        StringBuilder builder = new($"[] var {name} := 1; {{ y += ");
+        StringBuilder builder = new($"[] var {name} := 1; callback calculation {{ y += ");
         for (int i = 0; i < depth; i++)
         {
             builder.Append("-(");

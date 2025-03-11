@@ -61,6 +61,8 @@ public class Interpreter
                         functionsList.Add(emitter.EmitFunction(function.Args, function.Code));
                     }
                     break;
+                case ASTTag.Callback:
+                    break;
                 default:
                     throw InterpreterError("Invalid AST node for a declaration!");
             }

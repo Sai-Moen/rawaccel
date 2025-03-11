@@ -10,13 +10,98 @@ public sealed class ParserException(string message, Token suspect)
     : CompilationException(message, suspect)
 { }
 
-internal readonly record struct Operator(Token Token, int Precedence)
+internal readonly struct Operator
 {
+    internal Operator(Token token, int precedence)
+    {
+        Token = token;
+        Precedence = precedence;
+    }
+
+    internal Operator(Token token, bool unary = false)
+    {
+        int precedence = token.Kind switch
+        {
+            TokenKind.Comparison => (ExtraIndexComparison)token.ExtraIndex switch
+            {
+                ExtraIndexComparison.Or => 0,
+
+                ExtraIndexComparison.And => 1,
+
+                ExtraIndexComparison.Equal => 2,
+                ExtraIndexComparison.NotEqual => 2,
+
+                ExtraIndexComparison.LessThan => 3,
+                ExtraIndexComparison.GreaterThan => 3,
+                ExtraIndexComparison.LessThanOrEqual => 3,
+                ExtraIndexComparison.GreaterThanOrEqual => 3,
+
+                // this one is also unary,
+                // but the unary system is kind of a hack for when an operator has a unary and binary form
+                ExtraIndexComparison.Not => 7,
+
+                _ => throw new ParserException($"Unknown ExtraIndexComparison value: {token.ExtraIndex}", token)
+            },
+
+            TokenKind.Arithmetic => (ExtraIndexArithmetic)token.ExtraIndex switch
+            {
+                ExtraIndexArithmetic.Add => 4,
+                ExtraIndexArithmetic.Sub => 4,
+
+                ExtraIndexArithmetic.Mul => 5,
+                ExtraIndexArithmetic.Div => 5,
+                ExtraIndexArithmetic.Mod => 5,
+
+                ExtraIndexArithmetic.Pow => 6,
+
+                _ => throw new ParserException($"Unknown ExtraIndexArithmetic value: {token.ExtraIndex}", token)
+            },
+
+            _ => throw new ParserException($"Unexpected TokenKind when determining precedence: {token.Kind}", token)
+        };
+
+        if (unary)
+        {
+            const int unaryPrecedenceAdd = 8;
+            Debug.Assert(
+                precedence < unaryPrecedenceAdd,
+                "The maximum precedence level here should be lower than what we add...");
+            precedence += unaryPrecedenceAdd;
+        }
+
+        Token = token;
+        Precedence = precedence;
+    }
+
+    internal Token Token { get; }
+    internal int Precedence { get; }
+
     internal TokenKind Kind => Token.Kind;
 
-    internal bool HasHigherPrecedence(Operator other, bool left)
-        => Kind.HasPrecedence() &&
-            (Precedence > other.Precedence || left && Precedence == other.Precedence);
+    internal bool HasHigherPrecedence(Operator other)
+        => HasPrecedence() && (Precedence > other.Precedence || other.LeftAssociative() && Precedence == other.Precedence);
+
+    internal bool LeftAssociative()
+    {
+        Debug.Assert(HasPrecedence());
+        return Kind == TokenKind.Arithmetic && (ExtraIndexArithmetic)Token.ExtraIndex != ExtraIndexArithmetic.Pow;
+    }
+
+    internal bool HasPrecedence() => Kind switch
+    {
+        TokenKind.Arithmetic or
+        TokenKind.Comparison => true,
+
+        _ => false
+    };
+
+    internal bool IsFunction() => Kind switch
+    {
+        TokenKind.FunctionName or
+        TokenKind.MathFunction => true,
+
+        _ => false
+    };
 }
 
 /// <summary>
@@ -38,7 +123,6 @@ public class Parser(Context context, Lexer lexer)
 
     private readonly Parameters parameters = [];
     private readonly Block declarations = [];
-    private readonly Dictionary<string, ParsedCallback> callbacks = [];
 
     public AST Parse()
     {
@@ -136,12 +220,38 @@ public class Parser(Context context, Lexer lexer)
 
         #region Parse Declarations
 
-        while (!Peek(TokenKind.CurlyOpen))
+        while (currentToken.Kind != TokenKind.None)
         {
-            TokenKind kind = currentToken.MapDeclarer();
-            if (kind == TokenKind.None)
-                throw ParserError("Unknown declarer!");
-        
+            ASTTag tag;
+            ASTUnion union;
+            if (Accept(TokenKind.Callback))
+            {
+                Token callback = Expect(TokenKind.CallbackName);
+                List<Token> args = [];
+                if (Accept(TokenKind.ParenOpen))
+                    args = Expression(TokenKind.ParenClose, TokenKind.CurlyOpen);
+
+                Block code = ParseBlock();
+
+                tag = ASTTag.Callback;
+                union = new()
+                {
+                    astCallback = new(callback, [.. args], [.. code])
+                };
+                declarations.Add(new ASTNode(tag, union));
+                continue;
+            }
+
+            TokenKind kind = currentToken.Kind switch
+            {
+                TokenKind.Const    => TokenKind.Immutable,
+                TokenKind.Let      => TokenKind.Persistent,
+                TokenKind.Var      => TokenKind.Impersistent,
+                TokenKind.Fn       => TokenKind.FunctionName,
+
+                _ => throw ParserError("Unknown declarer!")
+            };
+
             // couldn't use Expect due to mapping, so we have to advance manually
             Advance();
 
@@ -150,9 +260,7 @@ public class Parser(Context context, Lexer lexer)
             if (declarationNames.ContainsKey(symbol))
                 throw ParserError($"Name collision! Name {symbol} already exists.");
 
-            ASTTag tag;
-            ASTUnion union;
-            if (kind == TokenKind.Function)
+            if (kind == TokenKind.FunctionName)
             {
                 List<Token> args = [];
                 if (Accept(TokenKind.ParenOpen) && !Accept(TokenKind.ParenClose))
@@ -192,31 +300,8 @@ public class Parser(Context context, Lexer lexer)
             }
             declarations.Add(new ASTNode(tag, union));
 
-            // this is done last to avoid having to check for circular dependencies on this variable
+            // this is done last to avoid having to check for circular dependencies on this symbol
             declarationNames.Add(symbol, kind);
-        }
-
-        #endregion
-
-        #region Parse Callbacks
-
-        Block asts = ParseBlock();
-        callbacks.Add(Calculation.NAME, new(Calculation.NAME, [], [.. asts]));
-
-        while (Accept(TokenKind.Identifier, out Token identifier))
-        {
-            List<Token> args = [];
-            if (Accept(TokenKind.ParenOpen))
-                args = Expression(TokenKind.ParenClose, TokenKind.CurlyOpen);
-
-            Block code = ParseBlock();
-
-            string symbol = context.GetSymbol(identifier);
-            ParsedCallback callback = new(symbol, [.. args], [.. code]);
-            if (callbacks.ContainsKey(callback.Name))
-                throw ParserError("Duplicate callbacks detected!");
-
-            callbacks[callback.Name] = callback;
         }
 
         #endregion
@@ -253,12 +338,11 @@ public class Parser(Context context, Lexer lexer)
 
         #endregion
 
-        return new(description, parameters, declarations, [.. callbacks.Values]);
+        return new(description, parameters, declarations);
     }
 
     public void Reset()
     {
-        context.Reset();
         lexer.Reset();
 
         previousToken = default;
@@ -271,7 +355,6 @@ public class Parser(Context context, Lexer lexer)
 
         parameters.Clear();
         declarations.Clear();
-        callbacks.Clear();
     }
 
     private Block ParseBlock()
@@ -447,7 +530,7 @@ public class Parser(Context context, Lexer lexer)
                             throw ParserError($"Could not resolve name! (name was: {name})", token);
 
                         Token resolved = token with { Kind = kind };
-                        if (kind == TokenKind.Function)
+                        if (kind == TokenKind.FunctionName)
                             operatorStack.Push(new(resolved, -1));
                         else
                             expression.Add(resolved);
@@ -517,7 +600,7 @@ public class Parser(Context context, Lexer lexer)
                         if (oper.Kind == TokenKind.None)
                             throw ParserError($"No matching: {Tokens.PAREN_OPEN}", token);
 
-                        if (operatorStack.TryPeek(out var maybeFunction) && maybeFunction.Kind.IsFunction())
+                        if (operatorStack.TryPeek(out var maybeFunction) && maybeFunction.IsFunction())
                         {
                             Operator fun = operatorStack.Pop();
                             expression.Add(fun.Token);
@@ -549,11 +632,10 @@ public class Parser(Context context, Lexer lexer)
 
     private static void HandlePrecedences(Stack<Operator> operatorStack, List<Token> expression, Token token, bool unary = false)
     {
-        Operator tokenOperator = new(token, token.Precedence(unary));
-        bool left = token.LeftAssociative();
+        Operator tokenOperator = new(token, unary);
         while (operatorStack.TryPop(out var oper))
         {
-            if (oper.HasHigherPrecedence(tokenOperator, left))
+            if (oper.HasHigherPrecedence(tokenOperator))
             {
                 expression.Add(oper.Token);
             }
@@ -597,7 +679,7 @@ public class Parser(Context context, Lexer lexer)
 
     private bool Accept(TokenKind kind)
     {
-        bool ok = Peek(kind);
+        bool ok = kind == currentToken.Kind;
         if (ok)
             Advance();
         return ok;
@@ -608,11 +690,6 @@ public class Parser(Context context, Lexer lexer)
         bool ok = Accept(kind);
         token = ok ? previousToken : default;
         return ok;
-    }
-
-    private bool Peek(TokenKind kind)
-    {
-        return kind == currentToken.Kind;
     }
 
     private void Advance()

@@ -30,6 +30,7 @@ public class ControlFlowTests
 
             []
 
+            callback calculation
             {
 
                 if x > 16 {
@@ -95,10 +96,11 @@ public class ControlFlowTests
 
             ]
 
-                const b := a + 2;
-                const c := b * 2;
-                const d := c ^ 2;
+            const b := a + 2;
+            const c := b * 2;
+            const d := c ^ 2;
 
+            callback calculation
             {
 
                 if a > 1

@@ -274,7 +274,7 @@ public class Emitter(Context context)
             case TokenKind.Comparison:
                 AddInstruction(EmitComparison(token));
                 break;
-            case TokenKind.Function:
+            case TokenKind.FunctionName:
                 MemoryAddress functionAddress = functionAddresses[context.GetSymbol(token)];
                 AddInstruction(InstructionKind.Call, (byte[])functionAddress);
                 break;

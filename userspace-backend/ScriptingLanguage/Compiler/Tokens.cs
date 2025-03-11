@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 
 namespace userspace_backend.ScriptingLanguage.Compiler;
 
@@ -12,15 +11,16 @@ public enum TokenKind : byte
     None, // Doesn't mean invalid right away, depends on if you expect a certain symbol
 
     Description,
+    CallbackName,
     Number, Bool, Constant,
     Input, Output, Identifier, Parameter,
     Immutable, Persistent, Impersistent,
-    Const, Let, Var, Fn,
+    Const, Let, Var, Fn, Callback,
     Return, If, Else, While,
     Terminator, ParenOpen, ParenClose,
     SquareOpen, SquareClose, CurlyOpen, CurlyClose,
     Assignment, Compound, Arithmetic, Comparison,
-    Function, FunctionLocal, ArgumentSeparator, MathFunction,
+    FunctionName, FunctionLocal, ArgumentSeparator, MathFunction,
 
     Count
 }
@@ -45,6 +45,11 @@ public readonly record struct Token(
     byte ExtraIndex = 0);
 
 #region ExtraIndices
+
+public enum ExtraIndexCallback : byte
+{
+    Calculation, Distribution,
+}
 
 public enum ExtraIndexSpecial : byte
 {
@@ -114,6 +119,10 @@ public static class Tokens
     public const string CONST_TAU      = "tau";
     public const string CONST_CAPACITY = "capacity";
 
+    // Callbacks
+    public const string CALLBACK_CALCULATION  = "calculation";
+    public const string CALLBACK_DISTRIBUTION = "distribution";
+
     // Booleans
     public const string FALSE = "false";
     public const string TRUE  = "true";
@@ -123,10 +132,11 @@ public static class Tokens
     public const string OUTPUT = "y";
 
     // Declarations
-    public const string DECL_CONST = "const"; // immutable (so automatically persistent)
-    public const string DECL_LET   = "let";   // persistent mutable
-    public const string DECL_VAR   = "var";   // impersistent mutable
-    public const string DECL_FN    = "fn";    // user-defined function
+    public const string DECL_CONST    = "const";    // immutable (so automatically persistent)
+    public const string DECL_LET      = "let";      // persistent mutable
+    public const string DECL_VAR      = "var";      // impersistent mutable
+    public const string DECL_FN       = "fn";       // user-defined function
+    public const string DECL_CALLBACK = "callback"; // callback
 
     // Branches
     public const string RETURN       = "return";
@@ -239,6 +249,8 @@ public static class Tokens
     public const string FUSED_MULTIPLY_ADD = "fma";    // x * y + z
     public const string SCALE_B            = "scaleb"; // Binary Scale (IEEE754 exponent trickery idfk)
 
+    // Callbacks
+
     #endregion
 
     public static readonly Token DUMMY = default;
@@ -257,27 +269,31 @@ public static class Tokens
         [CONST_TAU]      = new(TokenKind.Constant, ExtraIndex: (byte)ExtraIndexConstant.Tau),
         [CONST_CAPACITY] = new(TokenKind.Constant, ExtraIndex: (byte)ExtraIndexConstant.Capacity),
 
+        [CALLBACK_CALCULATION]  = new(TokenKind.CallbackName, ExtraIndex: (byte)ExtraIndexCallback.Calculation),
+        [CALLBACK_DISTRIBUTION] = new(TokenKind.CallbackName, ExtraIndex: (byte)ExtraIndexCallback.Distribution),
+
         [FALSE] = new(TokenKind.Bool, ExtraIndex: 0),
         [TRUE]  = new(TokenKind.Bool, ExtraIndex: 1),
 
-        [DECL_CONST]   = new(TokenKind.Const),
-        [DECL_LET]     = new(TokenKind.Let),
-        [DECL_VAR]     = new(TokenKind.Var),
-        [DECL_FN]      = new(TokenKind.Fn),
-        [RETURN]       = new(TokenKind.Return),
-        [BRANCH_IF]    = new(TokenKind.If),
-        [BRANCH_ELSE]  = new(TokenKind.Else),
-        [BRANCH_WHILE] = new(TokenKind.While),
-        [ARG_SEP]      = new(TokenKind.ArgumentSeparator),
-        [FPOINT]       = new(TokenKind.Number),
-        [TERMINATOR]   = new(TokenKind.Terminator),
-        [PAREN_OPEN]   = new(TokenKind.ParenOpen),
-        [PAREN_CLOSE]  = new(TokenKind.ParenClose),
-        [SQUARE_OPEN]  = new(TokenKind.SquareOpen),
-        [SQUARE_CLOSE] = new(TokenKind.SquareClose),
-        [CURLY_OPEN]   = new(TokenKind.CurlyOpen),
-        [CURLY_CLOSE]  = new(TokenKind.CurlyClose),
-        [ASSIGN]       = new(TokenKind.Assignment),
+        [DECL_CONST]    = new(TokenKind.Const),
+        [DECL_LET]      = new(TokenKind.Let),
+        [DECL_VAR]      = new(TokenKind.Var),
+        [DECL_FN]       = new(TokenKind.Fn),
+        [DECL_CALLBACK] = new(TokenKind.Callback),
+        [RETURN]        = new(TokenKind.Return),
+        [BRANCH_IF]     = new(TokenKind.If),
+        [BRANCH_ELSE]   = new(TokenKind.Else),
+        [BRANCH_WHILE]  = new(TokenKind.While),
+        [ARG_SEP]       = new(TokenKind.ArgumentSeparator),
+        [FPOINT]        = new(TokenKind.Number),
+        [TERMINATOR]    = new(TokenKind.Terminator),
+        [PAREN_OPEN]    = new(TokenKind.ParenOpen),
+        [PAREN_CLOSE]   = new(TokenKind.ParenClose),
+        [SQUARE_OPEN]   = new(TokenKind.SquareOpen),
+        [SQUARE_CLOSE]  = new(TokenKind.SquareClose),
+        [CURLY_OPEN]    = new(TokenKind.CurlyOpen),
+        [CURLY_CLOSE]   = new(TokenKind.CurlyClose),
+        [ASSIGN]        = new(TokenKind.Assignment),
 
         [C_ADD] = new(TokenKind.Compound, ExtraIndex: (byte)ExtraIndexCompound.Add),
         [C_SUB] = new(TokenKind.Compound, ExtraIndex: (byte)ExtraIndexCompound.Sub),
@@ -343,124 +359,10 @@ public static class Tokens
     public static bool IsReserved(ReadOnlySpan<char> charView) => IsReserved(charView.ToString());
 
     public static Token GetReserved(string symbol) => reservedMap[symbol];
-    public static Token GetReserved(string symbol, int bytePosition) => GetReserved(symbol) with { BytePosition = bytePosition };
-    public static Token GetReserved(ReadOnlySpan<char> charView) => GetReserved(charView.ToString());
-    public static Token GetReserved(ReadOnlySpan<char> charView, int bytePosition) => GetReserved(charView.ToString(), bytePosition);
-
-    #region Extension Methods
-
-    /// <summary>
-    /// Maps a token to the type that the identifier will have.
-    /// The type in this case refers to mutability and persistence.
-    /// </summary>
-    /// <param name="token">The declarer.</param>
-    /// <returns>Type of the identifier.</returns>
-    public static TokenKind MapDeclarer(this Token token) => token.Kind switch
-    {
-        TokenKind.Const => TokenKind.Immutable,
-        TokenKind.Let => TokenKind.Persistent,
-        TokenKind.Var => TokenKind.Impersistent,
-        TokenKind.Fn => TokenKind.Function,
-
-        _ => TokenKind.None
-    };
-
-    /// <summary>
-    /// Looks up if the given token is left-associative.
-    /// </summary>
-    /// <param name="token">The token.</param>
-    /// <returns>Whether the token is left-associative.</returns>
-    public static bool LeftAssociative(this Token token)
-    {
-        TokenKind kind = token.Kind;
-        Debug.Assert(kind.HasPrecedence());
-        return kind == TokenKind.Arithmetic && (ExtraIndexArithmetic)token.ExtraIndex != ExtraIndexArithmetic.Pow;
-    }
-
-    /// <summary>
-    /// Looks up whether the given token kind is a function.
-    /// </summary>
-    /// <param name="kind">The kind of token.</param>
-    /// <returns>Whether the token kind is a function.</returns>
-    public static bool IsFunction(this TokenKind kind) => kind switch
-    {
-        TokenKind.Function or
-        TokenKind.MathFunction => true,
-
-        _ => false
-    };
-
-    /// <summary>
-    /// Looks up if the given token kind can be considered to have precedence.
-    /// </summary>
-    /// <param name="kind">The kind of token.</param>
-    /// <returns>Whether the token kind has precedence.</returns>
-    public static bool HasPrecedence(this TokenKind kind) => kind switch
-    {
-        TokenKind.Arithmetic or
-        TokenKind.Comparison => true,
-
-        _ => false
-    };
-
-    /// <summary>
-    /// Gets the precedence level of the given token.
-    /// The unary flag should be true if this is a unary operation with an operator that also has non-unary uses.
-    /// </summary>
-    /// <param name="token">The token.</param>
-    /// <param name="unary">Whether this is the unary form of an operator.</param>
-    /// <returns>The precedence level of the token.</returns>
-    /// <exception cref="ParserException"/>
-    public static int Precedence(this Token token, bool unary = false)
-    {
-        int prec = token.Kind switch
-        {
-            TokenKind.Comparison => (ExtraIndexComparison)token.ExtraIndex switch
-            {
-                ExtraIndexComparison.Or => 0,
-
-                ExtraIndexComparison.And => 1,
-
-                ExtraIndexComparison.Equal => 2,
-                ExtraIndexComparison.NotEqual => 2,
-
-                ExtraIndexComparison.LessThan => 3,
-                ExtraIndexComparison.GreaterThan => 3,
-                ExtraIndexComparison.LessThanOrEqual => 3,
-                ExtraIndexComparison.GreaterThanOrEqual => 3,
-
-                // this one is also unary, but the unary system is kind of a hack for when an operator has a unary and binary form
-                ExtraIndexComparison.Not => 7,
-
-                _ => throw new ParserException($"Unknown ExtraIndexComparison value: {token.ExtraIndex}", token)
-            },
-
-            TokenKind.Arithmetic => (ExtraIndexArithmetic)token.ExtraIndex switch
-            {
-                ExtraIndexArithmetic.Add => 4,
-                ExtraIndexArithmetic.Sub => 4,
-
-                ExtraIndexArithmetic.Mul => 5,
-                ExtraIndexArithmetic.Div => 5,
-                ExtraIndexArithmetic.Mod => 5,
-
-                ExtraIndexArithmetic.Pow => 6,
-
-                _ => throw new ParserException($"Unknown ExtraIndexArithmetic value: {token.ExtraIndex}", token)
-            },
-
-            _ => throw new ParserException($"Unexpected TokenKind when determining precedence: {token.Kind}", token)
-        };
-
-        if (unary)
-        {
-            const int unaryPrecedenceAdd = 8;
-            Debug.Assert(prec < unaryPrecedenceAdd, "The maximum precedence level here should be lower than what we add...");
-            prec += unaryPrecedenceAdd;
-        }
-
-        return prec;
-    }
-
-    #endregion
+    public static Token GetReserved(string symbol, int bytePosition)
+        => GetReserved(symbol) with { BytePosition = bytePosition };
+    public static Token GetReserved(ReadOnlySpan<char> charView)
+        => GetReserved(charView.ToString());
+    public static Token GetReserved(ReadOnlySpan<char> charView, int bytePosition)
+        => GetReserved(charView.ToString(), bytePosition);
 }
