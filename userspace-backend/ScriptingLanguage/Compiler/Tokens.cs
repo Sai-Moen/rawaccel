@@ -12,7 +12,7 @@ public enum TokenKind : byte
 
     Description,
     CallbackName,
-    Number, Bool, Constant,
+    Zero, Number, Bool, Constant,
     Input, Output, Identifier, Parameter,
     Immutable, Persistent, Impersistent,
     Const, Let, Var, Fn, Callback,
@@ -58,7 +58,8 @@ public enum ExtraIndexSpecial : byte
 
 public enum ExtraIndexConstant : byte
 {
-    Zero, E, Pi, Tau, Capacity,
+    Capacity,
+    E, Pi, Tau,
 }
 
 public enum ExtraIndexCompound : byte
@@ -106,18 +107,15 @@ public static class Tokens
 {
     #region Constant Strings
 
-    // Single line comments
+    // - Single line comments
     public const string COMMENT_LINE = "#";
 
-    // Keywords
-    // Zero
-    public const string ZERO = "zero";
-
+    // - Keywords
     // Constants
+    public const string CONST_CAPACITY = "capacity";
     public const string CONST_E        = "e";
     public const string CONST_PI       = "pi";
     public const string CONST_TAU      = "tau";
-    public const string CONST_CAPACITY = "capacity";
 
     // Callbacks
     public const string CALLBACK_CALCULATION  = "calculation";
@@ -144,7 +142,7 @@ public static class Tokens
     public const string BRANCH_ELSE  = "else";
     public const string BRANCH_WHILE = "while";
 
-    // Separators
+    // - Separators
     // Delimiters
     public const string SPACE      = " ";
     public const string UNDERSCORE = "_"; // For: spaces in parameter names
@@ -164,7 +162,7 @@ public static class Tokens
     public const string CURLY_OPEN  = "{";
     public const string CURLY_CLOSE = "}";
 
-    // Operators
+    // - Operators
     // Assignment
     public const string ASSIGN      = ":=";
     public const string EQUALS_SIGN = "="; // if there is a second character in an operator, it should be this!
@@ -196,7 +194,7 @@ public static class Tokens
     public const string EQ  = "==";
     public const string NE  = "!=";
 
-    // Functions
+    // - Functions
     // General
     public const string ABS       = "abs";      // Absolute Value
     public const string SIGN      = "sign";     // Sign
@@ -249,8 +247,6 @@ public static class Tokens
     public const string FUSED_MULTIPLY_ADD = "fma";    // x * y + z
     public const string SCALE_B            = "scaleb"; // Binary Scale (IEEE754 exponent trickery idfk)
 
-    // Callbacks
-
     #endregion
 
     public static readonly Token DUMMY = default;
@@ -263,11 +259,10 @@ public static class Tokens
         [INPUT]  = new(TokenKind.Input),
         [OUTPUT] = new(TokenKind.Output),
 
-        [ZERO]           = new(TokenKind.Constant, ExtraIndex: (byte)ExtraIndexConstant.Zero),
+        [CONST_CAPACITY] = new(TokenKind.Constant, ExtraIndex: (byte)ExtraIndexConstant.Capacity),
         [CONST_E]        = new(TokenKind.Constant, ExtraIndex: (byte)ExtraIndexConstant.E),
         [CONST_PI]       = new(TokenKind.Constant, ExtraIndex: (byte)ExtraIndexConstant.Pi),
         [CONST_TAU]      = new(TokenKind.Constant, ExtraIndex: (byte)ExtraIndexConstant.Tau),
-        [CONST_CAPACITY] = new(TokenKind.Constant, ExtraIndex: (byte)ExtraIndexConstant.Capacity),
 
         [CALLBACK_CALCULATION]  = new(TokenKind.CallbackName, ExtraIndex: (byte)ExtraIndexCallback.Calculation),
         [CALLBACK_DISTRIBUTION] = new(TokenKind.CallbackName, ExtraIndex: (byte)ExtraIndexCallback.Distribution),

@@ -7,6 +7,27 @@ namespace userspace_backend_tests.ScriptingLanguageTests.SystemTests;
 public class DeclarationTests
 {
     [TestMethod]
+    public void TestZeroIsInitialization()
+    {
+        const string script =
+            """
+            []
+
+            var zero;
+
+            callback calculation
+            {
+                y += zero + 1;
+            }
+            """;
+
+        IScriptFile scriptFile = Wrapper.LoadScript(script);
+        double expected = 2;
+        double actual = scriptFile.Calculate([0])[0];
+        Assert.AreEqual(expected, actual);
+    }
+
+    [TestMethod]
     [DataRow(1)]
     [DataRow(2)]
     [DataRow(3)]
@@ -16,9 +37,7 @@ public class DeclarationTests
         const string script =
             """
             [
-
                 a := 1;
-
             ]
 
             const b := a + 1;
@@ -27,9 +46,7 @@ public class DeclarationTests
 
             callback calculation
             {
-
                 y := a + b + c + d;
-
             }
             """;
 

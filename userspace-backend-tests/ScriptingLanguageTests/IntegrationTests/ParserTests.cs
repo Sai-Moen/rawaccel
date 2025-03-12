@@ -64,7 +64,7 @@ public class ParserTests
 
         for (int i = 0; i <= depth; i++)
         {
-            AssertNextToken(Tokens.GetReserved(Tokens.ZERO));
+            AssertNextToken(new(TokenKind.Zero));
         }
         AssertNextToken(new(TokenKind.Impersistent));
         for (int i = 0; i <= depth; i++)

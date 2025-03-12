@@ -227,6 +227,9 @@ public class Emitter(Context context)
     {
         switch (token.Kind)
         {
+            case TokenKind.Zero:
+                AddInstruction(InstructionKind.LoadZero);
+                break;
             case TokenKind.Number:
                 Number number = Number.Parse(context.GetSymbol(token), token);
                 if (!numberMap.TryGetValue(number, out DataAddress dAddress))
@@ -354,11 +357,10 @@ public class Emitter(Context context)
         Debug.Assert(token.Kind == TokenKind.Constant);
         return (ExtraIndexConstant)token.ExtraIndex switch
         {
-            ExtraIndexConstant.Zero => InstructionKind.LoadZero,
+            ExtraIndexConstant.Capacity => InstructionKind.LoadCapacity,
             ExtraIndexConstant.E => InstructionKind.LoadE,
             ExtraIndexConstant.Pi => InstructionKind.LoadPi,
             ExtraIndexConstant.Tau => InstructionKind.LoadTau,
-            ExtraIndexConstant.Capacity => InstructionKind.LoadCapacity,
 
             _ => throw EmitError($"Unknown ExtraIndexConstant value: {token.ExtraIndex}", token)
         };

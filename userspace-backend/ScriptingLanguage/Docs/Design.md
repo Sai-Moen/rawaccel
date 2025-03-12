@@ -99,6 +99,8 @@ There are 3 kinds of global variable declarations:
 For example, if an array of input values is put through the calculation callback,
 impersistent variables would be reset after each calculation, whereas the values of other variables would persist.
 
+The initializer of any variable can be left out (e.g. `var v;`), which will zero-initialize it instead.
+
 Last but not least, custom functions can also be defined.
 These will compute a value based on the given arguments as well as global variables.
 The arguments are passed by value.
@@ -108,7 +110,6 @@ The arguments are passed by value.
 ```
 x y          "Input/Output variables"
 false true   "Boolean values (0 and 1 respectively)"
-zero         "Another way of getting 0, usually for denoting variables with no meaningful initial value"
 e pi tau     "Math Constants"
 capacity     "LUT_POINTS_CAPACITY from rawaccel-base.hpp"
 

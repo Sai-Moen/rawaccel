@@ -21,8 +21,8 @@ public enum InstructionKind : byte
     // Constant,
     // Pushes a constant to the stack.
     LoadZero,
-    LoadE, LoadPi, LoadTau,
     LoadCapacity,
+    LoadE, LoadPi, LoadTau,
 
     // Branch,
     // Evaluates the TOS and jumps/skips to the next branch end marker if zero (Jz).

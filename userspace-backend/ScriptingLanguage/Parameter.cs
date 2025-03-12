@@ -98,12 +98,17 @@ public class Parameter
     }
 
     /// <summary>
-    /// Name of this Parameter (/\w+/ with underscores normalized to spaces).
+    /// A normalized version of the name that replaces underscores with spaces.
+    /// </summary>
+    public string NormalizedName => Name.Replace(Tokens.UNDERSCORE, Tokens.SPACE);
+
+    /// <summary>
+    /// Name of this Parameter.
     /// </summary>
     public string Name { get; }
 
     /// <summary>
-    /// The type of the parameter.
+    /// The type of this parameter.
     /// </summary>
     public ParameterType Type { get; }
 

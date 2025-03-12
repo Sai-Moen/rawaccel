@@ -26,19 +26,20 @@ Arc mode by SaiMoen.
 ...
 ```
 
-After that point, only specific characters are allowed (ASCII subset that the language accepts).
-
 ### Parameters
 
 As soon as a `[` is read, the next part of the script begins.
 This is the parameters section, which are the user-controlled variables passed in by the UI.
 
-The syntax for parameter assignments is `name := default`, where default is the default value as a number.
-The name can only be sequences of letters, separated by underscores.
-For parameter names, underscores are replaced by spaces, so they look better in the UI.
+The syntax for parameter assignments begins with `name := default`, where `default` is the default value as a number.
+
+Alternatively, the (default) value of a parameter can also be a boolean (`true` or `false`).
+When used in expressions, the value 0 is used if the parameter is `false`, and the value 1 is used if the parameter is `true`.
 
 Optionally, the script can also specify 'Bounds' that cause the user to get an error,
 if the value they entered is outside the allowed range.
+This feature cannot be used if the type of the parameter is a boolean.
+
 The syntax is as follows:
 
 * `{` or `}` means no bound. If you want to only give a bound to one side, then you can use this for the other side.
@@ -57,10 +58,6 @@ If both bounds have a value, the values have to be separated by a comma.
 
 Usually the difference between exclusive and inclusive bounds is not significant, but it can save you from dividing by zero.
 
-Alternatively, the (default) value of a parameter can also be a boolean (`true` or `false`).
-In this case, the Bounds functionality is not available.
-When used in expressions, the value 0 is used if the parameter is `false`, and the value 1 is used if the parameter is `true`.
-
 Finally, the line is ended with `;`.
 The section is ended with `]`.
 
@@ -68,63 +65,42 @@ The section is ended with `]`.
 
 ```
 [
-
 	Input_Offset := 0  [0};
 	Limit        := 4  [0};
 	Midpoint     := 16 (0};
-
 ]
 ```
 
 A maximum of 8 parameters can be declared,
 but it is recommended that you only expose very essential variables to the user.
-This usually results in 2-5 parameters for normal modes.
+This usually results in about 2 to 5 parameters for normal modes.
 
 Important to note is that after the parameters section, when a parameter is used,
 it will be set to the value entered by the user, and the value 'assigned' to a parameter is only the default value.
 
-### Variables
+### Declarations
 
-Next up is the variables section.
-This section does not have any explicit delimiters, as it is placed between two sections that do.
-This section is for hidden variables that improve the readability of the script.
+Next up is the declarations section.
+The following things can be declared here:
+- Callbacks
+- Variables
+- Functions
 
-The syntax for variable assignments is `name := expression`.
-The expression can be any mathematical expression (more on that later).
-For each variable declaration, parameters can be used, as well as previously declared variables.
+#### Callbacks
 
-Just like with parameters, the line is ended with `;`.
+Callbacks are special functions that allow the application to call into your script and get useful information.
 
-(e.g.)
-
-```
-
-	pLimit := Limit - 1;
-
-```
-
-If you want to signal that a variable has no meaningful intial value, you could use the `zero` keyword, but it's not required.
-
-### Calculation
-
-Finally, the calculation section is where we use these variables to calculate a LUT point.
-It starts with a `{`, and ends with a `}`, also known as a 'block'.
-
-The input speed is given by the built-in variable `x`, which is set by the application.
-The output speed is given by the built-in variable `y`, which is set to 1 upon entering the calculation section.
-
-The goal of a script is modify `y` depending on the value of `x` and the parameters.
-This can be done using control flow and maths (covered in the next part).
-The control flow is as basic as it gets (without a `goto` statement), with only `if`, `else` and `while`.
-
+They can be made to do useful things by using control flow and maths (covered in the next part).
+The control flow is as basic as it gets, with only `if`, `else` and `while`.
 These work as you most likely already expect, and this is their syntax:
 
 ```
-if (condition) {
+if condition {
 	statement
 	...
 	statement
-} else {
+}
+else {
 	statement
 	...
 	statement
@@ -135,7 +111,7 @@ if (condition) {
 The `else` block is optional, and will execute its statements if `condition` is false instead.
 
 ```
-while (condition) {
+while condition {
 	statement
 	...
 	statement
@@ -160,28 +136,73 @@ By combining these elements, you can represent many formulas.
 (e.g.)
 
 ```
+callback calculation
 {
-
 	if (x > Input_Offset) {
 		x -= Input_Offset;
 		y += (pLimit / x) * (x - Midpoint * atan(x / Midpoint));
 	}
-
 }
 ```
 
 (alternatively, with an early return)
 
 ```
+callback calculation
 {
-
 	if (x <= Input_Offset) { return; }
 
 	x -= Input_Offset;
 	y += (pLimit / x) * (x - Midpoint * atan(x / Midpoint));
-
 }
 ```
+
+As for the callbacks, there are 2 kinds of callback right now:
+
+*Calculation*
+
+Declared with `callback calculation` (mandatory to implement).
+
+The input speed is given by the built-in variable `x`, which is set by the application.
+The output speed is given by the built-in variable `y`, which is set to 1 upon entering the calculation section.
+
+The goal of this callback is modify `y` depending on the value of `x` and the parameters.
+The values obtained by calling the calculation callback with different values of `x` are used to fill a lookup table,
+which represents your acceleration mode.
+
+*Distribution*
+
+Declared with `callback distribution(numpoints)` (optional to implement).
+
+A way to customize the distribution of points along the x-axis.
+`numpoints` is the number of points that are defined.
+The number of points must be non-negative, and can be at most `capacity`.
+Inside the block, `x` will start at 0, but it will behave in a stateful manner.
+After each execution of the block, the new value of x will be saved to a list and used as the input value for the next execution.
+When this has been done `numpoints` amount of times, the list is full and will be used to run the Calculation block.
+
+#### Variables
+
+The syntax for variable assignments begins with a keyword that determines what kind of variable it is, followed by the name.
+
+Optionally, they can be initialized with an expression (`:= expression`).
+The expression can be any mathematical expression (more on that later).
+If no initializer is given, the variable will be zero-initialized.
+
+For each variable declaration, parameters can be used, as well as previously declared variables.
+
+Just like with parameters, the line is ended with `;`.
+
+(e.g.)
+
+```
+const pLimit := Limit - 1;
+var zero;
+```
+
+#### Functions
+
+TODO
 
 ## Complete Example
 
@@ -193,22 +214,19 @@ Likewise, x is also checked, but that can only be done in the calculation block.
 Arc mode by SaiMoen.
 
 [
-
 	Input_Offset := 0  [0};
 	Limit        := 4  [0};
 	Midpoint     := 16 (0};
-
 ]
 
-	pLimit := Limit - 1;
+const pLimit := Limit - 1;
 
+callback calculation
 {
-
-	if (x <= Input_Offset) { return; }
+	if x <= Input_Offset { return; }
 
 	x -= Input_Offset;
 	y += (pLimit / x) * (x - Midpoint * atan(x / Midpoint));
-
 }
 ```
 
@@ -285,8 +303,8 @@ The `capacity` constant holds the `LUT_POINTS_CAPACITY` constant from the driver
 This constant is the maximum amount of points that can be allocated in the LookUpTable.
 
 ```
-e pi tau
 capacity
+e pi tau
 ```
 
 #### Functions
@@ -315,14 +333,6 @@ Comments: with a `#`, the remaining part of the line becomes a comment.
 Callbacks:
 After the Calculation section, more 'callbacks' can be defined.
 Although Calculation is a mandatory callback, there also exist optional callbacks.
-
-Distribution:
-A way to customize the distribution of points along the x-axis.
-Defined by writing `distribution(numpoints)` and then a block, where numpoints is the number of points that are defined.
-The number of points must be non-negative, and can be at most `capacity`.
-Inside the block, `x` will start at 0, but it will behave in a stateful manner.
-After each execution of the block, the new value of x will be saved to a list and used as the input value for the next execution.
-When this has been done `numpoints` amount of times, the list is full and will be used to run the Calculation block.
 
 ## Concluding Remarks
 

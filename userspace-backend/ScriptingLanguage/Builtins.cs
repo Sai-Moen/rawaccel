@@ -18,23 +18,19 @@ public static class Builtins
         Arc mode by SaiMoen.
 
         [
-
             Input_Offset := 0  [0};
             Limit        := 4  [0};
             Midpoint     := 16 (0};
-
         ]
 
         const pLimit := Limit - 1;
 
         callback calculation
         {
-
             if x <= Input_Offset { return; }
 
             x -= Input_Offset;
             y += (pLimit / x) * (x - Midpoint * atan(x / Midpoint));
-
         }
         """;
 
@@ -46,13 +42,11 @@ public static class Builtins
         Preservation of RawAccel v1.6.1 Motivity.
 
         [
-
             Gain := false;
 
             Growth_Rate := 1   (0};
             Motivity    := 1.5 (1};
             Midpoint    := 5   (0};
-
         ]
 
         const accel    := e ^ Growth_Rate;
@@ -60,7 +54,7 @@ public static class Builtins
         const midpoint := log(Midpoint);
         const constant := -motivity / 2;
 
-        var denom := 0;
+        var denom;
 
         fn legacy(speed)
         {
@@ -72,7 +66,7 @@ public static class Builtins
         let sum := 0;
         let a := 0;
         const partitions := 2;
-        var interval := 0;
+        var interval;
         var partition := 1;
         fn sigmoidSum(b)
         {
@@ -98,19 +92,16 @@ public static class Builtins
 
         callback calculation
         {
-
             if !Gain {
                 return legacy(x);
             }
 
             # still need to scale x because of log-log, not sure how?
             y := sigmoidSum(x) / x;
-
         }
 
         callback distribution(rangeSize)
         {
-
             if ep < rangeStop
             {
                 if inner < rangeNum
@@ -127,7 +118,6 @@ public static class Builtins
             }
 
             x := scaleb(1, ep);
-
         }
         """;
 }

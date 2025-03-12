@@ -12,23 +12,19 @@ public class LinearTests
         Legacy output cap Linear mode as a RawAccelScript.
 
         [
-
             Acceleration := 0.005 (0};
             Output_Cap   := 2     [0};
             Input_Offset := 0     [0};
-
         ]
 
-        var base := zero;
+        var base;
 
         callback calculation
         {
-
             if x <= Input_Offset { return; }
 
             base := Acceleration * (x - Input_Offset) ^ 2 / x;
             y += min(base, Output_Cap);
-
         }
         """;
 

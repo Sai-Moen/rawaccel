@@ -288,14 +288,22 @@ public class Parser(Context context, Lexer lexer)
             }
             else
             {
-                Token eq = Expect(TokenKind.Assignment);
-
-                List<Token> output = Expression(before: TokenKind.Terminator);
+                Token[] initializer;
+                if (Accept(TokenKind.Assignment, out Token eq))
+                {
+                    List<Token> output = Expression(before: TokenKind.Terminator);
+                    initializer = [.. output];
+                }
+                else
+                {
+                    initializer = [new(TokenKind.Zero, identifier.BytePosition)];
+                    Discard(TokenKind.Terminator);
+                }
 
                 tag = ASTTag.Assign;
                 union = new()
                 {
-                    astAssign = new(identifier, eq, [.. output])
+                    astAssign = new(identifier, eq, initializer)
                 };
             }
             declarations.Add(new ASTNode(tag, union));
@@ -556,7 +564,7 @@ public class Parser(Context context, Lexer lexer)
                                 break;
                             default:
                                 // cursed way to handle unary operators
-                                expression.Add(Tokens.GetReserved(Tokens.ZERO, token.BytePosition));
+                                expression.Add(new(TokenKind.Zero, token.BytePosition));
                                 unary = true;
                                 break;
                         }
