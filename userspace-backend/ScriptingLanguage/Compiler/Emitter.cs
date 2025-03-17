@@ -71,14 +71,14 @@ public class Emitter(Context context)
 
     public Program EmitFunction(IList<Token> args, IList<ASTNode> code)
     {
-        int arity = 0;
+        StackAddress arity = 0;
         foreach (Token arg in args)
         {
             bool success = tempFunctionArgs.TryAdd(context.GetSymbol(arg), arity++);
             Debug.Assert(success, "Parser didn't check for duplicate function local names?");
         }
         Program program = Emit(code);
-        program.Arity = arity;
+        program.Arity = (int)arity;
         tempFunctionArgs.Clear();
         return program;
     }
@@ -96,9 +96,9 @@ public class Emitter(Context context)
         byte[] code = [.. byteCode];
         byteCode.Clear();
 
-        StaticData data = new(numberMap.Count);
-        foreach ((Number number, DataAddress dAddress) in numberMap)
-            data[dAddress] = number;
+        Number[] data = new Number[numberMap.Count];
+        foreach ((Number number, DataAddress dataAddress) in numberMap)
+            data[dataAddress.ToIndex()] = number;
         numberMap.Clear();
 
         return new Program(code, data);
@@ -138,17 +138,17 @@ public class Emitter(Context context)
                         case TokenKind.Immutable:
                         case TokenKind.Persistent:
                             EmitMemoryAssignment(
-                                (byte[])persistentAddresses[context.GetSymbol(identifier)],
+                                persistentAddresses[context.GetSymbol(identifier)].ToBytes(),
                                 isCompound, InstructionKind.LoadPersistent, modify, InstructionKind.StorePersistent);
                             break;
                         case TokenKind.Impersistent:
                             EmitMemoryAssignment(
-                                (byte[])impersistentAddresses[context.GetSymbol(identifier)],
+                                impersistentAddresses[context.GetSymbol(identifier)].ToBytes(),
                                 isCompound, InstructionKind.LoadImpersistent, modify, InstructionKind.StoreImpersistent);
                             break;
                         case TokenKind.FunctionLocal:
                             EmitMemoryAssignment(
-                                (byte[])tempFunctionArgs[context.GetSymbol(identifier)],
+                                tempFunctionArgs[context.GetSymbol(identifier)].ToBytes(),
                                 isCompound, InstructionKind.LoadStack, modify, InstructionKind.StoreStack);
                             break;
                         default:
@@ -169,32 +169,32 @@ public class Emitter(Context context)
                     CodeAddress ifJumpTarget;
                     if (ast.Else.Length == 0)
                     {
-                        ifJumpTarget = byteCode.Count - 1;
+                        ifJumpTarget = (CodeAddress)(byteCode.Count - 1);
                     }
                     else
                     {
                         CodeAddress elseJumpTargetIndex = AddDefaultJump(InstructionKind.Jmp);
-                        ifJumpTarget = byteCode.Count - 1;
+                        ifJumpTarget = (CodeAddress)(byteCode.Count - 1);
                         EmitBlock(ast.Else);
-                        CodeAddress elseJumpTarget = byteCode.Count - 1;
-                        SetAddress(elseJumpTargetIndex, (byte[])elseJumpTarget);
+                        CodeAddress elseJumpTarget = (CodeAddress)(byteCode.Count - 1);
+                        SetAddress(elseJumpTargetIndex, elseJumpTarget.ToBytes());
                     }
-                    SetAddress(ifJumpTargetIndex, (byte[])ifJumpTarget);
+                    SetAddress(ifJumpTargetIndex, ifJumpTarget.ToBytes());
                 }
                 break;
             case ASTTag.While:
                 {
                     ASTWhile ast = union.astWhile;
 
-                    CodeAddress loopJumpTarget = byteCode.Count - 1;
+                    CodeAddress loopJumpTarget = (CodeAddress)(byteCode.Count - 1);
                     EmitExpression(ast.Condition);
 
                     CodeAddress whileJumpTargetIndex = AddDefaultJump(InstructionKind.Jz);
                     EmitBlock(ast.While);
 
-                    AddInstruction(InstructionKind.Jmp, (byte[])loopJumpTarget);
-                    CodeAddress whileJumpTarget = byteCode.Count - 1;
-                    SetAddress(whileJumpTargetIndex, (byte[])whileJumpTarget);
+                    AddInstruction(InstructionKind.Jmp, loopJumpTarget.ToBytes());
+                    CodeAddress whileJumpTarget = (CodeAddress)(byteCode.Count - 1);
+                    SetAddress(whileJumpTargetIndex, whileJumpTarget.ToBytes());
                 }
                 break;
             case ASTTag.Return:
@@ -232,22 +232,22 @@ public class Emitter(Context context)
                 break;
             case TokenKind.Number:
                 Number number = Number.Parse(context.GetSymbol(token), token);
-                if (!numberMap.TryGetValue(number, out DataAddress dAddress))
+                if (!numberMap.TryGetValue(number, out DataAddress dataAddress))
                 {
-                    dAddress = (DataAddress)numberMap.Count;
-                    numberMap.Add(number, dAddress);
+                    dataAddress = (DataAddress)numberMap.Count;
+                    numberMap.Add(number, dataAddress);
                 }
-                AddInstruction(InstructionKind.LoadNumber, (byte[])dAddress);
+                AddInstruction(InstructionKind.LoadNumber, dataAddress.ToBytes());
                 break;
             case TokenKind.Parameter:
             case TokenKind.Immutable:
             case TokenKind.Persistent:
                 MemoryAddress persistentAddress = persistentAddresses[context.GetSymbol(token)];
-                AddInstruction(InstructionKind.LoadPersistent, (byte[])persistentAddress);
+                AddInstruction(InstructionKind.LoadPersistent, persistentAddress.ToBytes());
                 break;
             case TokenKind.Impersistent:
                 MemoryAddress impersistentAddress = impersistentAddresses[context.GetSymbol(token)];
-                AddInstruction(InstructionKind.LoadImpersistent, (byte[])impersistentAddress);
+                AddInstruction(InstructionKind.LoadImpersistent, impersistentAddress.ToBytes());
                 break;
             case TokenKind.Input:
                 AddInstruction(InstructionKind.LoadIn);
@@ -279,11 +279,11 @@ public class Emitter(Context context)
                 break;
             case TokenKind.FunctionName:
                 MemoryAddress functionAddress = functionAddresses[context.GetSymbol(token)];
-                AddInstruction(InstructionKind.Call, (byte[])functionAddress);
+                AddInstruction(InstructionKind.Call, functionAddress.ToBytes());
                 break;
             case TokenKind.FunctionLocal:
                 StackAddress stackAddress = tempFunctionArgs[context.GetSymbol(token)];
-                AddInstruction(InstructionKind.LoadStack, (byte[])stackAddress);
+                AddInstruction(InstructionKind.LoadStack, stackAddress.ToBytes());
                 break;
             case TokenKind.MathFunction:
                 AddInstruction(EmitMathFunction(token));
@@ -302,7 +302,7 @@ public class Emitter(Context context)
         byteCode.Add((byte)instructionKind);
     }
 
-    private void AddInstruction(InstructionKind instructionKind, byte[] address)
+    private void AddInstruction(InstructionKind instructionKind, ReadOnlySpan<byte> address)
     {
         Debug.Assert(instructionKind.AddressLength() == address.Length);
 
@@ -310,27 +310,28 @@ public class Emitter(Context context)
         byteCode.AddRange(address);
     }
 
-    private void SetAddress(CodeAddress start, byte[] address)
+    private void SetAddress(CodeAddress start, ReadOnlySpan<byte> address)
     {
-        int offset = start.Address;
         for (int i = 0; i < address.Length; i++)
-            byteCode[offset + i] = address[i];
+            byteCode[(int)start + i] = address[i];
     }
 
     private CodeAddress AddDefaultJump(InstructionKind jump)
     {
         Debug.Assert(jump.IsBranch());
 
-        byte[] address = (byte[])default(CodeAddress);
+        ReadOnlySpan<byte> address = default(CodeAddress).ToBytes();
         AddInstruction(jump, address);
-        return byteCode.Count - address.Length; // index of jump target address
+        return (CodeAddress)(byteCode.Count - address.Length); // index of jump target address
     }
 
     #endregion
 
     #region Emit Helpers
 
-    private void EmitRegisterAssignment(bool isCompound, InstructionKind load, InstructionKind modify, InstructionKind store)
+    private void EmitRegisterAssignment(
+        bool isCompound,
+        InstructionKind load, InstructionKind modify, InstructionKind store)
     {
         if (isCompound)
         {
@@ -341,7 +342,9 @@ public class Emitter(Context context)
         AddInstruction(store);
     }
 
-    private void EmitMemoryAssignment(byte[] address, bool isCompound, InstructionKind load, InstructionKind modify, InstructionKind store)
+    private void EmitMemoryAssignment(
+        ReadOnlySpan<byte> address, bool isCompound,
+        InstructionKind load, InstructionKind modify, InstructionKind store)
     {
         if (isCompound)
         {

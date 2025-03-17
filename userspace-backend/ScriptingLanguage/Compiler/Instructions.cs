@@ -72,20 +72,20 @@ public static class Instructions
     /// <returns>Length of subsequent address in bytes.</returns>
     public static int AddressLength(this InstructionKind kind) => kind switch
     {
-        InstructionKind.LoadPersistent => MemoryAddress.SIZE,
-        InstructionKind.StorePersistent => MemoryAddress.SIZE,
-        InstructionKind.LoadImpersistent => MemoryAddress.SIZE,
-        InstructionKind.StoreImpersistent => MemoryAddress.SIZE,
+        InstructionKind.LoadPersistent => sizeof(MemoryAddress),
+        InstructionKind.StorePersistent => sizeof(MemoryAddress),
+        InstructionKind.LoadImpersistent => sizeof(MemoryAddress),
+        InstructionKind.StoreImpersistent => sizeof(MemoryAddress),
 
-        InstructionKind.Call => MemoryAddress.SIZE,
+        InstructionKind.Call => sizeof(MemoryAddress),
 
-        InstructionKind.LoadNumber => DataAddress.SIZE,
+        InstructionKind.LoadNumber => sizeof(DataAddress),
 
-        InstructionKind.LoadStack => StackAddress.SIZE,
-        InstructionKind.StoreStack => StackAddress.SIZE,
+        InstructionKind.LoadStack => sizeof(StackAddress),
+        InstructionKind.StoreStack => sizeof(StackAddress),
 
-        InstructionKind.Jmp => CodeAddress.SIZE,
-        InstructionKind.Jz => CodeAddress.SIZE,
+        InstructionKind.Jmp => sizeof(CodeAddress),
+        InstructionKind.Jz => sizeof(CodeAddress),
 
         _ => 0
     };

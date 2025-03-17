@@ -18,10 +18,12 @@ public sealed class InterpreterException(string message)
 /// </summary>
 public class Interpreter
 {
-    private readonly Program[] assignments;
-    private readonly MemoryHeap stable = new();
-    private readonly MemoryHeap unstable = new();
+    private readonly Number[] stablePersistent;
+    private readonly Number[] unstablePersistent;
+    private readonly Number[] stableImpersistent;
+    private readonly Number[] unstableImpersistent;
 
+    private readonly Program[] assignments;
     private readonly Program[] functions;
 
     private StackAddress stackPointer;
@@ -71,8 +73,13 @@ public class Interpreter
         assignments = [.. assignmentsList];
         functions = [.. functionsList];
 
-        stable.EnsureSizes(emitter.PersistentCount, emitter.ImpersistentCount);
-        unstable.EnsureSizes(emitter.PersistentCount, emitter.ImpersistentCount);
+        stablePersistent = new Number[emitter.PersistentCount];
+        unstablePersistent = new Number[emitter.PersistentCount];
+        stableImpersistent = new Number[emitter.ImpersistentCount];
+        unstableImpersistent = new Number[emitter.ImpersistentCount];
+
+        Debug.Assert(stablePersistent.Length == unstablePersistent.Length);
+        Debug.Assert(stableImpersistent.Length == unstableImpersistent.Length);
 
         // responsibility to change settings from script defaults to saved settings is on the caller
         Defaults = new(parameters);
@@ -89,19 +96,21 @@ public class Interpreter
     {
         int index = 0;
         foreach (Parameter parameter in Settings)
-            stable.SetPersistent((MemoryAddress)index++, parameter.Value);
-        unstable.CopyAllFrom(stable);
+            stablePersistent[index++] = parameter.Value;
+        Array.Copy(stablePersistent, unstablePersistent, stablePersistent.Length);
+        Array.Copy(stableImpersistent, unstableImpersistent, stableImpersistent.Length);
 
         foreach (Program program in assignments)
             ExecuteProgram(program);
-        stable.CopyAllFrom(unstable);
+        Array.Copy(unstablePersistent, stablePersistent, stablePersistent.Length);
+        Array.Copy(unstableImpersistent, stableImpersistent, stableImpersistent.Length);
 
         Y = Number.DEFAULT_Y;
     }
 
     public void Stabilize()
     {
-        unstable.CopyFrom(stable);
+        Array.Copy(stableImpersistent, unstableImpersistent, stableImpersistent.Length);
     }
 
     public void ExecuteProgram(Program program)
@@ -132,7 +141,7 @@ public class Interpreter
             stack.Push(func(stack.Pop(), stack.Pop(), stack.Pop()));
         }
 
-        if (stackPointer.Address > Constants.MAX_STACK_DEPTH)
+        if ((int)stackPointer > Constants.MAX_STACK_DEPTH)
             throw InterpreterError("Stack overflow protection tripped! (stack pointer too high)");
 
         if (++depth > Constants.MAX_RECURSION_DEPTH)
@@ -141,6 +150,18 @@ public class Interpreter
 
         for (CodeAddress c = 0; c < program.Length; c++)
         {
+            ReadOnlySpan<byte> ExtractAddress(int addressLength)
+            {
+                ReadOnlySpan<byte> bytes = new(program.ByteCode, (int)c + 1, addressLength);
+                c += addressLength;
+                return bytes;
+            }
+
+            MemoryAddress ExtractMemoryAddress() => Addresses.MemoryAddressFromBytes(ExtractAddress(sizeof(MemoryAddress)));
+            DataAddress   ExtractDataAddress()   => Addresses.DataAddressFromBytes(ExtractAddress(sizeof(DataAddress)));
+            StackAddress  ExtractStackAddress()  => Addresses.StackAddressFromBytes(ExtractAddress(sizeof(StackAddress)));
+            CodeAddress   ExtractCodeAddress()   => Addresses.CodeAddressFromBytes(ExtractAddress(sizeof(CodeAddress)));
+
             switch ((InstructionKind)program[c])
             {
                 case InstructionKind.Start:
@@ -151,7 +172,7 @@ public class Interpreter
 
                     goto case InstructionKind.Return;
                 case InstructionKind.Return:
-                    if (stackPointer != stack.Count - program.Arity)
+                    if ((int)stackPointer != stack.Count - program.Arity)
                         throw InterpreterError("Bad stack pointer value!");
 
                     --depth;
@@ -169,43 +190,43 @@ public class Interpreter
                     Y = stack.Pop();
                     break;
                 case InstructionKind.LoadNumber:
-                    DataAddress dAddress = (DataAddress)program.ExtractAddress(ref c);
+                    DataAddress dAddress = ExtractDataAddress();
                     stack.Push(program[dAddress]);
                     break;
                 case InstructionKind.LoadPersistent:
                     {
-                        MemoryAddress loadAddress = (MemoryAddress)program.ExtractAddress(ref c);
-                        stack.Push(unstable.GetPersistent(loadAddress));
+                        MemoryAddress loadAddress = ExtractMemoryAddress();
+                        stack.Push(unstablePersistent[loadAddress.ToIndex()]);
                     }
                     break;
                 case InstructionKind.StorePersistent:
                     {
-                        MemoryAddress storeAddress = (MemoryAddress)program.ExtractAddress(ref c);
-                        unstable.SetPersistent(storeAddress, stack.Pop());
+                        MemoryAddress storeAddress = ExtractMemoryAddress();
+                        unstablePersistent[storeAddress.ToIndex()] = stack.Pop();
                     }
                     break;
                 case InstructionKind.LoadImpersistent:
                     {
-                        MemoryAddress loadAddress = (MemoryAddress)program.ExtractAddress(ref c);
-                        stack.Push(unstable.GetImpersistent(loadAddress));
+                        MemoryAddress loadAddress = ExtractMemoryAddress();
+                        stack.Push(unstableImpersistent[loadAddress.ToIndex()]);
                     }
                     break;
                 case InstructionKind.StoreImpersistent:
                     {
-                        MemoryAddress storeAddress = (MemoryAddress)program.ExtractAddress(ref c);
-                        unstable.SetImpersistent(storeAddress, stack.Pop());
+                        MemoryAddress storeAddress = ExtractMemoryAddress();
+                        unstableImpersistent[storeAddress.ToIndex()] = stack.Pop();
                     }
                     break;
                 case InstructionKind.LoadStack:
                     {
-                        StackAddress loadAddress = (StackAddress)program.ExtractAddress(ref c);
-                        stack.Push(stack[stackPointer + loadAddress]);
+                        StackAddress loadAddress = ExtractStackAddress();
+                        stack.Push(stack[(int)stackPointer + (int)loadAddress]);
                     }
                     break;
                 case InstructionKind.StoreStack:
                     {
-                        StackAddress storeAddress = (StackAddress)program.ExtractAddress(ref c);
-                        stack[stackPointer + storeAddress] = stack.Pop();
+                        StackAddress storeAddress = ExtractStackAddress();
+                        stack[(int)stackPointer + (int)storeAddress] = stack.Pop();
                     }
                     break;
                 case InstructionKind.Swap:
@@ -232,25 +253,25 @@ public class Interpreter
                     stack.Push(Constants.LUT_POINTS_CAPACITY);
                     break;
                 case InstructionKind.Jmp:
-                    CodeAddress jmpAddress = (CodeAddress)program.ExtractAddress(ref c);
+                    CodeAddress jmpAddress = ExtractCodeAddress();
                     c = jmpAddress;
                     break;
                 case InstructionKind.Jz:
-                    CodeAddress jzAddress = (CodeAddress)program.ExtractAddress(ref c);
+                    CodeAddress jzAddress = ExtractCodeAddress();
                     if (!stack.Pop())
                         c = jzAddress;
                     break;
                 case InstructionKind.Call:
-                    MemoryAddress functionAddress = (MemoryAddress)program.ExtractAddress(ref c);
-                    Program function = functions[functionAddress];
+                    MemoryAddress functionAddress = ExtractMemoryAddress();
+                    Program function = functions[functionAddress.ToIndex()];
 
                     Number y = Y;
                     StackAddress tempStackPointer = stackPointer;
-                    stackPointer = stack.Count - function.Arity;
+                    stackPointer = (StackAddress)(stack.Count - function.Arity);
 
                     ExecuteProgram(function);
 
-                    stack.RemoveRange(stackPointer.Address, function.Arity);
+                    stack.RemoveRange((int)stackPointer, function.Arity);
                     stackPointer = tempStackPointer;
                     stack.Push(Y);
                     Y = y;

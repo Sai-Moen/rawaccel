@@ -6,21 +6,13 @@ namespace userspace_backend.ScriptingLanguage.Compiler;
 /// <summary>
 /// Represents a program consisting of executable Instructions.
 /// </summary>
-public record Program(byte[] ByteCode, StaticData Data)
+public record Program(byte[] ByteCode, Number[] Data)
 {
-    public int Length => ByteCode.Length;
+    public CodeAddress Length => (CodeAddress)ByteCode.Length;
     public int Arity { get; set; } = 0;
 
-    public byte this[CodeAddress index] => ByteCode[index];
-    public Number this[DataAddress index] => Data[index];
-
-    public ReadOnlySpan<byte> ExtractAddress(ref CodeAddress c)
-    {
-        int addressLength = ((InstructionKind)this[c]).AddressLength();
-        ReadOnlySpan<byte> address = new(ByteCode, c.Address + 1, addressLength);
-        c += addressLength;
-        return address;
-    }
+    public byte this[CodeAddress index] => ByteCode[index.ToIndex()];
+    public Number this[DataAddress index] => Data[index.ToIndex()];
 }
 
 /// <summary>
@@ -30,8 +22,8 @@ public class ProgramStack : List<Number>
 {
     public Number this[StackAddress index]
     {
-        get => this[(Index)index];
-        set => this[(Index)index] = value;
+        get => this[index.ToIndex()];
+        set => this[index.ToIndex()] = value;
     }
 
     public void Push(Number number)
@@ -41,9 +33,9 @@ public class ProgramStack : List<Number>
 
     public Number Pop()
     {
-        StackAddress last = Count - 1;
+        int last = Count - 1;
         Number result = this[last];
-        RemoveAt(last.Address);
+        RemoveAt(last);
         return result;
     }
 }

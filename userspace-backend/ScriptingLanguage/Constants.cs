@@ -17,7 +17,7 @@ public static class Constants
     public const int MAX_NUMBER_LEN = 0x40;
 
     public const int MAX_PARAMETERS = 8;
-    public const int MAX_MEM_CAP = MemoryAddress.CAPACITY;
+    public const int MAX_MEM_CAP = 0x100;
     public const int MAX_DECLARATIONS = MAX_MEM_CAP - MAX_PARAMETERS;
 
     public const int MAX_RECURSION_DEPTH = 0xff;
